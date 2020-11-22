@@ -6,6 +6,8 @@
 
 #include <iostream>
 #include <codecvt>
+#include <locale>
+#include <string_view>
 
 void printUsage()
 {
@@ -17,7 +19,7 @@ Usage:
 
 void dumpToFile(const DuplicateDetector& detector, std::string_view filePath)
 {
-    std::wofstream pathsFile(filePath, std::ios::out | std::ios::binary);
+    std::wofstream pathsFile(std::string(filePath), std::ios::out | std::ios::binary);
 
     if (!pathsFile)
     {
@@ -87,6 +89,7 @@ int main(int argc, const char* argv[])
                     << group.groupId << ','
                     << ws2s(e.dir) << ','
                     << ws2s(e.filename) << ','
+                    << std::string_view(e.sha).substr(0, 10) << ','
                     << e.size << "\n";
             }
 

@@ -10,11 +10,7 @@ file(GLOB PROJ_TEST_FILES
    "test/*.cpp"
 )
 
-find_path(OpenSSL_INCLUDE_DIR openssl/sha.h)
-find_library(LIBSSL_LIBRARY libssl)
-find_library(LIBCRYPTOL_LIBRARY libcrypto)
-
-include_directories(${OpenSSL_INCLUDE_DIR})
+find_package(OpenSSL REQUIRED)
 
 message("Project binary dir:  " ${PROJECT_BINARY_DIR})
 message("CMake binary dir:    " ${CMAKE_BINARY_DIR})
@@ -24,7 +20,6 @@ message("Object dir:          " ${OBJECT_DIR})
 include_directories(src)
 
 add_executable(${PROJECT_NAME} ${PROJ_FILES} ${PROJ_TEST_FILES})
-
-target_link_libraries(${PROJECT_NAME} ${LIBSSL_LIBRARY})
-target_link_libraries(${PROJECT_NAME} ${LIBCRYPTOL_LIBRARY})
+target_include_directories(${PROJECT_NAME} PUBLIC ${OPENSSL_INCLUDE_DIR})
+target_link_libraries(${PROJECT_NAME} PRIVATE ${OPENSSL_LIBRARIES})
 

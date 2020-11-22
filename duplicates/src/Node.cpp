@@ -14,7 +14,7 @@ namespace detail {
 
 std::string calcSha256(const std::wstring& filePath)
 {
-    std::ifstream fp(filePath, std::ios::in | std::ios::binary);
+    std::ifstream fp(ws2s(filePath), std::ios::in | std::ios::binary);
 
     if (!fp.good())
     {

@@ -15,6 +15,7 @@ struct DupEntry
     std::wstring dir;
     std::wstring filename;
     size_t size;
+    std::string sha;
 };
 
 struct DupGroup

@@ -2,6 +2,7 @@
 
 #include "Utils.h"
 #include <codecvt>
+#include <locale>
 
 using ConverterType = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>;
 

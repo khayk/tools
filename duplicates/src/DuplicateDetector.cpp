@@ -55,6 +55,8 @@ size_t DuplicateDetector::groups() const noexcept
 
 void DuplicateDetector::detect(const Options& options)
 {
+    dups_.clear();
+    
     std::wstring ws;
     root_->update();
     root_->enumLeafs([&ws, &options, this](Node* node)
@@ -156,6 +158,7 @@ void DuplicateDetector::enumDuplicates(DupGroupCallback cb) const
             e.dir = folder;
             e.filename = filename;
             e.size = i->size();
+            e.sha = i->sha256();
         }
 
         cb(group);
