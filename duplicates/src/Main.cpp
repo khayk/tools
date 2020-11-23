@@ -1,5 +1,3 @@
-#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
-
 #include "StopWatch.h"
 #include "DuplicateDetector.h"
 #include "Utils.h"
