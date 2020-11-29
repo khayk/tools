@@ -163,3 +163,22 @@ void DuplicateDetector::enumDuplicates(DupGroupCallback cb) const
         ++duplicates;
     }
 }
+
+void DuplicateDetector::treeDump(std::ostream& os)
+{
+    root_->enumNodes([&os](const Node* node) {
+        std::wstring ws(node->name());
+        os << std::string(2 * node->depth(), ' ');
+
+        if (!node->leaf())
+        {
+            os << "- ";
+        }
+        else
+        {
+            os << "* ";
+        }
+
+        os << ws2s(ws) << " (" << node->size() << ")\n";
+        });
+}

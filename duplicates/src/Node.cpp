@@ -14,7 +14,7 @@ namespace detail {
 
 std::string calcSha256(const std::wstring& filePath)
 {
-    std::ifstream fp(ws2s(filePath), std::ios::in | std::ios::binary);
+    std::ifstream fp(fs::path(filePath), std::ios::in | std::ios::binary);
 
     if (!fp.good())
     {
@@ -82,6 +82,7 @@ Node::Node(std::wstring_view name, Node* parent)
     : name_(name)
     , parent_(parent)
     , size_(0)
+    , depth_(parent ? parent->depth() + 1 : 0)
 {
 }
 
@@ -103,6 +104,11 @@ bool Node::leaf() const noexcept
 size_t Node::size() const noexcept
 {
     return size_;
+}
+
+size_t Node::depth() const noexcept
+{
+    return depth_;
 }
 
 const std::string& Node::sha256() const
@@ -173,6 +179,34 @@ void Node::enumLeafs(MutableNodeCallback cb)
     {
         Node* child = it.second.get();
         child->enumLeafs(cb);
+    }
+}
+
+void Node::enumNodes(ConstNodeCallback cb) const
+{
+    if (depth() != 0)
+    {
+        cb(this);
+    }
+
+    // Non-leafs
+    for (const auto& it : childs_)
+    {
+        const Node* node = it.second.get();
+        if (!node->leaf())
+        {
+            node->enumNodes(cb);
+        }
+    }
+
+    // Leafs
+    for (const auto& it : childs_)
+    {
+        const Node* node = it.second.get();
+        if (node->leaf())
+        {
+            node->enumNodes(cb);
+        }
     }
 }
 

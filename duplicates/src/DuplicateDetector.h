@@ -48,6 +48,13 @@ public:
     void enumFiles(FileCallback cb) const;
     void enumDuplicates(DupGroupCallback cb) const;
 
+    /**
+     * @brief Print the content as a tree
+     * 
+     * @param os The output stream
+     */
+    void treeDump(std::ostream& os);
+
 private:
     using Nodes = std::vector<const Node*>;
     using MapBySize = std::map<size_t, Nodes>;

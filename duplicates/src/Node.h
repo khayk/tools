@@ -14,6 +14,7 @@ public:
     Node* parent() const noexcept;
     bool leaf() const noexcept;
     size_t size() const noexcept;
+    size_t depth() const noexcept;
     const std::string& sha256() const;
 
     std::wstring fullPath() const;
@@ -27,6 +28,8 @@ public:
 
     using MutableNodeCallback = std::function<void(Node*)>;
     void enumLeafs(MutableNodeCallback cb);
+
+    void enumNodes(ConstNodeCallback cb) const;
 
     size_t nodesCount() const noexcept;
     size_t leafsCount() const noexcept;
@@ -42,6 +45,7 @@ private:
     std::wstring_view name_;
     Node* parent_ {nullptr};
     size_t size_ {0};
+    size_t depth_ {0};
 
     void updateHelper(Node* node, std::wstring& ws);
 };

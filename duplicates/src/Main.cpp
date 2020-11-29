@@ -60,7 +60,7 @@ int main(int argc, const char* argv[])
             }
         }
 
-        std::cout << "Discovered files count: " << detector.files();
+        std::cout << "Discovered files: " << detector.files();
         std::cout << ", elapsed: " << sw.elapsedMls() << " ms" << std::endl;
 
         // Dump content
@@ -74,6 +74,8 @@ int main(int argc, const char* argv[])
         std::cout << "\nDetecting duplicates...:\n";
         detector.detect(Options {});
         std::cout << "Detection took: " << sw.elapsedMls() << " ms" << std::endl;
+
+        detector.treeDump(std::cout);
 
         detector.enumDuplicates([](const DupGroup& group) {
             if (group.entires.size() > 2)
