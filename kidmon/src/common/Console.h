@@ -1,0 +1,15 @@
+#pragma once
+
+#include "Runnable.h"
+#include <memory>
+
+class Console
+{
+public:
+    Console(const std::shared_ptr<Runnable>& runnable);
+    ~Console();
+
+private:
+    class Impl;
+    std::unique_ptr<Impl> impl_;
+};
