@@ -1,4 +1,6 @@
 #include "Console.h"
+#include "Console.h"
+#include "Console.h"
 
 #include <csignal>
 #include <mutex>
@@ -21,7 +23,7 @@ class Console::Impl
 
             if (instance)
             {
-                instance->stop();
+                instance->shutdown();
             }
         }
     }
@@ -48,13 +50,11 @@ public:
             // Install a signal handler, to handle stop event
             prevSignal_ = std::signal(SIGINT, signalHandler);
         }
-
-        start();
     }
 
     ~Impl()
     {
-        stop();
+        shutdown();
 
         // Wait until all other references dropped on this object, so that the distruction
         // takes place in the main thread
@@ -69,18 +69,19 @@ public:
         g_instance = nullptr;
     }
 
-    void start()
+    void run()
     {
         // Acquire shared pointer and use if it is alive
         std::shared_ptr<Runnable> runnable = runnable_.lock();
 
         if (runnable)
         {
+            stopped_ = false;
             runnable->run();
         }
     }
 
-    void stop()
+    void shutdown()
     {
         if (stopped_)
         {
@@ -106,4 +107,14 @@ Console::Console(const std::shared_ptr<Runnable>& runnable)
 Console::~Console()
 {
     impl_.reset();
+}
+
+void Console::run()
+{
+    impl_->run();
+}
+
+void Console::shutdown()
+{
+    impl_->shutdown();
 }
