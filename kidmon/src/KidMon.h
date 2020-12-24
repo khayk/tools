@@ -2,12 +2,18 @@
 
 #include "common/Runnable.h"
 
+#include <memory>
+
 class KidMon : public Runnable
 {
 public:
+    KidMon();
+    ~KidMon();
+
     void run() override;
     void shutdown() noexcept override;
 
 private:
-    bool stopRequested_{ false };
+    class Impl;
+    std::unique_ptr<Impl> impl_;
 };
