@@ -3,10 +3,15 @@
 
 #include <spdlog/spdlog.h>
 
-int main(int /*argc*/, char* /*argv*/[])
+void configureLogger()
 {
     spdlog::default_logger()->set_level(spdlog::level::trace);
     spdlog::default_logger()->set_pattern("%^[%L] %v%$");
+}
+
+int main(int /*argc*/, char* /*argv*/[])
+{
+    configureLogger();
     spdlog::info("Working as a console application");
 
     try
@@ -21,7 +26,7 @@ int main(int /*argc*/, char* /*argv*/[])
         spdlog::error("std::exception: {}", e.what());
     }
 
-    spdlog::info("Console application is turned off");
+    spdlog::info("Console application is closed");
 
     return 0;
 }

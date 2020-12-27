@@ -18,4 +18,6 @@ public:
     std::string ownerProcessPath() const override;
     uint64_t ownerProcessId() const noexcept override;
     Rect boundingRect() const noexcept override;
+
+    bool capture(const ImageFormat format, std::vector<char>& content) override;
 };

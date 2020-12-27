@@ -1,5 +1,6 @@
 #include "KidMon.h"
 #include "os/Api.h"
+#include "common/Utils.h"
 
 #include <boost/asio.hpp>
 #include <spdlog/spdlog.h>
@@ -24,6 +25,19 @@ std::ostream& operator<<(std::ostream& os, const Rect& rc)
     return os;
 }
 
+std::string_view toString(ImageFormat format)
+{
+    switch (format)
+    {
+    case ImageFormat::jpg:  return "jpg";
+    case ImageFormat::bmp:  return "bmp";
+    case ImageFormat::gif:  return "gif";
+    case ImageFormat::tif:  return "tif";
+    case ImageFormat::png:  return "png";
+    default: return "other";
+    }
+}
+
 class KidMon::Impl
 {
     using work_guard = net::executor_work_guard<net::io_context::executor_type>;
@@ -36,13 +50,15 @@ class KidMon::Impl
     std::chrono::milliseconds timeoutMs_;
 
     ApiPtr api_;
+    std::vector<char> wndContent_;
+    size_t index_{ 0 };
 
 public:
     Impl()
         : ioc_()
         , timer_(ioc_)
         , workGuard_(ioc_.get_executor())
-        , timeoutMs_(1000)
+        , timeoutMs_(3000)
         , api_(ApiFactory::create())
     {
     }
@@ -53,7 +69,6 @@ public:
 
         // Set to never expire
         timer_.expires_at(time_point::max());
-
         collectData();
 
         ioc_.run();
@@ -80,7 +95,7 @@ public:
                 return;
             }
 
-            spdlog::trace("{}, '{:64}', {:32}",
+            spdlog::trace("{}, '{:64}', '{:32}'",
                 window->id(),
                 window->title(),
                 window->className());
@@ -90,8 +105,15 @@ public:
             std::ostringstream oss;
             oss << rc;
 
-            spdlog::trace("Forground wnd {}", oss.str());
+            spdlog::trace("Forground wnd: {}", oss.str());
             spdlog::trace("Executable: {}\n", window->ownerProcessPath());
+
+            ImageFormat format = ImageFormat::jpg;
+            if (window->capture(format, wndContent_))
+            {
+                const auto filePath = StringUtils::s2ws(fmt::format("image-{}.{}", ++index_, toString(format)));
+                FileUtils::write(filePath, wndContent_);
+            }
         }
         catch (const std::exception& e)
         {

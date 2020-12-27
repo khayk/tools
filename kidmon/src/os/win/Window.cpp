@@ -2,13 +2,25 @@
 #include <winuser.h>
 #include <psapi.h>
 
+#pragma warning( push, 4 )
+#pragma warning( disable : 4458 )
+
+#include <gdiplus.h>
+#include <shellscalingapi.h>
+
+#pragma warning( pop )
+
 #include "Window.h"
+#include "GuiUtils.h"
 
 #include <fmt/format.h>
+#include <spdlog/spdlog.h>
 
 #include <array>
 
-#pragma comment(lib, "Psapi.lib")
+#pragma comment (lib, "Gdiplus.lib")
+#pragma comment (lib, "Shcore.lib")
+#pragma comment (lib, "Psapi.lib")
 
 std::string hwndToString(HWND hwnd)
 {
@@ -22,6 +34,23 @@ WindowImpl::WindowImpl(HWND hwnd) noexcept
     , id_(hwndToString(hwnd_))
 {
 }
+
+class GdiPlusInitializer
+{
+    ULONG_PTR gdiplusToken_{ 0 };
+public:
+    GdiPlusInitializer()
+    {
+        // Initialize GDI+.
+        Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+        Gdiplus::GdiplusStartup(&gdiplusToken_, &gdiplusStartupInput, NULL);
+    }
+
+    ~GdiPlusInitializer()
+    {
+        Gdiplus::GdiplusShutdown(gdiplusToken_);
+    }
+};
 
 const std::string& WindowImpl::id() const
 {
@@ -104,4 +133,118 @@ Rect WindowImpl::boundingRect() const noexcept
     }
 
     return Rect();
+}
+
+bool saveToBuffer(HBITMAP bitmap, const ImageFormat format, std::vector<char>& content)
+{
+    static GdiPlusInitializer initializer_;
+    Gdiplus::Bitmap bmp(bitmap, nullptr);
+
+    // Write to IStream
+    IStream* istream{ nullptr };
+    auto hr = CreateStreamOnHGlobal(NULL, TRUE, &istream);
+
+    if (FAILED(hr))
+    {
+        return false;
+    }
+
+    // Autmatic cleanup on scope exit
+    std::unique_ptr<IStream, ComPtrDeleter> streamPtr(istream);
+    istream = nullptr;
+
+    // Define encoding
+    std::wstring_view guid = L"";
+    switch (format)
+    {
+    case ImageFormat::bmp: guid = L"{557cf400-1a04-11d3-9a73-0000f81ef32e}"; break;
+    case ImageFormat::jpg: guid = L"{557cf401-1a04-11d3-9a73-0000f81ef32e}"; break;
+    case ImageFormat::gif: guid = L"{557cf402-1a04-11d3-9a73-0000f81ef32e}"; break;
+    case ImageFormat::tif: guid = L"{557cf405-1a04-11d3-9a73-0000f81ef32e}"; break;
+    case ImageFormat::png: guid = L"{557cf406-1a04-11d3-9a73-0000f81ef32e}"; break;
+    default:
+        return false;
+    }
+
+    CLSID clsid{};
+    if (FAILED(CLSIDFromString(guid.data(), &clsid)))
+    {
+        return false;
+    }
+
+    Gdiplus::Status status = bmp.Save(streamPtr.get(), &clsid, nullptr);
+    if (status != Gdiplus::Status::Ok)
+    {
+        return false;
+    }
+
+    // Get memory handle associated with istream
+    HGLOBAL hg{ nullptr };
+    if (FAILED(GetHGlobalFromStream(streamPtr.get(), &hg)))
+    {
+        return false;
+    }
+
+    auto bufSize = GlobalSize(hg);
+    content.resize(bufSize);
+
+    // Lock & unlock memory
+    LPVOID pimage = GlobalLock(hg);
+
+    if (pimage)
+    {
+        memcpy(content.data(), pimage, bufSize);
+    }
+
+    GlobalUnlock(hg);
+
+    return true;
+}
+
+
+bool WindowImpl::capture(const ImageFormat format, std::vector<char>& content)
+{
+    content.clear();
+
+    ScopedReleaseDC windowDC(hwnd_, GetWindowDC(hwnd_));
+    ScopedDeleteDC memDC(CreateCompatibleDC(windowDC.hdc()));
+
+    if (!memDC.hdc())
+    {
+        spdlog::error("CreateCompatibleDC has failed");
+        return false;
+    }
+
+    RECT rcWnd;
+    GetWindowRect(hwnd_, &rcWnd);
+
+    int windowWidth = rcWnd.right - rcWnd.left;
+    int windowHeight = rcWnd.bottom - rcWnd.top;
+
+    GdiObject<HBITMAP> bmWnd(CreateCompatibleBitmap(windowDC.hdc(), windowWidth, windowHeight));
+
+    if (!bmWnd.handle())
+    {
+        spdlog::error("CreateCompatibleBitmap Failed");
+        return false;
+    }
+
+    ScopedSelectObject sso(memDC.hdc(), bmWnd.handle());
+    ScopedReleaseDC screenDC(nullptr, GetDC(nullptr));
+
+    int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+    int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+
+    if (!BitBlt(memDC.hdc(),
+        0, 0,
+        windowWidth, windowHeight,
+        screenDC.hdc(),
+        rcWnd.left, rcWnd.top,
+        SRCCOPY))
+    {
+        spdlog::error("BitBlt has failed");
+        return false;
+    }
+
+    return saveToBuffer(bmWnd.handle(), format, content);
 }
