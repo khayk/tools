@@ -23,7 +23,7 @@ add_compile_definitions(BOOST_ASIO_NO_DEPRECATED)
 
 if(MSVC)
    add_compile_definitions(_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
-   add_compile_definitions(_WIN32_WINNT=0x0601)
+   add_compile_definitions(_WIN32_WINNT=0x0A00)
    add_compile_definitions(PSAPI_VERSION=1)
    string(REGEX REPLACE "/W[3|4]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
    add_compile_options(/W4)
