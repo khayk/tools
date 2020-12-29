@@ -1,21 +1,12 @@
 #pragma once
 
 #include "../geometry/Rect.h"
+#include "../common/Enums.h"
 
 #include <cstdint>
 #include <string>
 #include <memory>
 #include <vector>
-
-enum class ImageFormat
-{
-    jpg,
-    bmp,
-    gif,
-    tif,
-    png,
-    other
-};
 
 class Window
 {

@@ -25,18 +25,6 @@ std::ostream& operator<<(std::ostream& os, const Rect& rc)
     return os;
 }
 
-std::string_view toString(ImageFormat format)
-{
-    switch (format)
-    {
-    case ImageFormat::jpg:  return "jpg";
-    case ImageFormat::bmp:  return "bmp";
-    case ImageFormat::gif:  return "gif";
-    case ImageFormat::tif:  return "tif";
-    case ImageFormat::png:  return "png";
-    default: return "other";
-    }
-}
 
 class KidMon::Impl
 {
