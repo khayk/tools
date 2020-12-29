@@ -1,6 +1,7 @@
-#include <Windows.h>
+#include "Window.h"
 #include <winuser.h>
 #include <psapi.h>
+#include <dwmapi.h>
 
 #pragma warning( push, 4 )
 #pragma warning( disable : 4458 )
@@ -10,7 +11,6 @@
 
 #pragma warning( pop )
 
-#include "Window.h"
 #include "GuiUtils.h"
 
 #include <fmt/format.h>
@@ -21,6 +21,7 @@
 #pragma comment (lib, "Gdiplus.lib")
 #pragma comment (lib, "Shcore.lib")
 #pragma comment (lib, "Psapi.lib")
+#pragma comment (lib, "Dwmapi.lib")
 
 std::string hwndToString(HWND hwnd)
 {
@@ -121,6 +122,7 @@ uint64_t WindowImpl::ownerProcessId() const noexcept
 Rect WindowImpl::boundingRect() const noexcept
 {
     WINDOWPLACEMENT wndpl = {};
+    wndpl.length = sizeof(WINDOWPLACEMENT);
 
     if (GetWindowPlacement(hwnd_, &wndpl))
     {
@@ -215,11 +217,28 @@ bool WindowImpl::capture(const ImageFormat format, std::vector<char>& content)
         return false;
     }
 
-    RECT rcWnd;
-    GetWindowRect(hwnd_, &rcWnd);
+    RECT rect, frame;
+    GetWindowRect(hwnd_, &rect);
+    HRESULT hr = DwmGetWindowAttribute(hwnd_, DWMWA_EXTENDED_FRAME_BOUNDS, &frame, sizeof(frame));
 
-    int windowWidth = rcWnd.right - rcWnd.left;
-    int windowHeight = rcWnd.bottom - rcWnd.top;
+    if (SUCCEEDED(hr))
+    {
+        RECT border;
+
+        border.left = frame.left - rect.left;
+        border.top = frame.top - rect.top;
+        border.right = rect.right - frame.right;
+        border.bottom = rect.bottom - frame.bottom;
+
+        // Adjust rect to visible part
+        rect.left += border.left;
+        rect.top += border.top;
+        rect.right -= border.right;
+        rect.bottom -= border.bottom;
+    }
+
+    int windowWidth = rect.right - rect.left;
+    int windowHeight = rect.bottom - rect.top;
 
     GdiObject<HBITMAP> bmWnd(CreateCompatibleBitmap(windowDC.hdc(), windowWidth, windowHeight));
 
@@ -235,11 +254,13 @@ bool WindowImpl::capture(const ImageFormat format, std::vector<char>& content)
     int screenWidth = GetSystemMetrics(SM_CXSCREEN);
     int screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
+    SetStretchBltMode(memDC.hdc(), HALFTONE);
+
     if (!BitBlt(memDC.hdc(),
         0, 0,
         windowWidth, windowHeight,
         screenDC.hdc(),
-        rcWnd.left, rcWnd.top,
+        rect.left, rect.top,
         SRCCOPY))
     {
         spdlog::error("BitBlt has failed");
