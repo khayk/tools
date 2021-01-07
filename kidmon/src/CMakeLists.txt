@@ -1,6 +1,8 @@
 file(GLOB LIB_SRCS
    "*.h"
    "*.cpp"
+   "config/*.h"
+   "config/*.cpp"
    "common/*.h"
    "common/*.cpp"
    "geometry/*.h"
@@ -22,31 +24,45 @@ else(UNIX AND NOT APPLE)
 endif()
 )
 
+include_directories(".")
+
 list(FILTER LIB_SRCS EXCLUDE REGEX ".*Main.cpp")
 
-set(SPDLOG_COMPILED_LIB true)
+# Spdlog
+# set(SPDLOG_COMPILED_LIB true)
 find_package(spdlog REQUIRED)
 
-find_package(boost REQUIRED)
+# Boost
+find_package(Boost REQUIRED)
 
 if(Boost_FOUND)
-   message("Boost found: ${Boost_INCLUDE_DIRS}")
+   message("Boost found        : ${Boost_INCLUDE_DIRS}")
    include_directories(${Boost_INCLUDE_DIRS})
 endif()
 
-message("Spdlog Include dirs : ${spdlog_DIR}")
-message("Boost include dirs  : ${Boost_INCLUDE_DIRS}")
-message("Boost library dirs  : ${Boost_LIBRARY_DIRS}")
+# Sqlite3
+find_package(unofficial-sqlite3 REQUIRED)
+
+# SqliteOrm
+find_package(SqliteOrm REQUIRED)
+
+if(SqliteOrm_FOUND)
+   message("SqliteOrm found    : ${SqliteOrm_INCLUDE_DIRS}")
+endif()
+
+message("Spdlog include     : ${spdlog_DIR}")
+message("Boost include      : ${Boost_INCLUDE_DIRS}")
+message("Boost library      : ${Boost_LIBRARY_DIRS}")
 
 # Adding a library project
 add_library(${projectLib} ${LIB_SRCS})
-
-target_include_directories(${projectLib} INTERFACE "${spdlog_DIR}/../../include")
 target_link_libraries(${projectLib} PRIVATE spdlog::spdlog)
 
 # Adding executable project
 add_executable(${projectApp} Main.cpp)
 target_link_libraries (${projectApp} ${projectLib})
+target_link_libraries(${projectApp} sqlite_orm::sqlite_orm)
+target_link_libraries(${projectApp} unofficial::sqlite3::sqlite3)
 
 
 if(MSVC)
@@ -58,4 +74,3 @@ if(MSVC)
    )
 else()
 endif(MSVC)
-

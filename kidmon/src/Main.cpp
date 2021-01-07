@@ -1,9 +1,10 @@
 #include "KidMon.h"
+#include "config/Config.h"
 #include "common/Console.h"
 
 #include <spdlog/spdlog.h>
 
-void configureLogger()
+void configureLogger(const Config& /*cfg*/)
 {
     spdlog::default_logger()->set_level(spdlog::level::trace);
     spdlog::default_logger()->set_pattern("%^[%L] %v%$");
@@ -11,12 +12,17 @@ void configureLogger()
 
 int main(int /*argc*/, char* /*argv*/[])
 {
-    configureLogger();
-    spdlog::info("Working as a console application");
-
     try
     {
-        auto kidMon = std::make_shared<KidMon>();
+        Config cfg;
+        cfg.applyDefaults();
+        cfg.applyOverrides(L"");
+
+        configureLogger(cfg);
+
+        spdlog::info("Working as a console application");
+
+        auto kidMon = std::make_shared<KidMon>(cfg);
         Console app(kidMon);
 
         app.run();

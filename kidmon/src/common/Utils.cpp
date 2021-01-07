@@ -1,5 +1,11 @@
 #include "Utils.h"
 
+#ifdef _WIN32
+    #include <Shlobj.h>
+    #include <Knownfolders.h>
+#else
+#endif
+
 #include <fmt/format.h>
 
 #include <string_view>
@@ -23,6 +29,7 @@ namespace StringUtils
     }
 
 } // StringUtils
+
 
 namespace FileUtils
 {
@@ -50,4 +57,139 @@ namespace FileUtils
     }
 
 } // FileUtils
+
+
+namespace SysUtils
+{
+    std::wstring activeUserName()
+    {
+        return std::wstring();
+    }
+} // SysUtils 
+
+
+namespace KnownDirs
+{
+#ifdef _WIN32
+    std::string getKnownFolderPath(const GUID& id, std::error_code& ec) noexcept
+    {
+        constexpr DWORD flags = KF_FLAG_CREATE;
+        HANDLE token = nullptr;
+        PWSTR dest = nullptr;
+
+        const HRESULT result = SHGetKnownFolderPath(id, flags, token, &dest);
+        std::wstring path;
+
+        if (result != S_OK)
+        {
+            ec.assign(GetLastError(), std::system_category());
+        }
+        else
+        {
+            path.assign(dest);
+            CoTaskMemFree(dest);
+        }
+
+        return StringUtils::ws2s(path);
+    }
+#else
+
+#endif
+    std::string home(std::error_code& ec)
+    {
+#ifdef _WIN32
+        return getKnownFolderPath(FOLDERID_Profile, ec);
+#else
+        throw std::logic_error("Not implemented");
+#endif
+    }
+
+    std::string home()
+    {
+        std::error_code ec;
+        std::string str = home(ec);
+
+        if (ec)
+        {
+            throw std::system_error(ec, "Failed to retrieve home directory");
+        }
+
+        return str;
+    }
+
+    std::string temp(std::error_code& ec)
+    {
+#ifdef _WIN32
+        constexpr uint32_t bufferLength = MAX_PATH + 1;
+        WCHAR buffer[bufferLength];
+        auto length = GetTempPathW(bufferLength, buffer);
+
+        if (length == 0)
+        {
+            ec.assign(GetLastError(), std::system_category());
+        }
+
+        return StringUtils::ws2s(std::wstring_view(buffer, length));
+#else
+        return std::string();
+#endif
+    }
+
+    std::string temp()
+    {
+        std::error_code ec;
+        std::string str = temp(ec);
+
+        if (ec)
+        {
+            throw std::system_error(ec, "Failed to retrieve temp directory");
+        }
+
+        return str;
+    }
+
+    std::string data(std::error_code& ec)
+    {
+#ifdef _WIN32
+        return getKnownFolderPath(FOLDERID_LocalAppData, ec);
+#else
+        throw std::logic_error("Not implemented");
+#endif
+    }
+
+    std::string data()
+    {
+        std::error_code ec;
+        std::string str = data(ec);
+
+        if (ec)
+        {
+            throw std::system_error(ec, "Failed to retrieve local application data directory");
+        }
+
+        return str;
+    }
+
+    std::string config(std::error_code& ec)
+    {
+#ifdef _WIN32
+        return getKnownFolderPath(FOLDERID_ProgramData, ec);
+#else
+        throw std::logic_error("Not implemented");
+#endif
+    }
+
+    std::string config()
+    {
+        std::error_code ec;
+        std::string str = config(ec);
+
+        if (ec)
+        {
+            throw std::system_error(ec, "Failed to retrieve program data directory");
+        }
+
+        return str;
+    }
+} // KnownDirs 
 

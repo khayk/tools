@@ -5,11 +5,45 @@
 #include <boost/asio.hpp>
 #include <spdlog/spdlog.h>
 
+#include <filesystem>
 #include <iomanip>
 #include <sstream>
 #include <thread>
+#include <chrono>
 
 namespace net = boost::asio;
+namespace fs = std::filesystem;
+
+using TimePoint = std::chrono::system_clock::time_point;
+
+struct ProcessInfo
+{
+    std::wstring path;
+    std::string sha256;
+};
+
+struct WindowInfo
+{
+    std::string snapshotPath;
+    std::string title;
+    Rect placement;
+};
+
+struct Entry
+{
+    ProcessInfo procssInfo;
+    WindowInfo windowInfo;
+    TimePoint timestamp;
+};
+
+struct ReportDirs
+{
+    std::string snapshotsDir;
+    std::string dailyDir;
+    std::string monthlyDir;
+    std::string weeklyDir;
+    std::string rawDir;
+};
 
 std::ostream& operator<<(std::ostream& os, const Point& pt)
 {
@@ -25,12 +59,13 @@ std::ostream& operator<<(std::ostream& os, const Rect& rc)
     return os;
 }
 
-
 class KidMon::Impl
 {
     using work_guard = net::executor_work_guard<net::io_context::executor_type>;
     using clock_type = net::steady_timer::clock_type;
     using time_point = net::steady_timer::time_point;
+
+    const Config& cfg_;
 
     net::io_context ioc_;
     net::steady_timer timer_;
@@ -41,14 +76,62 @@ class KidMon::Impl
     std::vector<char> wndContent_;
     size_t index_{ 0 };
 
+    std::unordered_map<std::wstring, ReportDirs> dirs_;
+
+    const ReportDirs& getActiveUserDirs()
+    {
+        std::wstring activeUserName = SysUtils::activeUserName();
+
+        if (auto it = dirs_.find(activeUserName); it != dirs_.end())
+        {
+            return it->second;
+        }
+
+        std::time_t t = std::time(0);   // get time now
+        std::tm* now = std::localtime(&t);
+
+        fs::path userReportsRoot = fs::path(cfg_.reportsDir)
+            .append(activeUserName)
+            .append(fmt::format("{}", now->tm_year + 1900));
+
+        // Reports directory structure will look like this
+        //
+        // ...\kidmon\reports\user\YYYY\snapshots\MM.DD"
+        //                             \daily\d-001.txt
+        //                             \monthly\m-01.txt
+        //                             \weekly\w-01.txt
+        //                             \raw\r-001.dat
+
+        ReportDirs dirs;
+
+        dirs.snapshotsDir = (userReportsRoot / "snapshoots").u8string();
+        dirs.dailyDir = (userReportsRoot / "daily").u8string();
+        dirs.monthlyDir = (userReportsRoot / "monthly").u8string();
+        dirs.weeklyDir = (userReportsRoot / "weekly").u8string();
+        dirs.rawDir = (userReportsRoot / "raw").u8string();
+
+        auto [it, ok] = dirs_.emplace(activeUserName, std::move(dirs));
+
+        if (!ok)
+        {
+            static ReportDirs s_dirs;
+
+            return s_dirs;
+        }
+
+        return it->second;
+    }
+
 public:
-    Impl()
-        : ioc_()
+    Impl(const Config& cfg)
+        : cfg_(cfg)
+        , ioc_()
         , timer_(ioc_)
         , workGuard_(ioc_.get_executor())
         , timeoutMs_(3000)
         , api_(ApiFactory::create())
     {
+        const auto& dirs = getActiveUserDirs();
     }
 
     void run()
@@ -110,8 +193,8 @@ public:
     }
 };
 
-KidMon::KidMon()
-    : impl_(std::make_unique<Impl>())
+KidMon::KidMon(const Config& cfg)
+    : impl_(std::make_unique<Impl>(cfg))
 {
 }
 

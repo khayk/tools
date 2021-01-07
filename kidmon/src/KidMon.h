@@ -1,13 +1,13 @@
 #pragma once
 
 #include "common/Runnable.h"
-
+#include "config/Config.h"
 #include <memory>
 
 class KidMon : public Runnable
 {
 public:
-    KidMon();
+    KidMon(const Config& cfg);
     ~KidMon();
 
     void run() override;
