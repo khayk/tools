@@ -84,7 +84,7 @@ std::string WindowImpl::className() const
     return {};
 }
 
-std::string WindowImpl::ownerProcessPath() const
+std::wstring WindowImpl::ownerProcessPath() const
 {
     DWORD procId{ 0 };
     GetWindowThreadProcessId(hwnd_, &procId);
@@ -98,17 +98,17 @@ std::string WindowImpl::ownerProcessPath() const
     HMODULE modules{ nullptr };
     DWORD modulesCount{ 0 };
     DWORD sz{ 0 };
-    std::array<char, 256> modulePath {};
+    std::array<wchar_t, 256> modulePath {};
 
     if (EnumProcessModules(proc, &modules, sizeof(modules), &modulesCount))
     {
-        sz = GetModuleFileNameEx(proc, modules, modulePath.data(),
-                                 static_cast<DWORD>(modulePath.size()));
+        sz = GetModuleFileNameExW(proc, modules, modulePath.data(),
+                                  static_cast<DWORD>(modulePath.size()));
     }
 
     CloseHandle(proc);
 
-    return std::string(modulePath.data(), sz);
+    return std::wstring(modulePath.data(), sz);
 }
 
 uint64_t WindowImpl::ownerProcessId() const noexcept

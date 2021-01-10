@@ -38,11 +38,11 @@ struct Entry
 
 struct ReportDirs
 {
-    std::string snapshotsDir;
-    std::string dailyDir;
-    std::string monthlyDir;
-    std::string weeklyDir;
-    std::string rawDir;
+    fs::path snapshotsDir;
+    fs::path dailyDir;
+    fs::path monthlyDir;
+    fs::path weeklyDir;
+    fs::path rawDir;
 };
 
 std::ostream& operator<<(std::ostream& os, const Point& pt)
@@ -71,6 +71,7 @@ class KidMon::Impl
     net::steady_timer timer_;
     work_guard workGuard_;
     std::chrono::milliseconds timeoutMs_;
+    time_point nextCaptureTime_;
 
     ApiPtr api_;
     std::vector<char> wndContent_;
@@ -104,11 +105,17 @@ class KidMon::Impl
 
         ReportDirs dirs;
 
-        dirs.snapshotsDir = (userReportsRoot / "snapshoots").u8string();
-        dirs.dailyDir = (userReportsRoot / "daily").u8string();
-        dirs.monthlyDir = (userReportsRoot / "monthly").u8string();
-        dirs.weeklyDir = (userReportsRoot / "weekly").u8string();
-        dirs.rawDir = (userReportsRoot / "raw").u8string();
+        dirs.snapshotsDir   = userReportsRoot / "snapshoots";
+        dirs.dailyDir       = userReportsRoot / "daily";
+        dirs.monthlyDir     = userReportsRoot / "monthly";
+        dirs.weeklyDir      = userReportsRoot / "weekly";
+        dirs.rawDir         = userReportsRoot / "raw";
+
+        fs::create_directories(dirs.snapshotsDir);
+        fs::create_directories(dirs.dailyDir);
+        fs::create_directories(dirs.monthlyDir);
+        fs::create_directories(dirs.weeklyDir);
+        fs::create_directories(dirs.rawDir);
 
         auto [it, ok] = dirs_.emplace(activeUserName, std::move(dirs));
 
@@ -128,10 +135,9 @@ public:
         , ioc_()
         , timer_(ioc_)
         , workGuard_(ioc_.get_executor())
-        , timeoutMs_(3000)
+        , timeoutMs_(cfg.activityCheckIntervalMs)
         , api_(ApiFactory::create())
     {
-        const auto& dirs = getActiveUserDirs();
     }
 
     void run()
@@ -152,12 +158,16 @@ public:
 
     void collectData()
     {
+        using namespace StringUtils;
+
         timer_.expires_after(timeoutMs_);
         timer_.async_wait(std::bind(&Impl::collectData, this));
 
         try
         {
             spdlog::trace("Calls collectData");
+
+            Entry entry;
 
             auto window = api_->forgroundWindow();
             if (!window)
@@ -166,7 +176,7 @@ public:
                 return;
             }
 
-            spdlog::trace("{}, '{:64}', '{:32}'",
+            spdlog::trace("{}, '{}', '{}'",
                 window->id(),
                 window->title(),
                 window->className());
@@ -176,14 +186,32 @@ public:
             std::ostringstream oss;
             oss << rc;
 
-            spdlog::trace("Forground wnd: {}", oss.str());
-            spdlog::trace("Executable: {}\n", window->ownerProcessPath());
+            entry.windowInfo.placement = window->boundingRect();
+            entry.windowInfo.title = window->title();
+            entry.procssInfo.path = window->ownerProcessPath();
+            entry.procssInfo.sha256 = FileUtils::fileSha256(entry.procssInfo.path);
 
-            ImageFormat format = ImageFormat::jpg;
-            if (window->capture(format, wndContent_))
+            spdlog::trace("Forground wnd: {}", oss.str());
+            spdlog::trace("Executable: {}\n", ws2s(entry.procssInfo.path));
+
+            if (nextCaptureTime_ < clock_type::now())
             {
-                const auto filePath = StringUtils::s2ws(fmt::format("image-{}.{}", ++index_, toString(format)));
-                FileUtils::write(filePath, wndContent_);
+                nextCaptureTime_ = clock_type::now() + std::chrono::milliseconds(cfg_.snapshotIntervalMs);
+                ImageFormat format = ImageFormat::jpg;
+
+                if (window->capture(format, wndContent_))
+                {
+                    const auto& userDirs = getActiveUserDirs();
+                    std::time_t t = std::time(nullptr);
+
+                    char mbstr[16];
+                    auto bytesWritten = std::strftime(mbstr, sizeof(mbstr), "%m%d-%H%M%S", std::localtime(&t));
+                    auto fileName = fmt::format("img-{}.{}", std::string_view(mbstr, bytesWritten), toString(format));
+                    auto filePath = userDirs.snapshotsDir / fileName;
+
+                    entry.windowInfo.snapshotPath = filePath.u8string();
+                    FileUtils::write(filePath.wstring(), wndContent_);
+                }
             }
         }
         catch (const std::exception& e)

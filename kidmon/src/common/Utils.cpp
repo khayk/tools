@@ -6,13 +6,18 @@
 #else
 #endif
 
+#include <openssl/sha.h>
 #include <fmt/format.h>
 
+#include <system_error>
 #include <string_view>
+#include <filesystem>
+#include <sstream>
 #include <fstream>
 #include <codecvt>
 #include <locale>
-#include <system_error>
+
+namespace fs = std::filesystem;
 
 namespace StringUtils
 {
@@ -56,6 +61,43 @@ namespace FileUtils
         write(filePath, data.data(), data.size());
     }
 
+    std::string fileSha256(const std::wstring& filePath)
+    {
+        std::ifstream fp(filePath, std::ios::in | std::ios::binary);
+
+        if (!fp.good())
+        {
+            const auto& s = fmt::format("Unable to open file: {}", StringUtils::ws2s(filePath));
+            throw std::system_error(std::make_error_code(std::errc::no_such_file_or_directory), s);
+        }
+
+        constexpr const std::size_t bufferSize {static_cast<unsigned long long>(1UL) << 12};
+        char buffer[bufferSize];
+
+        unsigned char hash[SHA256_DIGEST_LENGTH] = {0};
+
+        SHA256_CTX ctx;
+        SHA256_Init(&ctx);
+
+        while (fp.good())
+        {
+            fp.read(buffer, bufferSize);
+            SHA256_Update(&ctx, buffer, fp.gcount());
+        }
+
+        SHA256_Final(hash, &ctx);
+        fp.close();
+
+        std::ostringstream os;
+        os << std::hex << std::setfill('0');
+
+        for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i)
+        {
+            os << std::setw(2) << static_cast<unsigned int>(hash[i]);
+        }
+
+        return os.str();
+    }
 } // FileUtils
 
 

@@ -24,5 +24,5 @@ void Config::applyDefaults()
 
 void Config::applyOverrides(const std::wstring& /*filePath*/)
 {
-
+    snapshotIntervalMs = 3 * SECOND_MS;
 }

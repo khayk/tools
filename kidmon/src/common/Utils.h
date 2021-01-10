@@ -14,6 +14,8 @@ namespace FileUtils
 {
     void write(const std::wstring& filePath, const std::string& data);
     void write(const std::wstring& filePath, const std::vector<char>& data);
+
+    std::string fileSha256(const std::wstring& filePath);
 }
 
 namespace SysUtils

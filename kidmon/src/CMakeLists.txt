@@ -40,11 +40,9 @@ if(Boost_FOUND)
    include_directories(${Boost_INCLUDE_DIRS})
 endif()
 
-# Sqlite3
-find_package(unofficial-sqlite3 REQUIRED)
-
-# SqliteOrm
-find_package(SqliteOrm REQUIRED)
+find_package(SQLite3 REQUIRED)
+# find_package(SqliteOrm REQUIRED)
+find_package(OpenSSL REQUIRED)
 
 if(SqliteOrm_FOUND)
    message("SqliteOrm found    : ${SqliteOrm_INCLUDE_DIRS}")
@@ -53,6 +51,8 @@ endif()
 message("Spdlog include     : ${spdlog_DIR}")
 message("Boost include      : ${Boost_INCLUDE_DIRS}")
 message("Boost library      : ${Boost_LIBRARY_DIRS}")
+message("Sqlite3 library    : ${SQLite3_LIBRARY}")
+message("OpenSsl library    : ${OPENSSL_LIBRARIES}")
 
 # Adding a library project
 add_library(${projectLib} ${LIB_SRCS})
@@ -60,9 +60,10 @@ target_link_libraries(${projectLib} PRIVATE spdlog::spdlog)
 
 # Adding executable project
 add_executable(${projectApp} Main.cpp)
-target_link_libraries (${projectApp} ${projectLib})
-target_link_libraries(${projectApp} sqlite_orm::sqlite_orm)
-target_link_libraries(${projectApp} unofficial::sqlite3::sqlite3)
+target_link_libraries (${projectApp} PRIVATE ${projectLib})
+# target_link_libraries(${projectApp} sqlite_orm::sqlite_orm)
+target_link_libraries(${projectApp} PRIVATE ${SQLite3_LIBRARY})
+target_link_libraries(${projectApp} PRIVATE ${OPENSSL_LIBRARIES})
 
 
 if(MSVC)
