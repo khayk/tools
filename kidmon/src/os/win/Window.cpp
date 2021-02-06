@@ -60,7 +60,7 @@ const std::string& WindowImpl::id() const
 
 std::string WindowImpl::title() const
 {
-    std::array<char, 256> buffer;
+    std::array<char, 256> buffer {};
     const int size = GetWindowTextA(hwnd_, buffer.data(), static_cast<int>(buffer.size()));
 
     if (size)
@@ -73,7 +73,7 @@ std::string WindowImpl::title() const
 
 std::string WindowImpl::className() const
 {
-    std::array<char, 256> buffer;
+    std::array<char, 256> buffer {};
     const int size = RealGetWindowClassA(hwnd_, buffer.data(), static_cast<int>(buffer.size()));
 
     if (size)
@@ -86,8 +86,7 @@ std::string WindowImpl::className() const
 
 std::wstring WindowImpl::ownerProcessPath() const
 {
-    DWORD procId{ 0 };
-    GetWindowThreadProcessId(hwnd_, &procId);
+    DWORD procId = static_cast<DWORD>(ownerProcessId());
     HANDLE proc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, procId);
 
     if (nullptr == proc)
@@ -217,13 +216,13 @@ bool WindowImpl::capture(const ImageFormat format, std::vector<char>& content)
         return false;
     }
 
-    RECT rect, frame;
+    RECT rect {}, frame {};
     GetWindowRect(hwnd_, &rect);
     HRESULT hr = DwmGetWindowAttribute(hwnd_, DWMWA_EXTENDED_FRAME_BOUNDS, &frame, sizeof(frame));
 
     if (SUCCEEDED(hr))
     {
-        RECT border;
+        RECT border {};
 
         border.left = frame.left - rect.left;
         border.top = frame.top - rect.top;

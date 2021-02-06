@@ -76,6 +76,9 @@ class KidMon::Impl
     ApiPtr api_;
     std::vector<char> wndContent_;
     size_t index_{ 0 };
+    size_t bufferedBytes_ {0};
+
+    std::vector<Entry> cachedEntries_;
 
     std::unordered_map<std::wstring, ReportDirs> dirs_;
 
@@ -189,6 +192,13 @@ public:
             entry.windowInfo.placement = window->boundingRect();
             entry.windowInfo.title = window->title();
             entry.procssInfo.path = window->ownerProcessPath();
+
+            if (entry.procssInfo.path.empty())
+            {
+                spdlog::warn("Unable to retrieve the path of the process {}", window->ownerProcessId());
+                return;
+            }
+
             entry.procssInfo.sha256 = FileUtils::fileSha256(entry.procssInfo.path);
 
             spdlog::trace("Forground wnd: {}", oss.str());
@@ -213,6 +223,8 @@ public:
                     FileUtils::write(filePath.wstring(), wndContent_);
                 }
             }
+
+            cachedEntries_.push_back(std::move(entry));
         }
         catch (const std::exception& e)
         {
