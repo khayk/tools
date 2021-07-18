@@ -1,0 +1,13 @@
+{
+    "version": "0.2.1",
+    "defaults": {},
+    "configurations": [
+        {
+            "type": "default",
+            "project": "CMakeLists.txt",
+            "projectTarget": "duplicates.exe (duplicates\\duplicates.exe)",
+            "name": "duplicates.exe (duplicates\\duplicates.exe)",
+            "args": [ "C:\\Code\\C++\\Projects\\dup-finder\\data" ]
+        }
+    ]
+}
