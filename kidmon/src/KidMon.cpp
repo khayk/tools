@@ -84,7 +84,7 @@ class KidMon::Impl
 
     const ReportDirs& getActiveUserDirs()
     {
-        std::wstring activeUserName = SysUtils::activeUserName();
+        std::wstring activeUserName = sys::activeUserName();
 
         if (auto it = dirs_.find(activeUserName); it != dirs_.end())
         {
@@ -161,7 +161,7 @@ public:
 
     void collectData()
     {
-        using namespace StringUtils;
+        using namespace str;
 
         timer_.expires_after(timeoutMs_);
         timer_.async_wait(std::bind(&Impl::collectData, this));
@@ -199,7 +199,7 @@ public:
                 return;
             }
 
-            entry.procssInfo.sha256 = FileUtils::fileSha256(entry.procssInfo.path);
+            entry.procssInfo.sha256 = crypto::fileSha256(entry.procssInfo.path);
 
             spdlog::trace("Forground wnd: {}", oss.str());
             spdlog::trace("Executable: {}\n", ws2s(entry.procssInfo.path));
@@ -219,8 +219,8 @@ public:
                     auto fileName = fmt::format("img-{}.{}", std::string_view(mbstr, bytesWritten), toString(format));
                     auto filePath = userDirs.snapshotsDir / fileName;
 
-                    entry.windowInfo.snapshotPath = filePath.u8string();
-                    FileUtils::write(filePath.wstring(), wndContent_);
+                    entry.windowInfo.snapshotPath = filePath.string();
+                    file::write(filePath.wstring(), wndContent_);
                 }
             }
 

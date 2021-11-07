@@ -4,24 +4,33 @@
 #include <vector>
 #include <system_error>
 
-namespace StringUtils
-{
-    std::wstring s2ws(std::string_view utf8);
-    std::string ws2s(std::wstring_view utf16);
-}
+namespace str {
 
-namespace FileUtils
-{
-    void write(const std::wstring& filePath, const std::string& data);
-    void write(const std::wstring& filePath, const std::vector<char>& data);
+std::wstring s2ws(std::string_view utf8);
+std::string ws2s(std::wstring_view utf16);
 
-    std::string fileSha256(const std::wstring& filePath);
-}
+} // namespace str
 
-namespace SysUtils
-{
-    std::wstring activeUserName();
-}
+namespace file {
+
+void write(const std::wstring& filePath, const std::string& data);
+void write(const std::wstring& filePath, const std::vector<char>& data);
+
+} // namespace file
+
+namespace crypto {
+
+std::string fileSha256(const std::wstring& filePath);
+
+} // crypto
+
+namespace sys {
+
+std::wstring activeUserName();
+
+bool isUserInteractive() noexcept;
+
+} // namespace sys
 
 /**
  * @brief Utility functions to provide full paths of know user/system directories
@@ -51,4 +60,18 @@ namespace KnownDirs
      */
     std::string config(std::error_code& ec);
     std::string config();
+};
+
+class SingleInstanceChecker
+{
+    std::wstring appName_;
+    std::atomic_bool processAlreadyRunning_ {false};
+    void* mutex_ {nullptr};
+
+public:
+    SingleInstanceChecker(std::wstring_view name);
+    ~SingleInstanceChecker();
+
+    bool processAlreadyRunning() const noexcept;
+    void report() const;
 };

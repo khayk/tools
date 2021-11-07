@@ -56,7 +56,7 @@ message("OpenSsl library    : ${OPENSSL_LIBRARIES}")
 
 # Adding a library project
 add_library(${projectLib} ${LIB_SRCS})
-target_link_libraries(${projectLib} PRIVATE spdlog::spdlog)
+target_link_libraries(${projectLib} PUBLIC spdlog::spdlog)
 
 # Adding executable project
 add_executable(${projectApp} Main.cpp)

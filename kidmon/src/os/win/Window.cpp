@@ -13,7 +13,6 @@
 
 #include "GuiUtils.h"
 
-#include <fmt/format.h>
 #include <spdlog/spdlog.h>
 
 #include <array>
@@ -250,8 +249,8 @@ bool WindowImpl::capture(const ImageFormat format, std::vector<char>& content)
     ScopedSelectObject sso(memDC.hdc(), bmWnd.handle());
     ScopedReleaseDC screenDC(nullptr, GetDC(nullptr));
 
-    int screenWidth = GetSystemMetrics(SM_CXSCREEN);
-    int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+    //int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+    //int screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
     SetStretchBltMode(memDC.hdc(), HALFTONE);
 

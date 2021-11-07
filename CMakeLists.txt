@@ -16,7 +16,7 @@ message("CMake source dir   : ${CMAKE_SOURCE_DIR}")
 message("Object dir         : ${OBJECT_DIR}")
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED true)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_compile_definitions(BOOST_BIND_NO_PLACEHOLDERS)
 add_compile_definitions(BOOST_ASIO_NO_DEPRECATED)

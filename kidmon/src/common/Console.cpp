@@ -1,6 +1,6 @@
 #include "Console.h"
-#include "Console.h"
-#include "Console.h"
+
+#include <spdlog/spdlog.h>
 
 #include <csignal>
 #include <mutex>
@@ -24,6 +24,7 @@ class Console::Impl
             if (instance)
             {
                 instance->shutdown();
+                instance = nullptr;
             }
         }
     }
@@ -88,13 +89,20 @@ public:
             return;
         }
 
-        // Acquire shared pointer and use if it is alive
-        std::shared_ptr<Runnable> runnable = runnable_.lock();
-
-        if (runnable)
+        try
         {
-            runnable->shutdown();
-            stopped_ = true;
+            // Acquire shared pointer and use if it is alive
+            std::shared_ptr<Runnable> runnable = runnable_.lock();
+
+            if (runnable)
+            {
+                runnable->shutdown();
+                stopped_ = true;
+            }
+        }
+        catch (const std::exception& e)
+        {
+            spdlog::error("Error inside the {}, desc: {}", __FUNCTION__, e.what());
         }
     }
 };
@@ -102,11 +110,13 @@ public:
 Console::Console(const std::shared_ptr<Runnable>& runnable)
     : impl_(std::make_unique<Impl>(runnable))
 {
+    spdlog::info("Working as a console application");
 }
 
 Console::~Console()
 {
     impl_.reset();
+    spdlog::info("Console application is closed");
 }
 
 void Console::run()

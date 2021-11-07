@@ -7,7 +7,7 @@
 #endif
 
 #include <openssl/sha.h>
-#include <fmt/format.h>
+#include <spdlog/spdlog.h>
 
 #include <system_error>
 #include <string_view>
@@ -19,219 +19,286 @@
 
 namespace fs = std::filesystem;
 
-namespace StringUtils
+namespace str {
+using ConverterType = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>;
+
+std::wstring s2ws(std::string_view utf8)
 {
-    using ConverterType = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>;
+    return ConverterType().from_bytes(utf8.data(), utf8.data() + utf8.size());
+}
 
-    std::wstring s2ws(std::string_view utf8)
-    {
-        return ConverterType().from_bytes(utf8.data(), utf8.data() + utf8.size());
-    }
-
-    std::string ws2s(std::wstring_view utf16)
-    {
-        return ConverterType().to_bytes(utf16.data(), utf16.data() + utf16.size());
-    }
-
-} // StringUtils
-
-
-namespace FileUtils
+std::string ws2s(std::wstring_view utf16)
 {
-    void write(const std::wstring& filePath, const char* data, size_t size)
-    {
-        std::ofstream ofs(filePath, std::ios::out | std::ios::binary);
+    return ConverterType().to_bytes(utf16.data(), utf16.data() + utf16.size());
+}
 
-        if (!ofs)
-        {
-            const auto& s = fmt::format("Unable to open file: {}", StringUtils::ws2s(filePath));
-            throw std::system_error(std::make_error_code(std::errc::no_such_file_or_directory), s);
-        }
-
-        ofs.write(data, size);
-    }
-
-    void write(const std::wstring& filePath, const std::string& data)
-    {
-        write(filePath, data.data(), data.size());
-    }
-
-    void write(const std::wstring& filePath, const std::vector<char>& data)
-    {
-        write(filePath, data.data(), data.size());
-    }
-
-    std::string fileSha256(const std::wstring& filePath)
-    {
-        std::ifstream fp(filePath, std::ios::in | std::ios::binary);
-
-        if (!fp.good())
-        {
-            const auto& s = fmt::format("Unable to open file: {}", StringUtils::ws2s(filePath));
-            throw std::system_error(std::make_error_code(std::errc::no_such_file_or_directory), s);
-        }
-
-        constexpr const std::size_t bufferSize {static_cast<unsigned long long>(1UL) << 12};
-        char buffer[bufferSize];
-
-        unsigned char hash[SHA256_DIGEST_LENGTH] = {0};
-
-        SHA256_CTX ctx;
-        SHA256_Init(&ctx);
-
-        while (fp.good())
-        {
-            fp.read(buffer, bufferSize);
-            SHA256_Update(&ctx, buffer, fp.gcount());
-        }
-
-        SHA256_Final(hash, &ctx);
-        fp.close();
-
-        std::ostringstream os;
-        os << std::hex << std::setfill('0');
-
-        for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i)
-        {
-            os << std::setw(2) << static_cast<unsigned int>(hash[i]);
-        }
-
-        return os.str();
-    }
-} // FileUtils
+} // namespace str
 
 
-namespace SysUtils
+namespace file {
+void write(const std::wstring& filePath, const char* data, size_t size)
 {
-    std::wstring activeUserName()
+    std::ofstream ofs(filePath, std::ios::out | std::ios::binary);
+
+    if (!ofs)
     {
-        return std::wstring();
+        const auto& s = fmt::format("Unable to open file: {}", str::ws2s(filePath));
+        throw std::system_error(
+            std::make_error_code(std::errc::no_such_file_or_directory),
+            s);
     }
-} // SysUtils 
+
+    ofs.write(data, size);
+}
+
+void write(const std::wstring& filePath, const std::string& data)
+{
+    write(filePath, data.data(), data.size());
+}
+
+void write(const std::wstring& filePath, const std::vector<char>& data)
+{
+    write(filePath, data.data(), data.size());
+}
+
+} // namespace file
+
+namespace crypto {
+
+std::string fileSha256(const std::wstring& filePath)
+{
+    std::ifstream fp(filePath, std::ios::in | std::ios::binary);
+
+    if (!fp.good())
+    {
+        const auto& s = fmt::format("Unable to open file: {}", str::ws2s(filePath));
+        throw std::system_error(
+            std::make_error_code(std::errc::no_such_file_or_directory),
+            s);
+    }
+
+    constexpr const std::size_t bufferSize {static_cast<unsigned long long>(1UL) << 12};
+    char buffer[bufferSize];
+
+    unsigned char hash[SHA256_DIGEST_LENGTH] = {0};
+
+    SHA256_CTX ctx;
+    SHA256_Init(&ctx);
+
+    while (fp.good())
+    {
+        fp.read(buffer, bufferSize);
+        SHA256_Update(&ctx, buffer, fp.gcount());
+    }
+
+    SHA256_Final(hash, &ctx);
+    fp.close();
+
+    std::ostringstream os;
+    os << std::hex << std::setfill('0');
+
+    for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i)
+    {
+        os << std::setw(2) << static_cast<unsigned int>(hash[i]);
+    }
+
+    return os.str();
+}
+
+} // namespace crypto
 
 
-namespace KnownDirs
+namespace sys {
+
+std::wstring activeUserName()
+{
+    return std::wstring();
+}
+
+bool isUserInteractive() noexcept
+{
+    bool interactiveUser = true;
+
+    HWINSTA hWinStation = GetProcessWindowStation();
+
+    if (hWinStation != nullptr)
+    {
+        USEROBJECTFLAGS uof = {0};
+        if (GetUserObjectInformation(hWinStation,
+                                     UOI_FLAGS,
+                                     &uof,
+                                     sizeof(USEROBJECTFLAGS),
+                                     NULL) &&
+            ((uof.dwFlags & WSF_VISIBLE) == 0))
+        {
+            interactiveUser = false;
+        }
+    }
+
+    return interactiveUser;
+}
+
+} // namespace sys
+
+
+namespace KnownDirs {
+#ifdef _WIN32
+std::string getKnownFolderPath(const GUID& id, std::error_code& ec) noexcept
+{
+    constexpr DWORD flags = KF_FLAG_CREATE;
+    HANDLE token = nullptr;
+    PWSTR dest = nullptr;
+
+    const HRESULT result = SHGetKnownFolderPath(id, flags, token, &dest);
+    std::wstring path;
+
+    if (result != S_OK)
+    {
+        ec.assign(GetLastError(), std::system_category());
+    }
+    else
+    {
+        path.assign(dest);
+        CoTaskMemFree(dest);
+    }
+
+    return str::ws2s(path);
+}
+#else
+
+#endif
+std::string home(std::error_code& ec)
 {
 #ifdef _WIN32
-    std::string getKnownFolderPath(const GUID& id, std::error_code& ec) noexcept
-    {
-        constexpr DWORD flags = KF_FLAG_CREATE;
-        HANDLE token = nullptr;
-        PWSTR dest = nullptr;
-
-        const HRESULT result = SHGetKnownFolderPath(id, flags, token, &dest);
-        std::wstring path;
-
-        if (result != S_OK)
-        {
-            ec.assign(GetLastError(), std::system_category());
-        }
-        else
-        {
-            path.assign(dest);
-            CoTaskMemFree(dest);
-        }
-
-        return StringUtils::ws2s(path);
-    }
+    return getKnownFolderPath(FOLDERID_Profile, ec);
 #else
-
+    throw std::logic_error("Not implemented");
 #endif
-    std::string home(std::error_code& ec)
+}
+
+std::string home()
+{
+    std::error_code ec;
+    std::string str = home(ec);
+
+    if (ec)
     {
+        throw std::system_error(ec, "Failed to retrieve home directory");
+    }
+
+    return str;
+}
+
+std::string temp(std::error_code& ec)
+{
 #ifdef _WIN32
-        return getKnownFolderPath(FOLDERID_Profile, ec);
+    constexpr uint32_t bufferLength = MAX_PATH + 1;
+    WCHAR buffer[bufferLength];
+    auto length = GetTempPathW(bufferLength, buffer);
+
+    if (length == 0)
+    {
+        ec.assign(GetLastError(), std::system_category());
+    }
+
+    return str::ws2s(std::wstring_view(buffer, length));
 #else
-        throw std::logic_error("Not implemented");
+    return std::string();
 #endif
+}
+
+std::string temp()
+{
+    std::error_code ec;
+    std::string str = temp(ec);
+
+    if (ec)
+    {
+        throw std::system_error(ec, "Failed to retrieve temp directory");
     }
 
-    std::string home()
-    {
-        std::error_code ec;
-        std::string str = home(ec);
+    return str;
+}
 
-        if (ec)
-        {
-            throw std::system_error(ec, "Failed to retrieve home directory");
-        }
-
-        return str;
-    }
-
-    std::string temp(std::error_code& ec)
-    {
+std::string data(std::error_code& ec)
+{
 #ifdef _WIN32
-        constexpr uint32_t bufferLength = MAX_PATH + 1;
-        WCHAR buffer[bufferLength];
-        auto length = GetTempPathW(bufferLength, buffer);
-
-        if (length == 0)
-        {
-            ec.assign(GetLastError(), std::system_category());
-        }
-
-        return StringUtils::ws2s(std::wstring_view(buffer, length));
+    return getKnownFolderPath(FOLDERID_LocalAppData, ec);
 #else
-        return std::string();
+    throw std::logic_error("Not implemented");
 #endif
+}
+
+std::string data()
+{
+    std::error_code ec;
+    std::string str = data(ec);
+
+    if (ec)
+    {
+        throw std::system_error(ec,
+                                "Failed to retrieve local application data directory");
     }
 
-    std::string temp()
-    {
-        std::error_code ec;
-        std::string str = temp(ec);
+    return str;
+}
 
-        if (ec)
-        {
-            throw std::system_error(ec, "Failed to retrieve temp directory");
-        }
-
-        return str;
-    }
-
-    std::string data(std::error_code& ec)
-    {
+std::string config(std::error_code& ec)
+{
 #ifdef _WIN32
-        return getKnownFolderPath(FOLDERID_LocalAppData, ec);
+    return getKnownFolderPath(FOLDERID_ProgramData, ec);
 #else
-        throw std::logic_error("Not implemented");
+    throw std::logic_error("Not implemented");
 #endif
-    }
+}
 
-    std::string data()
+std::string config()
+{
+    std::error_code ec;
+    std::string str = config(ec);
+
+    if (ec)
     {
-        std::error_code ec;
-        std::string str = data(ec);
-
-        if (ec)
-        {
-            throw std::system_error(ec, "Failed to retrieve local application data directory");
-        }
-
-        return str;
+        throw std::system_error(ec, "Failed to retrieve program data directory");
     }
 
-    std::string config(std::error_code& ec)
+    return str;
+}
+} // namespace KnownDirs
+
+SingleInstanceChecker::SingleInstanceChecker(std::wstring_view name)
+    : appName_(name)
+{
+    mutex_ = CreateMutexW(nullptr, TRUE, appName_.data());
+    const auto error = GetLastError();
+    
+    if (mutex_ == nullptr)
     {
-#ifdef _WIN32
-        return getKnownFolderPath(FOLDERID_ProgramData, ec);
-#else
-        throw std::logic_error("Not implemented");
-#endif
+        spdlog::error("CreateMutex failed, ec: {}", error);
+        processAlreadyRunning_ = true;
+
+        return;
     }
 
-    std::string config()
+    processAlreadyRunning_ = (error == ERROR_ALREADY_EXISTS);
+}
+
+SingleInstanceChecker::~SingleInstanceChecker()
+{
+    if (mutex_)
     {
-        std::error_code ec;
-        std::string str = config(ec);
-
-        if (ec)
-        {
-            throw std::system_error(ec, "Failed to retrieve program data directory");
-        }
-
-        return str;
+        ReleaseMutex(mutex_);
+        CloseHandle(mutex_);
+        mutex_ = nullptr;
     }
-} // KnownDirs 
+}
 
+bool SingleInstanceChecker::processAlreadyRunning() const noexcept
+{
+    return processAlreadyRunning_;
+}
+
+void SingleInstanceChecker::report() const
+{
+    spdlog::info("One instance of '{}' is already running.", str::ws2s(appName_));
+}
