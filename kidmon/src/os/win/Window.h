@@ -15,7 +15,7 @@ public:
     const std::string& id() const override;
     std::string title() const override;
     std::string className() const override;
-    std::wstring ownerProcessPath() const override;
+    fs::path ownerProcessPath() const override;
     uint64_t ownerProcessId() const noexcept override;
     Rect boundingRect() const noexcept override;
 

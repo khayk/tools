@@ -7,6 +7,9 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 class Window
 {
@@ -16,7 +19,7 @@ public:
    virtual const std::string& id() const = 0;
    virtual std::string title() const = 0;
    virtual std::string className() const = 0;
-   virtual std::wstring ownerProcessPath() const = 0;
+   virtual fs::path ownerProcessPath() const = 0;
    virtual uint64_t ownerProcessId() const noexcept = 0;
    virtual Rect boundingRect() const noexcept = 0;
 

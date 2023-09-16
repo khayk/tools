@@ -1,6 +1,7 @@
 #include "KidMon.h"
 #include "os/Api.h"
 #include "common/Utils.h"
+#include "common/FmtExt.h"
 
 #include <boost/asio.hpp>
 #include <spdlog/spdlog.h>
@@ -18,20 +19,20 @@ using TimePoint = std::chrono::system_clock::time_point;
 
 struct ProcessInfo
 {
-    std::wstring path;
+    fs::path processPath;
     std::string sha256;
 };
 
 struct WindowInfo
 {
-    std::string snapshotPath;
+    fs::path snapshotPath;
     std::string title;
     Rect placement;
 };
 
 struct Entry
 {
-    ProcessInfo procssInfo;
+    ProcessInfo processInfo;
     WindowInfo windowInfo;
     TimePoint timestamp;
 };
@@ -70,7 +71,7 @@ class KidMon::Impl
     net::io_context ioc_;
     net::steady_timer timer_;
     work_guard workGuard_;
-    std::chrono::milliseconds timeoutMs_;
+    std::chrono::milliseconds timeout_;
     time_point nextCaptureTime_;
 
     ApiPtr api_;
@@ -138,7 +139,7 @@ public:
         , ioc_()
         , timer_(ioc_)
         , workGuard_(ioc_.get_executor())
-        , timeoutMs_(cfg.activityCheckIntervalMs)
+        , timeout_(cfg.activityCheckInterval)
         , api_(ApiFactory::create())
     {
     }
@@ -163,7 +164,7 @@ public:
     {
         using namespace str;
 
-        timer_.expires_after(timeoutMs_);
+        timer_.expires_after(timeout_);
         timer_.async_wait(std::bind(&Impl::collectData, this));
 
         try
@@ -191,22 +192,22 @@ public:
 
             entry.windowInfo.placement = window->boundingRect();
             entry.windowInfo.title = window->title();
-            entry.procssInfo.path = window->ownerProcessPath();
+            entry.processInfo.processPath = window->ownerProcessPath();
 
-            if (entry.procssInfo.path.empty())
+            if (entry.processInfo.processPath.empty())
             {
                 spdlog::warn("Unable to retrieve the path of the process {}", window->ownerProcessId());
                 return;
             }
 
-            entry.procssInfo.sha256 = crypto::fileSha256(entry.procssInfo.path);
+            entry.processInfo.sha256 = crypto::fileSha256(entry.processInfo.processPath);
 
             spdlog::trace("Forground wnd: {}", oss.str());
-            spdlog::trace("Executable: {}\n", ws2s(entry.procssInfo.path));
+            spdlog::trace("Executable: {}\n", entry.processInfo.processPath);
 
             if (nextCaptureTime_ < clock_type::now())
             {
-                nextCaptureTime_ = clock_type::now() + std::chrono::milliseconds(cfg_.snapshotIntervalMs);
+                nextCaptureTime_ = clock_type::now() + cfg_.snapshotInterval;
                 ImageFormat format = ImageFormat::jpg;
 
                 if (window->capture(format, wndContent_))
@@ -217,10 +218,10 @@ public:
                     char mbstr[16];
                     auto bytesWritten = std::strftime(mbstr, sizeof(mbstr), "%m%d-%H%M%S", std::localtime(&t));
                     auto fileName = fmt::format("img-{}.{}", std::string_view(mbstr, bytesWritten), toString(format));
-                    auto filePath = userDirs.snapshotsDir / fileName;
+                    auto file = userDirs.snapshotsDir / fileName;
 
-                    entry.windowInfo.snapshotPath = filePath.string();
-                    file::write(filePath.wstring(), wndContent_);
+                    entry.windowInfo.snapshotPath = file;
+                    file::write(file, wndContent_);
                 }
             }
 

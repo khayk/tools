@@ -15,8 +15,8 @@ void configureLogger(const Config& cfg)
     consoleSink->set_level(spdlog::level::trace);
     consoleSink->set_pattern("%^[%L] %v%$");
 
-    auto fileSink =
-        std::make_shared<spdlog::sinks::basic_file_sink_mt>(cfg.logsDir + "/kidmon.log");
+    auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(
+        file::path2s(cfg.logsDir / "kidmon.log"));
     fileSink->set_level(spdlog::level::trace);
     fileSink->set_pattern("[%Y-%m-%d %H:%M:%S.%e][%=5t][%L] %v");
 
@@ -43,6 +43,7 @@ int main(int /*argc*/, char* /*argv*/[])
     try
     {
         Config cfg;
+
         cfg.applyDefaults();
         cfg.applyOverrides(L"");
         configureLogger(cfg);

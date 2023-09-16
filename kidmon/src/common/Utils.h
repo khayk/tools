@@ -3,24 +3,36 @@
 #include <string>
 #include <vector>
 #include <system_error>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 namespace str {
 
 std::wstring s2ws(std::string_view utf8);
 std::string ws2s(std::wstring_view utf16);
 
+#if !defined(__cpp_lib_char8_t)
+std::string u8tos(const std::string& s);
+std::string u8tos(std::string&& s);
+#else
+std::string u8tos(const std::u8string_view& s);
+#endif
+
 } // namespace str
 
 namespace file {
 
-void write(const std::wstring& filePath, const std::string& data);
-void write(const std::wstring& filePath, const std::vector<char>& data);
+void write(const fs::path& file, const std::string& data);
+void write(const fs::path& file, const std::vector<char>& data);
+
+std::string path2s(const fs::path& path);
 
 } // namespace file
 
 namespace crypto {
 
-std::string fileSha256(const std::wstring& filePath);
+std::string fileSha256(const fs::path& file);
 
 } // crypto
 
@@ -35,31 +47,31 @@ bool isUserInteractive() noexcept;
 /**
  * @brief Utility functions to provide full paths of know user/system directories
  */
-namespace KnownDirs
+namespace dirs
 {
     /**
      * @brief The user home directory. On Windows systems, this is '%USERPROFILE%'.
      */
-    std::string home(std::error_code& ec);
-    std::string home();
+    fs::path home(std::error_code& ec);
+    fs::path home();
 
     /**
      * @brief Temp directory of the current account. On Windows systems this is %TEMP%
      */
-    std::string temp(std::error_code& ec);
-    std::string temp();
+    fs::path temp(std::error_code& ec);
+    fs::path temp();
 
     /**
      * @brief Application data directory. On Windows systems, this is '%LOCALAPPDATA%'.
      */
-    std::string data(std::error_code& ec);
-    std::string data();
+    fs::path data(std::error_code& ec);
+    fs::path data();
 
     /**
      * @brief Returns the systemwide config directory. On Windows systems, this is '%ALLUSERSPROFILE%'.
      */
-    std::string config(std::error_code& ec);
-    std::string config();
+    fs::path config(std::error_code& ec);
+    fs::path config();
 };
 
 class SingleInstanceChecker
@@ -75,3 +87,4 @@ public:
     bool processAlreadyRunning() const noexcept;
     void report() const;
 };
+

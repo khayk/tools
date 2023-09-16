@@ -83,7 +83,7 @@ std::string WindowImpl::className() const
     return {};
 }
 
-std::wstring WindowImpl::ownerProcessPath() const
+fs::path WindowImpl::ownerProcessPath() const
 {
     DWORD procId = static_cast<DWORD>(ownerProcessId());
     HANDLE proc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, procId);
@@ -106,7 +106,7 @@ std::wstring WindowImpl::ownerProcessPath() const
 
     CloseHandle(proc);
 
-    return std::wstring(modulePath.data(), sz);
+    return fs::path(std::wstring_view(modulePath.data(), sz));
 }
 
 uint64_t WindowImpl::ownerProcessId() const noexcept

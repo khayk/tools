@@ -1,24 +1,19 @@
 #include "Config.h"
 #include "common/Utils.h"
 
-#include <filesystem>
-#include <chrono>
-
-namespace fs = std::filesystem;
+using namespace std::chrono_literals;
 
 void Config::applyDefaults()
 {
-    appDataDir =
-        fs::path(KnownDirs::data()).append("kidmon").lexically_normal().u8string();
+    appDataDir = dirs::data().append("kidmon").lexically_normal();
+    reportsDir = appDataDir / "reports";
+    logsDir = appDataDir / "logs";
 
-    reportsDir = fs::path(appDataDir).append("reports").u8string();
-    logsDir = fs::path(appDataDir).append("logs").u8string();
-
-    activityCheckIntervalMs = 5 * SECOND_MS;
-    snapshotIntervalMs = 5 * MINUTE_MS;
+    activityCheckInterval = 5s;
+    snapshotInterval = 5min;
 }
 
-void Config::applyOverrides(const std::wstring& /*filePath*/)
+void Config::applyOverrides(const fs::path& /*file*/)
 {
-    snapshotIntervalMs = 3 * SECOND_MS;
+    snapshotInterval = 3s;
 }

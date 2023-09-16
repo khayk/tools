@@ -2,16 +2,20 @@
 
 #include "Constants.h"
 #include <string>
+#include <chrono>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 struct Config
 {
-    std::string appDataDir;
-    std::string reportsDir;
-    std::string logsDir;
+    fs::path appDataDir;
+    fs::path reportsDir;
+    fs::path logsDir;
 
-    uint32_t activityCheckIntervalMs{ 0 };
-    uint32_t snapshotIntervalMs{ 0 };
+    std::chrono::milliseconds activityCheckInterval {5000};
+    std::chrono::milliseconds snapshotInterval {0};
 
     void applyDefaults();
-    void applyOverrides(const std::wstring& /*filePath*/);
+    void applyOverrides(const fs::path& /*file*/);
 };

@@ -1,4 +1,5 @@
 #include "Utils.h"
+#include "FmtExt.h"
 
 #ifdef _WIN32
     #include <Shlobj.h>
@@ -32,17 +33,35 @@ std::string ws2s(std::wstring_view utf16)
     return ConverterType().to_bytes(utf16.data(), utf16.data() + utf16.size());
 }
 
+#if !defined(__cpp_lib_char8_t)
+std::string u8tos(const std::string& s)
+{
+    return s;
+}
+
+std::string u8tos(std::string&& s)
+{
+    return std::move(s);
+}
+#else
+std::string u8tos(const std::u8string_view& s)
+{
+    return std::string(s.begin(), s.end());
+}
+#endif
+
 } // namespace str
 
 
 namespace file {
-void write(const std::wstring& filePath, const char* data, size_t size)
+
+void write(const fs::path& file, const char* data, size_t size)
 {
-    std::ofstream ofs(filePath, std::ios::out | std::ios::binary);
+    std::ofstream ofs(file, std::ios::out | std::ios::binary);
 
     if (!ofs)
     {
-        const auto& s = fmt::format("Unable to open file: {}", str::ws2s(filePath));
+        const auto s = fmt::format("Unable to open file: {}", file);
         throw std::system_error(
             std::make_error_code(std::errc::no_such_file_or_directory),
             s);
@@ -51,27 +70,32 @@ void write(const std::wstring& filePath, const char* data, size_t size)
     ofs.write(data, size);
 }
 
-void write(const std::wstring& filePath, const std::string& data)
+void write(const fs::path& file, const std::string& data)
 {
-    write(filePath, data.data(), data.size());
+    write(file, data.data(), data.size());
 }
 
-void write(const std::wstring& filePath, const std::vector<char>& data)
+void write(const fs::path& file, const std::vector<char>& data)
 {
-    write(filePath, data.data(), data.size());
+    write(file, data.data(), data.size());
+}
+
+std::string path2s(const fs::path& path)
+{
+    return str::u8tos(path.u8string());
 }
 
 } // namespace file
 
 namespace crypto {
 
-std::string fileSha256(const std::wstring& filePath)
+std::string fileSha256(const fs::path& file)
 {
-    std::ifstream fp(filePath, std::ios::in | std::ios::binary);
+    std::ifstream fp(file, std::ios::in | std::ios::binary);
 
     if (!fp.good())
     {
-        const auto& s = fmt::format("Unable to open file: {}", str::ws2s(filePath));
+        const auto s = fmt::format("Unable to open file: {}", file);
         throw std::system_error(
             std::make_error_code(std::errc::no_such_file_or_directory),
             s);
@@ -112,6 +136,7 @@ namespace sys {
 
 std::wstring activeUserName()
 {
+    // @todo:khayk
     return std::wstring();
 }
 
@@ -141,16 +166,16 @@ bool isUserInteractive() noexcept
 } // namespace sys
 
 
-namespace KnownDirs {
+namespace dirs {
 #ifdef _WIN32
-std::string getKnownFolderPath(const GUID& id, std::error_code& ec) noexcept
+fs::path getKnownFolderPath(const GUID& id, std::error_code& ec) noexcept
 {
     constexpr DWORD flags = KF_FLAG_CREATE;
     HANDLE token = nullptr;
     PWSTR dest = nullptr;
 
     const HRESULT result = SHGetKnownFolderPath(id, flags, token, &dest);
-    std::wstring path;
+    fs::path path;
 
     if (result != S_OK)
     {
@@ -158,16 +183,16 @@ std::string getKnownFolderPath(const GUID& id, std::error_code& ec) noexcept
     }
     else
     {
-        path.assign(dest);
+        path = dest;
         CoTaskMemFree(dest);
     }
 
-    return str::ws2s(path);
+    return path;
 }
 #else
 
 #endif
-std::string home(std::error_code& ec)
+fs::path home(std::error_code& ec)
 {
 #ifdef _WIN32
     return getKnownFolderPath(FOLDERID_Profile, ec);
@@ -176,10 +201,10 @@ std::string home(std::error_code& ec)
 #endif
 }
 
-std::string home()
+fs::path home()
 {
     std::error_code ec;
-    std::string str = home(ec);
+    auto str = home(ec);
 
     if (ec)
     {
@@ -189,8 +214,10 @@ std::string home()
     return str;
 }
 
-std::string temp(std::error_code& ec)
+fs::path temp(std::error_code& ec)
 {
+    fs::path path;
+
 #ifdef _WIN32
     constexpr uint32_t bufferLength = MAX_PATH + 1;
     WCHAR buffer[bufferLength];
@@ -200,27 +227,31 @@ std::string temp(std::error_code& ec)
     {
         ec.assign(GetLastError(), std::system_category());
     }
-
-    return str::ws2s(std::wstring_view(buffer, length));
+    else
+    {
+        path.assign(std::wstring_view(buffer, length));
+    }
 #else
-    return std::string();
+    throw std::logic_error("Not implemented");
 #endif
+
+    return path;
 }
 
-std::string temp()
+fs::path temp()
 {
     std::error_code ec;
-    std::string str = temp(ec);
+    auto path = temp(ec);
 
     if (ec)
     {
         throw std::system_error(ec, "Failed to retrieve temp directory");
     }
 
-    return str;
+    return path;
 }
 
-std::string data(std::error_code& ec)
+fs::path data(std::error_code& ec)
 {
 #ifdef _WIN32
     return getKnownFolderPath(FOLDERID_LocalAppData, ec);
@@ -229,10 +260,10 @@ std::string data(std::error_code& ec)
 #endif
 }
 
-std::string data()
+fs::path data()
 {
     std::error_code ec;
-    std::string str = data(ec);
+    auto path = data(ec);
 
     if (ec)
     {
@@ -240,10 +271,10 @@ std::string data()
                                 "Failed to retrieve local application data directory");
     }
 
-    return str;
+    return path;
 }
 
-std::string config(std::error_code& ec)
+fs::path config(std::error_code& ec)
 {
 #ifdef _WIN32
     return getKnownFolderPath(FOLDERID_ProgramData, ec);
@@ -252,19 +283,19 @@ std::string config(std::error_code& ec)
 #endif
 }
 
-std::string config()
+fs::path config()
 {
     std::error_code ec;
-    std::string str = config(ec);
+    auto path = config(ec);
 
     if (ec)
     {
         throw std::system_error(ec, "Failed to retrieve program data directory");
     }
 
-    return str;
+    return path;
 }
-} // namespace KnownDirs
+} // namespace dirs
 
 SingleInstanceChecker::SingleInstanceChecker(std::wstring_view name)
     : appName_(name)
