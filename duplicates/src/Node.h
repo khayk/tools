@@ -35,7 +35,7 @@ public:
     size_t leafsCount() const noexcept;
 
     /**
-     * @brief  Update the given node, it's decendents and propogate all the changes up
+     * @brief  Update the given node, it's descendants and propagate all the changes up
      */
     void update();
 

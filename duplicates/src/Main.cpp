@@ -46,7 +46,7 @@ int main(int argc, const char* argv[])
     {
         fs::path srcDir(argv[1]);
         srcDir = srcDir.lexically_normal();
-        std::cout << "Scaning directory: " << srcDir.u8string() << '\n';
+        std::cout << "Scanning directory: " << srcDir.u8string() << '\n';
 
         DuplicateDetector detector;
         StopWatch sw(true);
