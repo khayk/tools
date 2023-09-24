@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Windows.h>
+
 class ScopedDeleteDC
 {
     HDC hdc_{ nullptr };

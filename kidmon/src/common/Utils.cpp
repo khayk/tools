@@ -1,12 +1,12 @@
 #include "Utils.h"
 #include "FmtExt.h"
-
 #ifdef _WIN32
     #include <Shlobj.h>
     #include <Knownfolders.h>
 #else
 #endif
 
+#include <openssl/evp.h>
 #include <openssl/sha.h>
 #include <spdlog/spdlog.h>
 
@@ -17,6 +17,7 @@
 #include <fstream>
 #include <codecvt>
 #include <locale>
+#include <array>
 
 namespace fs = std::filesystem;
 
@@ -91,9 +92,9 @@ namespace crypto {
 
 std::string fileSha256(const fs::path& file)
 {
-    std::ifstream fp(file, std::ios::in | std::ios::binary);
+    std::ifstream in(file, std::ios::in | std::ios::binary);
 
-    if (!fp.good())
+    if (!in.good())
     {
         const auto s = fmt::format("Unable to open file: {}", file);
         throw std::system_error(
@@ -103,31 +104,38 @@ std::string fileSha256(const fs::path& file)
 
     constexpr const std::size_t bufferSize {static_cast<unsigned long long>(1UL) << 12};
     char buffer[bufferSize];
+    unsigned char hash[EVP_MAX_MD_SIZE] = {0};
 
-    unsigned char hash[SHA256_DIGEST_LENGTH] = {0};
+    std::unique_ptr<EVP_MD_CTX, void (*)(EVP_MD_CTX* ctx)> ctx(EVP_MD_CTX_new(),
+                                                               EVP_MD_CTX_free);
 
-    SHA256_CTX ctx;
-    SHA256_Init(&ctx);
-
-    while (fp.good())
+    const EVP_MD* md = EVP_get_digestbyname("sha256");
+    EVP_DigestInit_ex(ctx.get(), md, nullptr);
+    
+    while (in)
     {
-        fp.read(buffer, bufferSize);
-        SHA256_Update(&ctx, buffer, fp.gcount());
+        in.read(buffer, bufferSize);
+        if (!EVP_DigestUpdate(ctx.get(), buffer, in.gcount()))
+        {
+            throw std::runtime_error("Digest update failed");
+        }
     }
 
-    SHA256_Final(hash, &ctx);
-    fp.close();
+    uint32_t mdLen = 0;
+    EVP_DigestFinal_ex(ctx.get(), hash, &mdLen);
+    in.close();
 
-    std::ostringstream os;
-    os << std::hex << std::setfill('0');
+    std::string out;
+    out.resize(mdLen + mdLen);
 
-    for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i)
+    for (uint32_t i = 0; i < mdLen; ++i)
     {
-        os << std::setw(2) << static_cast<unsigned int>(hash[i]);
+        sprintf(out.data() + 2 * i, "%02x", hash[i]);
     }
 
-    return os.str();
+    return out;
 }
+
 
 } // namespace crypto
 
@@ -163,10 +171,78 @@ bool isUserInteractive() noexcept
     return interactiveUser;
 }
 
+std::string errorDescription(uint64_t code)
+{
+    std::string message;
+
+#ifdef _WIN32
+    if (code == 0)
+    {
+        return message; /// No error message has been recorded
+    }
+
+    std::array<CHAR, 512> buffer {};
+
+    const size_t size =
+        FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                       nullptr,
+                       static_cast<DWORD>(code),
+                       MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                       buffer.data(),
+                       static_cast<DWORD>(buffer.size()),
+                       nullptr);
+
+    if (size > 0)
+    {
+        /// get rid of \r\n
+        message.assign(buffer.data(), std::min<size_t>(size, size - 2));
+    }
+
+    return message;
+#else
+    message = std::strerror(code);
+    return message;
+#endif
+}
+
+std::string constructMessage(const std::string_view message, const uint64_t errorCode)
+{
+    if (errorCode == 0)
+    {
+        return std::string(message);
+    }
+
+    return fmt::format("{}, errorCode = {}, desc: {}",
+                       message,
+                       errorCode,
+                       errorDescription(errorCode));
+}
+
+void logError(const std::string_view message, const uint64_t errorCode) noexcept
+{
+    try
+    {
+        const std::string output = constructMessage(message, errorCode);
+
+        // We should not report these errors by default
+        spdlog::error(output);
+    }
+    catch (const std::exception& ex)
+    {
+        std::ignore = ex;
+    }
+}
+
+void logLastError(const std::string_view message) noexcept
+{
+    logError(message, GetLastError());
+}
+
 } // namespace sys
 
 
 namespace dirs {
+
 #ifdef _WIN32
 fs::path getKnownFolderPath(const GUID& id, std::error_code& ec) noexcept
 {

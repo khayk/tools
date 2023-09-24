@@ -1,5 +1,6 @@
 #include "Window.h"
-#include <winuser.h>
+#include "GuiUtils.h"
+
 #include <psapi.h>
 #include <dwmapi.h>
 
@@ -10,8 +11,6 @@
 #include <shellscalingapi.h>
 
 #pragma warning( pop )
-
-#include "GuiUtils.h"
 
 #include <spdlog/spdlog.h>
 

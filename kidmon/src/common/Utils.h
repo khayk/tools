@@ -42,6 +42,12 @@ std::wstring activeUserName();
 
 bool isUserInteractive() noexcept;
 
+std::string errorDescription(uint64_t code);
+
+void logError(std::string_view message, uint64_t errorCode) noexcept;
+
+void logLastError(const std::string_view message) noexcept;
+
 } // namespace sys
 
 /**

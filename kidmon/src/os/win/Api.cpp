@@ -2,6 +2,7 @@
 
 #include "Api.h"
 #include "Window.h"
+#include "ProcessLauncher.h"
 
 #include <spdlog/spdlog.h>
 
@@ -22,4 +23,9 @@ WindowPtr ApiImpl::forgroundWindow()
     }
 
     return WindowPtr();
+}
+
+ProcessLauncherPtr ApiImpl::createProcessLauncher()
+{
+    return std::make_unique<ProcessLauncherImpl>();
 }

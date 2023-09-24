@@ -35,7 +35,8 @@ int main(int /*argc*/, char* /*argv*/[])
     if (sic.processAlreadyRunning())
     {
         sic.report();
-        return 0;
+
+        return 1;
     }
     
     std::unique_ptr<ScopedTrace> trace;
@@ -65,11 +66,13 @@ int main(int /*argc*/, char* /*argv*/[])
             Service service(app, "KIDMON");
             service.run();
         }
+
+        return 0;
     }
     catch (const std::exception& e)
     {
         spdlog::error("std::exception: {}", e.what());
     }
 
-    return 0;
+    return 2;
 }

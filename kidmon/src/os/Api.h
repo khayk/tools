@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Window.h"
+#include "ProcessLauncher.h"
 
 #include <memory>
 
@@ -10,6 +11,7 @@ public:
     virtual ~Api() = default;
 
     virtual WindowPtr forgroundWindow() = 0;
+    virtual ProcessLauncherPtr createProcessLauncher() = 0;
 };
 
 using ApiPtr = std::unique_ptr<Api>;
