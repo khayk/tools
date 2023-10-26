@@ -1,4 +1,5 @@
-#include "KidMon.h"
+#include "KidmonAgent.h"
+#include "KidmonService.h"
 #include "config/Config.h"
 #include "common/Console.h"
 #include "common/Service.h"
@@ -9,6 +10,8 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
+#include <optional>
+
 void configureLogger(const Config& cfg)
 {
     auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
@@ -16,7 +19,7 @@ void configureLogger(const Config& cfg)
     consoleSink->set_pattern("%^[%L] %v%$");
 
     auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(
-        file::path2s(cfg.logsDir / "kidmon.log"));
+        file::path2s(cfg.logsDir / cfg.logFilename));
     fileSink->set_level(spdlog::level::trace);
     fileSink->set_pattern("[%Y-%m-%d %H:%M:%S.%e][%=5t][%L] %v");
 
@@ -28,9 +31,21 @@ void configureLogger(const Config& cfg)
     spdlog::flush_every(std::chrono::seconds(10));
 }
 
-int main(int /*argc*/, char* /*argv*/[])
+int main(int argc, char* /*argv*/[])
 {
-    SingleInstanceChecker sic(L"Global\\UniqueName100Percent");
+    const bool agentMode = argc > 1;
+    std::wstring uniqueName = L"KidmonUniqueName";
+    fs::path logFile = "kidmon";
+
+    if (agentMode)
+    {
+        uniqueName.append(L"Agent_" + sys::activeUserName());
+        logFile.concat("-agent");
+    }
+
+    logFile.concat(".log");
+
+    SingleInstanceChecker sic(uniqueName);
 
     if (sic.processAlreadyRunning())
     {
@@ -38,25 +53,39 @@ int main(int /*argc*/, char* /*argv*/[])
 
         return 1;
     }
-    
-    std::unique_ptr<ScopedTrace> trace;
+
+    std::optional<ScopedTrace> trace;
 
     try
     {
         Config cfg;
 
         cfg.applyDefaults();
-        cfg.applyOverrides(L"");
+        cfg.applyOverrides(logFile);
         configureLogger(cfg);
 
-        trace = std::make_unique<ScopedTrace>("",
-                                              fmt::format("{:-^80s}", "> START <"),
-                                              fmt::format("{:-^80s}\n", "> END <"));
+        trace.emplace("",
+                      fmt::format("{:-^80s}", "> START <"),
+                      fmt::format("{:-^80s}\n", "> END <"));
 
         ScopedTrace main(__FUNCTION__);
-        auto app = std::make_shared<KidMon>(cfg);
 
-        if (sys::isUserInteractive())
+        spdlog::trace("Active username: {}", str::ws2s(sys::activeUserName()));
+        spdlog::info("Unique guard string: {}", str::ws2s(uniqueName));
+
+        std::shared_ptr<Runnable> app;
+        const bool isInteractive = sys::isUserInteractive();
+        
+        if (agentMode)
+        {
+            app = std::make_shared<KidmonAgent>(cfg);
+        }
+        else
+        {
+            app = std::make_shared<KidmonService>(cfg);
+        }
+
+        if (isInteractive)
         {
             Console console(app);
             console.run();

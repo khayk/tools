@@ -1,4 +1,4 @@
-#include "KidMon.h"
+#include "KidmonAgent.h"
 #include "os/Api.h"
 #include "common/Utils.h"
 #include "common/FmtExt.h"
@@ -60,7 +60,7 @@ std::ostream& operator<<(std::ostream& os, const Rect& rc)
     return os;
 }
 
-class KidMon::Impl
+class KidmonAgent::Impl
 {
     using work_guard = net::executor_work_guard<net::io_context::executor_type>;
     using clock_type = net::steady_timer::clock_type;
@@ -234,24 +234,24 @@ public:
     }
 };
 
-KidMon::KidMon(const Config& cfg)
+KidmonAgent::KidmonAgent(const Config& cfg)
     : impl_(std::make_unique<Impl>(cfg))
 {
 }
 
-KidMon::~KidMon()
+KidmonAgent::~KidmonAgent()
 {
     impl_.reset();
 }
 
-void KidMon::run()
+void KidmonAgent::run()
 {
-    spdlog::trace("Running KidMon application");
+    spdlog::trace("Running KidmonAgent application");
 
     impl_->run();
 }
 
-void KidMon::shutdown() noexcept
+void KidmonAgent::shutdown() noexcept
 {
     spdlog::trace("Shutdown requested");
 

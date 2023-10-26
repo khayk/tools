@@ -21,12 +21,23 @@
 #pragma comment (lib, "Psapi.lib")
 #pragma comment (lib, "Dwmapi.lib")
 
+namespace
+{
+
+const std::wstring guidJpg = L"{557cf401-1a04-11d3-9a73-0000f81ef32e}";
+const std::wstring guidBmp = L"{557cf400-1a04-11d3-9a73-0000f81ef32e}";
+const std::wstring guidGif = L"{557cf402-1a04-11d3-9a73-0000f81ef32e}";
+const std::wstring guidTif = L"{557cf405-1a04-11d3-9a73-0000f81ef32e}";
+const std::wstring guidPng = L"{557cf406-1a04-11d3-9a73-0000f81ef32e}";
+
 std::string hwndToString(HWND hwnd)
 {
     uint64_t value = *reinterpret_cast<const uint64_t*>(&hwnd);
 
     return fmt::format("{:#010x}", value);
 }
+
+}  // namespace
 
 WindowImpl::WindowImpl(HWND hwnd) noexcept
     : hwnd_(hwnd)
@@ -148,7 +159,7 @@ bool saveToBuffer(HBITMAP bitmap, const ImageFormat format, std::vector<char>& c
         return false;
     }
 
-    // Autmatic cleanup on scope exit
+    // Automatic cleanup on scope exit
     std::unique_ptr<IStream, ComPtrDeleter> streamPtr(istream);
     istream = nullptr;
 
@@ -156,11 +167,11 @@ bool saveToBuffer(HBITMAP bitmap, const ImageFormat format, std::vector<char>& c
     std::wstring_view guid = L"";
     switch (format)
     {
-    case ImageFormat::bmp: guid = L"{557cf400-1a04-11d3-9a73-0000f81ef32e}"; break;
-    case ImageFormat::jpg: guid = L"{557cf401-1a04-11d3-9a73-0000f81ef32e}"; break;
-    case ImageFormat::gif: guid = L"{557cf402-1a04-11d3-9a73-0000f81ef32e}"; break;
-    case ImageFormat::tif: guid = L"{557cf405-1a04-11d3-9a73-0000f81ef32e}"; break;
-    case ImageFormat::png: guid = L"{557cf406-1a04-11d3-9a73-0000f81ef32e}"; break;
+    case ImageFormat::jpg: guid = guidJpg; break;
+    case ImageFormat::bmp: guid = guidBmp; break;
+    case ImageFormat::gif: guid = guidGif; break;
+    case ImageFormat::tif: guid = guidTif; break;
+    case ImageFormat::png: guid = guidPng; break;
     default:
         return false;
     }
@@ -171,7 +182,7 @@ bool saveToBuffer(HBITMAP bitmap, const ImageFormat format, std::vector<char>& c
         return false;
     }
 
-    Gdiplus::Status status = bmp.Save(streamPtr.get(), &clsid, nullptr);
+    const Gdiplus::Status status = bmp.Save(streamPtr.get(), &clsid, nullptr);
     if (status != Gdiplus::Status::Ok)
     {
         return false;

@@ -1,10 +1,14 @@
-#include "Utils.h"
-#include "FmtExt.h"
 #ifdef _WIN32
     #include <Shlobj.h>
     #include <Knownfolders.h>
+    #include <WtsApi32.h>
+
+    #pragma comment(lib, "Wtsapi32.lib")
 #else
 #endif
+
+#include "Utils.h"
+#include "FmtExt.h"
 
 #include <openssl/evp.h>
 #include <openssl/sha.h>
@@ -142,10 +146,39 @@ std::string fileSha256(const fs::path& file)
 
 namespace sys {
 
+std::wstring userNameBySessionId(unsigned long sessionId)
+{
+#ifdef _WIN32
+    wchar_t* buf = nullptr;
+    DWORD bufLen = 0;
+
+    if (!WTSQuerySessionInformationW(WTS_CURRENT_SERVER_HANDLE,
+                                     sessionId,
+                                     WTSUserName,
+                                     &buf,
+                                     &bufLen))
+    {
+        spdlog::error("WTSQuerySessionInformationW failed");
+        return {};
+    }
+
+    std::wstring str(buf);
+    WTSFreeMemory(buf);
+
+    return str;
+#else
+    throw std::runtime_error("userNameBySessionId not implemented");
+#endif
+}
+
 std::wstring activeUserName()
 {
+#ifdef _WIN32
+    return userNameBySessionId(WTSGetActiveConsoleSessionId());
+#else
     // @todo:khayk
-    return std::wstring();
+    throw std::runtime_error("activeUserName not implemented");
+#endif
 }
 
 bool isUserInteractive() noexcept
@@ -376,7 +409,7 @@ fs::path config()
 SingleInstanceChecker::SingleInstanceChecker(std::wstring_view name)
     : appName_(name)
 {
-    mutex_ = CreateMutexW(nullptr, TRUE, appName_.data());
+    mutex_ = CreateMutexW(nullptr, TRUE, (L"Global\\" + appName_).data());
     const auto error = GetLastError();
     
     if (mutex_ == nullptr)

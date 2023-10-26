@@ -7,7 +7,7 @@
             "project": "CMakeLists.txt",
             "projectTarget": "duplicates.exe (duplicates\\duplicates.exe)",
             "name": "duplicates.exe (duplicates\\duplicates.exe)",
-            "args": [ "C:\\Code\\C++\\Projects\\dup-finder\\data" ]
+            "args": [ "C:\\Code\\repo\\github\\khayk\\tools\\duplicates\\data" ]
         }
     ]
 }

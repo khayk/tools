@@ -12,6 +12,7 @@ struct Config
     fs::path appDataDir;
     fs::path reportsDir;
     fs::path logsDir;
+    fs::path logFilename;
 
     std::chrono::milliseconds activityCheckInterval {5000};
     std::chrono::milliseconds snapshotInterval {0};
