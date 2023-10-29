@@ -1,7 +1,11 @@
 #include "KidmonAgent.h"
 #include "os/Api.h"
 #include "common/Utils.h"
-#include "common/FmtExt.h"
+
+#include <utils/FmtExt.h>
+#include <utils/Str.h>
+#include <utils/File.h>
+#include <utils/Crypto.h>
 
 #include <boost/asio.hpp>
 #include <spdlog/spdlog.h>
@@ -162,8 +166,6 @@ public:
 
     void collectData()
     {
-        using namespace str;
-
         timer_.expires_after(timeout_);
         timer_.async_wait(std::bind(&Impl::collectData, this));
 
@@ -221,7 +223,7 @@ public:
                     auto file = userDirs.snapshotsDir / fileName;
 
                     entry.windowInfo.snapshotPath = file;
-                    file::write(file, wndContent_);
+                    file::write(file, wndContent_.data(), wndContent_.size());
                 }
             }
 

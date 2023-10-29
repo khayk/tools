@@ -1,8 +1,7 @@
 #include "Node.h"
 #include "Utils.h"
 
-// OpenSSL Library
-#include <openssl/sha.h>
+#include <utils/Crypto.h>
 
 #include <filesystem>
 #include <sstream>
@@ -11,45 +10,6 @@
 namespace fs = std::filesystem;
 
 namespace detail {
-
-std::string calcSha256(const std::wstring& filePath)
-{
-    std::ifstream fp(fs::path(filePath), std::ios::in | std::ios::binary);
-
-    if (!fp.good())
-    {
-        std::ostringstream os;
-        os << "Cannot open \"" << ws2s(filePath) << "\"" << ".";
-        throw std::runtime_error(os.str());
-    }
-
-    constexpr const std::size_t bufferSize {static_cast<unsigned long long>(1UL) << 12};
-    char buffer[bufferSize];
-
-    unsigned char hash[SHA256_DIGEST_LENGTH] = {0};
-
-    SHA256_CTX ctx;
-    SHA256_Init(&ctx);
-
-    while (fp.good())
-    {
-        fp.read(buffer, bufferSize);
-        SHA256_Update(&ctx, buffer, fp.gcount());
-    }
-
-    SHA256_Final(hash, &ctx);
-    fp.close();
-
-    std::ostringstream os;
-    os << std::hex << std::setfill('0');
-
-    for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i)
-    {
-        os << std::setw(2) << static_cast<unsigned int>(hash[i]);
-    }
-
-    return os.str();
-}
 
 void fullPathHelper(const Node* node, size_t size, std::wstring& dest)
 {
@@ -115,7 +75,7 @@ const std::string& Node::sha256() const
 {
     if (sha256_.empty())
     {
-        sha256_ = detail::calcSha256(fullPath());
+        sha256_ = crypto::fileSha256(fullPath());
     }
 
     return sha256_;

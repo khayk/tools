@@ -22,12 +22,14 @@ add_compile_definitions(BOOST_BIND_NO_PLACEHOLDERS)
 add_compile_definitions(BOOST_ASIO_NO_DEPRECATED)
 
 if(MSVC)
-   add_compile_definitions(_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
-   add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
-   add_compile_definitions(_WIN32_WINNT=0x0A00)
-   add_compile_definitions(PSAPI_VERSION=1)
    string(REGEX REPLACE "/W[3|4]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
    add_compile_options(/W4)
+   add_compile_options("/MP${BUILD_JOBS}")
+   add_compile_definitions(_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
+   add_compile_definitions(_WIN32_WINNT=_WIN32_WINNT_WIN10)
+   add_compile_definitions(NOMINMAX)
+   add_compile_definitions(_CRT_SECURE_NO_WARNINGS)   # // @todo:khayk deal with this
+   # add_compile_definitions(PSAPI_VERSION=1)
 else()
    add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
@@ -35,5 +37,7 @@ endif()
 # Diagnostic information
 message("Generated with config types: ${CMAKE_CONFIGURATION_TYPES}")
 
+
+add_subdirectory(core)
 add_subdirectory(duplicates)
 add_subdirectory(kidmon)

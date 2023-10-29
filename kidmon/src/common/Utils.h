@@ -1,40 +1,11 @@
 #pragma once
 
-#include <string>
-#include <vector>
 #include <system_error>
 #include <filesystem>
 
 namespace fs = std::filesystem;
 
-namespace str {
 
-std::wstring s2ws(std::string_view utf8);
-std::string ws2s(std::wstring_view utf16);
-
-#if !defined(__cpp_lib_char8_t)
-std::string u8tos(const std::string& s);
-std::string u8tos(std::string&& s);
-#else
-std::string u8tos(const std::u8string_view& s);
-#endif
-
-} // namespace str
-
-namespace file {
-
-void write(const fs::path& file, const std::string& data);
-void write(const fs::path& file, const std::vector<char>& data);
-
-std::string path2s(const fs::path& path);
-
-} // namespace file
-
-namespace crypto {
-
-std::string fileSha256(const fs::path& file);
-
-} // crypto
 
 namespace sys {
 

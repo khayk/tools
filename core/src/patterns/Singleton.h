@@ -4,7 +4,11 @@ template <typename T>
 class Singleton
 {
 public:
-    static T& instance();
+    static T& instance()
+    {
+        static T instance {};
+        return instance;
+    }
 
     Singleton(const Singleton&) = delete;
     Singleton(Singleton&&) = delete;
@@ -15,10 +19,3 @@ protected:
     Singleton() = default;
 };
 
-template <typename T>
-T& Singleton<T>::instance()
-{
-    static T instance{};
-
-    return instance;
-}

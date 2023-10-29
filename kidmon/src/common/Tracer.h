@@ -12,7 +12,6 @@ class ScopedTrace
 
     bool shouldTrace() const noexcept;
 
-private:
     std::string message_;
     std::string enter_;
     std::string leave_;

@@ -6,6 +6,9 @@
 #include "common/Utils.h"
 #include "common/Tracer.h"
 
+#include <utils/File.h>
+#include <utils/Str.h>
+
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
