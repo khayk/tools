@@ -53,11 +53,12 @@ size_t DuplicateDetector::groups() const noexcept
 
 void DuplicateDetector::detect(const Options& options)
 {
+    std::ignore = options;
     dups_.clear();
     
     std::wstring ws;
     root_->update();
-    root_->enumLeafs([&ws, &options, this](Node* node)
+    root_->enumLeafs([&ws, this](Node* node)
         {
             node->fullPath(ws);
             auto it = dups_.find(node->size());

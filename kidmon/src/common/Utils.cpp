@@ -325,10 +325,10 @@ SingleInstanceChecker::~SingleInstanceChecker()
     {
         ReleaseMutex(mutex_);
         CloseHandle(mutex_);
-        mutex_ = nullptr;
     }
 #else
 #endif
+    mutex_ = nullptr;
 }
 
 bool SingleInstanceChecker::processAlreadyRunning() const noexcept

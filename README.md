@@ -22,3 +22,8 @@ Own implementation of different tools. Feel free to use if you find them useful.
 2. Build
     * `cmake --build build --parallel 4`
 
+* If you want to build with `clang` you can run following command before configuring the project. Change clang path if required.
+    ```bash
+    export CC=/usr/bin/clang
+    export CXX=/usr/bin/clang++
+    ```

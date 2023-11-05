@@ -80,9 +80,6 @@ class KidmonAgent::Impl
 
     ApiPtr api_;
     std::vector<char> wndContent_;
-    size_t index_{ 0 };
-    size_t bufferedBytes_ {0};
-
     std::vector<Entry> cachedEntries_;
 
     std::unordered_map<std::wstring, ReportDirs> dirs_;
