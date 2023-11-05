@@ -1,6 +1,7 @@
 #include "Str.h"
 
 #include <codecvt>
+#include <locale>
 
 namespace str {
 using ConverterType = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>;

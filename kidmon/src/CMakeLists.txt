@@ -7,22 +7,27 @@ file(GLOB LIB_SRCS
    "common/*.cpp"
    "geometry/*.h"
    "geometry/*.cpp"
+   "network/*.h"
+   "network/*.cpp"
    "os/*.h"
    "os/*.cpp"
+)
+
 if(WIN32)
    # Windows
-   "os/win/*.h"
-   "os/win/*.cpp"
-elseif(APPLE)
-   # Apple
-   "os/mac/*.h"
-   "os/mac/*.cpp"
-else(UNIX AND NOT APPLE)
+   file(GLOB OS_WIN
+      "os/win/*.h"
+      "os/win/*.cpp"
+   )
+   list(APPEND LIB_SRCS ${OS_WIN})
+elseif(UNIX AND NOT APPLE)
    # Linux, BSD, Solaris, Minix
-   "os/linux/*.h"
-   "os/linux/*.cpp"
+   file(GLOB OS_LINUX
+      "os/linux/*.h"
+      "os/linux/*.cpp"
+   )
+   list(APPEND LIB_SRCS ${OS_LINUX})
 endif()
-)
 
 include_directories(".")
 
@@ -54,25 +59,32 @@ message("Boost library      : ${Boost_LIBRARY_DIRS}")
 # message("Sqlite3 library    : ${SQLite3_LIBRARY}")
 
 # Adding a library project
-add_library(${projectLib} ${LIB_SRCS})
-target_link_libraries(${projectLib} PUBLIC  
+add_library(${PROJECT_LIB} ${LIB_SRCS})
+
+message("${PROJECT_NAME} sources     : ${CMAKE_CURRENT_SOURCE_DIR}")
+target_include_directories(${PROJECT_LIB} PUBLIC 
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_link_libraries(${PROJECT_LIB} PUBLIC  
     spdlog::spdlog 
     core
 )
 
+
 # Adding executable project
-add_executable(${projectApp} Main.cpp)
-target_link_libraries (${projectApp} PRIVATE ${projectLib})
-# target_link_libraries(${projectApp} sqlite_orm::sqlite_orm)
-# target_link_libraries(${projectApp} PRIVATE ${SQLite3_LIBRARY})
-# target_link_libraries(${projectApp} PRIVATE ${OPENSSL_LIBRARIES})
+add_executable(${PROJECT_APP} Main.cpp)
+target_link_libraries (${PROJECT_APP} PRIVATE ${PROJECT_LIB})
+# target_link_libraries(${PROJECT_APP} sqlite_orm::sqlite_orm)
+# target_link_libraries(${PROJECT_APP} PRIVATE ${SQLite3_LIBRARY})
+# target_link_libraries(${PROJECT_APP} PRIVATE ${OPENSSL_LIBRARIES})
 
 
 if(MSVC)
    ADD_CUSTOM_COMMAND(
-      TARGET ${projectApp}
+      TARGET ${PROJECT_APP}
  		POST_BUILD
- 		COMMAND "mt.exe" -manifest \"${CMAKE_CURRENT_SOURCE_DIR}\\os\\win\\manifest\\app.manifest\" -inputresource:\"$<TARGET_FILE:${projectApp}>\"\;\#1 -outputresource:\"$<TARGET_FILE:${projectApp}>\"\;\#1
+ 		COMMAND "mt.exe" -manifest \"${CMAKE_CURRENT_SOURCE_DIR}\\os\\win\\manifest\\app.manifest\" -inputresource:\"$<TARGET_FILE:${PROJECT_APP}>\"\;\#1 -outputresource:\"$<TARGET_FILE:${PROJECT_APP}>\"\;\#1
  		COMMENT "Adding display aware manifest..."
    )
 else()

@@ -175,7 +175,7 @@ public:
 
             Entry entry;
 
-            auto window = api_->forgroundWindow();
+            auto window = api_->foregroundWindow();
             if (!window)
             {
                 spdlog::warn("Unable to detect forground window");

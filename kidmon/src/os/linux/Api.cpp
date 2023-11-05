@@ -1,12 +1,8 @@
-#include <Windows.h>
-
 #include "Api.h"
 #include "Window.h"
 #include "ProcessLauncher.h"
 
-#include <spdlog/spdlog.h>
-
-#include <array>
+#include <exception>
 
 ApiPtr ApiFactory::create()
 {
@@ -15,13 +11,7 @@ ApiPtr ApiFactory::create()
 
 WindowPtr ApiImpl::foregroundWindow()
 {
-    HWND hwnd = GetForegroundWindow();
-
-    if (hwnd != nullptr)
-    {
-        return std::make_unique<WindowImpl>(hwnd);
-    }
-
+    throw std::logic_error("Not implemented");
     return WindowPtr();
 }
 

@@ -43,6 +43,7 @@ std::wstring userNameBySessionId(unsigned long sessionId)
 
     return str;
 #else
+    std::ignore = sessionId;
     throw std::runtime_error("userNameBySessionId not implemented");
 #endif
 }
@@ -61,6 +62,7 @@ bool isUserInteractive() noexcept
 {
     bool interactiveUser = true;
 
+#ifdef _WIN32
     HWINSTA hWinStation = GetProcessWindowStation();
 
     if (hWinStation != nullptr)
@@ -76,6 +78,9 @@ bool isUserInteractive() noexcept
             interactiveUser = false;
         }
     }
+#else
+
+#endif
 
     return interactiveUser;
 }
@@ -144,7 +149,11 @@ void logError(const std::string_view message, const uint64_t errorCode) noexcept
 
 void logLastError(const std::string_view message) noexcept
 {
+#ifdef _WIN32
     logError(message, GetLastError());
+#else
+    logError(message, errno);
+#endif
 }
 
 } // namespace sys
@@ -182,6 +191,7 @@ fs::path home(std::error_code& ec)
 #ifdef _WIN32
     return getKnownFolderPath(FOLDERID_Profile, ec);
 #else
+    std::ignore = ec;
     throw std::logic_error("Not implemented");
 #endif
 }
@@ -217,6 +227,7 @@ fs::path temp(std::error_code& ec)
         path.assign(std::wstring_view(buffer, length));
     }
 #else
+    std::ignore = ec;
     throw std::logic_error("Not implemented");
 #endif
 
@@ -241,6 +252,7 @@ fs::path data(std::error_code& ec)
 #ifdef _WIN32
     return getKnownFolderPath(FOLDERID_LocalAppData, ec);
 #else
+    std::ignore = ec;
     throw std::logic_error("Not implemented");
 #endif
 }
@@ -264,6 +276,7 @@ fs::path config(std::error_code& ec)
 #ifdef _WIN32
     return getKnownFolderPath(FOLDERID_ProgramData, ec);
 #else
+    std::ignore = ec;
     throw std::logic_error("Not implemented");
 #endif
 }
@@ -285,6 +298,7 @@ fs::path config()
 SingleInstanceChecker::SingleInstanceChecker(std::wstring_view name)
     : appName_(name)
 {
+#ifdef _WIN32
     mutex_ = CreateMutexW(nullptr, TRUE, (L"Global\\" + appName_).data());
     const auto error = GetLastError();
     
@@ -297,16 +311,24 @@ SingleInstanceChecker::SingleInstanceChecker(std::wstring_view name)
     }
 
     processAlreadyRunning_ = (error == ERROR_ALREADY_EXISTS);
+#else
+    std::ignore = name;
+    spdlog::error("Single instance checker is not implemented");
+    processAlreadyRunning_ = false;
+#endif
 }
 
 SingleInstanceChecker::~SingleInstanceChecker()
 {
+#ifdef _WIN32
     if (mutex_)
     {
         ReleaseMutex(mutex_);
         CloseHandle(mutex_);
         mutex_ = nullptr;
     }
+#else
+#endif
 }
 
 bool SingleInstanceChecker::processAlreadyRunning() const noexcept

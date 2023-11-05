@@ -10,7 +10,7 @@ class Api
 public:
     virtual ~Api() = default;
 
-    virtual WindowPtr forgroundWindow() = 0;
+    virtual WindowPtr foregroundWindow() = 0;
     virtual ProcessLauncherPtr createProcessLauncher() = 0;
 };
 

@@ -12,7 +12,12 @@ class Console::Impl
 {
     std::weak_ptr<Runnable> runnable_;
     std::atomic<bool> stopped_{ false };
-    _crt_signal_t prevSignal_{ nullptr };
+
+#ifdef _WIN32
+    _crt_signal_t prevSignal_ {nullptr};
+#else
+    sighandler_t prevSignal_ {nullptr};
+#endif
 
     static void signalHandler(int signal)
     {

@@ -1,12 +1,18 @@
 #include "Service.h"
 #include "Tracer.h"
 
-#include <Windows.h>
+// @todo:khayk - refactor this file, to get rid of ifdef _WIN32 ...
+#ifdef _WIN32
+    #include <Windows.h>
+#endif
+
 #include <spdlog/spdlog.h>
 
 #include <array>
 
 namespace {
+
+#ifdef _WIN32
 
 const char* serviceStateToStr(DWORD status) noexcept
 {
@@ -51,6 +57,8 @@ const char* serviceControlCodeToStr(DWORD controlCode) noexcept
     return "";
 }
 
+#endif
+
 }
 
 class Service::Impl
@@ -59,8 +67,10 @@ public:
     Impl(const std::shared_ptr<Runnable>& runnable, std::string name)
         : runnable_(runnable)
         , name_(std::move(name))
+#ifdef _WIN32
         , handle_()
         , status_()
+#endif
     {
         instance_ = this;
     }
@@ -74,6 +84,7 @@ public:
     {
         auto name = name_;
 
+#ifdef _WIN32
         const std::array<SERVICE_TABLE_ENTRY, 2> startTable = {
             SERVICE_TABLE_ENTRY {name.data(), &Service::Impl::serviceMain},
             SERVICE_TABLE_ENTRY {nullptr, nullptr}};
@@ -82,6 +93,10 @@ public:
         {
             spdlog::error("Failed to start service ctrl dispatcher: {0}", GetLastError());
         }
+#else
+        throw std::runtime_error("Not implemented");
+#endif
+
     }
 
     void shutdown() noexcept
@@ -103,10 +118,13 @@ public:
     }
 
 private:
+    std::weak_ptr<Runnable> runnable_;
+    std::string name_;
+
+#ifdef _WIN32
     static void serviceMain(unsigned long argc, char* argv[])
     {
         ScopedTrace sc(__FUNCTION__);
-        //spdlog::info("WindowsService::serviceMain");
 
         if (instance_)
         {
@@ -242,11 +260,9 @@ private:
         }
     }
 
-    std::weak_ptr<Runnable> runnable_;
-    std::string name_;
     SERVICE_STATUS_HANDLE handle_;
     SERVICE_STATUS status_;
-
+#endif
     static Impl* instance_;
 };
 
