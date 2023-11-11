@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.5)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
@@ -10,10 +10,11 @@ endif()
 
 project(tools)
 
-message("Project binary dir : ${PROJECT_BINARY_DIR}")
-message("CMake binary dir   : ${CMAKE_BINARY_DIR}")
-message("CMake source dir   : ${CMAKE_SOURCE_DIR}")
-message("Object dir         : ${OBJECT_DIR}")
+message("CMake tool chain file : ${CMAKE_TOOLCHAIN_FILE}")
+message("Project binary dir    : ${PROJECT_BINARY_DIR}")
+message("CMake binary dir      : ${CMAKE_BINARY_DIR}")
+message("CMake source dir      : ${CMAKE_SOURCE_DIR}")
+message("Object dir            : ${OBJECT_DIR}")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
