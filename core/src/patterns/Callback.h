@@ -14,7 +14,7 @@ public:
     using FunctionPtr = std::shared_ptr<Function>;
     using Functions   = std::vector<FunctionPtr>;
 
-    FunctionPtr add(Function fn)
+    FunctionPtr add(Function&& fn)
     {
         FunctionPtr fp = std::make_shared<Function>(std::move(fn));
         pending_.push_back(fp);
@@ -23,7 +23,7 @@ public:
         return fp;
     }
 
-    void remove(FunctionPtr fp)
+    void remove(const FunctionPtr& fp)
     {
         auto it = std::find(std::begin(funcs_), std::end(funcs_), fp);
 

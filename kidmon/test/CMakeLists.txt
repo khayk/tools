@@ -1,0 +1,12 @@
+file(GLOB_RECURSE TEST_SRCS
+   "*.cpp"
+)
+
+find_package(GTest REQUIRED)
+
+add_executable(${PROJECT_TST} ${TEST_SRCS})
+
+target_link_libraries(${PROJECT_TST} PRIVATE
+	${GTEST_BOTH_LIBRARIES}
+	${PROJECT_LIB}
+)

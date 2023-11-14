@@ -3,12 +3,12 @@
 
 #include <tuple>
 
-TEST(CallbackTests, SingleCallback)
+TEST(CallbackTests, OneCallbackOneArg)
 {
     // First argument shows number of calls
     using Info = std::tuple<int, char>;
-    using CallbackInt = dp::Callback<char>;
-    CallbackInt cb;
+    using CallbackOne = dp::Callback<char>;
+    CallbackOne cb;
     Info info;
 
     auto fn = [&info](char val) {
@@ -28,7 +28,42 @@ TEST(CallbackTests, SingleCallback)
 }
 
 
-TEST(CallbackTests, MultipleCallbacks)
+TEST(CallbackTests, OneCallbackManyArgs)
+{
+    // First argument shows number of calls
+    using Info = std::tuple<int, char, std::string, double>;
+    using CallbackMany = dp::Callback<char, const std::string&, double>;
+    CallbackMany cb;
+    Info info;
+
+    auto fn = [&info](char chr, const std::string& str, double dbl) {
+        ++std::get<0>(info);
+        std::get<1>(info) = chr;
+        std::get<2>(info) = str;
+        std::get<3>(info) = dbl;
+    };
+
+    auto fp = cb.add(fn);
+    cb('Y', "es", 1.0);
+    EXPECT_TRUE((Info {1, 'Y', "es", 1.0} == info));
+}
+
+
+TEST(CallbackTests, OneCallbackZeroArg)
+{
+    using CallbackZero = dp::Callback<>;
+    CallbackZero cb;
+    size_t calls {0};
+
+    auto fn = [&calls]() { ++calls; };
+
+    auto fp = cb.add(fn);
+    cb();
+    EXPECT_EQ(1, calls);
+}
+
+
+TEST(CallbackTests, ManyCallbacks)
 {
     // First argument shows number of calls
     using Info = std::tuple<int, std::string>;
