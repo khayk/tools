@@ -23,6 +23,7 @@ public:
     struct Options
     {
         uint16_t port {0};
+        bool reuseAddress {false};
     };
 
     Server(IoContext& ioc);

@@ -17,6 +17,8 @@ struct Config
     std::chrono::milliseconds activityCheckInterval {5000};
     std::chrono::milliseconds snapshotInterval {0};
 
+    uint16_t serverPort {1234};
+
     void applyDefaults();
     void applyOverrides(const fs::path& /*file*/);
 };

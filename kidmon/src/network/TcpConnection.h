@@ -60,7 +60,7 @@ private:
     std::mutex mutex_;
 
     // @todo:hayk - see how this amount can be
-    // controlled according to client need
+    // controlled according to client needs
     std::array<char, 4096> data_;
 };
 

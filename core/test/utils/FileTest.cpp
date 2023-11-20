@@ -6,6 +6,8 @@
 namespace fs = std::filesystem;
 using namespace file;
 
+namespace {
+
 class UtilsFileTests : public ::testing::Test
 {
 public:
@@ -36,3 +38,5 @@ TEST_F(UtilsFileTests, Write)
     ASSERT_FALSE(ec);
     EXPECT_EQ(content, "One line for data");
 }
+
+} // namespace

@@ -80,7 +80,6 @@ void Connection::handleRead(const ErrorCode& ec, std::size_t size)
     }
 
     readCb_(data_.data(), size);
-    read();
 }
 
 void Connection::handleWrite(const ErrorCode& ec, size_t size)

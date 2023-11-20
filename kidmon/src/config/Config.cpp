@@ -12,6 +12,8 @@ void Config::applyDefaults()
 
     activityCheckInterval = 5s;
     snapshotInterval = 5min;
+    
+    serverPort = 1234;
 }
 
 void Config::applyOverrides(const fs::path& file)

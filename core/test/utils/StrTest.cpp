@@ -3,6 +3,8 @@
 
 using namespace str;
 
+namespace {
+
 TEST(UtilsStrTests, S2WS)
 {
     const auto es = s2ws("");
@@ -32,3 +34,5 @@ TEST(UtilsStrTests, U8S2WS)
     EXPECT_EQ(ws[3], 0x0587);
     EXPECT_EQ(ws[4], '.');
 }
+
+} // namespace

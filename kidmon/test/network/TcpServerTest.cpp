@@ -2,12 +2,16 @@
 #include "network/TcpServer.h"
 #include "network/TcpClient.h"
 
+namespace {
+
+using namespace tcp;
+
 TEST(TcpServerTest, ListenAndClose)
 {
     IoContext ioc;
 
-    tcp::Server svr(ioc);
-    tcp::Server::Options opts;
+    Server svr(ioc);
+    Server::Options opts;
     opts.port = 7453;
     uint16_t actualPort {0};
 
@@ -32,15 +36,15 @@ TEST(TcpServerTest, ListenFails)
 {
     IoContext ioc;
 
-    tcp::Server svr(ioc);
-    tcp::Server::Options opts;
+    Server svr(ioc);
+    Server::Options opts;
     opts.port = 7453;
 
     svr.listen(opts);
 
-    tcp::Server svr2(ioc);
+    Server svr2(ioc);
     bool secondListenSucceeded = false;
-    svr2.onListening([&secondListenSucceeded](uint16_t port) {
+    svr2.onListening([&secondListenSucceeded](uint16_t) {
         secondListenSucceeded = true;
     });
 
@@ -60,12 +64,12 @@ TEST(TcpServerTest, AcceptConnection)
     using namespace std::chrono_literals;
 
     IoContext ioc;
-    tcp::Server svr(ioc);
-    tcp::Server::Options opts;
+    Server svr(ioc);
+    Server::Options opts;
     opts.port = 7453;
     bool accepted = false;
 
-    svr.onConnection([&accepted, &svr](tcp::Connection& conn) {
+    svr.onConnection([&accepted, &svr](Connection& conn) {
         accepted = true;
         conn.close();
         svr.close();
@@ -73,8 +77,8 @@ TEST(TcpServerTest, AcceptConnection)
 
     svr.listen(opts);
 
-    tcp::Client cnt(ioc);
-    tcp::Client::Options copts;
+    Client cnt(ioc);
+    Client::Options copts;
     copts.host = "127.0.0.1";
     copts.port = opts.port;
 
@@ -83,3 +87,5 @@ TEST(TcpServerTest, AcceptConnection)
 
     EXPECT_EQ(accepted, true);
 }
+
+} // namespace

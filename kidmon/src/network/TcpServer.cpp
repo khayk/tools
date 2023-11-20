@@ -40,7 +40,7 @@ void Server::listen(const Options& opts)
         Endpoint endpoint {net::ip::address_v4::loopback(), opts.port};
 
         acceptor_.open(endpoint.protocol());
-        acceptor_.set_option(net::socket_base::reuse_address(false));
+        acceptor_.set_option(net::socket_base::reuse_address(opts.reuseAddress));
         acceptor_.bind(endpoint);
         acceptor_.listen(net::socket_base::max_listen_connections);
 

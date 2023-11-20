@@ -3,6 +3,8 @@
 
 #include <tuple>
 
+namespace {
+
 TEST(CallbackTests, OneCallbackOneArg)
 {
     // First argument shows number of calls
@@ -24,7 +26,7 @@ TEST(CallbackTests, OneCallbackOneArg)
 
     cb.remove(fp);
     cb('c');
-    EXPECT_TRUE((Info {2, 'b'} == info));    //< note, nothing is changed
+    EXPECT_TRUE((Info {2, 'b'} == info)); //< note, nothing is changed
 }
 
 
@@ -55,11 +57,13 @@ TEST(CallbackTests, OneCallbackZeroArg)
     CallbackZero cb;
     size_t calls {0};
 
-    auto fn = [&calls]() { ++calls; };
+    auto fn = [&calls]() {
+        ++calls;
+    };
 
     auto fp = cb.add(fn);
     cb();
-    EXPECT_EQ(1, calls);
+    EXPECT_EQ(calls, 1);
 }
 
 
@@ -119,5 +123,7 @@ TEST(CallbackTests, Performance)
         cb(big);
     }
 
-    EXPECT_EQ(n, calls);
+    EXPECT_EQ(calls, n);
 }
+
+} // namespace

@@ -9,18 +9,20 @@
 using namespace crypto;
 namespace fs = std::filesystem;
 
+namespace {
+
 TEST(UtilsCryptoTests, DataSha256)
 {
-    EXPECT_EQ("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-              sha256(""));
-    EXPECT_EQ("6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
-              sha256("1"));
-    EXPECT_EQ("fb8e20fc2e4c3f248c60c39bd652f3c1347298bb977b8b4d5903b85055620603",
-              sha256("ab"));
-    EXPECT_EQ("c9627deaca269fd9b5de61a1093c9f7e7a429f6a2233adf2b3a4fa79129cca4d",
-              sha256("_045u7"));
-    EXPECT_EQ("5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
-              sha256("password"));
+    EXPECT_EQ(sha256(""),
+              "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
+    EXPECT_EQ(sha256("1"),
+              "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b");
+    EXPECT_EQ(sha256("ab"),
+              "fb8e20fc2e4c3f248c60c39bd652f3c1347298bb977b8b4d5903b85055620603");
+    EXPECT_EQ(sha256("_045u7"),
+              "c9627deaca269fd9b5de61a1093c9f7e7a429f6a2233adf2b3a4fa79129cca4d");
+    EXPECT_EQ(sha256("password"),
+              "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8");
 }
 
 
@@ -47,6 +49,8 @@ TEST(UtilsCryptoTests, FileSha256)
 
     fs::remove(filename);
 }
+
+} // namespace
 
 /*
 TEST(UtilsCryptoTests, CheckEncodeDecode64)
