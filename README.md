@@ -27,3 +27,12 @@ Own implementation of different tools. Feel free to use if you find them useful.
     export CC=/usr/bin/clang
     export CXX=/usr/bin/clang++
     ```
+
+## Coverage
+
+### Windows
+
+* Install OpenCppCoverage
+* `OpenCppCoverage.exe --sources tools\core --modules test.exe --export_type=html:.reports/core/  -- out\build\x64-Debug\core\core-test.exe`
+* `OpenCppCoverage.exe --sources tools\kidmon --modules test.exe --export_type=html:.reports/kidmon/  -- out\build\x64-Debug\kidmon\kidmon-test.exe`
+* TBD - the command line above is for reference only, later create a script to produce coverage

@@ -58,7 +58,6 @@ find_package(GTest REQUIRED)
 add_executable(${PROJECT_TEST} ${TEST_SRCS})
 
 target_link_libraries(${PROJECT_TEST} PRIVATE
-    ${GTEST_BOTH_LIBRARIES}
-    ${GMOCK_MAIN_LIBRARY}
     ${PROJECT_LIB}
+    GTest::gmock_main
 )
