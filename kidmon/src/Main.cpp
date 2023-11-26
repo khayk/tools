@@ -1,5 +1,5 @@
 #include "KidmonAgent.h"
-#include "KidmonService.h"
+#include "KidmonServer.h"
 #include "config/Config.h"
 #include "common/Console.h"
 #include "common/Service.h"
@@ -78,14 +78,14 @@ int main(int argc, char* /*argv*/[])
 
         std::shared_ptr<Runnable> app;
         const bool isInteractive = sys::isUserInteractive();
-        
+
         if (agentMode)
         {
             app = std::make_shared<KidmonAgent>(cfg);
         }
         else
         {
-            app = std::make_shared<KidmonService>(cfg);
+            app = std::make_shared<KidmonServer>(cfg);
         }
 
         if (isInteractive)

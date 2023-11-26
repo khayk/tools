@@ -4,14 +4,14 @@
 #include "config/Config.h"
 #include <memory>
 
-class KidmonService;
+class KidmonServer;
 class KidmonAgent;
 
-class KidmonService : public Runnable
+class KidmonServer : public Runnable
 {
 public:
-    KidmonService(const Config& cfg);
-    ~KidmonService();
+    KidmonServer(const Config& cfg);
+    ~KidmonServer();
 
     void run() override;
     void shutdown() noexcept override;

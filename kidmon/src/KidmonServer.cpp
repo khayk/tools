@@ -1,4 +1,4 @@
-#include "KidmonService.h"
+#include "KidmonServer.h"
 #include "os/Api.h"
 
 #include <spdlog/spdlog.h>
@@ -6,7 +6,7 @@
 
 namespace net = boost::asio;
 
-class KidmonService::Impl
+class KidmonServer::Impl
 {
     using work_guard = net::executor_work_guard<net::io_context::executor_type>;
     using time_point = net::steady_timer::time_point;
@@ -16,6 +16,8 @@ class KidmonService::Impl
     work_guard workGuard_;
     std::chrono::milliseconds timeout_;
     ApiPtr api_;
+    ProcessLauncherPtr launcher_;
+    ServerLogic svrLogic_;
 
 public:
     Impl(const Config& cfg)
@@ -24,6 +26,8 @@ public:
         , workGuard_(ioc_.get_executor())
         , timeout_(cfg.activityCheckInterval)
         , api_(ApiFactory::create())
+        , launcher_(api_->createProcessLauncher())
+        , svrLogic_(ioc_, cfg.serverPort)
     {
     }
 
@@ -49,11 +53,13 @@ public:
         try
         {
             spdlog::trace("Calls healthCheck");
-            auto launcher = api_->createProcessLauncher();
             
-            std::vector<std::string> args;
-            args.push_back("dummy arg");
-            launcher->launch("kidmon-app.exe", args);
+            if (!svrLogic_.connected())
+            {
+                std::vector<std::string> args;
+                args.push_back("dummy arg");
+                launcher_->launch("kidmon-app.exe", args);
+            }
         }
         catch (const std::exception& e)
         {
@@ -62,24 +68,24 @@ public:
     }
 };
 
-KidmonService::KidmonService(const Config& cfg)
+KidmonServer::KidmonServer(const Config& cfg)
     : impl_(std::make_unique<Impl>(cfg))
 {
 }
 
-KidmonService::~KidmonService()
+KidmonServer::~KidmonServer()
 {
     impl_.reset();
 }
 
-void KidmonService::run()
+void KidmonServer::run()
 {
-    spdlog::trace("Running KidmonService application");
+    spdlog::trace("Running KidmonServer application");
 
     impl_->run();
 }
 
-void KidmonService::shutdown() noexcept
+void KidmonServer::shutdown() noexcept
 {
     spdlog::trace("Shutdown requested");
 
