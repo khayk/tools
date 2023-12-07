@@ -43,7 +43,7 @@ public:
 
             if (off < sent.size())
             {
-                conn.write(sent.data() + off, std::min(4096ull, sent.size() - off));
+                conn.write(sent.data() + off, std::min<size_t>(4096, sent.size() - off));
             }
             else if (rcvd.size() >= rcvdMax)
             {

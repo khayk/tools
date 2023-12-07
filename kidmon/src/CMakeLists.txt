@@ -9,6 +9,8 @@ file(GLOB LIB_SRCS
    "geometry/*.cpp"
    "network/*.h"
    "network/*.cpp"
+   "network/data/*.h"
+   "network/data/*.cpp"
    "os/*.h"
    "os/*.cpp"
 )

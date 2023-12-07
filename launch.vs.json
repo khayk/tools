@@ -7,7 +7,14 @@
             "project": "CMakeLists.txt",
             "projectTarget": "duplicates.exe (duplicates\\duplicates.exe)",
             "name": "duplicates.exe (duplicates\\duplicates.exe)",
-            "args": [ "C:\\Code\\repo\\github\\khayk\\tools\\duplicates\\data" ]
+            "args": [ "duplicates\\data" ]
+        },
+        {
+            "type": "default",
+            "project": "CMakeLists.txt",
+            "projectTarget": "kidmon-test.exe (kidmon\\test\\kidmon-test.exe)",
+            "name": "kidmon-test.exe (kidmon\\test\\kidmon-test.exe)",
+            "args": [ "--gtest_filter=*" ]
         }
     ]
 }
