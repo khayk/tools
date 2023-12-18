@@ -28,7 +28,7 @@ public:
         conn.onRead([this](const char* data, size_t size) {
             rcvd.append(data, size);
             
-            // Stop reading if there is no more data is coming
+            // Stop reading if no more data is coming
             if (rcvd.size() < rcvdMax)
             {
                 conn.read();
@@ -104,6 +104,43 @@ TEST(TcpConnectionTest, DataTransfer)
     EXPECT_EQ(clientMngr->rcvd, serverToSend);
     EXPECT_TRUE(!(clientMngr->errc));
     EXPECT_TRUE(clientMngr->disconnected);
+}
+
+
+TEST(TcpConnectionTest, WriteError)
+{
+    using namespace std::chrono_literals;
+    using namespace std::string_view_literals;
+
+    IoContext ioc;
+    Server svr(ioc);
+    Server::Options sopts {1234};
+
+    svr.onConnection([&](Connection& conn) {
+        conn.onDisconnect([&]() {
+            svr.close();
+        });
+    });
+    svr.listen(sopts);
+
+    Client cnt(ioc);
+    Client::Options copts {"127.0.0.1", sopts.port};
+
+    cnt.onConnect([&](Connection& conn) {
+        conn.onSent([&conn](size_t) {
+            conn.write("dummy"sv);
+            conn.close();
+        });
+        conn.onError([](const ErrorCode& ec) {
+            EXPECT_TRUE(ec);
+        });
+        conn.write("dummy"sv);
+    });
+    cnt.connect(copts);
+
+    // This is a maxiumum time dedicated for the tast, but
+    // in reality, test will take a few milliseconds
+    ioc.run_for(1s);
 }
 
 } // namespace

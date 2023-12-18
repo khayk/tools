@@ -34,7 +34,7 @@ void configureLogger(const Config& cfg)
     spdlog::flush_every(std::chrono::seconds(10));
 }
 
-int main(int argc, char* /*argv*/[])
+int main(int argc, char* argv[])
 {
     const bool agentMode = argc > 1;
     std::wstring uniqueName = L"KidmonUniqueName";
@@ -66,6 +66,7 @@ int main(int argc, char* /*argv*/[])
         cfg.applyDefaults();
         cfg.applyOverrides(logFile);
         configureLogger(cfg);
+        cfg.authToken = argc > 1 ? argv[1] : "";
 
         trace.emplace("",
                       fmt::format("{:-^80s}", "> START <"),

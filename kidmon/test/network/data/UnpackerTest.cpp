@@ -141,12 +141,9 @@ TEST(UnpackerTest, UnpackBatchData)
     {
         bytes = pack(quote);
         unpacker.put(bytes);
-
+        
         unpacked.clear();
-        while (unpacker.get(unpacked) != Unpacker::Status::Ready)
-        {
-            ASSERT_NE(unpacker.status(), Unpacker::Status::NeedMore);
-        }
+        EXPECT_EQ(unpacker.get(unpacked), Unpacker::Status::Ready);
         EXPECT_EQ(unpacked, quote);
     }
 }

@@ -38,6 +38,7 @@ list(FILTER LIB_SRCS EXCLUDE REGEX ".*Main.cpp")
 # Spdlog
 # set(SPDLOG_COMPILED_LIB true)
 find_package(spdlog REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
 
 # Boost
 find_package(Boost REQUIRED)
@@ -69,10 +70,10 @@ target_include_directories(${PROJECT_LIB} PUBLIC
 )
 
 target_link_libraries(${PROJECT_LIB} PUBLIC  
+    nlohmann_json::nlohmann_json
     spdlog::spdlog 
     core
 )
-
 
 # Adding executable project
 add_executable(${PROJECT_APP} Main.cpp)
