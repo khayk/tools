@@ -12,7 +12,9 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
+#include <cxxopts.hpp>
 
+#include <iostream>
 #include <optional>
 
 void configureLogger(const Config& cfg)
@@ -34,39 +36,64 @@ void configureLogger(const Config& cfg)
     spdlog::flush_every(std::chrono::seconds(10));
 }
 
-int main(int argc, char* argv[])
+void constructAttribs(const bool agent, std::wstring& uniqueName, fs::path& logFile) 
 {
-    const bool agentMode = argc > 1;
-    std::wstring uniqueName = L"KidmonUniqueName";
-    fs::path logFile = "kidmon";
+    uniqueName = L"kmuid";
+    logFile = "kidmon";
 
-    if (agentMode)
+    if (agent)
     {
-        uniqueName.append(L"Agent_" + sys::activeUserName());
+        uniqueName.append(L"-agent-" + sys::activeUserName());
         logFile.concat("-agent");
+    }
+    else
+    {
+        uniqueName.append(L"-server");
+        logFile.concat("-server");
     }
 
     logFile.concat(".log");
+}
 
-    SingleInstanceChecker sic(uniqueName);
-
-    if (sic.processAlreadyRunning())
-    {
-        sic.report();
-
-        return 1;
-    }
-
+int main(int argc, char* argv[])
+{
+    cxxopts::Options opts("kidmon", "Monitor kid activity on a PC");
     std::optional<ScopedTrace> trace;
+
+    opts.add_options()
+        ("t,token", "Authorization token for agent", cxxopts::value<std::string>())
+        ("a,agent", "Run as an agent", cxxopts::value<bool>()->default_value("false"))
+        ("p,passive", "Run server in a passive mode", cxxopts::value<bool>()->default_value("false"));
 
     try
     {
+        auto result = opts.parse(argc, argv);
+        const bool agentMode = result["agent"].as<bool>();
+
+        if (result.count("help"))
+        {
+            std::cout << opts.help() << std::endl;
+            return 0;
+        }
+
+        std::wstring uniqueName;
+        fs::path logFile;
+        constructAttribs(agentMode, uniqueName, logFile);
+        SingleInstanceChecker sic(uniqueName);
+
+        if (sic.processAlreadyRunning())
+        {
+            sic.report();
+            return 1;
+        }
+
         Config cfg;
 
         cfg.applyDefaults();
         cfg.applyOverrides(logFile);
         configureLogger(cfg);
-        cfg.authToken = argc > 1 ? argv[1] : "";
+        cfg.authToken = result["token"].as<std::string>();
+        cfg.spawnAgent = !result["passive"].as<bool>();
 
         trace.emplace("",
                       fmt::format("{:-^80s}", "> START <"),
@@ -75,7 +102,6 @@ int main(int argc, char* argv[])
         ScopedTrace main(__FUNCTION__);
 
         spdlog::trace("Active username: {}", str::ws2s(sys::activeUserName()));
-        spdlog::info("Unique guard string: {}", str::ws2s(uniqueName));
 
         std::shared_ptr<Runnable> app;
         const bool isInteractive = sys::isUserInteractive();

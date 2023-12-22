@@ -1,10 +1,99 @@
 #include "KidmonServer.h"
+#include "common/Utils.h"
 #include "os/Api.h"
+#include "network/TcpServer.h"
+#include "network/data/Unpacker.h"
+#include <network/TcpCommunicator.h>
+#include <utils/Str.h>
 
 #include <spdlog/spdlog.h>
 #include <boost/asio.hpp>
+#include <nlohmann/json.hpp>
 
 namespace net = boost::asio;
+
+namespace {
+
+
+class ServerMsgHandler
+{
+public:
+    void handle(const std::string& req, std::string& resp)
+    {
+        const auto js = nlohmann::json::parse(req);
+        
+        // @todo:hayk - verify auth info
+
+        resp = R"({"authorized": true})";
+    }
+};
+
+} // namespace 
+
+class ConnectionAccepter
+{
+    tcp::Server svr_;
+    std::unique_ptr<tcp::Communicator> comm_;
+    ServerMsgHandler handler_;
+    std::unordered_map<std::wstring, bool> users_;
+
+public :
+    ConnectionAccepter(net::io_context& ioc, uint16_t port)
+        : svr_(ioc)
+    {
+        svr_.onConnection([this](tcp::Connection& conn) {
+            spdlog::trace("Accepted: {}", reinterpret_cast<void*>(&conn));
+            comm_ = std::make_unique<tcp::Communicator>(conn);
+
+            comm_->onMsg([this](const std::string& req) {
+                spdlog::trace("Server rcvd: {}", req);
+
+                std::string resp;
+                handler_.handle(req, resp);
+                
+                spdlog::trace("Server send: {}", resp);
+                comm_->send(resp);
+            });
+
+            comm_->onDisconnect([this]() {
+                spdlog::info("Dropped client: {}", reinterpret_cast<void*>(comm_.get()));
+            });
+
+            comm_->onError([&conn](const ErrorCode& ec) {
+                spdlog::error("Connection error - ec: {}, msg: {}",
+                              ec.value(),
+                              ec.message());
+                conn.close();
+            });
+
+            comm_->start();
+        });
+
+        svr_.onListening([](uint16_t port) {
+            spdlog::trace("Listening on a port: {}", port);
+        });
+
+        svr_.onClose([]() {
+            spdlog::trace("Server closed");
+        });
+
+        svr_.onError([](const ErrorCode& ec) {
+            spdlog::error("Server error - ec: {}, msg: {}", ec.value(), ec.message());
+        });
+
+        tcp::Server::Options opts;
+        opts.port = port;
+
+        svr_.listen(opts);
+    }
+
+    bool connected(const std::wstring& username) const noexcept
+    {
+        const auto it = users_.find(username);
+
+        return it != users_.end() && it->second;
+    }
+};
 
 class KidmonServer::Impl
 {
@@ -17,7 +106,13 @@ class KidmonServer::Impl
     std::chrono::milliseconds timeout_;
     ApiPtr api_;
     ProcessLauncherPtr launcher_;
-    ServerLogic svrLogic_;
+    ConnectionAccepter accepter_;
+    bool spawnAgent_;
+
+    bool agentRunning()
+    {
+        return accepter_.connected(sys::activeUserName());
+    }
 
 public:
     Impl(const Config& cfg)
@@ -27,7 +122,8 @@ public:
         , timeout_(cfg.activityCheckInterval)
         , api_(ApiFactory::create())
         , launcher_(api_->createProcessLauncher())
-        , svrLogic_(ioc_, cfg.serverPort)
+        , accepter_(ioc_, cfg.serverPort)
+        , spawnAgent_(cfg.spawnAgent)
     {
     }
 
@@ -53,11 +149,10 @@ public:
         try
         {
             spdlog::trace("Calls healthCheck");
-            
-            if (!svrLogic_.connected())
+
+            if (spawnAgent_ && !agentRunning())
             {
-                std::vector<std::string> args;
-                args.push_back("dummy arg");
+                const std::vector<std::string> args = {"--token", "987650", "--agent"};
                 launcher_->launch("kidmon-app.exe", args);
             }
         }

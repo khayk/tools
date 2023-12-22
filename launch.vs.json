@@ -15,6 +15,13 @@
             "projectTarget": "kidmon-test.exe (kidmon\\test\\kidmon-test.exe)",
             "name": "kidmon-test.exe (kidmon\\test\\kidmon-test.exe)",
             "args": [ "--gtest_filter=*" ]
+        },
+        {
+            "type": "default",
+            "project": "CMakeLists.txt",
+            "projectTarget": "kidmon-app.exe (kidmon\\src\\kidmon-app.exe)",
+            "name": "kidmon-app.exe (kidmon\\src\\kidmon-app.exe)",
+            "args": [ "--passive", "--token 1234" ]
         }
     ]
 }

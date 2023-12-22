@@ -1,12 +1,15 @@
 #include "KidmonAgent.h"
 #include "os/Api.h"
 #include "common/Utils.h"
-
 #include <utils/FmtExt.h>
 #include <utils/Str.h>
 #include <utils/File.h>
 #include <utils/Crypto.h>
 
+#include <network/TcpClient.h>
+#include <network/TcpCommunicator.h>
+
+#include <nlohmann/json.hpp>
 #include <boost/asio.hpp>
 #include <spdlog/spdlog.h>
 
@@ -18,6 +21,65 @@ namespace net = boost::asio;
 namespace fs = std::filesystem;
 
 using TimePoint = std::chrono::system_clock::time_point;
+
+namespace {
+    
+std::string buildAuthMsg(std::string_view authToken)
+{
+    nlohmann::json js = {{"token", authToken},
+                         {"username", str::ws2s(sys::activeUserName())}};
+    return js.dump();
+}
+
+class AgentMsgHandler
+{
+public:
+    using AuthCb = std::function<void(bool)>;
+    using MsgCb = std::function<void(const nlohmann::json&)>;
+
+    bool handle(const std::string& msg)
+    {
+        try
+        {
+            nlohmann::json js = nlohmann::json::parse(msg);
+
+            if (!authReported_)
+            {
+                authCb_(js["authorized"].get<bool>());
+                authReported_ = true;
+            }
+            else
+            {
+                msgCb_(js);
+            }
+
+            return true;
+        }
+        catch (const std::exception& ex)
+        {
+            spdlog::error("Exception: {}", ex.what());
+        }
+
+        return false;
+    }
+
+    void onAuth(AuthCb authCb)
+    {
+        authCb_ = std::move(authCb);
+    }
+
+    void onMsg(MsgCb msgCb)
+    {
+        msgCb_ = std::move(msgCb);
+    }
+
+private:
+    bool authReported_ {false};
+    AuthCb authCb_;
+    MsgCb msgCb_;
+};
+
+} // namespace
 
 struct ProcessInfo
 {
@@ -75,12 +137,14 @@ class KidmonAgent::Impl
     work_guard workGuard_;
     std::chrono::milliseconds timeout_;
     time_point nextCaptureTime_;
+    tcp::Client tcpClient_;
 
     ApiPtr api_;
     std::vector<char> wndContent_;
     std::vector<Entry> cachedEntries_;
-
     std::unordered_map<std::wstring, ReportDirs> dirs_;
+    std::unique_ptr<tcp::Communicator> comm_;
+    AgentMsgHandler handler_;
 
     const ReportDirs& getActiveUserDirs()
     {
@@ -132,31 +196,67 @@ class KidmonAgent::Impl
         return it->second;
     }
 
-public:
-    Impl(const Config& cfg)
-        : cfg_(cfg)
-        , ioc_()
-        , timer_(ioc_)
-        , workGuard_(ioc_.get_executor())
-        , timeout_(cfg.activityCheckInterval)
-        , api_(ApiFactory::create())
+    void initHandlers()
     {
+        handler_.onAuth([this](bool successed) {
+            if (!successed)
+            {
+                spdlog::error("Authorization failed, exiting...");
+                ioc_.stop();
+            }
+            else
+            {
+                spdlog::info(
+                    "Authorization succeeded. Proceeding with data collection...");
+                collectData();
+            }
+        });
+
+        handler_.onMsg([this](const nlohmann::json& msg) {
+            spdlog::info("Agent processing msg: {}", msg.dump());
+            std::ignore = msg;
+        });
     }
 
-    void run()
+    void initiateConnect()
     {
-        using namespace std::chrono_literals;
+        tcpClient_.onConnect([this](tcp::Connection& conn) {
+            comm_ = std::make_unique<tcp::Communicator>(conn);
 
-        // Set to never expire
-        timer_.expires_at(time_point::max());
-        collectData();
+            comm_->onMsg([this](const std::string& msg) {
+                spdlog::info("Agent rcvd: {}", msg);
+                handler_.handle(msg);
+            });
 
-        ioc_.run();
-    }
+            comm_->onDisconnect([this]() {
+                spdlog::info("Agent disconnected.");
+                ioc_.stop();
+            });
 
-    void shutdown() noexcept
-    {
-        ioc_.stop();
+            comm_->onError([this](const ErrorCode& ec) {
+                spdlog::error("Agent connection error - code: {}, msg: {}",
+                              ec.value(),
+                              ec.message());
+                ioc_.stop();
+            });
+
+            comm_->start();
+
+            // Initiate authorization process
+            std::string authMsg = buildAuthMsg(cfg_.authToken);
+            spdlog::trace("Sending auth message: {}", authMsg);
+            comm_->send(authMsg);
+        });
+
+        tcpClient_.onError([this](const ErrorCode& ec) {
+            spdlog::error("Failed to connect - code: {}, msg: {}",
+                          ec.value(),
+                          ec.message());
+            ioc_.stop();
+        });
+
+        tcp::Client::Options opts {"127.0.0.1", cfg_.serverPort};
+        tcpClient_.connect(opts);
     }
 
     void collectData()
@@ -218,7 +318,8 @@ public:
                     auto file = userDirs.snapshotsDir / fileName;
 
                     entry.windowInfo.snapshotPath = file;
-                    file::write(file, wndContent_.data(), wndContent_.size());
+                    
+                    //file::write(file, wndContent_.data(), wndContent_.size());
                 }
             }
 
@@ -228,6 +329,37 @@ public:
         {
             spdlog::error("Failed to cleanup broken enviornment. Desc: {}", e.what());
         }
+    }
+
+
+public:
+    Impl(const Config& cfg)
+        : cfg_(cfg)
+        , ioc_()
+        , timer_(ioc_)
+        , workGuard_(ioc_.get_executor())
+        , timeout_(cfg.activityCheckInterval)
+        , api_(ApiFactory::create())
+        , tcpClient_(ioc_)
+    {
+    }
+
+    void run()
+    {
+        using namespace std::chrono_literals;
+
+        // Set to never expire
+        timer_.expires_at(time_point::max());
+
+        initHandlers();
+        initiateConnect();
+
+        ioc_.run();
+    }
+
+    void shutdown() noexcept
+    {
+        ioc_.stop();
     }
 };
 

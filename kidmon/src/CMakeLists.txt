@@ -39,10 +39,8 @@ list(FILTER LIB_SRCS EXCLUDE REGEX ".*Main.cpp")
 # set(SPDLOG_COMPILED_LIB true)
 find_package(spdlog REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
-
-# Boost
+find_package(cxxopts CONFIG REQUIRED)
 find_package(Boost REQUIRED)
-
 
 if(Boost_FOUND)
    message("Boost found        : ${Boost_INCLUDE_DIRS}")
@@ -77,7 +75,7 @@ target_link_libraries(${PROJECT_LIB} PUBLIC
 
 # Adding executable project
 add_executable(${PROJECT_APP} Main.cpp)
-target_link_libraries (${PROJECT_APP} PRIVATE ${PROJECT_LIB})
+target_link_libraries (${PROJECT_APP} PRIVATE ${PROJECT_LIB} cxxopts::cxxopts)
 # target_link_libraries(${PROJECT_APP} sqlite_orm::sqlite_orm)
 # target_link_libraries(${PROJECT_APP} PRIVATE ${SQLite3_LIBRARY})
 # target_link_libraries(${PROJECT_APP} PRIVATE ${OPENSSL_LIBRARIES})

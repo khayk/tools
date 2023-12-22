@@ -19,6 +19,7 @@ struct Config
     std::chrono::milliseconds snapshotInterval {0};
 
     uint16_t serverPort {1234};
+    bool spawnAgent {true};
     std::string authToken;
 
     void applyDefaults();

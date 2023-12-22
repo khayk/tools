@@ -38,7 +38,7 @@ HandleUPtr activeUserQueryToken()
     if (!WTSQueryUserToken(sessionId, &token))
     {
         const auto errorCode = GetLastError();
-        spdlog::trace("WTSQueryUserToken failed, errorCode: {}, desc: {}",
+        spdlog::debug("WTSQueryUserToken failed, errorCode: {}, desc: {}",
                       errorCode,
                       sys::errorDescription(errorCode));
         return {};
