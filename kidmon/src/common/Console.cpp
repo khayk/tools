@@ -40,7 +40,7 @@ public:
     {
         if (!runnable)
         {
-            throw std::runtime_error("Runnable initialiation attempt with nullptr");
+            throw std::runtime_error("Runnable initialization attempt with nullptr");
         }
 
         {
@@ -62,7 +62,7 @@ public:
     {
         shutdown();
 
-        // Wait until all other references dropped on this object, so that the distruction
+        // Wait until all other references dropped on this object, so that the destruction
         // takes place in the main thread
         while (runnable_.use_count() > 1)
         {

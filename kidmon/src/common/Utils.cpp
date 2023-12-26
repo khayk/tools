@@ -192,7 +192,7 @@ fs::path home(std::error_code& ec)
     return getKnownFolderPath(FOLDERID_Profile, ec);
 #else
     std::ignore = ec;
-    throw std::logic_error("Not implemented");
+    throw std::logic_error(fmt::format("Not implemented: {}", __func__));
 #endif
 }
 
@@ -228,7 +228,7 @@ fs::path temp(std::error_code& ec)
     }
 #else
     std::ignore = ec;
-    throw std::logic_error("Not implemented");
+    throw std::logic_error(fmt::format("Not implemented: {}", __func__));
 #endif
 
     return path;
@@ -253,7 +253,7 @@ fs::path data(std::error_code& ec)
     return getKnownFolderPath(FOLDERID_LocalAppData, ec);
 #else
     std::ignore = ec;
-    throw std::logic_error("Not implemented");
+    throw std::logic_error(fmt::format("Not implemented: {}", __func__));
 #endif
 }
 
@@ -277,7 +277,7 @@ fs::path config(std::error_code& ec)
     return getKnownFolderPath(FOLDERID_ProgramData, ec);
 #else
     std::ignore = ec;
-    throw std::logic_error("Not implemented");
+    throw std::logic_error(fmt::format("Not implemented: {}", __func__));
 #endif
 }
 
