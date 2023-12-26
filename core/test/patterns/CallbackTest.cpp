@@ -32,7 +32,7 @@ TEST(CallbackTests, OneCallbackOneArg)
 
 TEST(CallbackTests, OneCallbackManyArgs)
 {
-    // First argument shows number of calls
+    // First argument shows the number of calls
     using Info = std::tuple<int, char, std::string, double>;
     using CallbackMany = dp::Callback<char, const std::string&, double>;
     CallbackMany cb;
@@ -124,6 +124,28 @@ TEST(CallbackTests, Performance)
     }
 
     EXPECT_EQ(calls, n);
+}
+
+TEST(CallbackTests, ScopedCallback)
+{
+    using CallbackInt = dp::Callback<int>;
+    CallbackInt cb;
+    int lastValue = 0;
+
+    {
+        dp::ScopedCallback scb(cb, [&lastValue](int value) {
+            lastValue = value;
+        });
+        cb(5);
+        EXPECT_EQ(5, lastValue);
+
+        cb(42);
+        EXPECT_EQ(42, lastValue);
+    }
+
+    // Now, our function should not be called
+    cb(7);
+    EXPECT_EQ(42, lastValue);
 }
 
 } // namespace

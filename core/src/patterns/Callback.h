@@ -78,4 +78,24 @@ private:
     }
 };
 
+template<class ...Args>
+class ScopedCallback
+{
+    using CallbackType = Callback<Args...>;
+    CallbackType& cb_;
+    typename CallbackType::FunctionPtr ptr_;
+
+public:
+    ScopedCallback(CallbackType& cb, typename CallbackType::Function&& fn)
+        : cb_(cb)
+    {
+        ptr_ = cb_.add(std::move(fn));
+    }
+
+    ~ScopedCallback()
+    {
+        cb_.remove(ptr_);
+    }
+};
+
 } // namespace dp
