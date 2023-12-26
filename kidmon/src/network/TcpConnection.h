@@ -12,7 +12,6 @@
 namespace net       = boost::asio;
 using ErrorCode     = boost::system::error_code;
 using IoContext     = net::io_context;
-using MutableBuffer = net::mutable_buffer;
 using ConstBuffer   = net::const_buffer;
 
 namespace tcp {

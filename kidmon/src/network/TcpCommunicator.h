@@ -10,26 +10,19 @@
 namespace tcp {
 
 class Communicator
-{   
+{
 public:
     using MsgCb        = std::function<void(const std::string&)>;
-    using ErrorCb      = Connection::ErrorCb;
-    using DisconnectCb = Connection::DisconnectCb;
 
     Communicator(Connection& conn);
+    ~Communicator();
 
-    void onMsg(MsgCb msgCb);
-    void onError(ErrorCb errorCb);
-    void onDisconnect(DisconnectCb disconnectCb);
-
+    bool onMsg(MsgCb msgCb);
     void start();
     void send(std::string_view msg);
 
 private:
     MsgCb msgCb_;
-    ErrorCb errorCb_;
-    DisconnectCb disconnectCb_;
-    
     Connection* conn_ {nullptr};
     data::Unpacker unpacker_;
     std::queue<std::string> wq_;
@@ -39,7 +32,6 @@ private:
     bool sending_ {false};
 
     const std::string& sendBuf() const;
-
     void onRead(const char* data, size_t size);
     void onSent(size_t size);
     void sendInternal();

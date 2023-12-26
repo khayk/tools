@@ -228,12 +228,12 @@ class KidmonAgent::Impl
                 handler_.handle(msg);
             });
 
-            comm_->onDisconnect([this]() {
+            conn.onDisconnect([this]() {
                 spdlog::info("Agent disconnected.");
                 ioc_.stop();
             });
 
-            comm_->onError([this](const ErrorCode& ec) {
+            conn.onError([this](const ErrorCode& ec) {
                 spdlog::error("Agent connection error - code: {}, msg: {}",
                               ec.value(),
                               ec.message());
@@ -319,7 +319,7 @@ class KidmonAgent::Impl
 
                     entry.windowInfo.snapshotPath = file;
                     
-                    //file::write(file, wndContent_.data(), wndContent_.size());
+                    file::write(file, wndContent_.data(), wndContent_.size());
                 }
             }
 

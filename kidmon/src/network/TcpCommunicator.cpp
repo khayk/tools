@@ -5,9 +5,8 @@ namespace tcp {
 Communicator::Communicator(Connection& conn)
     : conn_(&conn)
 {
-    conn_->onDisconnect([this]() {
-        conn_ = nullptr;
-    });
+    // Default handlers, does nothing
+    msgCb_ = [](const std::string&) {};
 
     conn_->onRead([this](const char* data, size_t size) {
         onRead(data, size);
@@ -19,28 +18,29 @@ Communicator::Communicator(Connection& conn)
 }
 
 
-void Communicator::onMsg(MsgCb msgCb)
+Communicator::~Communicator()
 {
+}
+
+
+bool Communicator::onMsg(MsgCb msgCb)
+{
+    if (started_ || !msgCb)
+    {
+        return false;
+    }
+
     msgCb_ = std::move(msgCb);
-}
-
-
-void Communicator::onError(ErrorCb errorCb)
-{
-    errorCb_ = std::move(errorCb);
-}
-
-
-void Communicator::onDisconnect(DisconnectCb disconnectCb)
-{
-    disconnectCb_ = std::move(disconnectCb);
+    return true;
 }
 
 
 void Communicator::start()
 {
     if (started_ || !conn_)
+    {
         return;
+    }
 
     started_ = true;
     conn_->read();
@@ -65,6 +65,7 @@ const std::string& Communicator::sendBuf() const
     return wq_.front();
 }
 
+
 void Communicator::onRead(const char* data, size_t size)
 {
     unpacker_.put(std::string_view(data, size));
@@ -80,6 +81,7 @@ void Communicator::onRead(const char* data, size_t size)
 
     conn_->read();
 }
+
 
 void Communicator::onSent(size_t size)
 {
@@ -98,10 +100,13 @@ void Communicator::onSent(size_t size)
     }
 }
 
+
 void Communicator::sendInternal()
 {
     if (sending_ || wq_.empty() || !conn_)
+    {
         return;
+    }
 
     sending_ = true;
     off_ = 0;
