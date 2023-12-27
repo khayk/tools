@@ -2,8 +2,7 @@
 #include "common/Utils.h"
 #include "os/Api.h"
 #include "network/TcpServer.h"
-#include "network/data/Unpacker.h"
-#include <network/TcpCommunicator.h>
+#include "network/TcpCommunicator.h"
 #include <utils/Str.h>
 
 #include <spdlog/spdlog.h>
@@ -21,73 +20,87 @@ public:
     void handle(const std::string& req, std::string& resp)
     {
         const auto js = nlohmann::json::parse(req);
-        
+
         // @todo:hayk - verify auth info
 
         resp = R"({"authorized": true})";
     }
 };
 
-} // namespace 
+} // namespace
 
-class ConnectionAccepter
+class AgentManager
 {
-    tcp::Server svr_;
+    ServerMsgHandler& handler_;
     std::unique_ptr<tcp::Communicator> comm_;
-    ServerMsgHandler handler_;
     std::unordered_map<std::wstring, bool> users_;
+    std::unordered_map<const tcp::Connection*, std::wstring> conns_;
+
+    void updateMetadata(const tcp::Connection* conn, const bool connected)
+    {
+        if (connected)
+        {
+            const std::wstring username = sys::activeUserName();
+            users_[username] = true;
+            conns_[conn] = username;
+        }
+        else
+        {
+            users_[conns_[conn]] = false;
+            conns_.erase(conn);
+        }
+    }
 
 public :
-    ConnectionAccepter(net::io_context& ioc, uint16_t port)
-        : svr_(ioc)
+    AgentManager(ServerMsgHandler& handler, tcp::Server& svr)
+        : handler_(handler)
     {
-        svr_.onConnection([this](tcp::Connection& conn) {
-            spdlog::trace("Accepted: {}", reinterpret_cast<void*>(&conn));
+        svr.onConnection([this](tcp::Connection& conn) {
+            spdlog::info("Accepted: {}", fmt::ptr(&conn));
             comm_ = std::make_unique<tcp::Communicator>(conn);
+            updateMetadata(&conn, true);
 
             comm_->onMsg([this](const std::string& req) {
                 spdlog::trace("Server rcvd: {}", req);
 
                 std::string resp;
                 handler_.handle(req, resp);
-                
+
                 spdlog::trace("Server send: {}", resp);
                 comm_->send(resp);
             });
 
-            comm_->onDisconnect([this]() {
-                spdlog::info("Dropped client: {}", reinterpret_cast<void*>(comm_.get()));
+            conn.onDisconnect([this, &conn]() {
+                spdlog::info("Dropped: {}", fmt::ptr(&conn));
+                updateMetadata(&conn, false);
             });
 
-            comm_->onError([&conn](const ErrorCode& ec) {
-                spdlog::error("Connection error - ec: {}, msg: {}",
+            conn.onError([this, &conn](const ErrorCode& ec) {
+                spdlog::error("Connection error: {}, ec: {}, msg: {}",
+                              fmt::ptr(&conn),
                               ec.value(),
                               ec.message());
                 conn.close();
+                updateMetadata(&conn, false);
             });
 
             comm_->start();
         });
 
-        svr_.onListening([](uint16_t port) {
+        svr.onListening([](uint16_t port) {
             spdlog::trace("Listening on a port: {}", port);
         });
 
-        svr_.onClose([]() {
+        svr.onClose([]() {
             spdlog::trace("Server closed");
         });
 
-        svr_.onError([](const ErrorCode& ec) {
+        svr.onError([](const ErrorCode& ec) {
             spdlog::error("Server error - ec: {}, msg: {}", ec.value(), ec.message());
         });
-
-        tcp::Server::Options opts;
-        opts.port = port;
-
-        svr_.listen(opts);
     }
 
-    bool connected(const std::wstring& username) const noexcept
+    bool hasAgent(const std::wstring& username) const noexcept
     {
         const auto it = users_.find(username);
 
@@ -99,32 +112,40 @@ class KidmonServer::Impl
 {
     using work_guard = net::executor_work_guard<net::io_context::executor_type>;
     using time_point = net::steady_timer::time_point;
-
+    
+    ServerMsgHandler handler_;
+    std::unique_ptr<AgentManager> agentMngr_;
     net::io_context ioc_;
+    tcp::Server svr_;
     net::steady_timer timer_;
     work_guard workGuard_;
     std::chrono::milliseconds timeout_;
     ApiPtr api_;
     ProcessLauncherPtr launcher_;
-    ConnectionAccepter accepter_;
     bool spawnAgent_;
 
-    bool agentRunning()
+    bool agentRunning() const
     {
-        return accepter_.connected(sys::activeUserName());
+        return agentMngr_->hasAgent(sys::activeUserName());
     }
 
 public:
     Impl(const Config& cfg)
         : ioc_()
+        , svr_(ioc_)
         , timer_(ioc_)
         , workGuard_(ioc_.get_executor())
         , timeout_(cfg.activityCheckInterval)
         , api_(ApiFactory::create())
         , launcher_(api_->createProcessLauncher())
-        , accepter_(ioc_, cfg.serverPort)
         , spawnAgent_(cfg.spawnAgent)
     {
+        agentMngr_ = std::make_unique<AgentManager>(handler_, svr_);
+
+        tcp::Server::Options opts;
+        opts.port = cfg.serverPort;
+
+        svr_.listen(opts);
     }
 
     void run()

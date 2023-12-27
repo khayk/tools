@@ -10,8 +10,7 @@
             "cmakeCommandArgs": "",
             "buildCommandArgs": "",
             "ctestCommandArgs": "",
-            "cmakeExecutable": "",
-            "variables": []
+            "cmakeExecutable": ""
         },
         {
             "name": "x64-Release",
@@ -22,8 +21,21 @@
             "cmakeCommandArgs": "",
             "buildCommandArgs": "",
             "ctestCommandArgs": "",
-            "inheritEnvironments": [ "msvc_x64_x64" ],
-            "variables": []
+            "inheritEnvironments": [ "msvc_x64_x64" ]
+        },
+        {
+            "name": "WSL-Clang-Debug",
+            "generator": "Unix Makefiles",
+            "configurationType": "Debug",
+            "buildRoot": "${projectDir}\\out\\build\\${name}",
+            "installRoot": "${projectDir}\\out\\install\\${name}",
+            "cmakeExecutable": "cmake",
+            "cmakeCommandArgs": "",
+            "buildCommandArgs": "-j 8",
+            "ctestCommandArgs": "",
+            "inheritEnvironments": [ "linux_clang_x64" ],
+            "wslPath": "${defaultWSLPath}",
+            "cmakeToolchain": "~/code/vcpkg/scripts/buildsystems/vcpkg.cmake"
         }
     ]
 }

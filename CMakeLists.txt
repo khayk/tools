@@ -36,6 +36,10 @@ if(MSVC)
    # add_compile_definitions(PSAPI_VERSION=1)
 else()
    add_compile_options(-Wall -Wextra -Wpedantic)
+
+   # Use options below to enable build with sanitization
+   # add_compile_options(-Wall -Wextra -Wpedantic -fsanitize=address  -fsanitize=undefined)
+   # add_link_options(-fsanitize=address -fsanitize=undefined)
 endif()
 
 # Diagnostic information

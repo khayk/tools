@@ -1,15 +1,16 @@
 # Tools
 
-Own implementation of different tools. Feel free to use if you find them useful.
+Own implementation of different tools.
 
 ## Build
 
 ### Prerequisite
 
 1. Install `vcpkg`
-2. Install libraries 
-    * Windows `./vcpkg install gtest spdlog openssl boost-asio --triplet=x64-windows`
-    * Linux   `./vcpkg install gtest spdlog openssl boost-asio --triplet=x64-linux`
+2. Install libraries
+    * `./vcpkg install gtest spdlog openssl boost-asio nlohmann-json cxxopts --triplet=<platform>`
+        * Windows `<platform>` can be `x64-windows`
+        * Linux   `<platform>` can be `x64-linux`
 
 ### Windows
 
@@ -23,6 +24,7 @@ Own implementation of different tools. Feel free to use if you find them useful.
     * `cmake --build build --parallel 4`
 
 * If you want to build with `clang` you can run following command before configuring the project. Change clang path if required.
+
     ```bash
     export CC=/usr/bin/clang
     export CXX=/usr/bin/clang++
