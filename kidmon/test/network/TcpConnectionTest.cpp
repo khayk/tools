@@ -145,7 +145,7 @@ TEST(TcpConnectionTest, WriteError)
     });
     cnt.connect(copts);
 
-    // This is a maxiumum time dedicated for the tast, but
+    // This is a maximum time dedicated for the test, but
     // in reality, test will take a few milliseconds
     ioc.run_for(1s);
 }

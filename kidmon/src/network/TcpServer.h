@@ -1,8 +1,5 @@
 #pragma once
 
-#include <string>
-#include <functional>
-
 #include "TcpConnection.h"
 
 namespace tcp {
@@ -52,7 +49,7 @@ private:
     Acceptor acceptor_;
     Socket socket_;
     bool listening_ {false};
-    
+
     ListeningCbs listenCb_;
     ConnectionCbs connCb_;
     CloseCbs closeCb_;
