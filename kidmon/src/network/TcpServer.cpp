@@ -9,7 +9,9 @@ Server::Server(IoContext& ioc)
 {
 }
 
-Server::~Server() {}
+Server::~Server() {
+    close();
+}
 
 void Server::onListening(ListeningCb listenCb)
 {

@@ -23,7 +23,7 @@ namespace fs = std::filesystem;
 using TimePoint = std::chrono::system_clock::time_point;
 
 namespace {
-    
+
 std::string buildAuthMsg(std::string_view authToken)
 {
     nlohmann::json js = {{"token", authToken},
@@ -198,8 +198,8 @@ class KidmonAgent::Impl
 
     void initHandlers()
     {
-        handler_.onAuth([this](bool successed) {
-            if (!successed)
+        handler_.onAuth([this](bool succeeds) {
+            if (!succeeds)
             {
                 spdlog::error("Authorization failed, exiting...");
                 ioc_.stop();
@@ -207,12 +207,12 @@ class KidmonAgent::Impl
             else
             {
                 spdlog::info(
-                    "Authorization succeeded. Proceeding with data collection...");
+                    "Authorization succeeds. Proceeding with data collection...");
                 collectData();
             }
         });
 
-        handler_.onMsg([this](const nlohmann::json& msg) {
+        handler_.onMsg([](const nlohmann::json& msg) {
             spdlog::info("Agent processing msg: {}", msg.dump());
             std::ignore = msg;
         });
@@ -318,7 +318,7 @@ class KidmonAgent::Impl
                     auto file = userDirs.snapshotsDir / fileName;
 
                     entry.windowInfo.snapshotPath = file;
-                    
+
                     file::write(file, wndContent_.data(), wndContent_.size());
                 }
             }
@@ -339,8 +339,8 @@ public:
         , timer_(ioc_)
         , workGuard_(ioc_.get_executor())
         , timeout_(cfg.activityCheckInterval)
-        , api_(ApiFactory::create())
         , tcpClient_(ioc_)
+        , api_(ApiFactory::create())
     {
     }
 

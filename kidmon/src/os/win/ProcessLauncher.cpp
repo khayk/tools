@@ -99,7 +99,8 @@ bool directLaunch(const fs::path& exec, const std::vector<std::string>& args)
     memset(&processInfo, 0, sizeof(PROCESS_INFORMATION));
 
     startupInfo.dwFlags = STARTF_FORCEOFFFEEDBACK;
-    const DWORD creationFlags = GetConsoleWindow() ? 0 : CREATE_NO_WINDOW;
+    const DWORD creationFlags =
+        GetConsoleWindow() ? CREATE_NEW_CONSOLE : CREATE_NO_WINDOW;
 
     std::wstring cl {};
     for (const auto& e : args)

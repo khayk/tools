@@ -36,7 +36,7 @@ void configureLogger(const Config& cfg)
     spdlog::flush_every(std::chrono::seconds(10));
 }
 
-void constructAttribs(const bool agent, std::wstring& uniqueName, fs::path& logFile) 
+void constructAttribs(const bool agent, std::wstring& uniqueName, fs::path& logFile)
 {
     uniqueName = L"kmuid";
     logFile = "kidmon";
@@ -61,7 +61,7 @@ int main(int argc, char* argv[])
     std::optional<ScopedTrace> trace;
 
     opts.add_options()
-        ("t,token", "Authorization token for agent", cxxopts::value<std::string>())
+        ("t,token", "Authorization token for agent", cxxopts::value<std::string>()->default_value(""))
         ("a,agent", "Run as an agent", cxxopts::value<bool>()->default_value("false"))
         ("p,passive", "Run server in a passive mode", cxxopts::value<bool>()->default_value("false"));
 

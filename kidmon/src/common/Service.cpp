@@ -79,12 +79,11 @@ public:
     {
         instance_ = nullptr;
     }
-    
+
     void run()
     {
-        auto name = name_;
-
 #ifdef _WIN32
+        auto name = name_;
         const std::array<SERVICE_TABLE_ENTRY, 2> startTable = {
             SERVICE_TABLE_ENTRY {name.data(), &Service::Impl::serviceMain},
             SERVICE_TABLE_ENTRY {nullptr, nullptr}};
@@ -94,9 +93,8 @@ public:
             spdlog::error("Failed to start service ctrl dispatcher: {0}", GetLastError());
         }
 #else
-        throw std::runtime_error("Not implemented");
+        throw std::runtime_error(fmt::format("Not implemented: {}", __func__));
 #endif
-
     }
 
     void shutdown() noexcept
@@ -209,7 +207,7 @@ private:
                           GetLastError());
         }
     }
-    
+
     void onControl(unsigned long controlCode)
     {
         spdlog::trace("Service action `{}` requested",

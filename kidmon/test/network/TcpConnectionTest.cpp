@@ -12,7 +12,7 @@ struct Manager
     const std::string& sent;
     size_t off {0};
     const size_t rcvdMax;
-    
+
 public:
     std::string rcvd;
     ErrorCode errc {};
@@ -27,7 +27,7 @@ public:
 
         conn.onRead([this](const char* data, size_t size) {
             rcvd.append(data, size);
-            
+
             // Stop reading if no more data is coming
             if (rcvd.size() < rcvdMax)
             {
@@ -65,7 +65,7 @@ public:
 TEST(TcpConnectionTest, DataTransfer)
 {
     using namespace std::chrono_literals;
-    
+
     const std::string clientToSend = "hello from client";
     const std::string serverToSend = "greetings from server!";
     std::unique_ptr<Manager> serverMngr;
@@ -75,6 +75,11 @@ TEST(TcpConnectionTest, DataTransfer)
     Server svr(ioc);
     Server::Options sopts {1234};
 
+    uint16_t listeningPort = 0;
+    svr.onListening([&listeningPort](uint16_t port) {
+        listeningPort = port;
+    });
+
     svr.onConnection([&](Connection& conn) {
         serverMngr = std::make_unique<Manager>(conn, serverToSend, clientToSend.size());
         conn.onDisconnect([&]() {
@@ -82,6 +87,8 @@ TEST(TcpConnectionTest, DataTransfer)
         });
     });
     svr.listen(sopts);
+
+    ASSERT_EQ(listeningPort, sopts.port);
 
     Client cnt(ioc);
     Client::Options copts {"127.0.0.1", sopts.port};
@@ -91,11 +98,11 @@ TEST(TcpConnectionTest, DataTransfer)
     });
     cnt.connect(copts);
 
-    // This is a maxiumum time dedicated for the tast, but 
+    // This is a maximum time dedicated for the test, but
     // in reality, test will take a few milliseconds
     ioc.run_for(2s);
 
-    ASSERT_TRUE(serverMngr);   
+    ASSERT_TRUE(serverMngr);
     EXPECT_EQ(serverMngr->rcvd, clientToSend);
     EXPECT_TRUE(serverMngr->disconnected);
     EXPECT_TRUE(!(serverMngr->errc));
