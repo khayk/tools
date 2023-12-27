@@ -141,7 +141,7 @@ TEST(UnpackerTest, UnpackBatchData)
     {
         bytes = pack(quote);
         unpacker.put(bytes);
-        
+
         unpacked.clear();
         EXPECT_EQ(unpacker.get(unpacked), Unpacker::Status::Ready);
         EXPECT_EQ(unpacked, quote);

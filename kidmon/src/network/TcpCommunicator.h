@@ -12,7 +12,7 @@ namespace tcp {
 class Communicator
 {
 public:
-    using MsgCb        = std::function<void(const std::string&)>;
+    using MsgCb = std::function<void(const std::string&)>;
 
     Communicator(Connection& conn);
     ~Communicator();

@@ -7,7 +7,6 @@
 namespace fs = std::filesystem;
 
 
-
 namespace sys {
 
 std::wstring activeUserName();
@@ -25,32 +24,32 @@ void logLastError(const std::string_view message) noexcept;
 /**
  * @brief Utility functions to provide full paths of know user/system directories
  */
-namespace dirs
-{
-    /**
-     * @brief The user home directory. On Windows systems, this is '%USERPROFILE%'.
-     */
-    fs::path home(std::error_code& ec);
-    fs::path home();
+namespace dirs {
+/**
+ * @brief The user home directory. On Windows systems, this is '%USERPROFILE%'.
+ */
+fs::path home(std::error_code& ec);
+fs::path home();
 
-    /**
-     * @brief Temp directory of the current account. On Windows systems this is %TEMP%
-     */
-    fs::path temp(std::error_code& ec);
-    fs::path temp();
+/**
+ * @brief Temp directory of the current account. On Windows systems this is %TEMP%
+ */
+fs::path temp(std::error_code& ec);
+fs::path temp();
 
-    /**
-     * @brief Application data directory. On Windows systems, this is '%LOCALAPPDATA%'.
-     */
-    fs::path data(std::error_code& ec);
-    fs::path data();
+/**
+ * @brief Application data directory. On Windows systems, this is '%LOCALAPPDATA%'.
+ */
+fs::path data(std::error_code& ec);
+fs::path data();
 
-    /**
-     * @brief Returns the systemwide config directory. On Windows systems, this is '%ALLUSERSPROFILE%'.
-     */
-    fs::path config(std::error_code& ec);
-    fs::path config();
-};
+/**
+ * @brief Returns the systemwide config directory. On Windows systems, this is
+ * '%ALLUSERSPROFILE%'.
+ */
+fs::path config(std::error_code& ec);
+fs::path config();
+}; // namespace dirs
 
 class SingleInstanceChecker
 {
@@ -65,4 +64,3 @@ public:
     bool processAlreadyRunning() const noexcept;
     void report() const;
 };
-

@@ -59,7 +59,7 @@ const char* serviceControlCodeToStr(DWORD controlCode) noexcept
 
 #endif
 
-}
+} // namespace
 
 class Service::Impl
 {
@@ -247,8 +247,7 @@ private:
         }
         else
         {
-            spdlog::trace("Service state: {}",
-                          serviceStateToStr(status_.dwCurrentState));
+            spdlog::trace("Service state: {}", serviceStateToStr(status_.dwCurrentState));
         }
 
         if (status_.dwCurrentState == SERVICE_STOP_PENDING)
@@ -287,4 +286,3 @@ void Service::shutdown() noexcept
 {
     impl_->shutdown();
 }
-

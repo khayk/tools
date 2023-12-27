@@ -49,4 +49,3 @@ private:
 
     void updateHelper(Node* node, std::wstring& ws);
 };
-

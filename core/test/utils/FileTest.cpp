@@ -33,7 +33,7 @@ TEST_F(UtilsFileTests, Write)
     ASSERT_TRUE(fs::exists(filename));
     std::string content;
     std::error_code ec;
-    
+
     ASSERT_TRUE(read(filename, content, ec));
     ASSERT_FALSE(ec);
     EXPECT_EQ(content, "One line for data");

@@ -50,7 +50,7 @@ public:
 
     /**
      * @brief Print the content as a tree
-     * 
+     *
      * @param os The output stream
      */
     void treeDump(std::ostream& os);
@@ -63,4 +63,3 @@ private:
     std::unique_ptr<Node> root_;
     MapBySize dups_;
 };
-

@@ -12,7 +12,7 @@ void Config::applyDefaults()
 
     activityCheckInterval = 5s;
     snapshotInterval = 5min;
-    
+
     serverPort = 1234;
 }
 

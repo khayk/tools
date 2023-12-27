@@ -21,4 +21,3 @@ class ApiFactory
 public:
     static ApiPtr create();
 };
-

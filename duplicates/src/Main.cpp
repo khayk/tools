@@ -26,12 +26,13 @@ void dumpToFile(const DuplicateDetector& detector, std::string_view filePath)
 
     const unsigned long MaxCode = 0x10ffff;
     const std::codecvt_mode Mode = std::generate_header;
-    std::locale utf16_locale(pathsFile.getloc(), new std::codecvt_utf16<wchar_t, MaxCode, Mode>);
+    std::locale utf16_locale(pathsFile.getloc(),
+                             new std::codecvt_utf16<wchar_t, MaxCode, Mode>);
     pathsFile.imbue(utf16_locale);
 
     detector.enumFiles([&pathsFile](const std::wstring& ws) {
         pathsFile << ws << '\n';
-        });
+    });
 }
 
 int main(int argc, const char* argv[])
@@ -67,7 +68,7 @@ int main(int argc, const char* argv[])
         std::cout << "\nPrinting the content of the directory...\n\n";
         detector.enumFiles([](const std::wstring& ws) {
             std::cout << ws2s(ws) << '\n';
-            });
+        });
         std::cout << "\nPrinting completed.\n";
 
         sw.start();
@@ -85,18 +86,16 @@ int main(int argc, const char* argv[])
 
             for (const auto& e : group.entires)
             {
-                std::cout
-                    << group.groupId << ','
-                    << ws2s(e.dir) << ','
-                    << ws2s(e.filename) << ','
-                    << std::string_view(e.sha).substr(0, 10) << ','
-                    << e.size << "\n";
+                std::cout << group.groupId << ',' << ws2s(e.dir) << ','
+                          << ws2s(e.filename) << ','
+                          << std::string_view(e.sha).substr(0, 10) << ',' << e.size
+                          << "\n";
             }
 
             //<< "size: " << i->size()
             //<< ", sha256: " << std::string_view(i->sha256()).substr(0, 10)
             //<< ", path: " << ws2s(ws) << std::endl;
-            });
+        });
     }
     catch (const std::system_error& se)
     {

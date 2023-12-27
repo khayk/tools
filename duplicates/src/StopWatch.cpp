@@ -10,14 +10,14 @@ StopWatch::StopWatch(bool autostart)
 
 void StopWatch::start() noexcept
 {
-    start_   = Clock::now();
-    end_     = start_;
+    start_ = Clock::now();
+    end_ = start_;
     stopped_ = false;
 }
 
 void StopWatch::stop() noexcept
 {
-    end_     = Clock::now();
+    end_ = Clock::now();
     stopped_ = true;
 }
 

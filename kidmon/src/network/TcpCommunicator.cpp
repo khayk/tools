@@ -6,7 +6,8 @@ Communicator::Communicator(Connection& conn)
     : conn_(&conn)
 {
     // Default handlers, does nothing
-    msgCb_ = [](const std::string&) {};
+    msgCb_ = [](const std::string&) {
+    };
 
     conn_->onRead([this](const char* data, size_t size) {
         onRead(data, size);
@@ -18,9 +19,7 @@ Communicator::Communicator(Connection& conn)
 }
 
 
-Communicator::~Communicator()
-{
-}
+Communicator::~Communicator() {}
 
 
 bool Communicator::onMsg(MsgCb msgCb)

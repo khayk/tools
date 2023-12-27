@@ -13,8 +13,7 @@
 #pragma comment(lib, "Userenv.lib")
 #pragma comment(lib, "Wtsapi32.lib")
 
-namespace
-{
+namespace {
 
 struct HandleCloser
 {

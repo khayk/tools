@@ -301,7 +301,7 @@ SingleInstanceChecker::SingleInstanceChecker(std::wstring_view name)
 #ifdef _WIN32
     mutex_ = CreateMutexW(nullptr, TRUE, (L"Global\\" + appName_).data());
     const auto error = GetLastError();
-    
+
     if (mutex_ == nullptr)
     {
         spdlog::error("CreateMutex failed, ec: {}", error);

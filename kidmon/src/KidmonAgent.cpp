@@ -155,12 +155,12 @@ class KidmonAgent::Impl
             return it->second;
         }
 
-        std::time_t t = std::time(0);   // get time now
+        std::time_t t = std::time(0); // get time now
         std::tm* now = std::localtime(&t);
 
         fs::path userReportsRoot = fs::path(cfg_.reportsDir)
-            .append(activeUserName)
-            .append(fmt::format("{}", now->tm_year + 1900));
+                                       .append(activeUserName)
+                                       .append(fmt::format("{}", now->tm_year + 1900));
 
         // Reports directory structure will look like this
         //
@@ -172,11 +172,11 @@ class KidmonAgent::Impl
 
         ReportDirs dirs;
 
-        dirs.snapshotsDir   = userReportsRoot / "snapshoots";
-        dirs.dailyDir       = userReportsRoot / "daily";
-        dirs.monthlyDir     = userReportsRoot / "monthly";
-        dirs.weeklyDir      = userReportsRoot / "weekly";
-        dirs.rawDir         = userReportsRoot / "raw";
+        dirs.snapshotsDir = userReportsRoot / "snapshoots";
+        dirs.dailyDir = userReportsRoot / "daily";
+        dirs.monthlyDir = userReportsRoot / "monthly";
+        dirs.weeklyDir = userReportsRoot / "weekly";
+        dirs.rawDir = userReportsRoot / "raw";
 
         fs::create_directories(dirs.snapshotsDir);
         fs::create_directories(dirs.dailyDir);
@@ -278,9 +278,9 @@ class KidmonAgent::Impl
             }
 
             spdlog::trace("{}, '{}', '{}'",
-                window->id(),
-                window->title(),
-                window->className());
+                          window->id(),
+                          window->title(),
+                          window->className());
 
             Rect rc = window->boundingRect();
 
@@ -293,7 +293,8 @@ class KidmonAgent::Impl
 
             if (entry.processInfo.processPath.empty())
             {
-                spdlog::warn("Unable to retrieve the path of the process {}", window->ownerProcessId());
+                spdlog::warn("Unable to retrieve the path of the process {}",
+                             window->ownerProcessId());
                 return;
             }
 
@@ -313,8 +314,13 @@ class KidmonAgent::Impl
                     std::time_t t = std::time(nullptr);
 
                     char mbstr[16];
-                    auto bytesWritten = std::strftime(mbstr, sizeof(mbstr), "%m%d-%H%M%S", std::localtime(&t));
-                    auto fileName = fmt::format("img-{}.{}", std::string_view(mbstr, bytesWritten), toString(format));
+                    auto bytesWritten = std::strftime(mbstr,
+                                                      sizeof(mbstr),
+                                                      "%m%d-%H%M%S",
+                                                      std::localtime(&t));
+                    auto fileName = fmt::format("img-{}.{}",
+                                                std::string_view(mbstr, bytesWritten),
+                                                toString(format));
                     auto file = userDirs.snapshotsDir / fileName;
 
                     entry.windowInfo.snapshotPath = file;

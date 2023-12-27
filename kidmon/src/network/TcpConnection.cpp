@@ -43,7 +43,8 @@ void Connection::read()
                             });
 }
 
-void Connection::write(const char* data, size_t size) {
+void Connection::write(const char* data, size_t size)
+{
     auto self {shared_from_this()};
 
     net::async_write(socket_,

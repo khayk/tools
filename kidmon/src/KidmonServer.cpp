@@ -51,7 +51,7 @@ class AgentManager
         }
     }
 
-public :
+public:
     AgentManager(ServerMsgHandler& handler, tcp::Server& svr)
         : handler_(handler)
     {
@@ -112,7 +112,7 @@ class KidmonServer::Impl
 {
     using work_guard = net::executor_work_guard<net::io_context::executor_type>;
     using time_point = net::steady_timer::time_point;
-    
+
     ServerMsgHandler handler_;
     std::unique_ptr<AgentManager> agentMngr_;
     net::io_context ioc_;

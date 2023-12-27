@@ -55,7 +55,7 @@ TEST(ObserverTests, ManualObserve)
     EXPECT_CALL(listener, two(_, _)).Times(n);
 
     obs.add(listener);
-    
+
     // To show, that callbacks will be invoked as many
     // times as we trigger them
     for (int i = 0; i < n; ++i)

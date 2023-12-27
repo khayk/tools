@@ -55,28 +55,27 @@ void DuplicateDetector::detect(const Options& options)
 {
     std::ignore = options;
     dups_.clear();
-    
+
     std::wstring ws;
     root_->update();
-    root_->enumLeafs([&ws, this](Node* node)
-        {
-            node->fullPath(ws);
-            auto it = dups_.find(node->size());
+    root_->enumLeafs([&ws, this](Node* node) {
+        node->fullPath(ws);
+        auto it = dups_.find(node->size());
 
-            if (it == dups_.end())
-            {
-                dups_.emplace(node->size(), Nodes {node});
-            }
-            else
-            {
-                it->second.push_back(node);
-            }
-        });
+        if (it == dups_.end())
+        {
+            dups_.emplace(node->size(), Nodes {node});
+        }
+        else
+        {
+            it->second.push_back(node);
+        }
+    });
 
     // Files with unique size can be quickly excluded
     eraseIf(dups_, [](const auto& vt) {
         return vt.second.size() < 2;
-        });
+    });
 
     // Here we have files with the same size
     eraseIf(dups_, [](auto& vt) {
@@ -101,7 +100,7 @@ void DuplicateDetector::detect(const Options& options)
         // Remove all unique items
         eraseIf(hashes, [](const auto& vt) {
             return vt.second.size() < 2;
-            });
+        });
 
         if (hashes.empty())
         {
@@ -110,15 +109,16 @@ void DuplicateDetector::detect(const Options& options)
         }
 
         // Remove files with unique hashes
-        auto it = std::remove_if(std::begin(nodes), std::end(nodes),
-            [&hashes](const Node* const node) {
-                return hashes.find(node->sha256()) == hashes.end();
-            });
+        auto it = std::remove_if(std::begin(nodes),
+                                 std::end(nodes),
+                                 [&hashes](const Node* const node) {
+                                     return hashes.find(node->sha256()) == hashes.end();
+                                 });
 
         nodes.erase(it, nodes.end());
 
         return false;
-        });
+    });
 }
 
 void DuplicateDetector::enumFiles(FileCallback cb) const
@@ -128,7 +128,7 @@ void DuplicateDetector::enumFiles(FileCallback cb) const
     root_->enumLeafs([&ws, cb](const Node* const node) {
         node->fullPath(ws);
         cb(ws);
-        });
+    });
 }
 
 void DuplicateDetector::enumDuplicates(DupGroupCallback cb) const
@@ -181,5 +181,5 @@ void DuplicateDetector::treeDump(std::ostream& os)
         }
 
         os << ws2s(ws) << " (" << node->size() << ")\n";
-        });
+    });
 }
