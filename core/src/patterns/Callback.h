@@ -6,7 +6,7 @@
 
 namespace dp {
 
-template<class ...Args>
+template <class... Args>
 class Callback
 {
 public:
@@ -47,7 +47,7 @@ public:
         {
             if (fp)
             {
-                (*fp)(args ...);
+                (*fp)(args...);
             }
         }
     }
@@ -55,7 +55,7 @@ public:
 private:
     Functions pending_;
     Functions funcs_;
-    bool changed_{ false };
+    bool changed_ {false};
 
     void applyChanges()
     {
@@ -69,16 +69,17 @@ private:
 
     void removeIf(Functions& funcs, const FunctionPtr& fn)
     {
-        auto it = std::remove_if(funcs.begin(), funcs.end(),
-            [&fn](const FunctionPtr& fp) noexcept {
-                return fn == fp;
-            });
+        auto it = std::remove_if(funcs.begin(),
+                                 funcs.end(),
+                                 [&fn](const FunctionPtr& fp) noexcept {
+                                     return fn == fp;
+                                 });
 
         funcs.erase(it, funcs.end());
     }
 };
 
-template<class ...Args>
+template <class... Args>
 class ScopedCallback
 {
     using CallbackType = Callback<Args...>;
