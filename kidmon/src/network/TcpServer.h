@@ -56,5 +56,4 @@ private:
     ErrorCbs errorCb_;
 };
 
-}
-
+} // namespace tcp

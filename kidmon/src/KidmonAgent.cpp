@@ -306,7 +306,7 @@ class KidmonAgent::Impl
             if (nextCaptureTime_ < clock_type::now())
             {
                 nextCaptureTime_ = clock_type::now() + cfg_.snapshotInterval;
-                ImageFormat format = ImageFormat::jpg;
+                const ImageFormat format = ImageFormat::jpg;
 
                 if (window->capture(format, wndContent_))
                 {

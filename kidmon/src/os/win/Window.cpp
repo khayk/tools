@@ -171,23 +171,13 @@ bool saveToBuffer(HBITMAP bitmap, const ImageFormat format, std::vector<char>& c
     std::wstring_view guid = L"";
     switch (format)
     {
-        case ImageFormat::jpg:
-            guid = guidJpg;
-            break;
-        case ImageFormat::bmp:
-            guid = guidBmp;
-            break;
-        case ImageFormat::gif:
-            guid = guidGif;
-            break;
-        case ImageFormat::tif:
-            guid = guidTif;
-            break;
-        case ImageFormat::png:
-            guid = guidPng;
-            break;
-        default:
-            return false;
+        case ImageFormat::jpg: guid = guidJpg; break;
+        case ImageFormat::bmp: guid = guidBmp; break;
+        case ImageFormat::gif: guid = guidGif; break;
+        case ImageFormat::tif: guid = guidTif; break;
+        case ImageFormat::png: guid = guidPng; break;
+        
+        default: return false;
     }
 
     CLSID clsid {};

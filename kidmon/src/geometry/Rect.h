@@ -16,6 +16,7 @@ public:
     {
     }
 
+    // clang-format off
     uint32_t width() const noexcept { return dims_.width(); }
     uint32_t height() const noexcept { return dims_.height(); }
 
@@ -23,4 +24,5 @@ public:
     Point leftBottom() const noexcept { return leftTop_ + Point(0, height()); }
     Point rightTop() const noexcept { return leftTop_ + Point(width(), 0); }
     Point rightBottom() const noexcept { return leftTop_ + Point(width(), height()); }
+    // clang-format on
 };
