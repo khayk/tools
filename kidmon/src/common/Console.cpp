@@ -6,12 +6,12 @@
 #include <mutex>
 
 std::mutex g_mutex;
-void* g_instance{ nullptr };
+void* g_instance {nullptr};
 
 class Console::Impl
 {
     std::weak_ptr<Runnable> runnable_;
-    std::atomic<bool> stopped_{ false };
+    std::atomic<bool> stopped_ {false};
 
 #ifdef _WIN32
     _crt_signal_t prevSignal_ {nullptr};

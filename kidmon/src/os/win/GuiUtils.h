@@ -4,7 +4,7 @@
 
 class ScopedDeleteDC
 {
-    HDC hdc_{ nullptr };
+    HDC hdc_ {nullptr};
 
     ScopedDeleteDC(const ScopedDeleteDC&) = delete;
     ScopedDeleteDC(ScopedDeleteDC&&) = delete;
@@ -14,7 +14,8 @@ class ScopedDeleteDC
 public:
     ScopedDeleteDC(HDC hdc) noexcept
         : hdc_(hdc)
-    {}
+    {
+    }
 
     ~ScopedDeleteDC()
     {
@@ -34,8 +35,8 @@ public:
 
 class ScopedReleaseDC
 {
-    HWND hwnd_{ nullptr };
-    HDC hdc_{ nullptr };
+    HWND hwnd_ {nullptr};
+    HDC hdc_ {nullptr};
 
     ScopedReleaseDC(const ScopedReleaseDC&) = delete;
     ScopedReleaseDC(ScopedReleaseDC&&) = delete;
@@ -46,7 +47,8 @@ public:
     ScopedReleaseDC(HWND hwnd, HDC hdc) noexcept
         : hwnd_(hwnd)
         , hdc_(hdc)
-    {}
+    {
+    }
 
     ~ScopedReleaseDC()
     {
@@ -58,15 +60,18 @@ public:
         }
     }
 
-    HDC hdc() const noexcept { return hdc_; }
+    HDC hdc() const noexcept
+    {
+        return hdc_;
+    }
 };
 
 
 class ScopedSelectObject
 {
-    HDC hdc_{ nullptr };
-    HGDIOBJ obj_{ nullptr };
-    HGDIOBJ prevObj_{ nullptr };
+    HDC hdc_ {nullptr};
+    HGDIOBJ obj_ {nullptr};
+    HGDIOBJ prevObj_ {nullptr};
 
     ScopedSelectObject(const ScopedSelectObject&) = delete;
     ScopedSelectObject(ScopedSelectObject&&) = delete;
@@ -91,7 +96,7 @@ public:
 template <class T>
 class GdiObject
 {
-    T hobj_{ nullptr };
+    T hobj_ {nullptr};
 
     GdiObject(const GdiObject&) = delete;
     GdiObject& operator=(const GdiObject&) = delete;

@@ -1,5 +1,3 @@
 #include <gtest/gtest.h>
 
-TEST(DuplicateDetectorTest, WindowsPaths)
-{
-}
+TEST(DuplicateDetectorTest, WindowsPaths) {}

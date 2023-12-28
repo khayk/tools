@@ -5,7 +5,7 @@
 
 class WindowImpl : public Window
 {
-    HWND hwnd_{ nullptr };
+    HWND hwnd_ {nullptr};
     Rect rect_;
     std::string id_;
 

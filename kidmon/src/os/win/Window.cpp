@@ -4,25 +4,24 @@
 #include <psapi.h>
 #include <dwmapi.h>
 
-#pragma warning( push, 4 )
-#pragma warning( disable : 4458 )
+#pragma warning(push, 4)
+#pragma warning(disable : 4458)
 
 #include <gdiplus.h>
 #include <shellscalingapi.h>
 
-#pragma warning( pop )
+#pragma warning(pop)
 
 #include <spdlog/spdlog.h>
 
 #include <array>
 
-#pragma comment (lib, "Gdiplus.lib")
-#pragma comment (lib, "Shcore.lib")
-#pragma comment (lib, "Psapi.lib")
-#pragma comment (lib, "Dwmapi.lib")
+#pragma comment(lib, "Gdiplus.lib")
+#pragma comment(lib, "Shcore.lib")
+#pragma comment(lib, "Psapi.lib")
+#pragma comment(lib, "Dwmapi.lib")
 
-namespace
-{
+namespace {
 
 const std::wstring guidJpg = L"{557cf401-1a04-11d3-9a73-0000f81ef32e}";
 const std::wstring guidBmp = L"{557cf400-1a04-11d3-9a73-0000f81ef32e}";
@@ -37,7 +36,7 @@ std::string hwndToString(HWND hwnd)
     return fmt::format("{:#010x}", value);
 }
 
-}  // namespace
+} // namespace
 
 WindowImpl::WindowImpl(HWND hwnd) noexcept
     : hwnd_(hwnd)
@@ -47,7 +46,8 @@ WindowImpl::WindowImpl(HWND hwnd) noexcept
 
 class GdiPlusInitializer
 {
-    ULONG_PTR gdiplusToken_{ 0 };
+    ULONG_PTR gdiplusToken_ {0};
+
 public:
     GdiPlusInitializer()
     {
@@ -70,7 +70,8 @@ const std::string& WindowImpl::id() const
 std::string WindowImpl::title() const
 {
     std::array<char, 256> buffer {};
-    const int size = GetWindowTextA(hwnd_, buffer.data(), static_cast<int>(buffer.size()));
+    const int size =
+        GetWindowTextA(hwnd_, buffer.data(), static_cast<int>(buffer.size()));
 
     if (size)
     {
@@ -83,7 +84,8 @@ std::string WindowImpl::title() const
 std::string WindowImpl::className() const
 {
     std::array<char, 256> buffer {};
-    const int size = RealGetWindowClassA(hwnd_, buffer.data(), static_cast<int>(buffer.size()));
+    const int size =
+        RealGetWindowClassA(hwnd_, buffer.data(), static_cast<int>(buffer.size()));
 
     if (size)
     {
@@ -103,14 +105,16 @@ fs::path WindowImpl::ownerProcessPath() const
         return {};
     }
 
-    HMODULE modules{ nullptr };
-    DWORD modulesCount{ 0 };
-    DWORD sz{ 0 };
+    HMODULE modules {nullptr};
+    DWORD modulesCount {0};
+    DWORD sz {0};
     std::array<wchar_t, 256> modulePath {};
 
     if (EnumProcessModules(proc, &modules, sizeof(modules), &modulesCount))
     {
-        sz = GetModuleFileNameExW(proc, modules, modulePath.data(),
+        sz = GetModuleFileNameExW(proc,
+                                  modules,
+                                  modulePath.data(),
                                   static_cast<DWORD>(modulePath.size()));
     }
 
@@ -121,7 +125,7 @@ fs::path WindowImpl::ownerProcessPath() const
 
 uint64_t WindowImpl::ownerProcessId() const noexcept
 {
-    DWORD procId{ 0 };
+    DWORD procId {0};
     GetWindowThreadProcessId(hwnd_, &procId);
 
     return procId;
@@ -151,7 +155,7 @@ bool saveToBuffer(HBITMAP bitmap, const ImageFormat format, std::vector<char>& c
     Gdiplus::Bitmap bmp(bitmap, nullptr);
 
     // Write to IStream
-    IStream* istream{ nullptr };
+    IStream* istream {nullptr};
     auto hr = CreateStreamOnHGlobal(NULL, TRUE, &istream);
 
     if (FAILED(hr))
@@ -167,16 +171,26 @@ bool saveToBuffer(HBITMAP bitmap, const ImageFormat format, std::vector<char>& c
     std::wstring_view guid = L"";
     switch (format)
     {
-    case ImageFormat::jpg: guid = guidJpg; break;
-    case ImageFormat::bmp: guid = guidBmp; break;
-    case ImageFormat::gif: guid = guidGif; break;
-    case ImageFormat::tif: guid = guidTif; break;
-    case ImageFormat::png: guid = guidPng; break;
-    default:
-        return false;
+        case ImageFormat::jpg:
+            guid = guidJpg;
+            break;
+        case ImageFormat::bmp:
+            guid = guidBmp;
+            break;
+        case ImageFormat::gif:
+            guid = guidGif;
+            break;
+        case ImageFormat::tif:
+            guid = guidTif;
+            break;
+        case ImageFormat::png:
+            guid = guidPng;
+            break;
+        default:
+            return false;
     }
 
-    CLSID clsid{};
+    CLSID clsid {};
     if (FAILED(CLSIDFromString(guid.data(), &clsid)))
     {
         return false;
@@ -189,7 +203,7 @@ bool saveToBuffer(HBITMAP bitmap, const ImageFormat format, std::vector<char>& c
     }
 
     // Get memory handle associated with istream
-    HGLOBAL hg{ nullptr };
+    HGLOBAL hg {nullptr};
     if (FAILED(GetHGlobalFromStream(streamPtr.get(), &hg)))
     {
         return false;
@@ -227,7 +241,8 @@ bool WindowImpl::capture(const ImageFormat format, std::vector<char>& content)
 
     RECT rect {}, frame {};
     GetWindowRect(hwnd_, &rect);
-    HRESULT hr = DwmGetWindowAttribute(hwnd_, DWMWA_EXTENDED_FRAME_BOUNDS, &frame, sizeof(frame));
+    HRESULT hr =
+        DwmGetWindowAttribute(hwnd_, DWMWA_EXTENDED_FRAME_BOUNDS, &frame, sizeof(frame));
 
     if (SUCCEEDED(hr))
     {
@@ -248,7 +263,8 @@ bool WindowImpl::capture(const ImageFormat format, std::vector<char>& content)
     int windowWidth = rect.right - rect.left;
     int windowHeight = rect.bottom - rect.top;
 
-    GdiObject<HBITMAP> bmWnd(CreateCompatibleBitmap(windowDC.hdc(), windowWidth, windowHeight));
+    GdiObject<HBITMAP> bmWnd(
+        CreateCompatibleBitmap(windowDC.hdc(), windowWidth, windowHeight));
 
     if (!bmWnd.handle())
     {
@@ -259,17 +275,20 @@ bool WindowImpl::capture(const ImageFormat format, std::vector<char>& content)
     ScopedSelectObject sso(memDC.hdc(), bmWnd.handle());
     ScopedReleaseDC screenDC(nullptr, GetDC(nullptr));
 
-    //int screenWidth = GetSystemMetrics(SM_CXSCREEN);
-    //int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+    // int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+    // int screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
     SetStretchBltMode(memDC.hdc(), HALFTONE);
 
     if (!BitBlt(memDC.hdc(),
-        0, 0,
-        windowWidth, windowHeight,
-        screenDC.hdc(),
-        rect.left, rect.top,
-        SRCCOPY))
+                0,
+                0,
+                windowWidth,
+                windowHeight,
+                screenDC.hdc(),
+                rect.left,
+                rect.top,
+                SRCCOPY))
     {
         spdlog::error("BitBlt has failed");
         return false;
