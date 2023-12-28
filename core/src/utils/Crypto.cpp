@@ -20,7 +20,7 @@ void hexadecimal(unsigned char* const hash, size_t size, std::string& out)
         sprintf(out.data() + 2 * i, "%02x", hash[i]);
     }
 }
-}   // namespace 
+} // namespace
 
 void sha256(const std::string_view data, std::string& out)
 {
