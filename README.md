@@ -38,3 +38,10 @@ Own implementation of different tools.
 * `OpenCppCoverage.exe --sources tools\core --modules test.exe --export_type=html:.reports/core/  -- out\build\x64-Debug\core\core-test.exe`
 * `OpenCppCoverage.exe --sources tools\kidmon --modules test.exe --export_type=html:.reports/kidmon/  -- out\build\x64-Debug\kidmon\test\kidmon-test.exe`
 * TBD - the command line above is for reference only, later create a script to produce coverage
+
+## Formatting
+
+* The project formatted based on the settings in .clang-format file under the project root directory
+    * Open bash, navigate to project root directory
+    * Ensure you have installed `clang-format` version `17.0.1`
+    * Run `find . -iname *.h -o -iname *.cpp | xargs clang-format -i`, to format all {h,cpp} files in place
