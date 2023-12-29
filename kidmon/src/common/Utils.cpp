@@ -10,7 +10,6 @@
 #include "Utils.h"
 
 #include <utils/Str.h>
-#include <utils/FmtExt.h>
 
 #include <spdlog/spdlog.h>
 

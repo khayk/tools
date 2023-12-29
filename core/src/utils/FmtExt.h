@@ -21,6 +21,6 @@ struct fmt::formatter<fs::path> // NOSONAR cpp:S1642 "struct" names should compl
     template <typename FormatContext>
     auto format(const fs::path& ph, FormatContext& ctx)
     {
-        return fmt::format_to(ctx.out(), "{0}", file::path2s(ph));
+        return fmt::format_to(ctx.out(), "{}", file::path2s(ph));
     }
 };
