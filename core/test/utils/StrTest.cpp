@@ -26,7 +26,7 @@ TEST(UtilsStrTests, WS2S)
 TEST(UtilsStrTests, U8S2WS)
 {
     const auto s = u8"Բարև.";
-    const auto ws = s2ws(s);
+    const auto ws = s2ws(u8tos(s));
 
     EXPECT_EQ(ws[0], 0x0532);
     EXPECT_EQ(ws[1], 0x0561);

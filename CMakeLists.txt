@@ -16,7 +16,7 @@ message("CMake binary dir      : ${CMAKE_BINARY_DIR}")
 message("CMake source dir      : ${CMAKE_SOURCE_DIR}")
 message("Object dir            : ${OBJECT_DIR}")
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_compile_definitions(BOOST_BIND_NO_PLACEHOLDERS)
@@ -44,7 +44,6 @@ endif()
 
 # Diagnostic information
 message("Generated with config types: ${CMAKE_CONFIGURATION_TYPES}")
-
 
 add_subdirectory(core)
 add_subdirectory(duplicates)

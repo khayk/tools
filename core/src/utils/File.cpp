@@ -67,7 +67,7 @@ bool read(const fs::path& file, std::string& data, std::error_code& ec)
 
 std::string path2s(const fs::path& path)
 {
-    return str::u8tos(path.u8string());
+    return std::string(str::u8tos(path.u8string()));
 }
 
 } // namespace file

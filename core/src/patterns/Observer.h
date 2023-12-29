@@ -65,11 +65,9 @@ private:
 
     void cleanup()
     {
-        auto it =
-            std::remove_if(obs_.begin(), obs_.end(), [](const Observer* obs) noexcept {
-                return obs == nullptr;
-            });
-        obs_.erase(it, obs_.end());
+        std::erase_if(obs_, [](const Observer* obs) noexcept {
+            return obs == nullptr;
+        });
         dirty_ = false;
     }
 };

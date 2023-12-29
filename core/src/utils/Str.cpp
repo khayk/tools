@@ -17,19 +17,14 @@ std::string ws2s(std::wstring_view utf16)
 }
 
 #if !defined(__cpp_lib_char8_t)
-std::string u8tos(const std::string& s)
+std::string_view u8tos(const std::string_view sv)
 {
-    return s;
-}
-
-std::string u8tos(std::string&& s)
-{
-    return std::move(s);
+    return sv;
 }
 #else
-std::string u8tos(const std::u8string_view& s)
+std::string_view u8tos(const std::u8string_view u8sv)
 {
-    return std::string(s.begin(), s.end());
+    return std::string_view(reinterpret_cast<const char*>(u8sv.data()), u8sv.size());
 }
 #endif
 
