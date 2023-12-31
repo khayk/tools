@@ -167,9 +167,9 @@ TEST(UnpackerTest, UnpackData_1Gb)
         if (!first)
         {
             EXPECT_EQ(packed, unpacked);
-            first = false;
         }
 
+        first = false;
         packed.clear();
         unpacked.clear();
     }

@@ -5,9 +5,9 @@ file(GLOB LIB_SRCS
 
 list(FILTER LIB_SRCS EXCLUDE REGEX ".*Main.cpp")
 
-
 # Adding a library project
 add_library(${PROJECT_LIB} ${LIB_SRCS})
+target_include_directories(${PROJECT_LIB} PUBLIC ../include)
 target_link_libraries(${PROJECT_LIB} PUBLIC core)
 
 # Adding executable project

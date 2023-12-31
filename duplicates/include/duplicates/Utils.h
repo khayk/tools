@@ -1,10 +1,7 @@
 #pragma once
 
-#include <string>
 #include <map>
 
-std::wstring s2ws(const std::string& utf8);
-std::string ws2s(const std::wstring& utf16);
 uint16_t digits(size_t n);
 
 template <class Key, class T, class Compare, class Alloc, class Pred>

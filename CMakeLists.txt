@@ -24,6 +24,7 @@ add_compile_definitions(BOOST_BIND_NO_PLACEHOLDERS)
 add_compile_definitions(BOOST_ASIO_NO_DEPRECATED)
 
 if(MSVC)
+   set_property(GLOBAL PROPERTY USE_FOLDERS ON)
    string(REGEX REPLACE "/W[3|4]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
    add_compile_options(/W4)
    add_compile_options("/MP${BUILD_JOBS}")
@@ -46,7 +47,6 @@ endif()
 # Diagnostic information
 message("Generated with config types: ${CMAKE_CONFIGURATION_TYPES}")
 
-enable_testing()
 add_subdirectory(core)
 add_subdirectory(duplicates)
 add_subdirectory(kidmon)
