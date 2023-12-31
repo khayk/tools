@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <patterns/Callback.h>
+#include <core/patterns/Callback.h>
 
 #include <tuple>
 

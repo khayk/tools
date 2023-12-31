@@ -1,18 +1,4 @@
-#include "Utils.h"
-#include <codecvt>
-#include <locale>
-
-using ConverterType = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>;
-
-std::wstring s2ws(const std::string& utf8)
-{
-    return ConverterType().from_bytes(utf8);
-}
-
-std::string ws2s(const std::wstring& utf16)
-{
-    return ConverterType().to_bytes(utf16);
-}
+#include <duplicates/Utils.h>
 
 uint16_t digits(size_t n)
 {

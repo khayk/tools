@@ -7,10 +7,6 @@ file(GLOB LIB_SRCS
    "common/*.cpp"
    "geometry/*.h"
    "geometry/*.cpp"
-   "network/*.h"
-   "network/*.cpp"
-   "network/data/*.h"
-   "network/data/*.cpp"
    "os/*.h"
    "os/*.cpp"
 )
@@ -31,7 +27,7 @@ elseif(UNIX AND NOT APPLE)
    list(APPEND LIB_SRCS ${OS_LINUX})
 endif()
 
-include_directories(".")
+# include_directories(".")
 
 list(FILTER LIB_SRCS EXCLUDE REGEX ".*Main.cpp")
 
@@ -49,10 +45,9 @@ endif()
 
 # find_package(SQLite3 REQUIRED)
 # find_package(SqliteOrm REQUIRED)
-
-if(SqliteOrm_FOUND)
-   message("SqliteOrm found    : ${SqliteOrm_INCLUDE_DIRS}")
-endif()
+# if(SqliteOrm_FOUND)
+#    message("SqliteOrm found    : ${SqliteOrm_INCLUDE_DIRS}")
+# endif()
 
 message("Spdlog include     : ${spdlog_DIR}")
 message("Boost include      : ${Boost_INCLUDE_DIRS}")
@@ -63,23 +58,20 @@ message("Boost library      : ${Boost_LIBRARY_DIRS}")
 add_library(${PROJECT_LIB} ${LIB_SRCS})
 
 message("${PROJECT_NAME} sources     : ${CMAKE_CURRENT_SOURCE_DIR}")
-target_include_directories(${PROJECT_LIB} PUBLIC 
-    ${CMAKE_CURRENT_SOURCE_DIR}
-)
+target_include_directories(${PROJECT_LIB} PUBLIC ../include)
 
-target_link_libraries(${PROJECT_LIB} PUBLIC  
+target_link_libraries(${PROJECT_LIB} PUBLIC
     nlohmann_json::nlohmann_json
-    spdlog::spdlog 
+    spdlog::spdlog
     core
 )
 
 # Adding executable project
 add_executable(${PROJECT_APP} Main.cpp)
 target_link_libraries (${PROJECT_APP} PRIVATE ${PROJECT_LIB} cxxopts::cxxopts)
+
 # target_link_libraries(${PROJECT_APP} sqlite_orm::sqlite_orm)
 # target_link_libraries(${PROJECT_APP} PRIVATE ${SQLite3_LIBRARY})
-# target_link_libraries(${PROJECT_APP} PRIVATE ${OPENSSL_LIBRARIES})
-
 
 if(MSVC)
    ADD_CUSTOM_COMMAND(

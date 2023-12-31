@@ -1,4 +1,4 @@
-#include "Console.h"
+#include <kidmon/common/Console.h>
 
 #include <spdlog/spdlog.h>
 

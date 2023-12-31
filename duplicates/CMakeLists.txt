@@ -1,8 +1,8 @@
 project(duplicates VERSION 0.0.1)
 
-set(projectLib "${PROJECT_NAME}")
-set(projectApp "${PROJECT_NAME}-app")
-set(projectTest "${PROJECT_NAME}-test")
+set(PROJECT_LIB "${PROJECT_NAME}")
+set(PROJECT_APP "${PROJECT_NAME}-app")
+set(PROJECT_TST "${PROJECT_NAME}-test")
 
 add_subdirectory(src)
 add_subdirectory(test)

@@ -1,11 +1,12 @@
-#include "StopWatch.h"
-#include "DuplicateDetector.h"
-#include "Utils.h"
+#include <duplicates/DuplicateDetector.h>
+#include <core/utils/StopWatch.h>
+#include <core/utils/Str.h>
 
 #include <iostream>
 #include <codecvt>
 #include <locale>
 #include <string_view>
+#include <fstream>
 
 void printUsage()
 {
@@ -62,19 +63,19 @@ int main(int argc, const char* argv[])
         }
 
         std::cout << "Discovered files: " << detector.files();
-        std::cout << ", elapsed: " << sw.elapsedMls() << " ms" << std::endl;
+        std::cout << ", elapsed: " << sw.elapsedMs() << " ms" << std::endl;
 
         // Dump content
         std::cout << "\nPrinting the content of the directory...\n\n";
         detector.enumFiles([](const std::wstring& ws) {
-            std::cout << ws2s(ws) << '\n';
+            std::cout << str::ws2s(ws) << '\n';
         });
         std::cout << "\nPrinting completed.\n";
 
         sw.start();
         std::cout << "\nDetecting duplicates...:\n";
         detector.detect(Options {});
-        std::cout << "Detection took: " << sw.elapsedMls() << " ms" << std::endl;
+        std::cout << "Detection took: " << sw.elapsedMs() << " ms" << std::endl;
 
         detector.treeDump(std::cout);
 
@@ -86,8 +87,8 @@ int main(int argc, const char* argv[])
 
             for (const auto& e : group.entires)
             {
-                std::cout << group.groupId << ',' << ws2s(e.dir) << ','
-                          << ws2s(e.filename) << ','
+                std::cout << group.groupId << ',' << str::ws2s(e.dir) << ','
+                          << str::ws2s(e.filename) << ','
                           << std::string_view(e.sha).substr(0, 10) << ',' << e.size
                           << "\n";
             }

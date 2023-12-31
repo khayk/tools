@@ -1,9 +1,10 @@
-#include "DuplicateDetector.h"
-#include "StopWatch.h"
-#include "Utils.h"
+#include <duplicates/DuplicateDetector.h>
+#include <duplicates/Utils.h>
+
+#include <core/utils/StopWatch.h>
+#include <core/utils/Str.h>
 
 #include <iostream>
-#include <iomanip>
 
 DuplicateDetector::DuplicateDetector()
 {
@@ -180,6 +181,6 @@ void DuplicateDetector::treeDump(std::ostream& os)
             os << "* ";
         }
 
-        os << ws2s(ws) << " (" << node->size() << ")\n";
+        os << str::ws2s(ws) << " (" << node->size() << ")\n";
     });
 }

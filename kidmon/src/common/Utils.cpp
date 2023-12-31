@@ -7,9 +7,8 @@
 #else
 #endif
 
-#include "Utils.h"
-
-#include <utils/Str.h>
+#include <kidmon/common/Utils.h>
+#include <core/utils/Str.h>
 
 #include <spdlog/spdlog.h>
 
@@ -66,7 +65,7 @@ bool isUserInteractive() noexcept
 
     if (hWinStation != nullptr)
     {
-        USEROBJECTFLAGS uof = {0};
+        USEROBJECTFLAGS uof = {};
         if (GetUserObjectInformation(hWinStation,
                                      UOI_FLAGS,
                                      &uof,

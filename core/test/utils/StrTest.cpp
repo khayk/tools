@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "utils/Str.h"
+#include <core/utils/Str.h>
 
 using namespace str;
 

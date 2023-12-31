@@ -6,8 +6,6 @@
 
 #include <spdlog/spdlog.h>
 
-#include <array>
-
 ApiPtr ApiFactory::create()
 {
     return std::make_unique<ApiImpl>();

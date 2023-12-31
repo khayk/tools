@@ -1,5 +1,5 @@
-#include "Config.h"
-#include "common/Utils.h"
+#include <kidmon/config/Config.h>
+#include <kidmon/common/Utils.h>
 
 using namespace std::chrono_literals;
 
