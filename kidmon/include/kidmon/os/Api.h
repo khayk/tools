@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Window.h"
-#include "ProcessLauncher.h"
+#include <kidmon/os/Window.h>
+#include <kidmon/os/ProcessLauncher.h>
 
 #include <memory>
 

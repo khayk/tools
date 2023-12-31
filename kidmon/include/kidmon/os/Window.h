@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../geometry/Rect.h"
-#include "../common/Enums.h"
+#include <kidmon/geometry/Rect.h>
+#include <kidmon/common/Enums.h>
 
 #include <cstdint>
 #include <string>

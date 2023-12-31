@@ -1,13 +1,13 @@
-#include "KidmonAgent.h"
-#include "os/Api.h"
-#include "common/Utils.h"
-#include <utils/FmtExt.h>
-#include <utils/Str.h>
-#include <utils/File.h>
-#include <utils/Crypto.h>
+#include <kidmon/KidmonAgent.h>
+#include <kidmon/os/Api.h>
+#include <kidmon/common/Utils.h>
 
-#include <network/TcpClient.h>
-#include <network/TcpCommunicator.h>
+#include <core/utils/FmtExt.h>
+#include <core/utils/Str.h>
+#include <core/utils/File.h>
+#include <core/utils/Crypto.h>
+#include <core/network/TcpClient.h>
+#include <core/network/TcpCommunicator.h>
 
 #include <nlohmann/json.hpp>
 #include <boost/asio.hpp>
@@ -172,7 +172,7 @@ class KidmonAgent::Impl
 
         ReportDirs dirs;
 
-        dirs.snapshotsDir = userReportsRoot / "snapshoots";
+        dirs.snapshotsDir = userReportsRoot / "snapshots";
         dirs.dailyDir = userReportsRoot / "daily";
         dirs.monthlyDir = userReportsRoot / "monthly";
         dirs.weeklyDir = userReportsRoot / "weekly";
@@ -273,7 +273,7 @@ class KidmonAgent::Impl
             auto window = api_->foregroundWindow();
             if (!window)
             {
-                spdlog::warn("Unable to detect forground window");
+                spdlog::warn("Unable to detect foreground window");
                 return;
             }
 

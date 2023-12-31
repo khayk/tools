@@ -1,8 +1,8 @@
 #include "ProcessLauncher.h"
-#include "../../common/Utils.h"
-#include "../../common/Tracer.h"
-#include "utils/FmtExt.h"
-#include "utils/Str.h"
+#include <kidmon/common/Utils.h>
+#include <kidmon/common/Tracer.h>
+#include <core/utils/FmtExt.h>
+#include <core/utils/Str.h>
 
 #include <Windows.h>
 #include <UserEnv.h>

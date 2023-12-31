@@ -1,4 +1,4 @@
-#include "Enums.h"
+#include <kidmon/common/Enums.h>
 
 #define EnumStringify(x) #x
 #define EnumDef(x) x

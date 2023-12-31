@@ -1,9 +1,10 @@
-#include "KidmonServer.h"
-#include "common/Utils.h"
-#include "os/Api.h"
-#include "network/TcpServer.h"
-#include "network/TcpCommunicator.h"
-#include <utils/Str.h>
+#include <kidmon/KidmonServer.h>
+#include <kidmon/common/Utils.h>
+#include <kidmon/os/Api.h>
+
+#include <core/network/TcpServer.h>
+#include <core/network/TcpCommunicator.h>
+#include <core/utils/Str.h>
 
 #include <spdlog/spdlog.h>
 #include <boost/asio.hpp>

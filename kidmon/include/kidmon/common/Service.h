@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Runnable.h"
+#include <kidmon/common/Runnable.h>
 #include <memory>
 #include <string>
 

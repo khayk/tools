@@ -1,13 +1,13 @@
-#include "KidmonAgent.h"
-#include "KidmonServer.h"
-#include "config/Config.h"
-#include "common/Console.h"
-#include "common/Service.h"
-#include "common/Utils.h"
-#include "common/Tracer.h"
+#include <kidmon/KidmonAgent.h>
+#include <kidmon/KidmonServer.h>
+#include <kidmon/config/Config.h>
+#include <kidmon/common/Console.h>
+#include <kidmon/common/Service.h>
+#include <kidmon/common/Utils.h>
+#include <kidmon/common/Tracer.h>
 
-#include <utils/File.h>
-#include <utils/Str.h>
+#include <core/utils/File.h>
+#include <core/utils/Str.h>
 
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
