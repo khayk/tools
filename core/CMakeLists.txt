@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.5)
 project(core)
 
 set(PROJECT_LIB  ${PROJECT_NAME})
-set(PROJECT_TEST ${PROJECT_NAME}-test)
+set(PROJECT_TST ${PROJECT_NAME}-test)
 
 # =========================================================
 # Lib files
@@ -55,9 +55,11 @@ set(TEST_SRCS ${UTILS_FILES} ${PATTERNS_FILES})
 
 find_package(GTest REQUIRED)
 
-add_executable(${PROJECT_TEST} ${TEST_SRCS})
+add_executable(${PROJECT_TST} ${TEST_SRCS})
 
-target_link_libraries(${PROJECT_TEST} PRIVATE
+target_link_libraries(${PROJECT_TST} PRIVATE
     ${PROJECT_LIB}
     GTest::gmock_main
 )
+
+gtest_discover_tests(${PROJECT_TST})

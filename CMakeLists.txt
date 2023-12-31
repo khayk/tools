@@ -18,6 +18,7 @@ message("Object dir            : ${OBJECT_DIR}")
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_compile_definitions(BOOST_BIND_NO_PLACEHOLDERS)
 add_compile_definitions(BOOST_ASIO_NO_DEPRECATED)
@@ -45,6 +46,7 @@ endif()
 # Diagnostic information
 message("Generated with config types: ${CMAKE_CONFIGURATION_TYPES}")
 
+enable_testing()
 add_subdirectory(core)
 add_subdirectory(duplicates)
 add_subdirectory(kidmon)

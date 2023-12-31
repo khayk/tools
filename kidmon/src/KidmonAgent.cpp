@@ -300,8 +300,8 @@ class KidmonAgent::Impl
 
             entry.processInfo.sha256 = crypto::fileSha256(entry.processInfo.processPath);
 
-            spdlog::trace("Forground wnd: {}", oss.str());
-            spdlog::trace("Executable: {}\n", entry.processInfo.processPath);
+            spdlog::trace("Foreground wnd: {}", oss.str());
+            spdlog::trace("Executable: {}", entry.processInfo.processPath);
 
             if (nextCaptureTime_ < clock_type::now())
             {
