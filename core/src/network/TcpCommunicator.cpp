@@ -1,4 +1,4 @@
-#include "TcpCommunicator.h"
+#include <core/network/TcpCommunicator.h>
 
 namespace tcp {
 

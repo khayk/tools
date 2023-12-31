@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#include <patterns/Observer.h>
+#include <core/patterns/Observer.h>
 
 using namespace dp;
 using ::testing::_;

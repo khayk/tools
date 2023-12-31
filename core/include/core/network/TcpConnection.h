@@ -1,6 +1,6 @@
 #pragma once
 
-#include <patterns/Callback.h>
+#include <core/patterns/Callback.h>
 
 #include <boost/asio.hpp>
 #include <boost/asio/buffer.hpp>

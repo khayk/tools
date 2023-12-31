@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ISource.h"
+#include <core/network/data/ISource.h>
 
 namespace data {
 

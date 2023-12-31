@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
-#include "network/TcpClient.h"
-#include "network/TcpServer.h"
+#include <core/network/TcpClient.h>
+#include <core/network/TcpServer.h>
 
 namespace {
 

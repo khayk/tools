@@ -1,9 +1,9 @@
 #pragma once
 
-#include "TcpConnection.h"
-#include <network/data/Unpacker.h>
-#include <network/data/Packer.h>
-#include <network/data/StringSource.h>
+#include <core/network/TcpConnection.h>
+#include <core/network/data/Unpacker.h>
+#include <core/network/data/Packer.h>
+#include <core/network/data/StringSource.h>
 
 #include <queue>
 

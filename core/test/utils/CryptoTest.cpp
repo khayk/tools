@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "utils/File.h"
-#include "utils/Crypto.h"
+#include <core/utils/File.h>
+#include <core/utils/Crypto.h>
 
 #include <array>
 #include <filesystem>

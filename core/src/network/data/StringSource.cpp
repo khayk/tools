@@ -1,4 +1,4 @@
-#include "StringSource.h"
+#include <core/network/data/StringSource.h>
 
 namespace data {
 

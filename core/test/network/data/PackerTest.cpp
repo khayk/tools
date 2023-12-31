@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "network/data/Packer.h"
-#include "network/data/StringSource.h"
+#include <core/network/data/Packer.h>
+#include <core/network/data/StringSource.h>
 
 using namespace data;
 
