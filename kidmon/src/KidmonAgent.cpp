@@ -381,7 +381,7 @@ KidmonAgent::~KidmonAgent()
 
 void KidmonAgent::run()
 {
-    spdlog::trace("Running KidmonAgent application");
+    spdlog::trace("Running KidmonAgent");
 
     impl_->run();
 }

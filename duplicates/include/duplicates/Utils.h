@@ -1,6 +1,8 @@
 #pragma once
 
 #include <map>
+#include <cstdint>
+#include <cstddef>
 
 uint16_t digits(size_t n);
 

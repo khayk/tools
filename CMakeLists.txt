@@ -26,6 +26,7 @@ add_compile_definitions(BOOST_ASIO_NO_DEPRECATED)
 if(MSVC)
    set_property(GLOBAL PROPERTY USE_FOLDERS ON)
    string(REGEX REPLACE "/W[3|4]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+   string(APPEND CMAKE_CXX_FLAGS " /Zc:__cplusplus /MP")
    add_compile_options(/W4)
    add_compile_options("/MP${BUILD_JOBS}")
    add_compile_definitions(_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
@@ -34,8 +35,6 @@ if(MSVC)
    add_compile_definitions(NOMINMAX)
    add_compile_definitions(_CRT_SECURE_NO_WARNINGS)   # // @todo:khayk deal with this
    add_compile_definitions(_WINSOCK_DEPRECATED_NO_WARNINGS)   # // @todo:khayk deal with this
-
-   # add_compile_definitions(PSAPI_VERSION=1)
 else()
    add_compile_options(-Wall -Wextra -Wpedantic)
 
@@ -46,6 +45,16 @@ endif()
 
 # Diagnostic information
 message("Generated with config types: ${CMAKE_CONFIGURATION_TYPES}")
+
+option(TOOLS_TIDY "run clang-tidy" OFF)
+
+if(TOOLS_TIDY)
+    set(CMAKE_CXX_CLANG_TIDY "clang-tidy")
+    set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+    message(STATUS "Enabled clang-tidy")
+endif()
+
+option(BUILD_TESTS "Tests enabled by default" OFF)
 
 add_subdirectory(core)
 add_subdirectory(duplicates)

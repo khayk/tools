@@ -51,6 +51,8 @@ fs::path config(std::error_code& ec);
 fs::path config();
 }; // namespace dirs
 
+
+
 class SingleInstanceChecker
 {
     std::wstring appName_;

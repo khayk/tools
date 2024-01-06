@@ -4,4 +4,8 @@ set(PROJECT_LIB  ${PROJECT_NAME})
 set(PROJECT_TST ${PROJECT_NAME}-test)
 
 add_subdirectory(src)
-add_subdirectory(test)
+
+if(BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(test)
+endif()

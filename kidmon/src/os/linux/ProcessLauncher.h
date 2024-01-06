@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../ProcessLauncher.h"
+#include <kidmon/os/ProcessLauncher.h>
 
 class ProcessLauncherImpl : public ProcessLauncher
 {

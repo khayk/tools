@@ -2,7 +2,6 @@
 #include "Window.h"
 #include "ProcessLauncher.h"
 
-#include <exception>
 #include <fmt/format.h>
 
 ApiPtr ApiFactory::create()

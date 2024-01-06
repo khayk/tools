@@ -1,5 +1,3 @@
-enable_testing()
-
 file(GLOB_RECURSE TEST_SRCS
    "*.cpp"
 )

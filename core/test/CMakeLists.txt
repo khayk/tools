@@ -1,5 +1,3 @@
-enable_testing()
-
 file(GLOB NETWORK_FILES
     "network/data/*.cpp"
     "network/data/*.h"
@@ -29,5 +27,4 @@ target_link_libraries(${PROJECT_TST} PRIVATE
     GTest::gmock_main
 )
 
-add_test(NAME ${PROJECT_TST} COMMAND ${PROJECT_TST})
 gtest_discover_tests(${PROJECT_TST})

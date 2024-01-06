@@ -4,5 +4,13 @@ set(PROJECT_LIB "${PROJECT_NAME}")
 set(PROJECT_APP "${PROJECT_NAME}-app")
 set(PROJECT_TST "${PROJECT_NAME}-test")
 
+if(MSVC)
+    add_compile_definitions(PSAPI_VERSION=1)
+endif()
+
 add_subdirectory(src)
-add_subdirectory(test)
+
+if(BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(test)
+endif()

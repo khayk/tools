@@ -1,5 +1,6 @@
-#include "../Window.h"
-#include "../../geometry/Rect.h"
+#include <kidmon/os/Window.h>
+#include <kidmon/geometry/Rect.h>
+
 
 class WindowImpl : public Window
 {
