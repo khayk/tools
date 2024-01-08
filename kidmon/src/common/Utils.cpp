@@ -338,3 +338,23 @@ void SingleInstanceChecker::report() const
 {
     spdlog::info("One instance of '{}' is already running.", str::ws2s(appName_));
 }
+
+
+namespace utl {
+
+std::string generateToken(const size_t length)
+{
+    auto randchar = []() -> char {
+        constexpr std::string_view charset = "0123456789"
+                                             "abcdefghijklmnopqrstuvwxyz"
+                                             "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        return charset[rand() % (charset.size() - 1)];
+    };
+
+    std::string token(length, 0);
+    std::generate_n(token.begin(), length, randchar);
+
+    return token;
+}
+
+} // namespace utl

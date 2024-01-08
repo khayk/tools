@@ -54,7 +54,7 @@ if(TOOLS_TIDY)
     message(STATUS "Enabled clang-tidy")
 endif()
 
-option(BUILD_TESTS "Tests enabled by default" OFF)
+option(BUILD_TESTS "Tests enabled by default" ON)
 
 add_subdirectory(core)
 add_subdirectory(duplicates)

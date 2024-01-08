@@ -1,5 +1,6 @@
 file(GLOB_RECURSE TEST_SRCS
    "*.cpp"
+   "common/*.cpp"
 )
 
 find_package(GTest REQUIRED)

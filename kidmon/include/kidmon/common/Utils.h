@@ -49,6 +49,7 @@ fs::path data();
  */
 fs::path config(std::error_code& ec);
 fs::path config();
+
 }; // namespace dirs
 
 
@@ -66,3 +67,16 @@ public:
     bool processAlreadyRunning() const noexcept;
     void report() const;
 };
+
+namespace utl {
+
+/**
+ * @brief  Generate a alpha-numeric string with a given length
+ * 
+ * @param length The length of the token to be generated
+ *
+ * @return  The alpha-numeric string
+ */
+std::string generateToken(const size_t length = 16);
+
+} // namespace utl
