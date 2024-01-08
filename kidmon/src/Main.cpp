@@ -1,5 +1,5 @@
-#include <kidmon/KidmonAgent.h>
-#include <kidmon/KidmonServer.h>
+#include <kidmon/agent/KidmonAgent.h>
+#include <kidmon/server/KidmonServer.h>
 #include <kidmon/config/Config.h>
 #include <kidmon/common/Console.h>
 #include <kidmon/common/Service.h>
@@ -100,9 +100,7 @@ int main(int argc, char* argv[])
         trace.emplace("",
                       fmt::format("{:-^80s}", "> START <"),
                       fmt::format("{:-^80s}\n", "> END <"));
-
         ScopedTrace main(__FUNCTION__);
-
         spdlog::trace("Active username: {}", str::ws2s(sys::activeUserName()));
 
         std::shared_ptr<Runnable> app;

@@ -7,6 +7,9 @@ Server::Server(IoContext& ioc)
     , acceptor_(ioc_)
     , socket_(ioc_)
 {
+    createConnCb_ = [](Socket&& socket) {
+        return std::make_shared<Connection>(std::move(socket));
+    };
 }
 
 Server::~Server()
@@ -32,6 +35,11 @@ void Server::onClose(CloseCb closeCb)
 void Server::onError(ErrorCb errorCb)
 {
     errorCb_.add(std::move(errorCb));
+}
+
+void Server::onCreateConnection(CreateConnectionCb createConnCb)
+{
+    createConnCb_ = std::move(createConnCb);
 }
 
 void Server::listen(const Options& opts)
@@ -82,7 +90,7 @@ void Server::doAccept()
             return;
         }
 
-        auto conn = std::make_shared<Connection>(std::move(socket_));
+        auto conn = createConnCb_(std::move(socket_));
         connCb_(*conn);
 
         doAccept();

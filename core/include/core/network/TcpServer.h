@@ -17,22 +17,25 @@ public:
     using CloseCb        = CloseCbs::Function;
     using ErrorCb        = ErrorCbs::Function;
 
+    using CreateConnectionCb = std::function<std::shared_ptr<Connection>(Socket&&)>;
+
     struct Options
     {
         uint16_t port {0};
         bool reuseAddress {false};
     };
 
-    Server(IoContext& ioc);
+    explicit Server(IoContext& ioc);
     ~Server();
 
     /**
-     * @brief Events
+     * @brief Event handlers
      */
     void onListening(ListeningCb listenCb);
     void onConnection(ConnectionCb connCb);
     void onClose(CloseCb closeCb);
     void onError(ErrorCb errorCb);
+    void onCreateConnection(CreateConnectionCb createConnCb);
 
     /**
      * @brief Operations
@@ -54,6 +57,7 @@ private:
     ConnectionCbs connCb_;
     CloseCbs closeCb_;
     ErrorCbs errorCb_;
+    CreateConnectionCb createConnCb_;
 };
 
 } // namespace tcp

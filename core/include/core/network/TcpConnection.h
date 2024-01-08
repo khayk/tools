@@ -32,7 +32,7 @@ public:
     using ErrorCb       = ErrorCbs::Function;
     using DisconnectCb  = DisconnectCbs::Function;
 
-    Connection(Socket socket) noexcept;
+    explicit Connection(Socket socket) noexcept;
     ~Connection();
 
     void onRead(ReadCb readCb);

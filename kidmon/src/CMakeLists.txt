@@ -1,12 +1,18 @@
 file(GLOB LIB_SRCS
    "*.h"
    "*.cpp"
+   "agent/*.h"
+   "agent/*.cpp"
    "config/*.h"
    "config/*.cpp"
    "common/*.h"
    "common/*.cpp"
    "geometry/*.h"
    "geometry/*.cpp"
+   "server/*.h"
+   "server/*.cpp"
+   "server/handler/*.h"
+   "server/handler/*.cpp"
    "os/*.h"
    "os/*.cpp"
 )

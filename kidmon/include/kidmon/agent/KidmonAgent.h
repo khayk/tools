@@ -1,7 +1,7 @@
 #pragma once
 
-#include "common/Runnable.h"
-#include "config/Config.h"
+#include <kidmon/common/Runnable.h>
+#include <kidmon/config/Config.h>
 #include <memory>
 
 class KidmonAgent : public Runnable
