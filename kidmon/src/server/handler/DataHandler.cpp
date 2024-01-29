@@ -2,15 +2,15 @@
 
 #include <nlohmann/json.hpp>
 
-bool DataHandler::handle(const nlohmann::json& req,
-                         nlohmann::json& resp,
+bool DataHandler::handle(const nlohmann::json& payload,
+                         nlohmann::json& answer,
                          std::string& error)
 {
-    std::ignore = req;
-    std::ignore = resp;
+    std::ignore = payload;
+    std::ignore = answer;
     std::ignore = error;
 
-    resp = R"({"status":"ok"})";
+    answer = R"({})";
 
     return false;
 }

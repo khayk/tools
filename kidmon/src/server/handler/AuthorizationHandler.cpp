@@ -7,13 +7,25 @@ void AuthorizationHandler::setToken(std::string_view token)
     token_ = token;
 }
 
-bool AuthorizationHandler::handle(const nlohmann::json& req,
-                                  nlohmann::json& resp,
+bool AuthorizationHandler::handle(const nlohmann::json& payload,
+                                  nlohmann::json& answer,
                                   std::string& error)
 {
-    const auto it = req.find("token");
+    const auto nit = payload.find("name");
+    if (nit == payload.end() || (*nit).get<std::string>() != "auth")
+    {
+        return false;
+    }
 
-    if (it != req.end())
+    const auto im = payload.find("message");
+    if (im == payload.end())
+    {
+        return false;
+    }
+
+    const auto it = (*im).find("token");
+
+    if (it != (*im).end())
     {
         std::string token;
         (*it).get_to(token);
@@ -23,7 +35,7 @@ bool AuthorizationHandler::handle(const nlohmann::json& req,
             error.assign("Invalid authorization token");
         }
 
-        resp["authorized"] = error.empty();
+        answer["authorized"] = error.empty();
         return true;
     }
 

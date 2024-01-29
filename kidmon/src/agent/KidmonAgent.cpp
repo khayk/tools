@@ -26,26 +26,38 @@ namespace {
 
 std::string buildAuthMsg(std::string_view authToken)
 {
-    nlohmann::json js = {{"token", authToken},
-                         {"username", str::ws2s(sys::activeUserName())}};
+    nlohmann::ordered_json js = {
+        {"name", "auth"},
+        {"message", {{"username", str::ws2s(sys::activeUserName())},
+                     {"token", authToken}}}
+    };
+
     return js.dump();
 }
+
 
 class AgentMsgHandler
 {
 public:
     using AuthCb = std::function<void(bool)>;
     using MsgCb = std::function<void(const nlohmann::json&)>;
+    using ErrCb = std::function<void(int, const std::string&)>;
 
     bool handle(const std::string& msg)
     {
+        int status = 0;
+        std::string error;
+
         try
         {
             nlohmann::json js = nlohmann::json::parse(msg);
+            status = js["status"].get<int>();
+            error = js["error"].get<std::string>();
+            const auto& answer = js["answer"];
 
             if (!authReported_)
             {
-                authCb_(js["authorized"].get<bool>());
+                authCb_(answer["authorized"].get<bool>());
                 authReported_ = true;
             }
             else
@@ -57,7 +69,7 @@ public:
         }
         catch (const std::exception& ex)
         {
-            spdlog::error("Exception: {}", ex.what());
+            errCb_(status, ex.what());
         }
 
         return false;
@@ -73,10 +85,16 @@ public:
         msgCb_ = std::move(msgCb);
     }
 
+    void onError(ErrCb errCb)
+    {
+        errCb_ = std::move(errCb);
+    }
+
 private:
     bool authReported_ {false};
     AuthCb authCb_;
     MsgCb msgCb_;
+    ErrCb errCb_;
 };
 
 } // namespace
@@ -216,6 +234,12 @@ class KidmonAgent::Impl
             spdlog::info("Agent processing msg: {}", msg.dump());
             std::ignore = msg;
         });
+
+        handler_.onError([](int status, const std::string& error) {
+            spdlog::error("Error in agent handler - status: {}, error: {}",
+                          status,
+                          error);
+        });
     }
 
     void initiateConnect()
@@ -245,7 +269,7 @@ class KidmonAgent::Impl
             // Initiate authorization process
             std::string authMsg = buildAuthMsg(cfg_.authToken);
             spdlog::trace("Sending auth message: {}", authMsg);
-            comm_->send(authMsg);
+            comm_->sendAsync(authMsg);
         });
 
         tcpClient_.onError([this](const ErrorCode& ec) {
@@ -262,7 +286,7 @@ class KidmonAgent::Impl
     void collectData()
     {
         timer_.expires_after(timeout_);
-        timer_.async_wait(std::bind(&Impl::collectData, this));
+        timer_.async_wait([this](const ErrorCode&) { collectData(); });
 
         try
         {

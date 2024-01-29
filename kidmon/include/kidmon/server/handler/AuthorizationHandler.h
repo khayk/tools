@@ -9,7 +9,7 @@ class AuthorizationHandler : public MsgHandler
 public:
     void setToken(std::string_view token);
 
-    bool handle(const nlohmann::json& req,
-                nlohmann::json& resp,
+    bool handle(const nlohmann::json& payload,
+                nlohmann::json& answer,
                 std::string& error) override;
 };

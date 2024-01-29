@@ -23,15 +23,15 @@ AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
     comm_.onMsg([this](const std::string& msg) {
         spdlog::trace("Server rcvd: {}", msg);
 
-        const auto req = nlohmann::json::parse(msg);
-        nlohmann::json resp;
+        const auto payload = nlohmann::json::parse(msg);
+        nlohmann::json answer;
         std::string error;
 
         if (status_ == Status::Authorized)
         {
-            dataHandler_.handle(req, resp, error);
+            dataHandler_.handle(payload, answer, error);
         }
-        else if (authHandler_.handle(req, resp, error))
+        else if (authHandler_.handle(payload, answer, error))
         {
             transitionTo(Status::Authorized);
         }
@@ -46,9 +46,15 @@ AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
             return;
         }
 
-        const auto answer = resp.dump();
-        spdlog::trace("Server send: {}", answer);
-        comm_.send(answer);
+        const nlohmann::ordered_json js = {
+            {"status",0},
+            {"error", ""},
+            {"answer", answer}
+        };
+
+        const auto res = js.dump();
+        spdlog::trace("Server send: {}", res);
+        comm_.sendAsync(res, [](bool) {});
     });
 
     onError([this](const ErrorCode& ec) {

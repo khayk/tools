@@ -38,5 +38,5 @@ private:
     tcp::Communicator comm_;
     AuthorizationCb authCb_;
 
-    void transitionTo(const Status status) noexcept;
+    void transitionTo(Status status) noexcept;
 };

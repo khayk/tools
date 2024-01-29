@@ -15,7 +15,7 @@ protected:
 public:
     virtual ~MsgHandler() = default;
 
-    virtual bool handle(const nlohmann::json& req,
-                        nlohmann::json& resp,
+    virtual bool handle(const nlohmann::json& payload,
+                        nlohmann::json& answer,
                         std::string& error) = 0;
 };
