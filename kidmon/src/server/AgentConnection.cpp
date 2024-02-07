@@ -13,13 +13,6 @@ AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
     , dataHandler_(dataHandler)
     , comm_(*this)
 {
-    // if (authHandler_.hasAuthorizedAgent())
-    // {
-    //     comm_.send(R"({"error": "Already has an authorized agent"})");
-    //     close();
-    //     return;
-    // }
-
     comm_.onMsg([this](const std::string& msg) {
         spdlog::trace("Server rcvd: {}", msg);
 

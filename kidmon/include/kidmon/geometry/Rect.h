@@ -17,12 +17,18 @@ public:
     }
 
     // clang-format off
-    uint32_t width() const noexcept { return dims_.width(); }
-    uint32_t height() const noexcept { return dims_.height(); }
+    [[nodiscard]] uint32_t width() const noexcept { return dims_.width(); }
+    [[nodiscard]] uint32_t height() const noexcept { return dims_.height(); }
 
-    Point leftTop() const noexcept { return leftTop_; }
-    Point leftBottom() const noexcept { return leftTop_ + Point(0, height()); }
-    Point rightTop() const noexcept { return leftTop_ + Point(width(), 0); }
-    Point rightBottom() const noexcept { return leftTop_ + Point(width(), height()); }
+    [[nodiscard]] Point leftTop() const noexcept { return leftTop_; }
+    [[nodiscard]] Point leftBottom() const noexcept {
+        return leftTop_ + Point(0, static_cast<int>(height()));
+    }
+    [[nodiscard]] Point rightTop() const noexcept {
+        return leftTop_ + Point(static_cast<int>(width()), 0);
+    }
+    [[nodiscard]] Point rightBottom() const noexcept {
+        return leftTop_ + Point(static_cast<int>(width()), static_cast<int>(height()));
+    }
     // clang-format on
 };

@@ -20,21 +20,10 @@
 namespace net = boost::asio;
 namespace fs = std::filesystem;
 
-using TimePoint = std::chrono::system_clock::time_point;
+using SystemClock = std::chrono::system_clock;
+using TimePoint = SystemClock::time_point;
 
 namespace {
-
-std::string buildAuthMsg(std::string_view authToken)
-{
-    nlohmann::ordered_json js = {
-        {"name", "auth"},
-        {"message", {{"username", str::ws2s(sys::activeUserName())},
-                     {"token", authToken}}}
-    };
-
-    return js.dump();
-}
-
 
 class AgentMsgHandler
 {
@@ -107,7 +96,6 @@ struct ProcessInfo
 
 struct WindowInfo
 {
-    fs::path snapshotPath;
     std::string title;
     Rect placement;
 };
@@ -118,6 +106,37 @@ struct Entry
     WindowInfo windowInfo;
     TimePoint timestamp;
 };
+
+void toJson(const ProcessInfo& pi, nlohmann::ordered_json& js)
+{
+    js["process_path"] = file::path2s(pi.processPath);
+    js["sha256"] = pi.sha256;
+}
+
+void toJson(const WindowInfo& wi, nlohmann::ordered_json& js)
+{
+    js["title"] = wi.title;
+    js["rect"] = {
+        {"leftTop", {wi.placement.leftTop().x(), wi.placement.leftTop().y()}},
+        {"dimensions", {wi.placement.width(), wi.placement.height()}}
+    };
+}
+
+void toJson(const TimePoint& tp, nlohmann::ordered_json& js)
+{
+    using std::chrono::milliseconds;
+    using std::chrono::duration_cast;
+
+    js["since_epoch"] = duration_cast<milliseconds>(tp.time_since_epoch()).count();
+    js["unit"] = "mls";
+}
+
+void toJson(const Entry& entry, nlohmann::ordered_json& js)
+{
+    toJson(entry.processInfo, js["process_info"]);
+    toJson(entry.windowInfo, js["window_info"]);
+    toJson(entry.timestamp, js["timestamp"]);
+}
 
 struct ReportDirs
 {
@@ -142,6 +161,23 @@ std::ostream& operator<<(std::ostream& os, const Rect& rc)
     return os;
 }
 
+void buildAuthMsg(std::string_view authToken, nlohmann::ordered_json& js)
+{
+    js = {
+        {"name", "auth"},
+        {"message", {{"username", str::ws2s(sys::activeUserName())},
+                     {"token", authToken}}}
+    };
+}
+
+void buildDataMsg(const Entry& entry, nlohmann::ordered_json& js)
+{
+    js["name"] = "auth";
+    auto& msgJs = js["message"];
+    msgJs["username"] = str::ws2s(sys::activeUserName());
+    toJson(entry, msgJs["entry"]);
+}
+
 class KidmonAgent::Impl
 {
     using work_guard = net::executor_work_guard<net::io_context::executor_type>;
@@ -159,7 +195,6 @@ class KidmonAgent::Impl
 
     ApiPtr api_;
     std::vector<char> wndContent_;
-    std::vector<Entry> cachedEntries_;
     std::unordered_map<std::wstring, ReportDirs> dirs_;
     std::unique_ptr<tcp::Communicator> comm_;
     AgentMsgHandler handler_;
@@ -266,8 +301,10 @@ class KidmonAgent::Impl
 
             comm_->start();
 
-            // Initiate authorization process
-            std::string authMsg = buildAuthMsg(cfg_.authToken);
+            // Initiate authorization
+            nlohmann::ordered_json js;
+            buildAuthMsg(cfg_.authToken, js);
+            const auto authMsg = js.dump();
             spdlog::trace("Sending auth message: {}", authMsg);
             comm_->sendAsync(authMsg);
         });
@@ -323,13 +360,15 @@ class KidmonAgent::Impl
             }
 
             entry.processInfo.sha256 = crypto::fileSha256(entry.processInfo.processPath);
+            entry.timestamp = SystemClock::now();
 
             spdlog::trace("Foreground wnd: {}", oss.str());
             spdlog::trace("Executable: {}", entry.processInfo.processPath);
 
-            if (nextCaptureTime_ < clock_type::now())
+            const auto now = clock_type::now();
+            if (cfg_.takeSnapshots && nextCaptureTime_ < now)
             {
-                nextCaptureTime_ = clock_type::now() + cfg_.snapshotInterval;
+                nextCaptureTime_ = now + cfg_.snapshotInterval;
                 const ImageFormat format = ImageFormat::jpg;
 
                 if (window->capture(format, wndContent_))
@@ -347,25 +386,28 @@ class KidmonAgent::Impl
                                                 toString(format));
                     auto file = userDirs.snapshotsDir / fileName;
 
-                    entry.windowInfo.snapshotPath = file;
+                    //entry.windowInfo.snapshotPath = file;
 
                     file::write(file, wndContent_.data(), wndContent_.size());
                 }
             }
 
-            cachedEntries_.push_back(std::move(entry));
+            nlohmann::ordered_json js;
+            buildDataMsg(entry, js);
+            const auto dataMsg = js.dump();
+            spdlog::trace("Sending data message: {}", dataMsg);
+            comm_->sendAsync(dataMsg);
         }
         catch (const std::exception& e)
         {
-            spdlog::error("Failed to cleanup broken enviornment. Desc: {}", e.what());
+            spdlog::error("Failure in collectData. Desc: {}", e.what());
         }
     }
 
 
 public:
-    Impl(const Config& cfg)
+    explicit Impl(const Config& cfg)
         : cfg_(cfg)
-        , ioc_()
         , timer_(ioc_)
         , workGuard_(ioc_.get_executor())
         , timeout_(cfg.activityCheckInterval)
