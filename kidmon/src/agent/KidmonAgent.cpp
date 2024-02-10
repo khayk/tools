@@ -1,6 +1,7 @@
 #include <kidmon/agent/KidmonAgent.h>
 #include <kidmon/os/Api.h>
 #include <kidmon/common/Utils.h>
+#include <kidmon/data/Messages.h>
 
 #include <core/utils/FmtExt.h>
 #include <core/utils/Str.h>
@@ -19,9 +20,6 @@
 
 namespace net = boost::asio;
 namespace fs = std::filesystem;
-
-using SystemClock = std::chrono::system_clock;
-using TimePoint = SystemClock::time_point;
 
 namespace {
 
@@ -88,55 +86,7 @@ private:
 
 } // namespace
 
-struct ProcessInfo
-{
-    fs::path processPath;
-    std::string sha256;
-};
 
-struct WindowInfo
-{
-    std::string title;
-    Rect placement;
-};
-
-struct Entry
-{
-    ProcessInfo processInfo;
-    WindowInfo windowInfo;
-    TimePoint timestamp;
-};
-
-void toJson(const ProcessInfo& pi, nlohmann::ordered_json& js)
-{
-    js["process_path"] = file::path2s(pi.processPath);
-    js["sha256"] = pi.sha256;
-}
-
-void toJson(const WindowInfo& wi, nlohmann::ordered_json& js)
-{
-    js["title"] = wi.title;
-    js["rect"] = {
-        {"leftTop", {wi.placement.leftTop().x(), wi.placement.leftTop().y()}},
-        {"dimensions", {wi.placement.width(), wi.placement.height()}}
-    };
-}
-
-void toJson(const TimePoint& tp, nlohmann::ordered_json& js)
-{
-    using std::chrono::milliseconds;
-    using std::chrono::duration_cast;
-
-    js["since_epoch"] = duration_cast<milliseconds>(tp.time_since_epoch()).count();
-    js["unit"] = "mls";
-}
-
-void toJson(const Entry& entry, nlohmann::ordered_json& js)
-{
-    toJson(entry.processInfo, js["process_info"]);
-    toJson(entry.windowInfo, js["window_info"]);
-    toJson(entry.timestamp, js["timestamp"]);
-}
 
 struct ReportDirs
 {
@@ -159,23 +109,6 @@ std::ostream& operator<<(std::ostream& os, const Rect& rc)
     os << '[' << rc.leftTop() << ", " << rc.rightBottom() << ']';
 
     return os;
-}
-
-void buildAuthMsg(std::string_view authToken, nlohmann::ordered_json& js)
-{
-    js = {
-        {"name", "auth"},
-        {"message", {{"username", str::ws2s(sys::activeUserName())},
-                     {"token", authToken}}}
-    };
-}
-
-void buildDataMsg(const Entry& entry, nlohmann::ordered_json& js)
-{
-    js["name"] = "auth";
-    auto& msgJs = js["message"];
-    msgJs["username"] = str::ws2s(sys::activeUserName());
-    toJson(entry, msgJs["entry"]);
 }
 
 class KidmonAgent::Impl
@@ -303,7 +236,7 @@ class KidmonAgent::Impl
 
             // Initiate authorization
             nlohmann::ordered_json js;
-            buildAuthMsg(cfg_.authToken, js);
+            msgs::buildAuthMsg(cfg_.authToken, js);
             const auto authMsg = js.dump();
             spdlog::trace("Sending auth message: {}", authMsg);
             comm_->sendAsync(authMsg);
@@ -393,7 +326,7 @@ class KidmonAgent::Impl
             }
 
             nlohmann::ordered_json js;
-            buildDataMsg(entry, js);
+            msgs::buildDataMsg(entry, js);
             const auto dataMsg = js.dump();
             spdlog::trace("Sending data message: {}", dataMsg);
             comm_->sendAsync(dataMsg);

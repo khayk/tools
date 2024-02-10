@@ -1,20 +1,22 @@
 file(GLOB LIB_SRCS
    "*.h"
    "*.cpp"
-   "agent/*.h"
    "agent/*.cpp"
-   "config/*.h"
-   "config/*.cpp"
-   "common/*.h"
+   "agent/*.h"
    "common/*.cpp"
-   "geometry/*.h"
+   "common/*.h"
+   "config/*.cpp"
+   "config/*.h"
+   "data/*.cpp"
+   "data/*.h"
    "geometry/*.cpp"
-   "server/*.h"
-   "server/*.cpp"
-   "server/handler/*.h"
-   "server/handler/*.cpp"
-   "os/*.h"
+   "geometry/*.h"
    "os/*.cpp"
+   "os/*.h"
+   "server/*.cpp"
+   "server/*.h"
+   "server/handler/*.cpp"
+   "server/handler/*.h"
 )
 
 if(WIN32)
@@ -43,6 +45,7 @@ find_package(spdlog REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(cxxopts CONFIG REQUIRED)
 find_package(Boost REQUIRED)
+# find_package(msgpack-c CONFIG REQUIRED)
 
 if(Boost_FOUND)
    message("Boost found        : ${Boost_INCLUDE_DIRS}")
@@ -70,7 +73,11 @@ target_link_libraries(${PROJECT_LIB} PUBLIC
     nlohmann_json::nlohmann_json
     spdlog::spdlog
     core
-)
+    )
+
+# target_link_libraries(${PROJECT_LIB} PRIVATE
+#    msgpack-c
+# )
 
 # Adding executable project
 add_executable(${PROJECT_APP} Main.cpp)
