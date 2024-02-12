@@ -99,9 +99,10 @@ TEST(UnpackerTest, UnpackChunkedData)
 }
 
 
-TEST(UnpackerTest, UnpackIncompleteData)
+namespace {
+
+void unpackIncompleteData(const std::string_view data, size_t chunkSize)
 {
-    constexpr std::string_view data("payload");
     Unpacker unpacker;
 
     const auto packed = pack(data);
@@ -111,7 +112,7 @@ TEST(UnpackerTest, UnpackIncompleteData)
     EXPECT_EQ(unpacker.size(), data.size());
 
     std::string buf;
-    while (unpacker.get(buf, 3) == Unpacker::Status::HasMore)
+    while (unpacker.get(buf, chunkSize) == Unpacker::Status::HasMore)
     {
         EXPECT_EQ(unpacker.size(), data.size());
     }
@@ -124,6 +125,24 @@ TEST(UnpackerTest, UnpackIncompleteData)
     EXPECT_EQ(unpacker.get(buf), Unpacker::Status::Ready);
     EXPECT_EQ(buf, data);
 }
+
+} // namespace
+
+
+TEST(UnpackerTest, UnpackIncompleteData_SmallChunks)
+{
+    constexpr std::string_view data("payload");
+    unpackIncompleteData(data, data.size() / 2);
+}
+
+
+TEST(UnpackerTest, UnpackIncompleteData_BigChunks)
+{
+    constexpr std::string_view data("payload");
+    unpackIncompleteData(data, 3 * data.size() / 2);
+    unpackIncompleteData(data, 4 * data.size());
+}
+
 
 
 TEST(UnpackerTest, UnpackBatchData)

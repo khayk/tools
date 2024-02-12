@@ -29,7 +29,7 @@ Unpacker::Status Unpacker::status() const noexcept
 Unpacker::Status Unpacker::get(std::string& buf, size_t maxSize)
 {
     status_ = Status::NeedMore;
-    const auto bytes = std::min(std::min(rem_, maxSize), buffer_.size());
+    const auto bytes = std::min(std::min(rem_, maxSize), buffer_.size() - off_);
 
     if (bytes == 0)
     {
