@@ -41,7 +41,8 @@ class KidmonServer::Impl
 
 public:
     explicit Impl(const Config& cfg)
-        : svr_(ioc_)
+        : dataHandler_(cfg.reportsDir)
+        , svr_(ioc_)
         , timer_(ioc_)
         , workGuard_(ioc_.get_executor())
         , timeout_(cfg.activityCheckInterval)

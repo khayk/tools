@@ -32,7 +32,7 @@ public:
     using ErrorCb       = ErrorCbs::Function;
     using DisconnectCb  = DisconnectCbs::Function;
 
-    explicit Connection(Socket socket) noexcept;
+    explicit Connection(Socket socket, uint16_t bufferSize = 4096) noexcept;
     ~Connection();
 
     void onRead(ReadCb readCb);
@@ -56,10 +56,7 @@ private:
     DisconnectCbs disconnectCb_;
 
     std::mutex mutex_;
-
-    // @todo:hayk - see how this amount can be
-    // controlled according to client needs
-    std::array<char, 4096> data_;
+    std::string data_;
 };
 
 } // namespace tcp

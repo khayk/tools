@@ -1,11 +1,9 @@
 #include <kidmon/agent/KidmonAgent.h>
 #include <kidmon/os/Api.h>
-#include <kidmon/common/Utils.h>
 #include <kidmon/data/Messages.h>
 
 #include <core/utils/FmtExt.h>
 #include <core/utils/Str.h>
-#include <core/utils/File.h>
 #include <core/utils/Crypto.h>
 #include <core/network/TcpClient.h>
 #include <core/network/TcpCommunicator.h>
@@ -27,7 +25,7 @@ class AgentMsgHandler
 {
 public:
     using AuthCb = std::function<void(bool)>;
-    using MsgCb = std::function<void(const nlohmann::json&)>;
+    using MsgCb = std::function<void(const nlohmann::ordered_json&)>;
     using ErrCb = std::function<void(int, const std::string&)>;
 
     bool handle(const std::string& msg)
@@ -37,7 +35,7 @@ public:
 
         try
         {
-            nlohmann::json js = nlohmann::json::parse(msg);
+            const auto js = nlohmann::ordered_json::parse(msg);
             status = js["status"].get<int>();
             error = js["error"].get<std::string>();
             const auto& answer = js["answer"];
@@ -87,16 +85,6 @@ private:
 } // namespace
 
 
-
-struct ReportDirs
-{
-    fs::path snapshotsDir;
-    fs::path dailyDir;
-    fs::path monthlyDir;
-    fs::path weeklyDir;
-    fs::path rawDir;
-};
-
 std::ostream& operator<<(std::ostream& os, const Point& pt)
 {
     os << '(' << pt.x() << ", " << pt.y() << ')';
@@ -128,59 +116,8 @@ class KidmonAgent::Impl
 
     ApiPtr api_;
     std::vector<char> wndContent_;
-    std::unordered_map<std::wstring, ReportDirs> dirs_;
     std::unique_ptr<tcp::Communicator> comm_;
     AgentMsgHandler handler_;
-
-    const ReportDirs& getActiveUserDirs()
-    {
-        std::wstring activeUserName = sys::activeUserName();
-
-        if (auto it = dirs_.find(activeUserName); it != dirs_.end())
-        {
-            return it->second;
-        }
-
-        std::time_t t = std::time(0); // get time now
-        std::tm* now = std::localtime(&t);
-
-        fs::path userReportsRoot = fs::path(cfg_.reportsDir)
-                                       .append(activeUserName)
-                                       .append(fmt::format("{}", now->tm_year + 1900));
-
-        // Reports directory structure will look like this
-        //
-        // ...\kidmon\reports\user\YYYY\snapshots\MM.DD"
-        //                             \daily\d-001.txt
-        //                             \monthly\m-01.txt
-        //                             \weekly\w-01.txt
-        //                             \raw\r-001.dat
-
-        ReportDirs dirs;
-
-        dirs.snapshotsDir = userReportsRoot / "snapshots";
-        dirs.dailyDir = userReportsRoot / "daily";
-        dirs.monthlyDir = userReportsRoot / "monthly";
-        dirs.weeklyDir = userReportsRoot / "weekly";
-        dirs.rawDir = userReportsRoot / "raw";
-
-        fs::create_directories(dirs.snapshotsDir);
-        fs::create_directories(dirs.dailyDir);
-        fs::create_directories(dirs.monthlyDir);
-        fs::create_directories(dirs.weeklyDir);
-        fs::create_directories(dirs.rawDir);
-
-        auto [it, ok] = dirs_.emplace(activeUserName, std::move(dirs));
-
-        if (!ok)
-        {
-            static ReportDirs s_dirs;
-
-            return s_dirs;
-        }
-
-        return it->second;
-    }
 
     void initHandlers()
     {
@@ -198,8 +135,7 @@ class KidmonAgent::Impl
             }
         });
 
-        handler_.onMsg([](const nlohmann::json& msg) {
-            spdlog::info("Agent processing msg: {}", msg.dump());
+        handler_.onMsg([](const nlohmann::ordered_json& msg) {
             std::ignore = msg;
         });
 
@@ -306,9 +242,7 @@ class KidmonAgent::Impl
 
                 if (window->capture(format, wndContent_))
                 {
-                    const auto& userDirs = getActiveUserDirs();
                     std::time_t t = std::time(nullptr);
-
                     char mbstr[16];
                     auto bytesWritten = std::strftime(mbstr,
                                                       sizeof(mbstr),
@@ -317,11 +251,11 @@ class KidmonAgent::Impl
                     auto fileName = fmt::format("img-{}.{}",
                                                 std::string_view(mbstr, bytesWritten),
                                                 toString(format));
-                    auto file = userDirs.snapshotsDir / fileName;
 
-                    //entry.windowInfo.snapshotPath = file;
-
-                    file::write(file, wndContent_.data(), wndContent_.size());
+                    entry.windowInfo.imageName = fileName;
+                    auto data = crypto::encodeBase64(
+                        std::string_view(wndContent_.data(), wndContent_.size()));
+                    entry.windowInfo.imageBytes = data;
                 }
             }
 

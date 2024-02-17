@@ -2,9 +2,9 @@
 
 namespace tcp {
 
-Connection::Connection(Socket socket) noexcept
+Connection::Connection(Socket socket, uint16_t bufferSize) noexcept
     : socket_ {std::move(socket)}
-    , data_ {}
+    , data_(bufferSize, ' ')
 {
 }
 

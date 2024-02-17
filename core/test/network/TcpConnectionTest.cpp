@@ -2,9 +2,9 @@
 #include <core/network/TcpClient.h>
 #include <core/network/TcpServer.h>
 
-namespace {
-
 using namespace tcp;
+
+namespace {
 
 struct Manager
 {
@@ -61,6 +61,8 @@ public:
         conn.write(sent.data(), 1);
     }
 };
+
+} // namespace
 
 TEST(TcpConnectionTest, DataTransfer)
 {
@@ -149,5 +151,3 @@ TEST(TcpConnectionTest, WriteError)
     // in reality, test will take a few milliseconds
     ioc.run_for(1s);
 }
-
-} // namespace

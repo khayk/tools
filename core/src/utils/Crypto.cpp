@@ -79,4 +79,44 @@ std::string fileSha256(const fs::path& file)
     return out;
 }
 
+void encodeBase64(std::string_view byteSeq, std::string& base64Seq)
+{
+    // @todo:khayk  - replace dummy code with real implementation
+    base64Seq = byteSeq;
+    for (auto& ch : base64Seq)
+    {
+        if ((ch >= 'A' && ch <= 'Z') ||
+            (ch >= 'a' && ch <= 'z') || 
+            (ch >= '0' && ch <= '9'))
+        {
+            ch = ch;
+        }
+        else
+        {
+            ch = '*';
+        }
+    }
+}
+
+std::string encodeBase64(std::string_view byteSeq)
+{
+    std::string base64Seq;
+    encodeBase64(byteSeq, base64Seq);
+    
+    return base64Seq;
+}
+
+void decodeBase64(const std::string& base64Seq, std::string& byteSeq)
+{
+    std::ignore = base64Seq;
+    std::ignore = byteSeq;
+}
+
+std::string decodeBase64(const std::string& base64Seq)
+{
+    std::ignore = base64Seq;
+
+    return "";
+}
+
 } // namespace crypto

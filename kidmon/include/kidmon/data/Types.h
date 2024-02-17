@@ -18,8 +18,10 @@ struct ProcessInfo
 
 struct WindowInfo
 {
-    std::string title;
     Rect placement;
+    std::string title;
+    std::string imageName;
+    std::string imageBytes;
 };
 
 struct Entry

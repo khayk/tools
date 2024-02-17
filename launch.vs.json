@@ -12,6 +12,13 @@
         {
             "type": "default",
             "project": "CMakeLists.txt",
+            "projectTarget": "core-test.exe (core\\test\\core-test.exe)",
+            "name": "core-test.exe (core\\test\\core-test.exe)",
+            "args": [ "--gtest_filter=*TcpCommunicatorTest*" ]
+        },
+        {
+            "type": "default",
+            "project": "CMakeLists.txt",
             "projectTarget": "kidmon-test.exe (kidmon\\test\\kidmon-test.exe)",
             "name": "kidmon-test.exe (kidmon\\test\\kidmon-test.exe)",
             "args": [ "--gtest_filter=*" ]

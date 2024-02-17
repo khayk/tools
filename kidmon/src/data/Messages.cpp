@@ -23,4 +23,41 @@ void buildDataMsg(const Entry& entry, nlohmann::ordered_json& js)
     toJson(entry, msgJs["entry"]);
 }
 
+void buildAnswer(int status,
+    const std::string_view error,
+    const nlohmann::json& answer,
+    nlohmann::ordered_json& js)
+{
+    js["status"] = status;
+    js["error"] = std::string(error);
+    js["answer"] = answer;
+}
+
+void buildAnswer(int status, const nlohmann::json& answer, nlohmann::ordered_json& js)
+{
+    buildAnswer(status, "", answer, js);
+}
+
+bool isAuthMsg(const nlohmann::ordered_json& js)
+{
+    const auto nit = js.find("name");
+    if (nit == js.end() || (*nit).get<std::string>() != "auth")
+    {
+        return false;
+    }
+
+    return true;
+}
+
+bool isDataMsg(const nlohmann::ordered_json& js)
+{
+    const auto nit = js.find("name");
+    if (nit == js.end() || (*nit).get<std::string>() != "data")
+    {
+        return false;
+    }
+
+    return true;
+}
+
 }  // namespace msgs

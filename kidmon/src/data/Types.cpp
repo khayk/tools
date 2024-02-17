@@ -16,6 +16,8 @@ void toJson(const WindowInfo& wi, nlohmann::ordered_json& js)
         {"leftTop", {wi.placement.leftTop().x(), wi.placement.leftTop().y()}},
         {"dimensions", {wi.placement.width(), wi.placement.height()}}
     };
+    js["imageName"] = wi.imageName;
+    js["bytes"] = wi.imageBytes;
 }
 
 void toJson(const TimePoint& tp, nlohmann::ordered_json& js)

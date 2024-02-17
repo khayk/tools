@@ -1,4 +1,5 @@
 #include <kidmon/server/handler/AuthorizationHandler.h>
+#include <kidmon/data/Messages.h>
 
 #include <nlohmann/json.hpp>
 
@@ -11,8 +12,7 @@ bool AuthorizationHandler::handle(const nlohmann::json& payload,
                                   nlohmann::json& answer,
                                   std::string& error)
 {
-    const auto nit = payload.find("name");
-    if (nit == payload.end() || (*nit).get<std::string>() != "auth")
+    if (!msgs::isAuthMsg(payload))
     {
         return false;
     }
@@ -24,20 +24,19 @@ bool AuthorizationHandler::handle(const nlohmann::json& payload,
     }
 
     const auto it = (*im).find("token");
-
-    if (it != (*im).end())
+    if (it == (*im).end())
     {
-        std::string token;
-        (*it).get_to(token);
-
-        if (token != token_)
-        {
-            error.assign("Invalid authorization token");
-        }
-
-        answer["authorized"] = error.empty();
-        return true;
+        return false;
     }
 
-    return false;
+    std::string token;
+    (*it).get_to(token);
+
+    if (token != token_)
+    {
+        error.assign("Invalid authorization token");
+    }
+
+    answer["authorized"] = error.empty();
+    return true;
 }

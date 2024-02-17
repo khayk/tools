@@ -1,6 +1,7 @@
 #include <kidmon/server/AgentConnection.h>
 #include <kidmon/server/handler/AuthorizationHandler.h>
 #include <kidmon/server/handler/DataHandler.h>
+#include <kidmon/data/Messages.h>
 
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
@@ -39,15 +40,11 @@ AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
             return;
         }
 
-        const nlohmann::ordered_json js = {
-            {"status",0},
-            {"error", ""},
-            {"answer", answer}
-        };
-
+        nlohmann::ordered_json js;
+        msgs::buildAnswer(0, answer, js);
         const auto res = js.dump();
-        spdlog::trace("Server send: {}", res);
-        comm_.sendAsync(res, [](bool) {});
+        spdlog::trace("Server answers: {}", res);
+        comm_.sendAsync(res);
     });
 
     onError([this](const ErrorCode& ec) {
