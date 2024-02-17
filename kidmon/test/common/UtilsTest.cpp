@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <kidmon/common/Utils.h>
 
+#include <algorithm>
 #include <cctype>
 
 TEST(UtilsTest, GenerateToken)
