@@ -14,7 +14,7 @@
             "project": "CMakeLists.txt",
             "projectTarget": "core-test.exe (core\\test\\core-test.exe)",
             "name": "core-test.exe (core\\test\\core-test.exe)",
-            "args": [ "--gtest_filter=*TcpCommunicatorTest*" ]
+            "args": [ "--gtest_filter=*" ]
         },
         {
             "type": "default",
