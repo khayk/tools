@@ -81,20 +81,18 @@ std::string fileSha256(const fs::path& file)
 
 void encodeBase64(std::string_view byteSeq, std::string& base64Seq)
 {
-    // @todo:khayk  - replace dummy code with real implementation
-    base64Seq = byteSeq;
-    for (auto& ch : base64Seq)
+    const auto len = 4 * ((byteSeq.size() + 2) / 3);
+    base64Seq.resize(len);
+    const auto res =
+        EVP_EncodeBlock(reinterpret_cast<unsigned char*>(base64Seq.data()),
+                        reinterpret_cast<const unsigned char*>(byteSeq.data()),
+                        static_cast<int>(byteSeq.size()));
+
+    if (res != len)
     {
-        if ((ch >= 'A' && ch <= 'Z') ||
-            (ch >= 'a' && ch <= 'z') || 
-            (ch >= '0' && ch <= '9'))
-        {
-            ch = ch;
-        }
-        else
-        {
-            ch = '*';
-        }
+        const auto s = fmt::format("Encode prediced {} but we got {}", len, res);
+        throw std::system_error(std::make_error_code(std::errc::result_out_of_range),
+            s);
     }
 }
 
@@ -108,15 +106,30 @@ std::string encodeBase64(std::string_view byteSeq)
 
 void decodeBase64(const std::string& base64Seq, std::string& byteSeq)
 {
-    std::ignore = base64Seq;
-    std::ignore = byteSeq;
+    const auto len = 3 * base64Seq.size() / 4;
+    byteSeq.resize(len);
+    const auto res =
+        EVP_DecodeBlock(reinterpret_cast<unsigned char*>(byteSeq.data()),
+                        reinterpret_cast<const unsigned char*>(base64Seq.data()),
+                        static_cast<int>(base64Seq.size()));
+    if (res != len)
+    {
+        const auto s = fmt::format("Encode prediced {} but we got {}", len, res);
+        throw std::system_error(std::make_error_code(std::errc::result_out_of_range), s);
+    }
+
+    while (!byteSeq.empty() && byteSeq.back() == 0)
+    {
+        byteSeq.pop_back();
+    }
 }
 
 std::string decodeBase64(const std::string& base64Seq)
 {
-    std::ignore = base64Seq;
+    std::string byteSeq;
+    decodeBase64(base64Seq, byteSeq);
 
-    return "";
+    return byteSeq;
 }
 
 } // namespace crypto
