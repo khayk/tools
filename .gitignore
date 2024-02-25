@@ -1,5 +1,6 @@
 # Build results
 [Bb]uild/
+[Bb]uild-*/
 .cache/
 
 # Visual Studio files

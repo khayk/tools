@@ -39,6 +39,7 @@ TEST(TcpServerTest, ListenFails)
     Server svr(ioc);
     Server::Options opts;
     opts.port = 7453;
+    opts.reuseAddress = true;
 
     svr.listen(opts);
 
@@ -53,6 +54,7 @@ TEST(TcpServerTest, ListenFails)
         ec2 = ec;
     });
 
+    opts.reuseAddress = false;
     svr2.listen(opts);
     EXPECT_FALSE(secondListenSucceeded);
     EXPECT_TRUE((ec2));

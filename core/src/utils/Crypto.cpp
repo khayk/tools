@@ -83,7 +83,7 @@ void encodeBase64(std::string_view byteSeq, std::string& base64Seq)
 {
     const auto len = 4 * ((byteSeq.size() + 2) / 3);
     base64Seq.resize(len);
-    const auto res =
+    const size_t res =
         EVP_EncodeBlock(reinterpret_cast<unsigned char*>(base64Seq.data()),
                         reinterpret_cast<const unsigned char*>(byteSeq.data()),
                         static_cast<int>(byteSeq.size()));
@@ -108,7 +108,7 @@ void decodeBase64(const std::string& base64Seq, std::string& byteSeq)
 {
     const auto len = 3 * base64Seq.size() / 4;
     byteSeq.resize(len);
-    const auto res =
+    const size_t res =
         EVP_DecodeBlock(reinterpret_cast<unsigned char*>(byteSeq.data()),
                         reinterpret_cast<const unsigned char*>(base64Seq.data()),
                         static_cast<int>(base64Seq.size()));

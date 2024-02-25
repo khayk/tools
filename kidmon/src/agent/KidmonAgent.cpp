@@ -262,7 +262,7 @@ class KidmonAgent::Impl
             nlohmann::ordered_json js;
             msgs::buildDataMsg(entry, js);
             const auto dataMsg = js.dump();
-            spdlog::trace("Sending data message: {}", dataMsg);
+            //spdlog::trace("Sending data message: {}", dataMsg);
             comm_->sendAsync(dataMsg);
         }
         catch (const std::exception& e)

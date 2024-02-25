@@ -15,7 +15,7 @@ AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
     , comm_(*this)
 {
     comm_.onMsg([this](const std::string& msg) {
-        spdlog::trace("Server rcvd: {}", msg);
+        //spdlog::trace("Server rcvd: {}", msg);
 
         const auto payload = nlohmann::json::parse(msg);
         nlohmann::json answer;
