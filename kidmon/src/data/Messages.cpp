@@ -33,7 +33,10 @@ void buildAnswer(int status,
     {
         js["error"] = std::string(error);
     }
-    js["answer"] = answer;
+    if (!answer.is_null() && !answer.empty())
+    {
+        js["answer"] = answer;
+    }
 }
 
 void buildAnswer(int status, const nlohmann::json& answer, nlohmann::ordered_json& js)

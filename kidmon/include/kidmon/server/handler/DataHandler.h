@@ -19,6 +19,7 @@ class DataHandler : public MsgHandler
 {
     fs::path reportsDir_;
     std::unordered_map<std::wstring, ReportDirs> dirs_;
+    std::string buffer_;
 
     const ReportDirs& getActiveUserDirs();
 

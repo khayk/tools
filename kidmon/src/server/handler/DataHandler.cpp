@@ -1,9 +1,12 @@
 #include <kidmon/server/handler/DataHandler.h>
 #include <kidmon/common/Utils.h>
+#include <kidmon/data/Types.h>
 #include <core/utils/File.h>
+#include <core/utils/Crypto.h>
 
 #include <nlohmann/json.hpp>
 #include <fmt/format.h>
+#include <spdlog/spdlog.h>
 
 DataHandler::DataHandler(fs::path reportsDir)
     : reportsDir_(std::move(reportsDir))
@@ -64,25 +67,32 @@ bool DataHandler::handle(const nlohmann::json& payload,
                          nlohmann::json& answer,
                          std::string& error)
 {
-    std::ignore = payload;
-    std::ignore = answer;
-    std::ignore = error;
-
-    bool hasSnapshot = false;
-    std::string imageName;
-    std::string imageBytes;
-
-    if (hasSnapshot)
+    try
     {
-        const auto& userDirs = getActiveUserDirs();
-        auto file = userDirs.snapshotsDir / imageName;
-        
-        file::write(file, imageBytes.data(), imageBytes.size());
+        const auto& msg = payload["message"];
+
+        Entry entry;
+        fromJson(msg["entry"], entry);
+
+        const std::string& imageName = entry.windowInfo.imageName;
+        const std::string& imageBytes = entry.windowInfo.imageBytes;
+        const bool hasSnapshot = !imageName.empty();
+
+        if (hasSnapshot)
+        {
+            const auto& userDirs = getActiveUserDirs();
+            auto file = userDirs.snapshotsDir / imageName;
+
+            crypto::decodeBase64(imageBytes, buffer_);
+            file::write(file, buffer_.data(), buffer_.size());
+        }
+
+        return true;
     }
-
-    answer = R"({})";
-
-
+    catch (const std::exception& ex)
+    {
+        error = fmt::format("Unable to handle incoming payload: {}", ex.what());
+    }
 
     return false;
 }

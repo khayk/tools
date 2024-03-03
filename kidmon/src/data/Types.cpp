@@ -36,3 +36,46 @@ void toJson(const Entry& entry, nlohmann::ordered_json& js)
     toJson(entry.timestamp, js["timestamp"]);
 }
 
+void fromJson(const nlohmann::json& js, ProcessInfo& pi)
+{
+    pi.processPath.assign(js["process_path"].get<std::string>());
+    pi.sha256 = js["sha256"];
+}
+
+void fromJson(const nlohmann::json& js, WindowInfo& wi)
+{
+    wi.title = js["title"];
+    wi.imageName = js["imageName"];
+    wi.imageBytes = js["bytes"];
+
+    const auto& jsRect = js["rect"];
+    const auto& lt = jsRect["leftTop"];
+    const auto& dims = jsRect["dimensions"];
+
+    const Point leftTop(lt.at(0), lt.at(1));
+    const Dimensions dimensions(dims.at(0), dims.at(1));
+
+    wi.placement = Rect(leftTop, dimensions);
+}
+
+void fromJson(const nlohmann::json& js, TimePoint& tp)
+{
+    size_t ms = js["since_epoch"];
+    const auto& units = js["unit"];
+
+    if (units == "mls")
+    {
+        tp = TimePoint(std::chrono::milliseconds(ms));
+    }
+    else
+    {
+        throw std::logic_error("Unknown time unit");
+    }
+}
+
+void fromJson(const nlohmann::json& js, Entry& entry)
+{
+    fromJson(js["process_info"], entry.processInfo);
+    fromJson(js["window_info"], entry.windowInfo);
+    fromJson(js["timestamp"], entry.timestamp);
+}

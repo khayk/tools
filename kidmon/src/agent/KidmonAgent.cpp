@@ -33,17 +33,17 @@ public:
     {
         int status = 0;
         std::string error;
-        nlohmann::json answer;
 
         try
         {
             const auto js = nlohmann::ordered_json::parse(msg);
             jsu::get(js, "status", status);
             jsu::get(js, "error", error, status != 0);
-            jsu::get(js, "answer", answer);
 
             if (!authReported_)
             {
+                nlohmann::json answer;
+                jsu::get(js, "answer", answer);
                 authCb_(answer["authorized"].get<bool>());
                 authReported_ = true;
             }
