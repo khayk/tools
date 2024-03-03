@@ -17,9 +17,7 @@ file(GLOB UTILS_FILES
 
 # Source list for the library
 set(LIB_SRCS  ${NETWORK_FILES} ${PATTERNS_FILES} ${UTILS_FILES})
-
 add_library(${PROJECT_LIB} STATIC ${LIB_SRCS})
-
 target_include_directories(${PROJECT_LIB} PUBLIC ../include)
 
 find_package(fmt REQUIRED)

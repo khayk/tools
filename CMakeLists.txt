@@ -14,6 +14,7 @@ message("CMake tool chain file : ${CMAKE_TOOLCHAIN_FILE}")
 message("Project binary dir    : ${PROJECT_BINARY_DIR}")
 message("CMake binary dir      : ${CMAKE_BINARY_DIR}")
 message("CMake source dir      : ${CMAKE_SOURCE_DIR}")
+message("CMake generator       : ${CMAKE_GENERATOR}")
 message("Object dir            : ${OBJECT_DIR}")
 
 set(CMAKE_CXX_STANDARD 20)
