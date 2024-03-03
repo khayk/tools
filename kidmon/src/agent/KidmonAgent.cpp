@@ -1,6 +1,7 @@
 #include <kidmon/agent/KidmonAgent.h>
 #include <kidmon/os/Api.h>
 #include <kidmon/data/Messages.h>
+#include <kidmon/data/Helpers.h>
 
 #include <core/utils/FmtExt.h>
 #include <core/utils/Str.h>
@@ -32,13 +33,14 @@ public:
     {
         int status = 0;
         std::string error;
+        nlohmann::json answer;
 
         try
         {
             const auto js = nlohmann::ordered_json::parse(msg);
-            status = js["status"].get<int>();
-            error = js["error"].get<std::string>();
-            const auto& answer = js["answer"];
+            jsu::get(js, "status", status);
+            jsu::get(js, "error", error, status != 0);
+            jsu::get(js, "answer", answer);
 
             if (!authReported_)
             {

@@ -29,7 +29,10 @@ void buildAnswer(int status,
     nlohmann::ordered_json& js)
 {
     js["status"] = status;
-    js["error"] = std::string(error);
+    if (!error.empty())
+    {
+        js["error"] = std::string(error);
+    }
     js["answer"] = answer;
 }
 
