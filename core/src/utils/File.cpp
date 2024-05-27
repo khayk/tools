@@ -7,10 +7,9 @@
 
 namespace file {
 
-void write(const fs::path& file, const char* const data, size_t size)
-
+void open(const fs::path& file, const std::ios_base::openmode mode, std::ofstream& ofs)
 {
-    std::ofstream ofs(file, std::ios::out | std::ios::binary);
+    ofs.open(file, mode);
 
     if (!ofs)
     {
@@ -19,7 +18,14 @@ void write(const fs::path& file, const char* const data, size_t size)
             std::make_error_code(std::errc::no_such_file_or_directory),
             s);
     }
+}
 
+
+void write(const fs::path& file, const char* const data, size_t size)
+
+{
+    std::ofstream ofs;
+    open(file, std::ios::out | std::ios::binary, ofs);
     ofs.write(data, size);
 }
 
@@ -27,6 +33,20 @@ void write(const fs::path& file, const std::string_view data)
 {
     write(file, data.data(), data.size());
 }
+
+
+void append(const fs::path& file, const char* const data, size_t size)
+{
+    std::ofstream ofs;
+    open(file, std::ios::app | std::ios::binary, ofs);
+    ofs.write(data, size);
+}
+
+void append(const fs::path& file, std::string_view data)
+{
+    append(file, data.data(), data.size());
+}
+
 
 bool read(const fs::path& file, std::string& data, std::error_code& ec)
 {

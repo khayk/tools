@@ -11,6 +11,10 @@ void write(const fs::path& file, std::string_view data);
 
 void write(const fs::path& file, const char* const data, size_t size);
 
+void append(const fs::path& file, std::string_view data);
+
+void append(const fs::path& file, const char* const data, size_t size);
+
 /**
  * @brief Read the content of the file into 'data' string
  *

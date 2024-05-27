@@ -9,6 +9,15 @@ void toJson(const ProcessInfo& pi, nlohmann::ordered_json& js)
     js["sha256"] = pi.sha256;
 }
 
+void toJson(const Image& image, nlohmann::ordered_json& js)
+{
+    js = {
+        {"name", image.name},
+        {"bytes", image.bytes},
+        {"encoded", image.encoded},
+    };
+}
+
 void toJson(const WindowInfo& wi, nlohmann::ordered_json& js)
 {
     js["title"] = wi.title;
@@ -16,8 +25,8 @@ void toJson(const WindowInfo& wi, nlohmann::ordered_json& js)
         {"leftTop", {wi.placement.leftTop().x(), wi.placement.leftTop().y()}},
         {"dimensions", {wi.placement.width(), wi.placement.height()}}
     };
-    js["imageName"] = wi.imageName;
-    js["bytes"] = wi.imageBytes;
+
+    toJson(wi.image, js["image"]);
 }
 
 void toJson(const TimePoint& tp, nlohmann::ordered_json& js)
@@ -42,11 +51,19 @@ void fromJson(const nlohmann::json& js, ProcessInfo& pi)
     pi.sha256 = js["sha256"];
 }
 
+void fromJson(const nlohmann::json& js, Image& image)
+{
+    image.name = js["name"];
+    image.bytes= js["bytes"];
+    image.encoded = js["encoded"];
+}
+
 void fromJson(const nlohmann::json& js, WindowInfo& wi)
 {
     wi.title = js["title"];
-    wi.imageName = js["imageName"];
-    wi.imageBytes = js["bytes"];
+
+    const auto& jsImg = js["image"];
+    fromJson(jsImg, wi.image);
 
     const auto& jsRect = js["rect"];
     const auto& lt = jsRect["leftTop"];

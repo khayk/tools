@@ -1,30 +1,53 @@
 #pragma once
 
 #include "MsgHandler.h"
+#include <kidmon/data/Types.h>
 #include <filesystem>
 #include <unordered_map>
 
 namespace fs = std::filesystem;
 
-struct ReportDirs
+//
+// * Entry                  // full representation of the event
+// * Statistics             // statistical data about multiple entries (part of report)
+//
+// * Report                 // summary of the collection of an event based on a certain criterias
+// * ReportBuilder          // interface for producing a report
+//
+// * IDataStorage          // interface for event storage
+//      * DatabaseStorage 
+//      * FileSystemStorage
+//      * MemoryStorage
+
+
+class IDataStorage
 {
-    fs::path snapshotsDir;
-    fs::path dailyDir;
-    fs::path monthlyDir;
-    fs::path weeklyDir;
-    fs::path rawDir;
+public:
+    virtual ~IDataStorage() = default;
+
+    virtual void add(const Entry& entry) = 0;
+};
+
+class FileSystemStorage : public IDataStorage
+{
+public:
+    FileSystemStorage(fs::path reportsDir);
+    ~FileSystemStorage();
+
+    void add(const Entry& entry) override;
+
+private:
+    class Impl;
+    std::unique_ptr<Impl> pimpl_;
 };
 
 class DataHandler : public MsgHandler
 {
-    fs::path reportsDir_;
-    std::unordered_map<std::wstring, ReportDirs> dirs_;
+    IDataStorage& storage_;
     std::string buffer_;
 
-    const ReportDirs& getActiveUserDirs();
-
 public:
-    DataHandler(fs::path reportsDir);
+    DataHandler(IDataStorage& storage);
 
     bool handle(const nlohmann::json& payload,
                 nlohmann::json& answer,

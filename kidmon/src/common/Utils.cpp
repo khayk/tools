@@ -15,6 +15,7 @@
 #include <system_error>
 #include <filesystem>
 #include <array>
+#include <ctime>
 
 namespace fs = std::filesystem;
 
@@ -355,6 +356,23 @@ std::string generateToken(const size_t length)
     std::generate_n(token.begin(), length, randchar);
 
     return token;
+}
+
+tm timet2tm(const time_t dt)
+{
+    tm d {};
+#ifdef _WIN32
+    auto err = localtime_s(&d, &dt);
+#else
+    throw std::logic_error(fmt::format("Not implemented: {}", __func__));
+#endif
+
+    return d;
+}
+
+uint32_t daysSinceYearStart(time_t dt)
+{
+    return static_cast<uint32_t>(timet2tm(dt).tm_yday);
 }
 
 } // namespace utl

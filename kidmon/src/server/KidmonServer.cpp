@@ -22,6 +22,7 @@ class KidmonServer::Impl
     using time_point = net::steady_timer::time_point;
 
     AuthorizationHandler authHandler_;
+    FileSystemStorage storage_;
     DataHandler dataHandler_;
 
     std::unique_ptr<AgentManager> agentMngr_;
@@ -41,7 +42,8 @@ class KidmonServer::Impl
 
 public:
     explicit Impl(const Config& cfg)
-        : dataHandler_(cfg.reportsDir)
+        : storage_(cfg.reportsDir)
+        , dataHandler_(storage_)
         , svr_(ioc_)
         , timer_(ioc_)
         , workGuard_(ioc_.get_executor())

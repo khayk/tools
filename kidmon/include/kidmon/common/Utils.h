@@ -25,6 +25,7 @@ void logLastError(const std::string_view message) noexcept;
  * @brief Utility functions to provide full paths of know user/system directories
  */
 namespace dirs {
+
 /**
  * @brief The user home directory. On Windows systems, this is '%USERPROFILE%'.
  */
@@ -78,5 +79,18 @@ namespace utl {
  * @return  The alpha-numeric string
  */
 std::string generateToken(const size_t length = 16);
+
+
+
+tm timet2tm(const time_t dt);
+
+/**
+ * @brief  Calculate days since January 1 for the year represented by the given date time
+ * 
+ * @param date  Specified dt
+ * 
+ * @return Number of days
+ */
+uint32_t daysSinceYearStart(time_t dt = std::time(nullptr));
 
 } // namespace utl

@@ -254,10 +254,11 @@ class KidmonAgent::Impl
                                                 std::string_view(mbstr, bytesWritten),
                                                 toString(format));
 
-                    entry.windowInfo.imageName = fileName;
+                    entry.windowInfo.image.name = fileName;
                     auto data = crypto::encodeBase64(
                         std::string_view(wndContent_.data(), wndContent_.size()));
-                    entry.windowInfo.imageBytes = data;
+                    entry.windowInfo.image.bytes = data;
+                    entry.windowInfo.image.encoded = true;
                 }
             }
 
