@@ -364,6 +364,7 @@ tm timet2tm(const time_t dt)
 #ifdef _WIN32
     auto err = localtime_s(&d, &dt);
 #else
+    std::ignore = dt;
     throw std::logic_error(fmt::format("Not implemented: {}", __func__));
 #endif
 

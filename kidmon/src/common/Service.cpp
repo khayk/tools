@@ -18,13 +18,20 @@ const char* serviceStateToStr(DWORD status) noexcept
 {
     switch (status)
     {
-        case SERVICE_STOPPED:          return "SERVICE_STOPPED";
-        case SERVICE_START_PENDING:    return "SERVICE_START_PENDING";
-        case SERVICE_STOP_PENDING:     return "SERVICE_STOP_PENDING";
-        case SERVICE_RUNNING:          return "SERVICE_RUNNING";
-        case SERVICE_CONTINUE_PENDING: return "SERVICE_CONTINUE_PENDING";
-        case SERVICE_PAUSE_PENDING:    return "SERVICE_PAUSE_PENDING";
-        case SERVICE_PAUSED:           return "SERVICE_PAUSED";
+        case SERVICE_STOPPED:
+            return "SERVICE_STOPPED";
+        case SERVICE_START_PENDING:
+            return "SERVICE_START_PENDING";
+        case SERVICE_STOP_PENDING:
+            return "SERVICE_STOP_PENDING";
+        case SERVICE_RUNNING:
+            return "SERVICE_RUNNING";
+        case SERVICE_CONTINUE_PENDING:
+            return "SERVICE_CONTINUE_PENDING";
+        case SERVICE_PAUSE_PENDING:
+            return "SERVICE_PAUSE_PENDING";
+        case SERVICE_PAUSED:
+            return "SERVICE_PAUSED";
     }
 
     return "";
@@ -34,12 +41,18 @@ const char* serviceControlCodeToStr(DWORD controlCode) noexcept
 {
     switch (controlCode)
     {
-        case SERVICE_CONTROL_STOP:        return "SERVICE_CONTROL_STOP";
-        case SERVICE_CONTROL_PAUSE:       return "SERVICE_CONTROL_PAUSE";
-        case SERVICE_CONTROL_CONTINUE:    return "SERVICE_CONTROL_CONTINUE";
-        case SERVICE_CONTROL_INTERROGATE: return "SERVICE_CONTROL_INTERROGATE";
-        case SERVICE_CONTROL_SHUTDOWN:    return "SERVICE_CONTROL_SHUTDOWN";
-        case SERVICE_CONTROL_PRESHUTDOWN: return "SERVICE_CONTROL_PRESHUTDOWN";
+        case SERVICE_CONTROL_STOP:
+            return "SERVICE_CONTROL_STOP";
+        case SERVICE_CONTROL_PAUSE:
+            return "SERVICE_CONTROL_PAUSE";
+        case SERVICE_CONTROL_CONTINUE:
+            return "SERVICE_CONTROL_CONTINUE";
+        case SERVICE_CONTROL_INTERROGATE:
+            return "SERVICE_CONTROL_INTERROGATE";
+        case SERVICE_CONTROL_SHUTDOWN:
+            return "SERVICE_CONTROL_SHUTDOWN";
+        case SERVICE_CONTROL_PRESHUTDOWN:
+            return "SERVICE_CONTROL_PRESHUTDOWN";
     }
     return "";
 }
@@ -117,12 +130,17 @@ private:
         }
     }
 
-    static void controlHandler(unsigned long controlCode)
+    static DWORD controlHandler(const DWORD controlCode,
+                                DWORD /*eventType*/,
+                                LPVOID /*lpEventData*/,
+                                LPVOID /*lpContext*/)
     {
         if (instance_)
         {
             instance_->onControl(controlCode);
         }
+
+        return NO_ERROR;
     }
 
     void main(unsigned long argc, char* argv[])
@@ -140,7 +158,9 @@ private:
         status_.dwCheckPoint = 0;
         status_.dwWaitHint = 0;
 
-        handle_ = ::RegisterServiceCtrlHandler(name_.c_str(), &Impl::controlHandler);
+        handle_ = ::RegisterServiceCtrlHandlerExA(name_.c_str(),
+                                                  &Impl::controlHandler,
+                                                  nullptr);
 
         if (handle_ != nullptr)
         {
