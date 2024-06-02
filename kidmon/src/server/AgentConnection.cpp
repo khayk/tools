@@ -15,7 +15,7 @@ AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
     , comm_(*this)
 {
     comm_.onMsg([this](const std::string& msg) {
-        //spdlog::trace("Server rcvd: {}", msg);
+        spdlog::debug("Server rcvd: {}", msg);
 
         const auto payload = nlohmann::json::parse(msg);
         nlohmann::json answer;
@@ -43,7 +43,7 @@ AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
         nlohmann::ordered_json js;
         msgs::buildAnswer(0, answer, js);
         const auto res = js.dump();
-        spdlog::trace("Server answers: {}", res);
+        spdlog::debug("Server answers: {}", res);
         comm_.sendAsync(res);
     });
 

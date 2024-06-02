@@ -142,8 +142,6 @@ public:
 
     void add(const Entry& entry)
     {
-        spdlog::trace("Added entry: {}", entry.windowInfo.title);
-
         const auto& userDirs = dirs_.getUserDirs(entry.username);
         const auto& bytes = entry.windowInfo.image.bytes;
 

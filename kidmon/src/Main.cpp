@@ -101,7 +101,7 @@ int main(int argc, char* argv[])
                       fmt::format("{:-^80s}", "> START <"),
                       fmt::format("{:-^80s}\n", "> END <"));
         ScopedTrace main(__FUNCTION__);
-        spdlog::trace("Active username: {}", str::ws2s(sys::activeUserName()));
+        spdlog::debug("Active username: {}", str::ws2s(sys::activeUserName()));
 
         std::shared_ptr<Runnable> app;
         const bool isInteractive = sys::isUserInteractive();

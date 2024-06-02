@@ -22,6 +22,58 @@ namespace fs = std::filesystem;
 
 namespace {
 
+
+class CachedFileSha256
+{
+    struct FileInfo
+    {
+        std::string sha256;
+        std::filesystem::file_time_type lastWriteTime;
+    };
+
+    mutable std::unordered_map<fs::path, FileInfo> cachedSha_;
+
+public:
+    const std::string& sha256(const fs::path& file) const
+    {
+        const auto lwt = std::filesystem::last_write_time(file);
+        auto [it, _] = cachedSha_.emplace(file, FileInfo{});
+        auto& fi = it->second;
+
+        // Update SHA256 only if the file is changed or newly added
+        if (fi.lastWriteTime != lwt)
+        {
+            fi.sha256 = crypto::fileSha256(file);
+            fi.lastWriteTime = lwt;
+        }
+
+        return fi.sha256;
+    }
+};
+
+
+class Statistics
+{
+    uint64_t numEvents_ {0};
+
+public:
+    void report(std::ostream& oss)
+    {
+        oss << "Total number of events collected: " << numEvents_;
+    }
+
+    void incrementEvents()
+    {
+        ++numEvents_;
+    }
+
+    const uint64_t numEvents() const noexcept
+    {
+        return numEvents_;
+    }
+};
+
+
 class AgentMsgHandler
 {
 public:
@@ -109,6 +161,7 @@ class KidmonAgent::Impl
 
     const Config& cfg_;
 
+    CachedFileSha256 shaCache_;
     net::io_context ioc_;
     net::steady_timer timer_;
     work_guard workGuard_;
@@ -120,6 +173,7 @@ class KidmonAgent::Impl
     std::vector<char> wndContent_;
     std::unique_ptr<tcp::Communicator> comm_;
     AgentMsgHandler handler_;
+    Statistics stats_;
 
     void initHandlers()
     {
@@ -132,7 +186,7 @@ class KidmonAgent::Impl
             else
             {
                 spdlog::info(
-                    "Authorization succeeds. Proceeding with data collection...");
+                    "Authorization succeeded, proceeding with data collection...");
                 collectData();
             }
         });
@@ -154,7 +208,7 @@ class KidmonAgent::Impl
             comm_ = std::make_unique<tcp::Communicator>(conn);
 
             comm_->onMsg([this](const std::string& msg) {
-                spdlog::info("Agent rcvd: {}", msg);
+                spdlog::debug("Agent rcvd: {}", msg);
                 handler_.handle(msg);
             });
 
@@ -176,7 +230,7 @@ class KidmonAgent::Impl
             nlohmann::ordered_json js;
             msgs::buildAuthMsg(cfg_.authToken, js);
             const auto authMsg = js.dump();
-            spdlog::trace("Sending auth message: {}", authMsg);
+            spdlog::debug("Sending auth message: {}", authMsg);
             comm_->sendAsync(authMsg);
         });
 
@@ -198,7 +252,7 @@ class KidmonAgent::Impl
 
         try
         {
-            spdlog::trace("Calls collectData");
+            stats_.incrementEvents();
 
             Entry entry;
 
@@ -209,7 +263,8 @@ class KidmonAgent::Impl
                 return;
             }
 
-            spdlog::trace("{}, '{}', '{}'",
+            spdlog::trace("collectData");
+            spdlog::debug("id: {}, title: {}, class: {}",
                           window->id(),
                           window->title(),
                           window->className());
@@ -230,11 +285,11 @@ class KidmonAgent::Impl
                 return;
             }
 
-            entry.processInfo.sha256 = crypto::fileSha256(entry.processInfo.processPath);
+            entry.processInfo.sha256 = shaCache_.sha256(entry.processInfo.processPath);
             entry.timestamp = SystemClock::now();
 
-            spdlog::trace("Foreground wnd: {}", oss.str());
-            spdlog::trace("Executable: {}", entry.processInfo.processPath);
+            spdlog::debug("Foreground wnd: {}", oss.str());
+            spdlog::debug("Executable: {}", entry.processInfo.processPath);
 
             const auto now = clock_type::now();
             if (cfg_.takeSnapshots && nextCaptureTime_ < now)
@@ -265,7 +320,7 @@ class KidmonAgent::Impl
             nlohmann::ordered_json js;
             msgs::buildDataMsg(entry, js);
             const auto dataMsg = js.dump();
-            //spdlog::trace("Sending data message: {}", dataMsg);
+            spdlog::debug("Sending data message: {}", dataMsg);
             comm_->sendAsync(dataMsg);
         }
         catch (const std::exception& e)
@@ -284,6 +339,13 @@ public:
         , tcpClient_(ioc_)
         , api_(ApiFactory::create())
     {
+    }
+
+    ~Impl()
+    {
+        std::ostringstream oss;
+        stats_.report(oss);
+        spdlog::info(oss.str());
     }
 
     void run()
@@ -317,14 +379,14 @@ KidmonAgent::~KidmonAgent()
 
 void KidmonAgent::run()
 {
-    spdlog::trace("Running KidmonAgent");
+    spdlog::info("Running KidmonAgent");
 
     impl_->run();
 }
 
 void KidmonAgent::shutdown() noexcept
 {
-    spdlog::trace("Shutdown requested");
+    spdlog::info("Shutdown requested");
 
     impl_->shutdown();
 }

@@ -254,7 +254,7 @@ private:
         }
         else
         {
-            spdlog::trace("Service state: {}", serviceStateToStr(status_.dwCurrentState));
+            spdlog::info("Service state: {}", serviceStateToStr(status_.dwCurrentState));
         }
 
         if (status_.dwCurrentState == SERVICE_STOP_PENDING)

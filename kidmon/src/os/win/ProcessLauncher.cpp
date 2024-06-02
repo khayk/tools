@@ -67,7 +67,7 @@ HandleUPtr activeUserMaxAllowedToken()
     if (!ret)
     {
         const auto errorCode = GetLastError();
-        spdlog::trace("GetTokenInformation failed, errorCode: {}, desc: {}",
+        spdlog::debug("GetTokenInformation failed, errorCode: {}, desc: {}",
                       errorCode,
                       sys::errorDescription(errorCode));
         return {};

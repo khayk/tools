@@ -49,7 +49,7 @@ AgentManager::AgentManager(AuthorizationHandler& authHandler,
     });
 
     svr.onListening([](uint16_t port) {
-        spdlog::trace("Listening on a port: {}", port);
+        spdlog::info("Listening on a port: {}", port);
     });
 
     svr.onClose([]() {

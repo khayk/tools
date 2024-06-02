@@ -16,7 +16,7 @@ struct Config
 
     std::chrono::milliseconds activityCheckInterval {5000};
     std::chrono::milliseconds snapshotInterval {0};
-    bool takeSnapshots {true};
+    bool takeSnapshots {false};
 
     uint16_t serverPort {1234};
     bool spawnAgent {true};

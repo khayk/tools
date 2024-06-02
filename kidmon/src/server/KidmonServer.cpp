@@ -52,6 +52,7 @@ public:
         , launcher_(api_->createProcessLauncher())
         , spawnAgent_(cfg.spawnAgent)
     {
+        authHandler_.setToken(cfg.authToken);
         agentMngr_ = std::make_unique<AgentManager>(authHandler_, dataHandler_, svr_);
 
         tcp::Server::Options opts;
@@ -81,7 +82,7 @@ public:
 
         try
         {
-            spdlog::trace("Calls healthCheck");
+            spdlog::trace("healthCheck");
 
             if (spawnAgent_ && !agentRunning())
             {
@@ -111,14 +112,14 @@ KidmonServer::~KidmonServer()
 
 void KidmonServer::run()
 {
-    spdlog::trace("Running KidmonServer");
+    spdlog::info("Running KidmonServer");
 
     impl_->run();
 }
 
 void KidmonServer::shutdown() noexcept
 {
-    spdlog::trace("Shutdown requested");
+    spdlog::info("Shutdown requested");
 
     impl_->shutdown();
 }
