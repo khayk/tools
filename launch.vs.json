@@ -28,7 +28,7 @@
             "project": "CMakeLists.txt",
             "projectTarget": "kidmon-app.exe (kidmon\\src\\kidmon-app.exe)",
             "name": "kidmon-app.exe (kidmon\\src\\kidmon-app.exe)",
-            "args": [ "--token 1234" ]
+            "args": [ "--token", "1234" ]
         }
     ]
 }

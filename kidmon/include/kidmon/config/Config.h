@@ -20,6 +20,7 @@ struct Config
 
     uint16_t serverPort {1234};
     bool spawnAgent {true};
+    bool calcSha {false};
     std::string authToken;
 
     void applyDefaults();

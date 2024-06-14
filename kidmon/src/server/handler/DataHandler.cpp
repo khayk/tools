@@ -100,7 +100,7 @@ bool DataHandler::handle(const nlohmann::json& payload,
         fromJson(msg["entry"], entry);
         entry.username = msg["username"];
 
-        if (entry.username.empty() || 
+        if (entry.username.empty() ||
             entry.username != str::ws2s(sys::activeUserName()))
         {
             error = "Username mismatch";
@@ -130,7 +130,7 @@ bool DataHandler::handle(const nlohmann::json& payload,
     return false;
 }
 
-class FileSystemStorage::Impl 
+class FileSystemStorage::Impl
 {
     Dirs dirs_;
 
@@ -151,7 +151,7 @@ public:
             file::write(file, bytes.data(), bytes.size());
         }
 
-        auto tp = std::chrono::system_clock::to_time_t(entry.timestamp);
+        auto tp = std::chrono::system_clock::to_time_t(entry.timestamp.capture);
         auto day = utl::daysSinceYearStart(tp);
 
         const auto tm = utl::timet2tm(tp);
@@ -173,7 +173,6 @@ FileSystemStorage::FileSystemStorage(fs::path reportsDir)
 
 FileSystemStorage::~FileSystemStorage()
 {
-
 }
 
 void FileSystemStorage::add(const Entry& entry)

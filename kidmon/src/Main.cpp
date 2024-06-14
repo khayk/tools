@@ -19,6 +19,7 @@
 
 void configureLogger(const Config& cfg)
 {
+    // @todo:hayk - consider log rotation or at least create a new log file on each launch
     auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
     consoleSink->set_level(spdlog::level::trace);
     consoleSink->set_pattern("%^[%L] %v%$");
@@ -74,7 +75,7 @@ int main(int argc, char* argv[])
 
         if (result.count("help"))
         {
-            std::cout << opts.help() << std::endl;
+            std::cout << opts.help() << '\n';
             return 0;
         }
 

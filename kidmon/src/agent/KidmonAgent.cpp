@@ -57,7 +57,7 @@ class Statistics
     uint64_t numEvents_ {0};
 
 public:
-    void report(std::ostream& oss)
+    void report(std::ostream& oss) const
     {
         oss << "Total number of events collected: " << numEvents_;
     }
@@ -67,7 +67,7 @@ public:
         ++numEvents_;
     }
 
-    const uint64_t numEvents() const noexcept
+    [[nodiscard]] uint64_t numEvents() const noexcept
     {
         return numEvents_;
     }
@@ -285,8 +285,13 @@ class KidmonAgent::Impl
                 return;
             }
 
-            entry.processInfo.sha256 = shaCache_.sha256(entry.processInfo.processPath);
-            entry.timestamp = SystemClock::now();
+            if (cfg_.calcSha)
+            {
+                entry.processInfo.sha256 = shaCache_.sha256(entry.processInfo.processPath);
+            }
+
+            entry.timestamp.capture = SystemClock::now();
+            entry.timestamp.duration = timeout_;
 
             spdlog::debug("Foreground wnd: {}", oss.str());
             spdlog::debug("Executable: {}", entry.processInfo.processPath);

@@ -20,7 +20,7 @@ void Client::onError(ErrorCb errorCb)
 
 void Client::connect(const Options& opts)
 {
-    // @todo:hayk - resolve host -> ip later, now assume it is valid ip
+    // @todo:hayk - resolve host -> ip later, now assume it is a valid ip
     // https://theboostcpplibraries.com/boost.asio-network-programming
     const Endpoint endpoint(net::ip::make_address(opts.host), opts.port);
 
