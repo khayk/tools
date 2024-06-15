@@ -15,9 +15,9 @@ bool isUserInteractive() noexcept;
 
 std::string errorDescription(uint64_t code);
 
-void logError(std::string_view message, uint64_t errorCode) noexcept;
+void logError(std::string_view message, uint64_t errorCode);
 
-void logLastError(std::string_view message) noexcept;
+void logLastError(std::string_view message);
 
 } // namespace sys
 

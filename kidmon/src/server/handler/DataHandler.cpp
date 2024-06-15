@@ -95,6 +95,7 @@ bool DataHandler::handle(const nlohmann::json& payload,
     try
     {
         const auto& msg = payload["message"];
+        std::ignore = answer;
 
         Entry entry;
         fromJson(msg["entry"], entry);
@@ -135,7 +136,7 @@ class FileSystemStorage::Impl
     Dirs dirs_;
 
 public:
-    Impl(fs::path reportsDir)
+    explicit Impl(fs::path reportsDir)
         : dirs_(std::move(reportsDir))
     {
     }
@@ -155,14 +156,14 @@ public:
         auto day = utl::daysSinceYearStart(tp);
 
         const auto tm = utl::timet2tm(tp);
-        const auto rawname = fmt::format("raw-{:03}-{:02}{:02}.dat", day, tm.tm_mon + 1, tm.tm_mday);
-        const auto rawfile = userDirs.rawDir / rawname;
+        const auto rawName = fmt::format("raw-{:03}-{:02}{:02}.dat", day, tm.tm_mon + 1, tm.tm_mday);
+        const auto rawFile = userDirs.rawDir / rawName;
 
         nlohmann::ordered_json js;
         Entry tmp = entry;
         tmp.windowInfo.image.bytes.clear();
         toJson(tmp, js);
-        file::append(rawfile, js.dump().append(1, '\n'));
+        file::append(rawFile, js.dump().append(1, '\n'));
     }
 };
 

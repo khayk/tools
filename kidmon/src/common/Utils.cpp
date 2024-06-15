@@ -131,22 +131,13 @@ std::string constructMessage(const std::string_view message, const uint64_t erro
                        errorDescription(errorCode));
 }
 
-void logError(const std::string_view message, const uint64_t errorCode) noexcept
+void logError(const std::string_view message, const uint64_t errorCode)
 {
-    try
-    {
-        const std::string output = constructMessage(message, errorCode);
-
-        // We should not report these errors by default
-        spdlog::error(output);
-    }
-    catch (const std::exception& ex)
-    {
-        std::ignore = ex;
-    }
+    const std::string output = constructMessage(message, errorCode);
+    spdlog::error(output);
 }
 
-void logLastError(const std::string_view message) noexcept
+void logLastError(const std::string_view message)
 {
 #ifdef _WIN32
     logError(message, GetLastError());
@@ -345,7 +336,7 @@ namespace utl {
 
 std::string generateToken(const size_t length)
 {
-    const auto randchar = []() -> char {
+    const auto randomChar = []() -> char {
         constexpr std::string_view charset = "0123456789"
                                              "abcdefghijklmnopqrstuvwxyz"
                                              "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -353,7 +344,7 @@ std::string generateToken(const size_t length)
     };
 
     std::string token(length, 0);
-    std::generate_n(token.begin(), length, randchar);
+    std::generate_n(token.begin(), length, randomChar);
 
     return token;
 }

@@ -23,10 +23,10 @@ void buildDataMsg(const Entry& entry, nlohmann::ordered_json& js)
     toJson(entry, msgJs["entry"]);
 }
 
-void buildAnswer(int status,
-    const std::string_view error,
-    const nlohmann::json& answer,
-    nlohmann::ordered_json& js)
+void buildResponse(int status,
+                   const std::string_view error,
+                   const nlohmann::json& answer,
+                   nlohmann::ordered_json& js)
 {
     js["status"] = status;
     if (!error.empty())
@@ -39,9 +39,9 @@ void buildAnswer(int status,
     }
 }
 
-void buildAnswer(int status, const nlohmann::json& answer, nlohmann::ordered_json& js)
+void buildResponse(int status, const nlohmann::json& answer, nlohmann::ordered_json& js)
 {
-    buildAnswer(status, "", answer, js);
+    buildResponse(status, "", answer, js);
 }
 
 bool isAuthMsg(const nlohmann::ordered_json& js)

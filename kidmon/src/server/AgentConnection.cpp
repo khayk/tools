@@ -41,7 +41,7 @@ AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
         }
 
         nlohmann::ordered_json js;
-        msgs::buildAnswer(0, answer, js);
+        msgs::buildResponse(0, answer, js);
         const auto res = js.dump();
         spdlog::debug("Server answers: {}", res);
         comm_.sendAsync(res);
