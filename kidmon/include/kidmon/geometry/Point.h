@@ -14,8 +14,8 @@ public:
     }
 
     // clang-format off
-    int x() const noexcept { return x_; }
-    int y() const noexcept { return y_; }
+    [[nodiscard]] int x() const noexcept { return x_; }
+    [[nodiscard]] int y() const noexcept { return y_; }
     void x(int value) noexcept { x_ = value; }
     void y(int value) noexcept { y_ = value; }
     // clang-format on
@@ -23,10 +23,10 @@ public:
 
 inline Point operator+(const Point& lhs, const Point& rhs)
 {
-    return Point(lhs.x() + rhs.x(), lhs.y() + rhs.y());
+    return {lhs.x() + rhs.x(), lhs.y() + rhs.y()};
 }
 
 inline Point operator-(const Point& lhs, const Point& rhs)
 {
-    return Point(lhs.x() - rhs.x(), lhs.y() - rhs.y());
+    return {lhs.x() - rhs.x(), lhs.y() - rhs.y()};
 }

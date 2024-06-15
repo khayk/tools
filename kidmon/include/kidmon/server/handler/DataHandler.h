@@ -3,19 +3,18 @@
 #include "MsgHandler.h"
 #include <kidmon/data/Types.h>
 #include <filesystem>
-#include <unordered_map>
 
 namespace fs = std::filesystem;
 
 //
-// * Entry                  // full representation of the event
-// * Statistics             // statistical data about multiple entries (part of report)
+// * Entry          // full representation of the event
+// * Statistics     // statistical data about multiple entries (part of report)
 //
-// * Report                 // summary of the collection of an event based on a certain criterias
-// * ReportBuilder          // interface for producing a report
+// * Report         // summary of the collection of an event based on a certain criteria
+// * ReportBuilder  // interface for producing a report
 //
-// * IDataStorage          // interface for event storage
-//      * DatabaseStorage 
+// * IDataStorage   // interface for event storage
+//      * DatabaseStorage
 //      * FileSystemStorage
 //      * MemoryStorage
 
@@ -31,7 +30,7 @@ public:
 class FileSystemStorage : public IDataStorage
 {
 public:
-    FileSystemStorage(fs::path reportsDir);
+    explicit FileSystemStorage(fs::path reportsDir);
     ~FileSystemStorage();
 
     void add(const Entry& entry) override;
@@ -47,7 +46,7 @@ class DataHandler : public MsgHandler
     std::string buffer_;
 
 public:
-    DataHandler(IDataStorage& storage);
+    explicit DataHandler(IDataStorage& storage);
 
     bool handle(const nlohmann::json& payload,
                 nlohmann::json& answer,

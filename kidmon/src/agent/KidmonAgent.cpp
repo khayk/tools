@@ -13,6 +13,7 @@
 #include <boost/asio.hpp>
 #include <spdlog/spdlog.h>
 
+#include <unordered_map>
 #include <filesystem>
 #include <sstream>
 #include <chrono>

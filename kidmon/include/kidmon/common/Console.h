@@ -6,7 +6,7 @@
 class Console
 {
 public:
-    Console(const std::shared_ptr<Runnable>& runnable);
+    explicit Console(const std::shared_ptr<Runnable>& runnable);
     ~Console();
 
     void run();

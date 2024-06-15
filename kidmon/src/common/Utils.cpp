@@ -172,7 +172,7 @@ fs::path getKnownFolderPath(const GUID& id, std::error_code& ec) noexcept
 
     if (result != S_OK)
     {
-        ec.assign(GetLastError(), std::system_category());
+        ec.assign(static_cast<int>(GetLastError()), std::system_category());
     }
     else
     {
@@ -219,7 +219,7 @@ fs::path temp(std::error_code& ec)
 
     if (length == 0)
     {
-        ec.assign(GetLastError(), std::system_category());
+        ec.assign(static_cast<int>(GetLastError()), std::system_category());
     }
     else
     {
@@ -345,7 +345,7 @@ namespace utl {
 
 std::string generateToken(const size_t length)
 {
-    auto randchar = []() -> char {
+    const auto randchar = []() -> char {
         constexpr std::string_view charset = "0123456789"
                                              "abcdefghijklmnopqrstuvwxyz"
                                              "ABCDEFGHIJKLMNOPQRSTUVWXYZ";

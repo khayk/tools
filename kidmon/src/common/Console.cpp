@@ -5,8 +5,13 @@
 #include <csignal>
 #include <mutex>
 
+namespace {
+
 std::mutex g_mutex;
 void* g_instance {nullptr};
+
+}   // namespace
+
 
 class Console::Impl
 {
@@ -24,7 +29,7 @@ class Console::Impl
         if (signal == SIGINT)
         {
             std::unique_lock guard(g_mutex);
-            Console::Impl* instance = reinterpret_cast<Console::Impl*>(g_instance);
+            auto* instance = reinterpret_cast<Console::Impl*>(g_instance);
 
             if (instance)
             {
@@ -35,7 +40,7 @@ class Console::Impl
     }
 
 public:
-    Impl(const std::shared_ptr<Runnable>& runnable)
+    explicit Impl(const std::shared_ptr<Runnable>& runnable)
         : runnable_(runnable)
     {
         if (!runnable)
@@ -71,7 +76,7 @@ public:
 
         std::unique_lock guard(g_mutex);
 
-        std::signal(SIGINT, prevSignal_);
+        std::ignore = std::signal(SIGINT, prevSignal_);
         g_instance = nullptr;
     }
 

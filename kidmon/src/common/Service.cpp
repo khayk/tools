@@ -67,10 +67,6 @@ public:
     Impl(const std::shared_ptr<Runnable>& runnable, std::string name)
         : runnable_(runnable)
         , name_(std::move(name))
-#ifdef _WIN32
-        , handle_()
-        , status_()
-#endif
     {
         instance_ = this;
     }
@@ -264,8 +260,8 @@ private:
         }
     }
 
-    SERVICE_STATUS_HANDLE handle_;
-    SERVICE_STATUS status_;
+    SERVICE_STATUS_HANDLE handle_ {};
+    SERVICE_STATUS status_ {};
 #endif
     static Impl* instance_;
 };

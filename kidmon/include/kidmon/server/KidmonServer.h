@@ -11,7 +11,7 @@ class KidmonAgent;
 class KidmonServer : public Runnable
 {
 public:
-    KidmonServer(const Config& cfg);
+    explicit KidmonServer(const Config& cfg);
     ~KidmonServer();
 
     void run() override;

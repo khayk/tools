@@ -24,7 +24,7 @@ class Dirs
     fs::path reportsDir_;
 
 public:
-    Dirs(fs::path reportsDir)
+    explicit Dirs(fs::path reportsDir)
         : reportsDir_(std::move(reportsDir))
     {
     }

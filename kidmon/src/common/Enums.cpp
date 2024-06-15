@@ -3,7 +3,7 @@
 #define EnumStringify(x) #x
 #define EnumDef(x) x
 
-std::string_view toString(ImageFormat format)
+std::string_view toString(const ImageFormat format)
 {
     switch (format)
     {

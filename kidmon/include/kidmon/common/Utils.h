@@ -17,7 +17,7 @@ std::string errorDescription(uint64_t code);
 
 void logError(std::string_view message, uint64_t errorCode) noexcept;
 
-void logLastError(const std::string_view message) noexcept;
+void logLastError(std::string_view message) noexcept;
 
 } // namespace sys
 
@@ -62,7 +62,7 @@ class SingleInstanceChecker
     void* mutex_ {nullptr};
 
 public:
-    SingleInstanceChecker(std::wstring_view name);
+    explicit SingleInstanceChecker(std::wstring_view name);
     ~SingleInstanceChecker();
 
     bool processAlreadyRunning() const noexcept;
@@ -73,22 +73,22 @@ namespace utl {
 
 /**
  * @brief  Generate a alpha-numeric string with a given length
- * 
+ *
  * @param length The length of the token to be generated
  *
  * @return  The alpha-numeric string
  */
-std::string generateToken(const size_t length = 16);
+std::string generateToken(size_t length = 16);
 
 
 
-tm timet2tm(const time_t dt);
+tm timet2tm(time_t dt);
 
 /**
  * @brief  Calculate days since January 1 for the year represented by the given date time
- * 
+ *
  * @param date  Specified dt
- * 
+ *
  * @return Number of days
  */
 uint32_t daysSinceYearStart(time_t dt = std::time(nullptr));

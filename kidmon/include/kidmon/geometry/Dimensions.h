@@ -16,8 +16,8 @@ public:
     }
 
     // clang-format off
-    uint32_t width() const noexcept { return width_; }
-    uint32_t height() const noexcept { return height_; }
+    [[nodiscard]] uint32_t width() const noexcept { return width_; }
+    [[nodiscard]] uint32_t height() const noexcept { return height_; }
     void width(uint32_t value) noexcept { width_ = value; }
     void height(uint32_t value) noexcept { height_ = value; }
     // clang-format on

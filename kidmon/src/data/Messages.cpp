@@ -47,23 +47,13 @@ void buildAnswer(int status, const nlohmann::json& answer, nlohmann::ordered_jso
 bool isAuthMsg(const nlohmann::ordered_json& js)
 {
     const auto nit = js.find("name");
-    if (nit == js.end() || (*nit).get<std::string>() != "auth")
-    {
-        return false;
-    }
-
-    return true;
+    return !(nit == js.end() || (*nit).get<std::string>() != "auth");
 }
 
 bool isDataMsg(const nlohmann::ordered_json& js)
 {
     const auto nit = js.find("name");
-    if (nit == js.end() || (*nit).get<std::string>() != "data")
-    {
-        return false;
-    }
-
-    return true;
+    return !(nit == js.end() || (*nit).get<std::string>() != "data");
 }
 
 }  // namespace msgs
