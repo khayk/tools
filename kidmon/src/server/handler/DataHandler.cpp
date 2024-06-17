@@ -6,6 +6,7 @@
 #include <core/utils/Str.h>
 
 #include <nlohmann/json.hpp>
+#include <stdexcept>
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
 
@@ -82,8 +83,8 @@ public:
     }
 };
 
-DataHandler::DataHandler(IDataStorage& storage)
-    : storage_(storage)
+DataHandler::DataHandler(IRepository& repo)
+    : repo_(repo)
 {
 }
 
@@ -119,7 +120,7 @@ bool DataHandler::handle(const nlohmann::json& payload,
             entry.windowInfo.image.bytes = buffer_;
         }
 
-        storage_.add(entry);
+        repo_.add(entry);
 
         return true;
     }
@@ -131,7 +132,7 @@ bool DataHandler::handle(const nlohmann::json& payload,
     return false;
 }
 
-class FileSystemStorage::Impl
+class FileSystemRepository::Impl
 {
     Dirs dirs_;
 
@@ -167,16 +168,31 @@ public:
     }
 };
 
-FileSystemStorage::FileSystemStorage(fs::path reportsDir)
+FileSystemRepository::FileSystemRepository(fs::path reportsDir)
     : pimpl_(std::make_unique<Impl>(std::move(reportsDir)))
 {
 }
 
-FileSystemStorage::~FileSystemStorage()
+FileSystemRepository::~FileSystemRepository()
 {
 }
 
-void FileSystemStorage::add(const Entry& entry)
+void FileSystemRepository::add(const Entry& entry)
 {
     pimpl_->add(entry);
+}
+
+void FileSystemRepository::queryUsers(UserCb cb) const
+{
+    std::ignore = cb;
+
+    throw std::logic_error(fmt::format("Not implemented: {}", __func__));
+}
+
+void FileSystemRepository::queryEntries(const Filter& filter, EntryCb cb) const
+{
+    std::ignore = filter;
+    std::ignore = cb;
+
+    throw std::logic_error(fmt::format("Not implemented: {}", __func__));
 }

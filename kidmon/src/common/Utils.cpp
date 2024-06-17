@@ -43,7 +43,7 @@ std::wstring userNameBySessionId(unsigned long sessionId)
     return str;
 #else
     std::ignore = sessionId;
-    throw std::runtime_error("userNameBySessionId not implemented");
+    throw std::runtime_error(fmt::format("Not implemented: {}", __func__));
 #endif
 }
 
@@ -53,7 +53,7 @@ std::wstring activeUserName()
     return userNameBySessionId(WTSGetActiveConsoleSessionId());
 #else
     // @todo:khayk
-    throw std::runtime_error("activeUserName not implemented");
+    throw std::runtime_error(fmt::format("Not implemented: {}", __func__));
 #endif
 }
 
@@ -182,7 +182,7 @@ fs::path home(std::error_code& ec)
     return getKnownFolderPath(FOLDERID_Profile, ec);
 #else
     std::ignore = ec;
-    throw std::logic_error(fmt::format("Not implemented: {}", __func__));
+    throw std::runtime_error(fmt::format("Not implemented: {}", __func__));
 #endif
 }
 
@@ -218,7 +218,7 @@ fs::path temp(std::error_code& ec)
     }
 #else
     std::ignore = ec;
-    throw std::logic_error(fmt::format("Not implemented: {}", __func__));
+    throw std::runtime_error(fmt::format("Not implemented: {}", __func__));
 #endif
 
     return path;
