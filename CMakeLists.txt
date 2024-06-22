@@ -24,6 +24,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_compile_definitions(BOOST_BIND_NO_PLACEHOLDERS)
 add_compile_definitions(BOOST_ASIO_NO_DEPRECATED)
+add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
 
 if(MSVC)
    set_property(GLOBAL PROPERTY USE_FOLDERS ON)

@@ -11,7 +11,7 @@
 
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/daily_file_sink.h>
 #include <cxxopts.hpp>
 
 #include <iostream>
@@ -19,22 +19,25 @@
 
 void configureLogger(const Config& cfg)
 {
+    using namespace spdlog;
+
     // @todo:hayk - consider log rotation or at least create a new log file on each launch
-    auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-    consoleSink->set_level(spdlog::level::trace);
+    auto consoleSink = std::make_shared<sinks::stdout_color_sink_mt>();
+    consoleSink->set_level(level::trace);
     consoleSink->set_pattern("%^[%L] %v%$");
 
-    auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(
-        file::path2s(cfg.logsDir / cfg.logFilename));
-    fileSink->set_level(spdlog::level::trace);
-    fileSink->set_pattern("[%Y-%m-%d %H:%M:%S.%e][%=5t][%L] %v");
+    auto fileSink = std::make_shared<sinks::daily_file_sink_mt>(
+        file::path2s(cfg.logsDir / cfg.logFilename),
+        4,
+        0);
+    fileSink->set_level(level::trace);
+    fileSink->set_pattern("[%Y-%m-%d %H:%M:%S.%e][%=5t][%L]  %v "); // [%s:%#]
 
-    auto logger =
-        std::make_shared<spdlog::logger>("multi_sink",
-                                         spdlog::sinks_init_list {consoleSink, fileSink});
-    logger->set_level(spdlog::level::trace);
-    spdlog::set_default_logger(logger);
-    spdlog::flush_every(std::chrono::seconds(10));
+    auto logr =
+        std::make_shared<logger>("multi_sink", sinks_init_list {consoleSink, fileSink});
+    logr->set_level(level::trace);
+    set_default_logger(logr);
+    flush_every(std::chrono::seconds(10));
 }
 
 void constructAttribs(const bool agent, std::wstring& uniqueName, fs::path& logFile)
