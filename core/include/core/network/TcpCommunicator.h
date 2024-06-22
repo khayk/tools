@@ -12,7 +12,7 @@ public:
     using MsgCb  = std::function<void(const std::string&)>;
     using SentCb = std::function<void(bool)>;
 
-    Communicator(Connection& conn);
+    explicit Communicator(Connection& conn);
     ~Communicator();
 
     bool onMsg(MsgCb msgCb);

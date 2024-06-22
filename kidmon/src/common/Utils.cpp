@@ -71,7 +71,7 @@ bool isUserInteractive() noexcept
                                      UOI_FLAGS,
                                      &uof,
                                      sizeof(USEROBJECTFLAGS),
-                                     NULL) &&
+                                     nullptr) &&
             ((uof.dwFlags & WSF_VISIBLE) == 0))
         {
             interactiveUser = false;
@@ -118,7 +118,7 @@ std::string errorDescription(uint64_t code)
 #endif
 }
 
-std::string constructMessage(const std::string_view message, const uint64_t errorCode)
+std::string constructErrorMsg(const std::string_view message, const uint64_t errorCode)
 {
     if (errorCode == 0)
     {
@@ -131,9 +131,14 @@ std::string constructMessage(const std::string_view message, const uint64_t erro
                        errorDescription(errorCode));
 }
 
+std::string constructLastErrorMsg(std::string_view message)
+{
+    return constructErrorMsg(message, GetLastError());
+}
+
 void logError(const std::string_view message, const uint64_t errorCode)
 {
-    const std::string output = constructMessage(message, errorCode);
+    const std::string output = constructErrorMsg(message, errorCode);
     spdlog::error(output);
 }
 

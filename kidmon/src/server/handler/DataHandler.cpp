@@ -173,9 +173,7 @@ FileSystemRepository::FileSystemRepository(fs::path reportsDir)
 {
 }
 
-FileSystemRepository::~FileSystemRepository()
-{
-}
+FileSystemRepository::~FileSystemRepository() = default;
 
 void FileSystemRepository::add(const Entry& entry)
 {

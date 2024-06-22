@@ -15,6 +15,10 @@ bool isUserInteractive() noexcept;
 
 std::string errorDescription(uint64_t code);
 
+std::string constructErrorMsg(std::string_view message, uint64_t errorCode);
+
+std::string constructLastErrorMsg(std::string_view message);
+
 void logError(std::string_view message, uint64_t errorCode);
 
 void logLastError(std::string_view message);
