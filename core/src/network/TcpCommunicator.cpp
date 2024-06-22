@@ -10,7 +10,7 @@ namespace tcp {
 class Communicator::Impl
 {
 public:
-    Impl(Connection& conn)
+    explicit Impl(Connection& conn)
         : conn_(&conn)
     {
         // Default handler, does nothing

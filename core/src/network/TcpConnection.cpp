@@ -1,10 +1,12 @@
 #include <core/network/TcpConnection.h>
+#include <boost/date_time/posix_time/posix_time_duration.hpp>
 
 namespace tcp {
 
 Connection::Connection(Socket socket, uint16_t bufferSize) noexcept
     : socket_ {std::move(socket)}
     , data_(bufferSize, ' ')
+    , timer_(socket_.get_executor())
 {
 }
 
@@ -33,6 +35,16 @@ void Connection::onDisconnect(DisconnectCb disconnectCb)
     disconnectCb_.add(std::move(disconnectCb));
 }
 
+void Connection::onTimeout(TimeoutCb timeoutCb)
+{
+    timeoutCb_.add(std::move(timeoutCb));
+}
+
+void Connection::setTimeout(std::chrono::milliseconds timeout)
+{
+    timeout_ = timeout;
+}
+
 void Connection::read()
 {
     auto self {shared_from_this()};
@@ -41,6 +53,14 @@ void Connection::read()
                             [this, self](const ErrorCode& ec, std::size_t size) {
                                 handleRead(ec, size);
                             });
+
+    if (timeout_.count() > 0)
+    {
+        timer_.expires_after(timeout_);
+        timer_.async_wait([this, self](const ErrorCode& ec) {
+            handleTimeout(ec);
+        });
+    }
 }
 
 void Connection::write(const char* data, size_t size)
@@ -54,6 +74,11 @@ void Connection::write(const char* data, size_t size)
                      });
 }
 
+void Connection::write(std::string_view sv)
+{
+    write(sv.data(), sv.size());
+}
+
 void Connection::close()
 {
     std::unique_lock guard(mutex_);
@@ -63,12 +88,8 @@ void Connection::close()
         ErrorCode ec;
         socket_.shutdown(Socket::shutdown_both, ec);
         socket_.close(ec);
+        timer_.cancel();
     }
-}
-
-void Connection::write(std::string_view sv)
-{
-    write(sv.data(), sv.size());
 }
 
 void Connection::handleRead(const ErrorCode& ec, std::size_t size)
@@ -91,6 +112,21 @@ void Connection::handleWrite(const ErrorCode& ec, size_t size)
     }
 
     sentCb_(size);
+}
+
+void Connection::handleTimeout(const ErrorCode& ec)
+{
+    if (!ec)
+    {
+        timeoutCb_(ec);
+
+        auto self {shared_from_this()};
+
+        timer_.expires_after(timeout_);
+        timer_.async_wait([this, self](const ErrorCode& ec) {
+            handleTimeout(ec);
+        });
+    }
 }
 
 } // namespace tcp
