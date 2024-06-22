@@ -2,20 +2,24 @@
 #include <kidmon/server/handler/AuthorizationHandler.h>
 #include <kidmon/server/handler/DataHandler.h>
 #include <kidmon/data/Messages.h>
+#include <kidmon/common/Utils.h>
+#include <core/utils/Str.h>
 
+#include <boost/asio/error.hpp>
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
 
 AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
                                  DataHandler& dataHandler,
-                                 tcp::Socket&& socket)
-    : Connection(std::move(socket))
+                                 tcp::Socket&& sock,
+                                 std::chrono::milliseconds peerDropTimeout)
+    : Connection(std::move(sock))
     , authHandler_(authHandler)
     , dataHandler_(dataHandler)
     , comm_(*this)
 {
     comm_.onMsg([this](const std::string& msg) {
-        spdlog::debug("Server rcvd: {}", msg);
+        spdlog::debug("Server rcvd: {} bytes", msg.size());
 
         const auto payload = nlohmann::json::parse(msg);
         nlohmann::json answer;
@@ -43,7 +47,7 @@ AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
         nlohmann::ordered_json js;
         msgs::buildResponse(0, answer, js);
         const auto res = js.dump();
-        spdlog::debug("Server answers: {}", res);
+        spdlog::debug("Server sent: {} bytes", res.size());
         comm_.sendAsync(res);
     });
 
@@ -54,6 +58,27 @@ AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
                       ec.message());
         transitionTo(Status::Disconnected);
         close();
+    });
+
+    setTimeout(peerDropTimeout);
+    spdlog::trace("Set timer to drop peer when it is inactive for {} ms", peerDropTimeout.count());
+
+    onTimeout([this](const ErrorCode& ec) {
+        std::ignore = ec;
+        spdlog::trace("Read timeout for agent: {}", fmt::ptr(this));
+
+        const auto activeUsername = str::ws2s(sys::activeUserName());
+
+        if (!authHandler_.username().empty() &&
+            !activeUsername.empty() &&
+            authHandler_.username() != activeUsername)
+        {
+            spdlog::info("Active user changed from '{}' to '{}'. Dropping peer",
+                         authHandler_.username(),
+                         activeUsername);
+            transitionTo(Status::Disconnected);
+            close();
+        }
     });
 }
 

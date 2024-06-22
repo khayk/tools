@@ -31,7 +31,14 @@ using HandleUPtr = std::unique_ptr<HANDLE, HandleCloser>;
 
 HandleUPtr activeUserQueryToken()
 {
+    static unsigned int previousSessionId = 0;
     const unsigned int sessionId = WTSGetActiveConsoleSessionId();
+
+    if (previousSessionId != sessionId)
+    {
+        spdlog::debug("Active console session id: {}", sessionId);
+        previousSessionId = sessionId;
+    }
 
     HANDLE token {nullptr};
     if (!WTSQueryUserToken(sessionId, &token))
@@ -53,11 +60,14 @@ HandleUPtr activeUserMaxAllowedToken()
 
     if (!userToken)
     {
+        spdlog::debug("No active user detected");
         return {};
     }
 
+    spdlog::debug("Active user token: {}", fmt::ptr(userToken.get()));
+
     // Get the linked token
-    TOKEN_LINKED_TOKEN tempLinkedToken = {nullptr};
+    TOKEN_LINKED_TOKEN tempLinkedToken {};
     unsigned long size = sizeof(tempLinkedToken);
     const BOOL ret = GetTokenInformation(userToken.get(),
                                          TokenLinkedToken,
@@ -66,23 +76,22 @@ HandleUPtr activeUserMaxAllowedToken()
                                          &size);
     if (!ret)
     {
-        const auto errorCode = GetLastError();
-        spdlog::debug("GetTokenInformation failed, errorCode: {}, desc: {}",
-                      errorCode,
-                      sys::errorDescription(errorCode));
-        return {};
+        spdlog::debug(sys::constructLastErrorMsg(
+            fmt::format("GetTokenInformation failed for token class: {}",
+                        static_cast<int>(TokenLinkedToken))));
     }
 
     const HandleUPtr linkedToken(tempLinkedToken.LinkedToken);
 
     HANDLE token {nullptr};
-    if (!DuplicateTokenEx(ret ? linkedToken.get() : userToken.get(),
+    if (!DuplicateTokenEx(linkedToken.get() ? linkedToken.get() : userToken.get(),
                           MAXIMUM_ALLOWED,
                           nullptr,
                           SecurityImpersonation,
                           TokenPrimary,
                           &token))
     {
+        spdlog::debug(sys::constructLastErrorMsg("DuplicateTokenEx failed"));
         return {};
     }
 
@@ -91,7 +100,7 @@ HandleUPtr activeUserMaxAllowedToken()
 
 bool directLaunch(const fs::path& exec, const std::vector<std::string>& args)
 {
-    STARTUPINFOW startupInfo;
+    STARTUPINFOW startupInfo{};
     PROCESS_INFORMATION processInfo;
     memset(&startupInfo, 0, sizeof(startupInfo));
     startupInfo.cb = sizeof(startupInfo);
@@ -122,8 +131,7 @@ bool directLaunch(const fs::path& exec, const std::vector<std::string>& args)
                                        &processInfo);
     if (!result)
     {
-        sys::logLastError("Call of CreateProcess failed for '" + file::path2s(exec) +
-                          "'");
+        sys::logLastError("CreateProcess failed for '" + file::path2s(exec) + "'");
         return false;
     }
 
@@ -191,7 +199,7 @@ bool interactiveLaunch(const fs::path& exec,
                                           &processInfo);
     if (!ret)
     {
-        sys::logLastError("Call of CreateProcessAsUserW failed.");
+        sys::logLastError("CreateProcessAsUserW failed");
         return false;
     }
 

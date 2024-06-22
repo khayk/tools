@@ -16,6 +16,7 @@ struct Config
 
     std::chrono::milliseconds activityCheckInterval {5000};
     std::chrono::milliseconds snapshotInterval {0};
+    std::chrono::milliseconds peerDropTimeout {activityCheckInterval.count() + 2000};
     bool takeSnapshots {false};
 
     uint16_t serverPort {1234};
@@ -24,5 +25,5 @@ struct Config
     std::string authToken;
 
     void applyDefaults();
-    void applyOverrides(const fs::path& /*file*/);
+    void applyOverrides(const fs::path& filename);
 };

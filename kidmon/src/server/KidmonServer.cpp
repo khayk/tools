@@ -53,7 +53,10 @@ public:
         , spawnAgent_(cfg.spawnAgent)
     {
         authHandler_.setToken(cfg.authToken);
-        agentMngr_ = std::make_unique<AgentManager>(authHandler_, dataHandler_, svr_);
+        agentMngr_ = std::make_unique<AgentManager>(authHandler_,
+                                                    dataHandler_,
+                                                    svr_,
+                                                    cfg.peerDropTimeout);
 
         tcp::Server::Options opts;
         opts.port = cfg.serverPort;

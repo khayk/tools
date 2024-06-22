@@ -13,7 +13,8 @@ class AgentManager
 public:
     AgentManager(AuthorizationHandler& authHandler,
                  DataHandler& dataHandler,
-                 tcp::Server& svr);
+                 tcp::Server& svr,
+                 std::chrono::milliseconds peerDropTimeout);
 
     [[nodiscard]] bool hasAuthorizedAgent() const;
 };

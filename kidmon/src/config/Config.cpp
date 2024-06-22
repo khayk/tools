@@ -10,14 +10,15 @@ void Config::applyDefaults()
     logsDir = appDataDir / "logs";
     logFilename = "kidmon.log";
 
-    activityCheckInterval = 1s;
+    activityCheckInterval = 2s;
+    peerDropTimeout = activityCheckInterval + 2s;
     snapshotInterval = 5min;
 
     serverPort = 1234;
 }
 
-void Config::applyOverrides(const fs::path& file)
+void Config::applyOverrides(const fs::path& filename)
 {
     snapshotInterval = 10s;
-    logFilename = file;
+    logFilename = filename;
 }

@@ -20,7 +20,8 @@ public:
 
     AgentConnection(AuthorizationHandler& authHandler,
                     DataHandler& dataHandler,
-                    tcp::Socket&& socket);
+                    tcp::Socket&& socket,
+                    std::chrono::milliseconds peerDropTimeout);
 
     ~AgentConnection();
 

@@ -15,24 +15,27 @@ tcp::Communicator& communicator(tcp::Connection& conn)
 
 AgentManager::AgentManager(AuthorizationHandler& authHandler,
                            DataHandler& dataHandler,
-                           tcp::Server& svr)
+                           tcp::Server& svr,
+                           std::chrono::milliseconds peerDropTimeout)
 {
-    svr.onCreateConnection([this, &authHandler, &dataHandler](tcp::Socket&& socket) {
-        auto conn = std::make_shared<AgentConnection>(authHandler,
-                                                      dataHandler,
-                                                      std::move(socket));
+    svr.onCreateConnection(
+        [this, &authHandler, &dataHandler, peerDropTimeout](tcp::Socket&& socket) {
+            auto conn = std::make_shared<AgentConnection>(authHandler,
+                                                          dataHandler,
+                                                          std::move(socket),
+                                                          peerDropTimeout);
 
-        conn->onAuth([this](AgentConnection* conn, bool auth) {
+            conn->onAuth([this](AgentConnection* conn, bool auth) {
             if (authAgentConn_ == nullptr && auth)
             {
-                spdlog::info("Detected an authorized agent {}", fmt::ptr(conn));
+                spdlog::info("Agent successfully authorized: {}", fmt::ptr(conn));
                 authAgentConn_ = conn;
                 return true;
             }
 
             if (authAgentConn_ == conn && !auth)
             {
-                spdlog::info("Authorized agent disconnected {}", fmt::ptr(conn));
+                spdlog::info("Authorized agent disconnected: {}", fmt::ptr(conn));
                 authAgentConn_ = nullptr;
                 return true;
             }

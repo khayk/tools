@@ -118,14 +118,14 @@ void Connection::handleTimeout(const ErrorCode& ec)
 {
     if (!ec)
     {
-        timeoutCb_(ec);
-
         auto self {shared_from_this()};
 
         timer_.expires_after(timeout_);
         timer_.async_wait([this, self](const ErrorCode& ec) {
             handleTimeout(ec);
         });
+
+        timeoutCb_(ec);
     }
 }
 
