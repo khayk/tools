@@ -25,13 +25,13 @@ AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
         nlohmann::json answer;
         std::string error;
 
-        if (status_ == Status::Authorized)
+        if (currentState_ == State::Authorized)
         {
             dataHandler_.handle(payload, answer, error);
         }
         else if (authHandler_.handle(payload, answer, error))
         {
-            transitionTo(Status::Authorized);
+            transitionTo(State::Authorized);
         }
 
         if (!error.empty())
@@ -39,7 +39,7 @@ AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
             spdlog::error("Request handling failed, details: {}", error);
 
             // This means unknown or bad message
-            transitionTo(Status::Disconnected);
+            transitionTo(State::Disconnected);
             close();
             return;
         }
@@ -56,7 +56,7 @@ AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
                       fmt::ptr(this),
                       ec.value(),
                       ec.message());
-        transitionTo(Status::Disconnected);
+        transitionTo(State::Disconnected);
         close();
     });
 
@@ -65,7 +65,7 @@ AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
 
     onTimeout([this](const ErrorCode& ec) {
         std::ignore = ec;
-        spdlog::trace("Read timeout for agent: {}", fmt::ptr(this));
+        spdlog::trace("No data from agent: {}", fmt::ptr(this));
 
         const auto activeUsername = str::ws2s(sys::activeUserName());
 
@@ -76,7 +76,7 @@ AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
             spdlog::info("Active user changed from '{}' to '{}'. Dropping peer",
                          authHandler_.username(),
                          activeUsername);
-            transitionTo(Status::Disconnected);
+            transitionTo(State::Disconnected);
             close();
         }
     });
@@ -86,7 +86,7 @@ AgentConnection::~AgentConnection()
 {
     spdlog::info("Dropped: {}", fmt::ptr(this));
 
-    transitionTo(Status::Disconnected);
+    transitionTo(State::Disconnected);
 }
 
 void AgentConnection::onAuth(AuthorizationCb authCb)
@@ -94,9 +94,9 @@ void AgentConnection::onAuth(AuthorizationCb authCb)
     authCb_ = std::move(authCb);
 }
 
-AgentConnection::Status AgentConnection::status() const noexcept
+AgentConnection::State AgentConnection::state() const noexcept
 {
-    return status_;
+    return currentState_;
 }
 
 tcp::Communicator& AgentConnection::communicator()
@@ -104,19 +104,19 @@ tcp::Communicator& AgentConnection::communicator()
     return comm_;
 }
 
-void AgentConnection::transitionTo(const Status status) noexcept
+void AgentConnection::transitionTo(const State newState) noexcept
 {
-    if (status_ == Status::Connected)
+    if (currentState_ == State::Connected)
     {
-        if (status == Status::Authorized)
+        if (newState == State::Authorized)
         {
             authCb_(this, true);
         }
     }
-    else if (status_ == Status::Authorized)
+    else if (currentState_ == State::Authorized)
     {
         authCb_(this, false);
     }
 
-    status_ = status;
+    currentState_ = newState;
 }

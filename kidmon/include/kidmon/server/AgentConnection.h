@@ -11,7 +11,7 @@ class AgentConnection : public tcp::Connection
 public:
     using AuthorizationCb = std::function<bool(AgentConnection* conn, bool)>;
 
-    enum Status
+    enum State
     {
         Disconnected,
         Connected,
@@ -27,17 +27,17 @@ public:
 
     void onAuth(AuthorizationCb authCb);
 
-    Status status() const noexcept;
+    State state() const noexcept;
 
     tcp::Communicator& communicator();
 
 private:
     AuthorizationHandler& authHandler_;
     DataHandler& dataHandler_;
-    Status status_ {Status::Connected};
+    State currentState_ {State::Connected};
 
     tcp::Communicator comm_;
     AuthorizationCb authCb_;
 
-    void transitionTo(Status status) noexcept;
+    void transitionTo(State newState) noexcept;
 };
