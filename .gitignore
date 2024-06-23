@@ -1,7 +1,9 @@
+
 # Build results
 [Bb]uild/
 [Bb]uild-*/
 .cache/
+ubuild/
 
 # Visual Studio files
 .vs/
