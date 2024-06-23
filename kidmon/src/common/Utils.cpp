@@ -133,7 +133,11 @@ std::string constructErrorMsg(const std::string_view message, const uint64_t err
 
 std::string constructLastErrorMsg(std::string_view message)
 {
+#ifdef _WIN32
     return constructErrorMsg(message, GetLastError());
+#else
+    return constructErrorMsg(message, errno);
+#endif
 }
 
 void logError(const std::string_view message, const uint64_t errorCode)
