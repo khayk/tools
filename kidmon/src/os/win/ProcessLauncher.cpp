@@ -44,9 +44,9 @@ HandleUPtr activeUserQueryToken()
     if (!WTSQueryUserToken(sessionId, &token))
     {
         const auto errorCode = GetLastError();
-        spdlog::debug("WTSQueryUserToken failed, errorCode: {}, desc: {}",
-                      errorCode,
-                      sys::errorDescription(errorCode));
+        spdlog::warn("WTSQueryUserToken failed, errorCode: {}, desc: {}",
+                     errorCode,
+                     sys::errorDescription(errorCode));
         return {};
     }
 
@@ -60,7 +60,6 @@ HandleUPtr activeUserMaxAllowedToken()
 
     if (!userToken)
     {
-        spdlog::debug("No active user detected");
         return {};
     }
 
@@ -97,6 +96,7 @@ HandleUPtr activeUserMaxAllowedToken()
 
     return HandleUPtr {token};
 }
+
 
 bool directLaunch(const fs::path& exec, const std::vector<std::string>& args)
 {
@@ -167,7 +167,7 @@ bool interactiveLaunch(const fs::path& exec,
     DWORD creationFlags = NORMAL_PRIORITY_CLASS | CREATE_UNICODE_ENVIRONMENT;
     std::wstring name = L"winsta0\\default";
 
-    STARTUPINFOW startupInfo;
+    STARTUPINFOW startupInfo {};
     ZeroMemory(&startupInfo, sizeof(startupInfo));
     startupInfo.cb = sizeof(startupInfo);
     startupInfo.lpDesktop = name.data();
