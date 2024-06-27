@@ -2,7 +2,7 @@
 
 Own implementation of different tools.
 
-## Build
+## Build & Test
 
 ### Prerequisite
 
@@ -12,23 +12,30 @@ Own implementation of different tools.
         * Windows `<platform>` can be `x64-windows`
         * Linux   `<platform>` can be `x64-linux`
 
-### Windows
+### Instructions
 
-* TODO
+* Configure
+    * Navigate the root directory of the project
+    * If the environment variable `VCPKG_ROOT` is defined, use the command below
+        * `cmake -B build -S .`
+    * Otherwise
+        * `cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=<vcpkg_path>/scripts/buildsystems/vcpkg.cmake`
+* Build
+    * `cmake --build build --parallel 8`
+* Extras
+    * Run the command below before configure step to build with `clang`. Change clang path if required.
 
-### Linux
+        ```bash
+        export CC=/usr/bin/clang
+        export CXX=/usr/bin/clang++
+        ```
 
-1. Configure from the project root directory
-    * `cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=<vcpkg_path>/scripts/buildsystems/vcpkg.cmake`
-2. Build
-    * `cmake --build build --parallel 4`
-
-* If you want to build with `clang` you can run following command before configuring the project. Change clang path if required.
-
-    ```bash
-    export CC=/usr/bin/clang
-    export CXX=/usr/bin/clang++
-    ```
+* Tests
+    * TBD
+    * Manually run application with ending with name `-test` (TBD, utilize `ctest`)
+        * Windows - `build\core\test\Debug\core-test.exe`
+        * Linux - `./build/core/test/core-test`
+    * [Creating and running tests with CTest](https://coderefinery.github.io/cmake-workshop/testing/)
 
 ## Coverage
 
@@ -41,7 +48,7 @@ Own implementation of different tools.
 
 ## Formatting
 
-* The project formatted based on the settings in .clang-format file under the project root directory
-    * Open bash, navigate to project root directory
-    * Ensure you have installed `clang-format` version `17.0.1`
-    * Run `find . -iname *.h -o -iname *.cpp | xargs clang-format -i`, to format all {h,cpp} files in place
+* The project is formatted based on the settings in `.clang-format`
+    * Open bash, navigate the root directory of the project
+    * Ensure `clang-format` version `17.0.1` is installed
+    * Run `find . -iname *.h -o -iname *.cpp | xargs clang-format -i`, to format all `{h,cpp}` files in place
