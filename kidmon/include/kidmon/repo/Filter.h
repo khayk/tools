@@ -35,4 +35,3 @@ private:
     TimePoint from_;
     TimePoint to_;
 };
-

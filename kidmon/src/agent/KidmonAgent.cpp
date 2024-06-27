@@ -38,7 +38,7 @@ public:
     const std::string& sha256(const fs::path& file) const
     {
         const auto lwt = std::filesystem::last_write_time(file);
-        auto [it, _] = cachedSha_.emplace(file, FileInfo{});
+        auto [it, _] = cachedSha_.emplace(file, FileInfo {});
         auto& fi = it->second;
 
         // Update SHA256 only if the file is changed or newly added
@@ -249,7 +249,9 @@ class KidmonAgent::Impl
     void collectData()
     {
         timer_.expires_after(timeout_);
-        timer_.async_wait([this](const ErrorCode&) { collectData(); });
+        timer_.async_wait([this](const ErrorCode&) {
+            collectData();
+        });
 
         try
         {
@@ -288,7 +290,8 @@ class KidmonAgent::Impl
 
             if (cfg_.calcSha)
             {
-                entry.processInfo.sha256 = shaCache_.sha256(entry.processInfo.processPath);
+                entry.processInfo.sha256 =
+                    shaCache_.sha256(entry.processInfo.processPath);
             }
 
             entry.timestamp.capture = SystemClock::now();

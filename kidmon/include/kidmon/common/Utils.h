@@ -58,7 +58,6 @@ fs::path config();
 }; // namespace dirs
 
 
-
 class SingleInstanceChecker
 {
     std::wstring appName_;
@@ -83,7 +82,6 @@ namespace utl {
  * @return  The alpha-numeric string
  */
 std::string generateToken(size_t length = 16);
-
 
 
 tm timet2tm(time_t dt);

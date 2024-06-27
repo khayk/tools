@@ -26,25 +26,25 @@ AgentManager::AgentManager(AuthorizationHandler& authHandler,
                                                           peerDropTimeout);
 
             conn->onAuth([this](AgentConnection* conn, bool auth) {
-            if (authAgentConn_ == nullptr && auth)
-            {
-                spdlog::info("Agent successfully authorized: {}", fmt::ptr(conn));
-                authAgentConn_ = conn;
-                return true;
-            }
+                if (authAgentConn_ == nullptr && auth)
+                {
+                    spdlog::info("Agent successfully authorized: {}", fmt::ptr(conn));
+                    authAgentConn_ = conn;
+                    return true;
+                }
 
-            if (authAgentConn_ == conn && !auth)
-            {
-                spdlog::info("Authorized agent disconnected: {}", fmt::ptr(conn));
-                authAgentConn_ = nullptr;
-                return true;
-            }
+                if (authAgentConn_ == conn && !auth)
+                {
+                    spdlog::info("Authorized agent disconnected: {}", fmt::ptr(conn));
+                    authAgentConn_ = nullptr;
+                    return true;
+                }
 
-            return false;
+                return false;
+            });
+
+            return conn;
         });
-
-        return conn;
-    });
 
     svr.onConnection([](tcp::Connection& conn) {
         spdlog::info("Accepted: {}", fmt::ptr(&conn));

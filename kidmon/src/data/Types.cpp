@@ -3,23 +3,23 @@
 
 #include <nlohmann/json.hpp>
 
-#define PROC_INFO           "proc"
-#define PROC_PATH           "path"
-#define PROC_SHA            "sha256"
+#define PROC_INFO "proc"
+#define PROC_PATH "path"
+#define PROC_SHA "sha256"
 
-#define WND_INFO            "wnd"
-#define WND_TITLE           "title"
-#define WND_LEFT_TOP        "lt"
-#define WND_DIMENSIONS      "wh"
-#define WND_IMG             "img"
+#define WND_INFO "wnd"
+#define WND_TITLE "title"
+#define WND_LEFT_TOP "lt"
+#define WND_DIMENSIONS "wh"
+#define WND_IMG "img"
 
-#define WND_IMG_NAME        "name"
-#define WND_IMG_BYTES       "bytes"
-#define WND_IMG_ENCODED     "encoded"
+#define WND_IMG_NAME "name"
+#define WND_IMG_BYTES "bytes"
+#define WND_IMG_ENCODED "encoded"
 
-#define TIMESTAMP           "ts"
-#define TIMESTAMP_WHEN      "when"
-#define TIMESTAMP_DUR       "dur"
+#define TIMESTAMP "ts"
+#define TIMESTAMP_WHEN "when"
+#define TIMESTAMP_DUR "dur"
 
 void toJson(const ProcessInfo& pi, nlohmann::ordered_json& js)
 {
@@ -47,10 +47,11 @@ void toJson(const WindowInfo& wi, nlohmann::ordered_json& js)
 
 void toJson(const Timestamp& ts, nlohmann::ordered_json& js)
 {
-    using std::chrono::milliseconds;
     using std::chrono::duration_cast;
+    using std::chrono::milliseconds;
 
-    js[TIMESTAMP_WHEN] = duration_cast<milliseconds>(ts.capture.time_since_epoch()).count();
+    js[TIMESTAMP_WHEN] =
+        duration_cast<milliseconds>(ts.capture.time_since_epoch()).count();
     js[TIMESTAMP_DUR] = ts.duration.count();
 }
 

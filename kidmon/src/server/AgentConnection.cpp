@@ -61,7 +61,8 @@ AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
     });
 
     setTimeout(peerDropTimeout);
-    spdlog::trace("Set timer to drop peer when it is inactive for {} ms", peerDropTimeout.count());
+    spdlog::trace("Set timer to drop peer when it is inactive for {} ms",
+                  peerDropTimeout.count());
 
     onTimeout([this](const ErrorCode& ec) {
         std::ignore = ec;
@@ -69,8 +70,7 @@ AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
 
         const auto activeUsername = str::ws2s(sys::activeUserName());
 
-        if (!authHandler_.username().empty() &&
-            !activeUsername.empty() &&
+        if (!authHandler_.username().empty() && !activeUsername.empty() &&
             authHandler_.username() != activeUsername)
         {
             spdlog::info("Active user changed from '{}' to '{}'. Dropping peer",

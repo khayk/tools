@@ -5,7 +5,7 @@
 class AuthorizationHandler : public MsgHandler
 {
     std::string token_;
-    std::string username_;  //< the authenticated username
+    std::string username_; //< the authenticated username
 
 public:
     void setToken(std::string_view token);

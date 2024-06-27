@@ -100,7 +100,7 @@ HandleUPtr activeUserMaxAllowedToken()
 
 bool directLaunch(const fs::path& exec, const std::vector<std::string>& args)
 {
-    STARTUPINFOW startupInfo{};
+    STARTUPINFOW startupInfo {};
     PROCESS_INFORMATION processInfo;
     memset(&startupInfo, 0, sizeof(startupInfo));
     startupInfo.cb = sizeof(startupInfo);

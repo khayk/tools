@@ -10,7 +10,7 @@ namespace {
 std::mutex g_mutex;
 void* g_instance {nullptr};
 
-}   // namespace
+} // namespace
 
 
 class Console::Impl

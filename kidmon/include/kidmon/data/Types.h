@@ -20,7 +20,7 @@ struct Image
 {
     std::string name;
     std::string bytes;
-    bool encoded {false};   // base64 encoded
+    bool encoded {false}; // base64 encoded
 };
 
 struct WindowInfo
