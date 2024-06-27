@@ -1,6 +1,7 @@
 #include <kidmon/server/KidmonServer.h>
 #include <kidmon/server/handler/AuthorizationHandler.h>
 #include <kidmon/server/handler/DataHandler.h>
+#include <kidmon/repo/FileSystemRepository.h>
 #include <kidmon/server/AgentManager.h>
 #include <kidmon/os/Api.h>
 

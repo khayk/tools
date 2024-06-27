@@ -13,6 +13,8 @@ file(GLOB LIB_SRCS
    "geometry/*.h"
    "os/*.cpp"
    "os/*.h"
+   "repo/*.cpp"
+   "repo/*.h"
    "server/*.cpp"
    "server/*.h"
    "server/handler/*.cpp"
