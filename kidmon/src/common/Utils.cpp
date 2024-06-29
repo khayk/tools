@@ -113,7 +113,7 @@ std::string errorDescription(uint64_t code)
 
     return message;
 #else
-    message = std::strerror(code);
+    message = std::strerror(static_cast<int>(code));
     return message;
 #endif
 }
