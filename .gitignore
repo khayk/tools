@@ -4,6 +4,7 @@
 [Bb]uild-*/
 .cache/
 ubuild/
+[Bb]in/
 
 # Visual Studio files
 .vs/

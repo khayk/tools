@@ -20,8 +20,10 @@ Own implementation of different tools.
         * `cmake -B build -S .`
     * Otherwise
         * `cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=<vcpkg_path>/scripts/buildsystems/vcpkg.cmake`
+    * Additionally build type can be specified as below
+        * `-DCMAKE_BUILD_TYPE=Release`
 * Build
-    * `cmake --build build --parallel 8`
+    * `cmake --build build --parallel 8 --config <cfg>`
 * Extras
     * Run the command below before configure step to build with `clang`. Change clang path if required.
 
@@ -36,6 +38,8 @@ Own implementation of different tools.
         * Windows - `build\core\test\Debug\core-test.exe`
         * Linux - `./build/core/test/core-test`
     * [Creating and running tests with CTest](https://coderefinery.github.io/cmake-workshop/testing/)
+* Install
+    * `cmake --install build --prefix ./ --config <cfg>`
 
 ## Coverage
 

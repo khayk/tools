@@ -16,6 +16,7 @@ message("CMake binary dir      : ${CMAKE_BINARY_DIR}")
 message("CMake source dir      : ${CMAKE_SOURCE_DIR}")
 message("CMake generator       : ${CMAKE_GENERATOR}")
 message("Object dir            : ${OBJECT_DIR}")
+message("CMAKE_BUILD_TYPE:     : ${CMAKE_BUILD_TYPE}")
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -39,15 +40,35 @@ if(MSVC)
    add_compile_definitions(_CRT_SECURE_NO_WARNINGS)   # // @todo:khayk deal with this
    add_compile_definitions(_WINSOCK_DEPRECATED_NO_WARNINGS)   # // @todo:khayk deal with this
 else()
-   add_compile_options(-Wall -Wextra -Wpedantic)
+   add_compile_options(
+      -Wall
+      -Wextra
+      -Wpedantic
+      -Wconversion
+      -Werror
+      -Wfatal-errors
+   )
 
    # Use options below to enable build with sanitization
    # add_compile_options(-Wall -Wextra -Wpedantic -fsanitize=address  -fsanitize=undefined)
    # add_link_options(-fsanitize=address -fsanitize=undefined)
+
+   # Not tested, taken from spdlog
+   add_compile_options(
+      -fsanitize=address,undefined
+      -fno-sanitize=signed-integer-overflow
+      -fno-sanitize-recover=all
+      -fno-omit-frame-pointer
+   )
+   add_link_options(
+      -fsanitize=address,undefined
+      -fuse-ld=gold
+   )
+
 endif()
 
 # Diagnostic information
-message("Generated with config types: ${CMAKE_CONFIGURATION_TYPES}")
+message("Config types          : ${CMAKE_CONFIGURATION_TYPES}")
 
 option(TOOLS_TIDY "run clang-tidy" OFF)
 

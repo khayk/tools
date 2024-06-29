@@ -75,7 +75,7 @@ target_link_libraries(${PROJECT_LIB} PUBLIC
     nlohmann_json::nlohmann_json
     spdlog::spdlog
     core
-    )
+)
 
 # target_link_libraries(${PROJECT_LIB} PRIVATE
 #    msgpack-c
@@ -97,3 +97,11 @@ if(MSVC)
    )
 else()
 endif(MSVC)
+
+install(
+    TARGETS ${PROJECT_APP} 
+    DESTINATION bin
+    RUNTIME_DEPENDENCIES 
+    PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-"
+    POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
+)
