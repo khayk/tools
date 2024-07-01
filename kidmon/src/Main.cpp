@@ -17,18 +17,19 @@
 #include <iostream>
 #include <optional>
 
-void configureLogger(const Config& cfg)
+namespace {
+
+void configureLogger(const fs::path& logsDir, const fs::path& logFilename)
 {
     namespace sinks = spdlog::sinks;
     namespace level = spdlog::level;
 
-    // @todo:hayk - consider log rotation or at least create a new log file on each launch
     auto consoleSink = std::make_shared<sinks::stdout_color_sink_mt>();
     consoleSink->set_level(level::trace);
     consoleSink->set_pattern("%^[%L] %v%$");
 
     auto fileSink = std::make_shared<sinks::basic_file_sink_mt>(
-        file::path2s(cfg.logsDir / cfg.logFilename));
+        file::path2s(logsDir / logFilename));
     fileSink->set_level(level::trace);
     fileSink->set_pattern("[%Y-%m-%d %H:%M:%S.%e][%=5t][%L]  %v "); // [%s:%#]
 
@@ -66,6 +67,8 @@ void constructAttribs(const bool agent, std::wstring& uniqueName, fs::path& logF
     logFile.concat(date);
     logFile.concat(".log");
 }
+
+} // namespace
 
 int main(int argc, char* argv[])
 {
@@ -105,7 +108,7 @@ int main(int argc, char* argv[])
 
         cfg.applyDefaults();
         cfg.applyOverrides(logFile);
-        configureLogger(cfg);
+        configureLogger(cfg.logsDir, cfg.logFilename);
         cfg.authToken = result["token"].as<std::string>();
         cfg.spawnAgent = !result["passive"].as<bool>();
 

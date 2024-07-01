@@ -19,11 +19,11 @@
 
 namespace fs = std::filesystem;
 
-namespace sys {
+namespace {
 
+#ifdef _WIN32
 std::wstring userNameBySessionId(unsigned long sessionId)
 {
-#ifdef _WIN32
     wchar_t* buf = nullptr;
     DWORD bufLen = 0;
 
@@ -41,11 +41,34 @@ std::wstring userNameBySessionId(unsigned long sessionId)
     WTSFreeMemory(buf);
 
     return str;
-#else
-    std::ignore = sessionId;
-    throw std::runtime_error(fmt::format("Not implemented: {}", __func__));
-#endif
 }
+
+fs::path getKnownFolderPath(const GUID& id, std::error_code& ec) noexcept
+{
+    constexpr DWORD flags = KF_FLAG_CREATE;
+    HANDLE token = nullptr;
+    PWSTR dest = nullptr;
+
+    const HRESULT result = SHGetKnownFolderPath(id, flags, token, &dest);
+    fs::path path;
+
+    if (result != S_OK)
+    {
+        ec.assign(static_cast<int>(GetLastError()), std::system_category());
+    }
+    else
+    {
+        path = dest;
+        CoTaskMemFree(dest);
+    }
+
+    return path;
+}
+#endif
+
+} // namespace 
+
+namespace sys {
 
 std::wstring activeUserName()
 {
@@ -160,31 +183,6 @@ void logLastError(const std::string_view message)
 
 namespace dirs {
 
-#ifdef _WIN32
-fs::path getKnownFolderPath(const GUID& id, std::error_code& ec) noexcept
-{
-    constexpr DWORD flags = KF_FLAG_CREATE;
-    HANDLE token = nullptr;
-    PWSTR dest = nullptr;
-
-    const HRESULT result = SHGetKnownFolderPath(id, flags, token, &dest);
-    fs::path path;
-
-    if (result != S_OK)
-    {
-        ec.assign(static_cast<int>(GetLastError()), std::system_category());
-    }
-    else
-    {
-        path = dest;
-        CoTaskMemFree(dest);
-    }
-
-    return path;
-}
-#else
-
-#endif
 fs::path home(std::error_code& ec)
 {
 #ifdef _WIN32
@@ -363,6 +361,10 @@ tm timet2tm(const time_t dt)
     tm d {};
 #ifdef _WIN32
     auto err = localtime_s(&d, &dt);
+    if (err)
+    {
+        spdlog::error("Unable to convert '{}' to local time", dt);
+    }
 #else
     std::ignore = dt;
     throw std::logic_error(fmt::format("Not implemented: {}", __func__));
