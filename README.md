@@ -57,6 +57,7 @@ Own implementation of different tools.
     * TBD - the command line above is for reference only, later create a script to produce coverage
 * Linux
     * TBD
+* Read about [codecov](https://docs.codecov.com/docs/quick-start) CI
 
 ## Formatting
 
