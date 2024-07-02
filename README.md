@@ -33,7 +33,9 @@ Own implementation of different tools.
         ```
 
 * Tests
-    * TBD
+    * CTest
+        * `ctest --test-dir build --build-config <cfg>`
+        * `ctest --test-dir build -C <cfg>`
     * Manually run application with ending with name `-test` (TBD, utilize `ctest`)
         * Windows - `build\core\test\Debug\core-test.exe`
         * Linux - `./build/core/test/core-test`
@@ -43,12 +45,18 @@ Own implementation of different tools.
 
 ## Coverage
 
-### Windows
+* Windows
+    * Install OpenCppCoverage
+    * Run tests with coverage
 
-* Install OpenCppCoverage
-* `OpenCppCoverage.exe --sources tools\core --modules test.exe --export_type=html:.reports/core/  -- out\build\x64-Debug\core\core-test.exe`
-* `OpenCppCoverage.exe --sources tools\kidmon --modules test.exe --export_type=html:.reports/kidmon/  -- out\build\x64-Debug\kidmon\test\kidmon-test.exe`
-* TBD - the command line above is for reference only, later create a script to produce coverage
+        ```bat
+        OpenCppCoverage.exe --sources tools\core --modules test.exe --export_type=html:.reports/core/  -- out\build\x64-Debug\core\core-test.exe
+        OpenCppCoverage.exe --sources tools\kidmon --modules test.exe --export_type=html:.reports/kidmon/  -- out\build\x64-Debug\kidmon\test\kidmon-test.exe
+        ```
+
+    * TBD - the command line above is for reference only, later create a script to produce coverage
+* Linux
+    * TBD
 
 ## Formatting
 
