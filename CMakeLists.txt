@@ -80,6 +80,10 @@ endif()
 
 option(BUILD_TESTS "Tests enabled by default" ON)
 
+if(BUILD_TESTS)
+    enable_testing()
+endif()
+
 add_subdirectory(core)
 add_subdirectory(duplicates)
 add_subdirectory(kidmon)

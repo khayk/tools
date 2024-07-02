@@ -27,4 +27,5 @@ target_link_libraries(${PROJECT_TST} PRIVATE
     GTest::gmock_main
 )
 
+enable_testing()
 gtest_discover_tests(${PROJECT_TST})

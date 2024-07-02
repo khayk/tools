@@ -15,7 +15,7 @@ struct Config
     fs::path logFilename;
 
     std::chrono::milliseconds activityCheckInterval {5000};
-    std::chrono::milliseconds snapshotInterval {0};
+    std::chrono::milliseconds snapshotInterval {5000};
     std::chrono::milliseconds peerDropTimeout {activityCheckInterval.count() + 2000};
     bool takeSnapshots {false};
 

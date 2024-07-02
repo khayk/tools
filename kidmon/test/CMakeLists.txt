@@ -12,4 +12,5 @@ target_link_libraries(${PROJECT_TST} PRIVATE
 	${PROJECT_LIB}
 )
 
+enable_testing()
 gtest_discover_tests(${PROJECT_TST})

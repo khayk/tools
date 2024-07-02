@@ -8,6 +8,5 @@ add_subdirectory(src)
 
 if(BUILD_TESTS)
     add_subdirectory(test)
-    enable_testing()
 endif()
 
