@@ -35,4 +35,19 @@ TEST(UtilsStrTests, U8S2WS)
     EXPECT_EQ(ws[4], '.');
 }
 
+TEST(UtilsStrTests, U8S2WSPerf)
+{
+    const auto s = u8"Լաւ է հանգիստ վաստակել մի բուռ, քան չարչարանքով ու տանջանքով՝ երկու բուռ։";
+    std::wstring ws;
+    std::string ss;
+
+    for (int i = 0; i < 10000; ++i)
+    {
+        s2ws(u8tos(s), ws);
+        ws2s(ws, ss);
+        const auto s8 = stou8(ss);
+        EXPECT_EQ(s, s8);
+    }
+}
+
 } // namespace
