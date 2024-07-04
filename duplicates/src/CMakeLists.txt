@@ -3,6 +3,9 @@ file(GLOB LIB_SRCS
    "*.cpp"
 )
 
+add_compile_definitions(_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
+add_compile_definitions(_SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING)
+
 list(FILTER LIB_SRCS EXCLUDE REGEX ".*Main.cpp")
 
 # Adding a library project
