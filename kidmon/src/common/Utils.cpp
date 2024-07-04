@@ -66,7 +66,7 @@ fs::path getKnownFolderPath(const GUID& id, std::error_code& ec) noexcept
 }
 #endif
 
-} // namespace 
+} // namespace
 
 namespace sys {
 
@@ -75,7 +75,6 @@ std::wstring activeUserName()
 #ifdef _WIN32
     return userNameBySessionId(WTSGetActiveConsoleSessionId());
 #else
-    // @todo:khayk
     throw std::runtime_error(fmt::format("Not implemented: {}", __func__));
 #endif
 }
