@@ -7,6 +7,7 @@
 #include <fmt/format.h>
 
 #include <fstream>
+#include <cassert>
 #include <array>
 
 namespace crypto {
@@ -17,7 +18,8 @@ void hexadecimal(unsigned char* const hash, size_t size, std::string& out)
 
     for (size_t i = 0; i < size; ++i)
     {
-        sprintf(out.data() + 2 * i, "%02x", hash[i]);
+        int written = sprintf(out.data() + 2 * i, "%02x", hash[i]);
+        assert(written >= 0);
     }
 }
 } // namespace
@@ -90,7 +92,7 @@ void encodeBase64(std::string_view byteSeq, std::string& base64Seq)
 
     if (res != len)
     {
-        const auto s = fmt::format("Encode prediced {} but we got {}", len, res);
+        const auto s = fmt::format("Encode predicted {} but we got {}", len, res);
         throw std::system_error(std::make_error_code(std::errc::result_out_of_range),
             s);
     }
@@ -100,7 +102,7 @@ std::string encodeBase64(std::string_view byteSeq)
 {
     std::string base64Seq;
     encodeBase64(byteSeq, base64Seq);
-    
+
     return base64Seq;
 }
 
@@ -114,7 +116,7 @@ void decodeBase64(const std::string& base64Seq, std::string& byteSeq)
                         static_cast<int>(base64Seq.size()));
     if (res != len)
     {
-        const auto s = fmt::format("Encode prediced {} but we got {}", len, res);
+        const auto s = fmt::format("Encode predicted {} but we got {}", len, res);
         throw std::system_error(std::make_error_code(std::errc::result_out_of_range), s);
     }
 
