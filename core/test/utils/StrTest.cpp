@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <core/utils/Str.h>
+#include <array>
 
 using namespace str;
 
@@ -33,6 +34,25 @@ TEST(UtilsStrTests, U8S2WS)
     EXPECT_EQ(ws[2], 0x0580);
     EXPECT_EQ(ws[3], 0x0587);
     EXPECT_EQ(ws[4], '.');
+}
+
+TEST(UtilsStrTests, U8Conversions)
+{
+    const std::array strs = {u8"",
+                             u8"Хорошо",
+                             u8"๑(◕‿◕)๑",
+                             u8"って行動しなければならない。",
+                             u8"有對整理《周易指》感興趣的小夥伴，請聯繫我郵箱"};
+
+    for (const auto& s : strs)
+    {
+        const auto ws = s2ws(u8tos(s));
+        const auto ss = ws2s(ws);
+        const auto s8 = stou8(ss);
+
+        EXPECT_EQ(s, s8);
+
+    }
 }
 
 TEST(UtilsStrTests, U8S2WSPerf)
