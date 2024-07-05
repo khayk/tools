@@ -18,7 +18,12 @@ void hexadecimal(unsigned char* const hash, size_t size, std::string& out)
 
     for (size_t i = 0; i < size; ++i)
     {
-        int written = sprintf(out.data() + 2 * i, "%02x", hash[i]);
+        int written = 0;
+#ifdef _WIN32
+        written = sprintf_s(out.data() + 2 * i, 3, "%02x", hash[i]);
+#else
+        written = sprintf(out.data() + 2 * i, "%02x", hash[i]);
+#endif
         assert(written >= 0);
     }
 }

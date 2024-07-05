@@ -2,6 +2,7 @@
 #include <kidmon/os/Api.h>
 #include <kidmon/data/Messages.h>
 #include <kidmon/data/Helpers.h>
+#include <kidmon/common/Utils.h>
 
 #include <core/utils/FmtExt.h>
 #include <core/utils/Str.h>
@@ -309,11 +310,10 @@ class KidmonAgent::Impl
                 if (window->capture(format, wndContent_))
                 {
                     std::time_t t = std::time(nullptr);
+                    const std::tm tm = utl::timet2tm(t);
                     char mbstr[16];
-                    auto bytesWritten = std::strftime(mbstr,
-                                                      sizeof(mbstr),
-                                                      "%m%d-%H%M%S",
-                                                      std::localtime(&t));
+                    auto bytesWritten =
+                        std::strftime(mbstr, sizeof(mbstr), "%m%d-%H%M%S", &tm);
                     auto fileName = fmt::format("img-{}.{}",
                                                 std::string_view(mbstr, bytesWritten),
                                                 toString(format));

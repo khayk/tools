@@ -35,8 +35,6 @@ if(MSVC)
    add_compile_options("/MP${BUILD_JOBS}")
    add_compile_definitions(_WIN32_WINNT=_WIN32_WINNT_WIN10)
    add_compile_definitions(NOMINMAX)
-   add_compile_definitions(_CRT_SECURE_NO_WARNINGS)   # // @todo:khayk deal with this
-   add_compile_definitions(_WINSOCK_DEPRECATED_NO_WARNINGS)   # // @todo:khayk deal with this
 else()
    add_compile_options(
       -Wall

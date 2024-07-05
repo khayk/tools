@@ -42,11 +42,11 @@ public:
         }
 
         std::time_t t = std::time(0); // get time now
-        std::tm* now = std::localtime(&t);
+        std::tm now = utl::timet2tm(t);
 
         fs::path userReportsRoot = fs::path(reportsDir_)
                                        .append(str::s2ws(username))
-                                       .append(fmt::format("{}", now->tm_year + 1900));
+                                       .append(fmt::format("{}", now.tm_year + 1900));
 
         // Reports directory structure will look like this
         //

@@ -58,11 +58,11 @@ void constructAttribs(const bool agent, std::wstring& uniqueName, fs::path& logF
     }
 
     std::time_t t = std::time(0); // get time now
-    std::tm* now = std::localtime(&t);
+    std::tm now = utl::timet2tm(t);
     const auto date = fmt::format("-{}-{:02}-{:02}",
-                                  now->tm_year + 1900,
-                                  now->tm_mon + 1,
-                                  now->tm_mday);
+                                  now.tm_year + 1900,
+                                  now.tm_mon + 1,
+                                  now.tm_mday);
 
     logFile.concat(date);
     logFile.concat(".log");

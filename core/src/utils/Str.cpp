@@ -26,9 +26,17 @@ void s2ws(std::string_view utf8, std::wstring& wstr)
 {
     const char* mbstr = utf8.data();
     std::mbstate_t state = std::mbstate_t();
+    size_t len = 0;
+
+#ifdef _WIN32
+    mbsrtowcs_s(&len, nullptr, 0, &mbstr, 0, &state);
+    wstr.resize(len > 0 ? len - 1 : 0);
+    mbsrtowcs_s(&len, &wstr[0], len, &mbstr, len, &state);
+#else
     std::size_t len = std::mbsrtowcs(nullptr, &mbstr, 0, &state);
     wstr.resize(len);
     std::mbsrtowcs(&wstr[0], &mbstr, wstr.size(), &state);
+#endif
 }
 
 std::wstring s2ws(std::string_view utf8)
@@ -43,9 +51,17 @@ void ws2s(std::wstring_view utf16, std::string& utf8)
 {
     const wchar_t* wstr = utf16.data();
     std::mbstate_t state = std::mbstate_t();
-    std::size_t len = std::wcsrtombs(nullptr, &wstr, 0, &state);
+    std::size_t len = 0;
+
+#ifdef _WIN32
+    auto err = wcsrtombs_s(&len, nullptr, 0, &wstr, 0, &state);
+    utf8.resize(len > 0 ? len - 1 : 0);
+    err = wcsrtombs_s(&len, &utf8[0], len, &wstr, len, &state);
+#else
+    len = std::wcsrtombs(nullptr, &wstr, 0, &state);
     utf8.resize(len);
     std::wcsrtombs(&utf8[0], &wstr, utf8.size(), &state);
+#endif
 }
 
 std::string ws2s(std::wstring_view utf16)
