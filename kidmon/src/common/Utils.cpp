@@ -177,6 +177,17 @@ void logLastError(const std::string_view message)
 #endif
 }
 
+fs::path currentProcessPath()
+{
+    std::array<wchar_t, MAX_PATH> buf {};
+
+    DWORD sz = GetModuleFileNameW(nullptr,
+                                  buf.data(),
+                                  static_cast<DWORD>(buf.size()));
+
+    return fs::path(buf.data(), buf.data() + sz).lexically_normal();
+}
+
 } // namespace sys
 
 

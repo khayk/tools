@@ -240,7 +240,8 @@ bool WindowImpl::capture(const ImageFormat format, std::vector<char>& content)
         return false;
     }
 
-    RECT rect {}, frame {};
+    RECT rect {};
+    RECT frame {};
     GetWindowRect(hwnd_, &rect);
     HRESULT hr =
         DwmGetWindowAttribute(hwnd_, DWMWA_EXTENDED_FRAME_BOUNDS, &frame, sizeof(frame));

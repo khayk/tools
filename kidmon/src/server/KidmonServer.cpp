@@ -94,7 +94,7 @@ public:
                 const std::vector<std::string> args = {"--token", token, "--agent"};
                 authHandler_.setToken(token);
 
-                launcher_->launch("kidmon-app.exe", args);
+                launcher_->launch(sys::currentProcessPath(), args);
             }
         }
         catch (const std::exception& e)

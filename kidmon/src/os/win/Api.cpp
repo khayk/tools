@@ -20,7 +20,7 @@ WindowPtr ApiImpl::foregroundWindow()
         return std::make_unique<WindowImpl>(hwnd);
     }
 
-    return WindowPtr();
+    return {};
 }
 
 ProcessLauncherPtr ApiImpl::createProcessLauncher()

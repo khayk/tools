@@ -23,6 +23,13 @@ void logError(std::string_view message, uint64_t errorCode);
 
 void logLastError(std::string_view message);
 
+/**
+ * @brief Full path of the current process
+ *
+ * @return Current process path with executable name.
+ */
+fs::path currentProcessPath();
+
 } // namespace sys
 
 /**
@@ -83,7 +90,13 @@ namespace utl {
  */
 std::string generateToken(size_t length = 16);
 
-
+/**
+ * @brief Get's local time from time_t
+ *
+ * @param dt The date time
+ *
+ * @return  The local time as tm structure
+ */
 tm timet2tm(time_t dt);
 
 /**

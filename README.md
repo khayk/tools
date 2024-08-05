@@ -43,6 +43,14 @@ Own implementation of different tools.
 * Install
     * `cmake --install build --prefix ./ --config <cfg>`
 
+## Run
+
+* Console application
+    * Run executable
+* Windows service
+    * Install autostart service
+        * `sc create kidmon binPath= "<absolute path of the kidmon app>" start= auto DisplayName= "Kidmon application"`
+
 ## Coverage
 
 * Windows
