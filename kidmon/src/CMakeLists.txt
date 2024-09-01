@@ -43,11 +43,14 @@ list(FILTER LIB_SRCS EXCLUDE REGEX ".*Main.cpp")
 
 # Spdlog
 # set(SPDLOG_COMPILED_LIB true)
-find_package(spdlog REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(cxxopts CONFIG REQUIRED)
-find_package(Boost REQUIRED)
+find_package(Boost CONFIG REQUIRED)
+find_package(glaze CONFIG REQUIRED)
 # find_package(msgpack-c CONFIG REQUIRED)
+
+find_package(Boost REQUIRED COMPONENTS iostreams)
 
 if(Boost_FOUND)
    message("Boost found        : ${Boost_INCLUDE_DIRS}")
@@ -75,6 +78,11 @@ target_link_libraries(${PROJECT_LIB} PUBLIC
     nlohmann_json::nlohmann_json
     spdlog::spdlog
     core
+)
+
+target_link_libraries(${PROJECT_LIB} PRIVATE 
+    Boost::iostreams
+    glaze::glaze
 )
 
 # target_link_libraries(${PROJECT_LIB} PRIVATE

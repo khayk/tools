@@ -96,4 +96,32 @@ std::u8string_view stou8(std::string_view sv)
 
 #endif
 
+std::string& trimLeft(std::string& s)
+{
+    s.erase(s.begin(),
+            std::find_if(s.begin(), s.end(), [](const unsigned char ch) noexcept {
+                return !std::isspace(ch);
+            }));
+
+    return s;
+}
+
+std::string& trimRight(std::string& s)
+{
+    s.erase(std::find_if(s.rbegin(),
+                         s.rend(),
+                         [](const unsigned char ch) noexcept {
+                             return !std::isspace(ch);
+                         })
+                .base(),
+            s.end());
+
+    return s;
+}
+
+std::string& trim(std::string& s)
+{
+    return trimLeft(trimRight(s));
+}
+
 } // namespace str

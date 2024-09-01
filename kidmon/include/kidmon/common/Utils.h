@@ -98,6 +98,7 @@ std::string generateToken(size_t length = 16);
  * @return  The local time as tm structure
  */
 tm timet2tm(time_t dt);
+bool timet2tm(time_t dt, tm&);
 
 /**
  * @brief  Calculate days since January 1 for the year represented by the given date time

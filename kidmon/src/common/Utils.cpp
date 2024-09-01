@@ -366,19 +366,30 @@ std::string generateToken(const size_t length)
     return token;
 }
 
+bool timet2tm(time_t dt, tm& d)
+{
+#ifdef _WIN32
+    if (localtime_s(&d, &dt))
+    {
+        return false;
+    }
+
+    return true;
+#else
+    std::ignore = dt;
+    std::ignore = d;
+    throw std::logic_error(fmt::format("Not implemented: {}", __func__));
+#endif
+}
+
 tm timet2tm(const time_t dt)
 {
     tm d {};
-#ifdef _WIN32
-    auto err = localtime_s(&d, &dt);
-    if (err)
+
+    if (!timet2tm(dt, d))
     {
-        spdlog::error("Unable to convert '{}' to local time", dt);
+        throw std::runtime_error(fmt::format("Unable to convert '{}' to local time", dt));
     }
-#else
-    std::ignore = dt;
-    throw std::logic_error(fmt::format("Not implemented: {}", __func__));
-#endif
 
     return d;
 }
