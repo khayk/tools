@@ -100,7 +100,7 @@ std::string& trimLeft(std::string& s)
 {
     s.erase(s.begin(),
             std::find_if(s.begin(), s.end(), [](const unsigned char ch) noexcept {
-                return !std::isspace(ch);
+                return std::isgraph(ch);
             }));
 
     return s;
@@ -111,7 +111,7 @@ std::string& trimRight(std::string& s)
     s.erase(std::find_if(s.rbegin(),
                          s.rend(),
                          [](const unsigned char ch) noexcept {
-                             return !std::isspace(ch);
+                             return std::isgraph(ch);
                          })
                 .base(),
             s.end());

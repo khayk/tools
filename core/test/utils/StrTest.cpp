@@ -51,7 +51,6 @@ TEST(UtilsStrTests, U8Conversions)
         const auto s8 = stou8(ss);
 
         EXPECT_EQ(s, s8);
-
     }
 }
 
@@ -68,6 +67,63 @@ TEST(UtilsStrTests, U8S2WSPerf)
         const auto s8 = stou8(ss);
         EXPECT_EQ(s, s8);
     }
+}
+
+TEST(UtilsStrTests, TrimLeft)
+{
+    std::string s = "  123  ";
+    trimLeft(s);
+    EXPECT_EQ(s, "123  ");
+
+    s = "a";
+    trimLeft(s);
+    EXPECT_EQ(s, "a");
+
+    s = "";
+    trimLeft(s);
+    EXPECT_EQ(s, "");
+
+    s = "  \t \n  \r ";
+    trimLeft(s);
+    EXPECT_EQ(s, "");
+}
+
+TEST(UtilsStrTests, TrimRight)
+{
+    std::string s = "  123  ";
+    trimRight(s);
+    EXPECT_EQ(s, "  123");
+
+    s = "a";
+    trimRight(s);
+    EXPECT_EQ(s, "a");
+
+    s = "";
+    trimRight(s);
+    EXPECT_EQ(s, "");
+
+    s = "  \t \n  \r ";
+    trimRight(s);
+    EXPECT_EQ(s, "");
+}
+
+TEST(UtilsStrTests, Trim)
+{
+    std::string s = "  123 a$ ";
+    trim(s);
+    EXPECT_EQ(s, "123 a$");
+
+    s = "a";
+    trim(s);
+    EXPECT_EQ(s, "a");
+    
+    s = "";
+    trim(s);
+    EXPECT_EQ(s, "");
+    
+    s = "  \t \n  \r \0";
+    trim(s);
+    EXPECT_EQ(s, "");
 }
 
 } // namespace
