@@ -55,11 +55,12 @@ Own implementation of different tools.
 
 * Windows
     * Install OpenCppCoverage
+    * Locate project root directory
     * Run tests with coverage
 
         ```bat
         OpenCppCoverage.exe --sources tools\core --modules test.exe --export_type=html:.reports/core/  -- out\build\x64-Debug\core\core-test.exe
-        OpenCppCoverage.exe --sources tools\kidmon --modules test.exe --export_type=html:.reports/kidmon/  -- out\build\x64-Debug\kidmon\test\kidmon-test.exe
+        OpenCppCoverage.exe --sources tools\kidmon --modules test.exe --export_type=html:.reports/kidmon/  -- out\build\x64-Debug\kidmon\test\kidmon-test.exe 
         ```
 
     * TBD - the command line above is for reference only, later create a script to produce coverage

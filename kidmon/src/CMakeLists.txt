@@ -41,9 +41,6 @@ endif()
 
 list(FILTER LIB_SRCS EXCLUDE REGEX ".*Main.cpp")
 
-# Spdlog
-# set(SPDLOG_COMPILED_LIB true)
-find_package(spdlog CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(cxxopts CONFIG REQUIRED)
 find_package(Boost CONFIG REQUIRED)
@@ -53,7 +50,7 @@ find_package(glaze CONFIG REQUIRED)
 find_package(Boost REQUIRED COMPONENTS iostreams)
 
 if(Boost_FOUND)
-   message("Boost found        : ${Boost_INCLUDE_DIRS}")
+   message("Boost found           : ${Boost_INCLUDE_DIRS}")
    include_directories(${Boost_INCLUDE_DIRS})
 endif()
 
@@ -63,9 +60,8 @@ endif()
 #    message("SqliteOrm found    : ${SqliteOrm_INCLUDE_DIRS}")
 # endif()
 
-message("Spdlog include     : ${spdlog_DIR}")
-message("Boost include      : ${Boost_INCLUDE_DIRS}")
-message("Boost library      : ${Boost_LIBRARY_DIRS}")
+message("Boost include         : ${Boost_INCLUDE_DIRS}")
+message("Boost library         : ${Boost_LIBRARY_DIRS}")
 # message("Sqlite3 library    : ${SQLite3_LIBRARY}")
 
 # Adding a library project
@@ -76,7 +72,6 @@ target_include_directories(${PROJECT_LIB} PUBLIC ../include)
 
 target_link_libraries(${PROJECT_LIB} PUBLIC
     nlohmann_json::nlohmann_json
-    spdlog::spdlog
     core
 )
 

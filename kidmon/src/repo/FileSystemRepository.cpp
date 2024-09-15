@@ -173,6 +173,11 @@ public:
     {
     }
 
+    const fs::path& reportsDir() const noexcept
+    {
+        return dirs_.reportsDir();
+    }
+
     void add(const Entry& entry)
     {
         const int year = yearFromTimePoint(entry.timestamp.capture);
@@ -314,6 +319,11 @@ FileSystemRepository::FileSystemRepository(fs::path reportsDir)
 }
 
 FileSystemRepository::~FileSystemRepository() = default;
+
+const fs::path& FileSystemRepository::reportsDir() const noexcept
+{
+    return pimpl_->reportsDir();
+}
 
 void FileSystemRepository::add(const Entry& entry)
 {

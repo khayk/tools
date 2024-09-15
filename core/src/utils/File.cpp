@@ -1,6 +1,9 @@
 #include <core/utils/File.h>
+#include <core/utils/Dirs.h>
 #include <core/utils/Str.h>
+#include <core/utils/Sys.h>
 #include <core/utils/FmtExt.h>
+#include <core/utils/Number.h>
 
 #include <fmt/format.h>
 #include <fstream>
@@ -88,6 +91,97 @@ bool read(const fs::path& file, std::string& data, std::error_code& ec)
 std::string path2s(const fs::path& path)
 {
     return std::string(str::u8tos(path.u8string()));
+}
+
+
+fs::path constructTempPath(std::string_view namePrefix, const fs::path& tempDir)
+{
+    static std::atomic_uint64_t count = 0;
+    fs::path path = tempDir.empty() ? dirs::temp() : tempDir;
+
+    std::string name;
+
+    if (!namePrefix.empty())
+    {
+        name = namePrefix;
+        name.push_back('-');
+    }
+    else
+    {
+        name += "tmp-";
+    }
+
+    name += num::num2s(sys::currentProcessId());
+    name += "-";
+
+    uint64_t n = count.fetch_add(1, std::memory_order_relaxed);
+
+    for (int i = 0; i < 6; ++i)
+    {
+        name.push_back(static_cast<char>('a' + (n % 26)));
+        n /= 26;
+    }
+
+    path /= name;
+    return path.lexically_normal();
+}
+
+
+Path::Path() noexcept
+    : owner_ {false}
+{
+}
+
+
+Path::Path(fs::path p) noexcept
+    : path_ {std::move(p)}
+{
+}
+
+
+const fs::path& Path::path() const noexcept
+{
+    return path_;
+}
+
+
+void Path::dropOwnership() noexcept
+{
+    owner_ = false;
+}
+
+
+void Path::takeOwnership(const fs::path& newPath)
+{
+    path_ = newPath;
+    owner_ = true;
+}
+
+
+ScopedDir::ScopedDir(fs::path dirPath)
+    : Path {std::move(dirPath)}
+{
+}
+
+ScopedDir::~ScopedDir()
+{
+    if (owner_ && !path_.empty())
+    {
+        std::error_code ec;
+        fs::remove_all(path_, ec);
+    }
+}
+
+
+TempDir::TempDir(const std::string_view namePrefix,
+                 const CreateMode createMode,
+                 const fs::path& tempDir)
+    : ScopedDir {constructTempPath(namePrefix, tempDir)}
+{
+    if (createMode == CreateMode::Auto)
+    {
+        fs::create_directories(path());
+    }
 }
 
 } // namespace file

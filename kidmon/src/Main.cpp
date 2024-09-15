@@ -3,11 +3,13 @@
 #include <kidmon/config/Config.h>
 #include <kidmon/common/Console.h>
 #include <kidmon/common/Service.h>
-#include <kidmon/common/Utils.h>
 #include <kidmon/common/Tracer.h>
+#include <kidmon/common/Utils.h>
 
 #include <core/utils/File.h>
 #include <core/utils/Str.h>
+#include <core/utils/Sys.h>
+#include <core/utils/SingleInstanceChecker.h>
 
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
