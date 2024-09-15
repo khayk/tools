@@ -33,7 +33,7 @@ struct WindowInfo
 struct Timestamp
 {
     TimePoint capture;
-    std::chrono::milliseconds duration;
+    std::chrono::milliseconds duration {};
 };
 
 struct Entry

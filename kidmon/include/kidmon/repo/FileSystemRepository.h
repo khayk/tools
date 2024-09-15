@@ -10,9 +10,9 @@ public:
 
     void add(const Entry& entry) override;
 
-    void queryUsers(UserCb cb) const override;
+    void queryUsers(const UserCb& cb) const override;
 
-    void queryEntries(const Filter& filter, EntryCb cb) const override;
+    void queryEntries(const Filter& filter, const EntryCb& cb) const override;
 
 private:
     class Impl;

@@ -8,7 +8,7 @@ Own implementation of different tools.
 
 1. Install `vcpkg`
 2. Install libraries
-    * `./vcpkg install gtest spdlog openssl boost-asio nlohmann-json cxxopts --triplet=<platform>`
+    * `./vcpkg install gtest spdlog openssl boost-asio nlohmann-json cxxopts glaze --triplet=<platform>`  # cereal
         * Windows `<platform>` can be `x64-windows`
         * Linux   `<platform>` can be `x64-linux`
 
