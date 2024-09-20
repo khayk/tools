@@ -14,6 +14,8 @@ struct ProcessInfo
 {
     fs::path processPath;
     std::string sha256;
+
+    bool operator==(const ProcessInfo&) const = default;
 };
 
 struct Image
@@ -21,6 +23,8 @@ struct Image
     std::string name;
     std::string bytes;
     bool encoded {false}; // base64 encoded
+
+    bool operator==(const Image&) const = default;
 };
 
 struct WindowInfo
@@ -28,12 +32,16 @@ struct WindowInfo
     Rect placement;
     Image image;
     std::string title;
+
+    bool operator==(const WindowInfo&) const = default;
 };
 
 struct Timestamp
 {
     TimePoint capture;
     std::chrono::milliseconds duration {};
+
+    bool operator==(const Timestamp&) const = default;
 };
 
 struct Entry
@@ -42,6 +50,8 @@ struct Entry
     ProcessInfo processInfo;
     WindowInfo windowInfo;
     Timestamp timestamp;
+
+    bool operator==(const Entry&) const = default;
 };
 
 void toJson(const ProcessInfo& pi, nlohmann::ordered_json& js);

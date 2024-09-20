@@ -19,6 +19,8 @@ public:
     void x(int value) noexcept { x_ = value; }
     void y(int value) noexcept { y_ = value; }
     // clang-format on
+
+    bool operator==(const Point&) const = default;
 };
 
 inline Point operator+(const Point& lhs, const Point& rhs)

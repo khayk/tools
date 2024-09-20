@@ -61,6 +61,11 @@ public:
 
     fs::path getUserDir(const std::string& username) const
     {
+        if (username.empty())
+        {
+            throw std::runtime_error("Empty username");
+        }
+
         return fs::path(reportsDir_).append(str::s2ws(username));
     }
 
@@ -286,6 +291,8 @@ private:
         Entry entry;
         glz::json_t json {};
 
+        entry.username = file.parent_path().parent_path().parent_path().filename().string();
+
         readLines(file, [&cb, &entry, &json, this](const std::string& line) {
             if (glz::read_json(json, line))
             {
@@ -294,6 +301,7 @@ private:
 
             auto& proc = json["proc"];
             entry.processInfo.processPath = proc["path"].get<std::string>();
+            entry.processInfo.sha256 = proc["sha256"].get<std::string>();
 
             auto& wnd = json["wnd"];
             entry.windowInfo.title = wnd["title"].get<std::string>();
@@ -304,8 +312,14 @@ private:
                                         getAs<int>(wnd["wh"][1]));
             entry.windowInfo.placement = Rect(leftTop, dimensions);
 
+            auto& img = wnd["img"];
+            entry.windowInfo.image.name = img["name"].get<std::string>();
+            entry.windowInfo.image.bytes = img["bytes"].get<std::string>();
+            entry.windowInfo.image.encoded= img["encoded"].get<bool>();
+
             const auto& ts = json["ts"];
-            entry.timestamp.capture = TimePoint(std::chrono::milliseconds(getAs<long long>(ts["when"])));
+            entry.timestamp.capture =
+                TimePoint(std::chrono::milliseconds(getAs<long long>(ts["when"])));
             entry.timestamp.duration = std::chrono::milliseconds(getAs<long long>(ts["dur"]));
 
             return cb(entry);

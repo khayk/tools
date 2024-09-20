@@ -31,4 +31,6 @@ public:
         return leftTop_ + Point(static_cast<int>(width()), static_cast<int>(height()));
     }
     // clang-format on
+
+    bool operator==(const Rect&) const = default;
 };

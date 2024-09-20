@@ -21,4 +21,6 @@ public:
     void width(uint32_t value) noexcept { width_ = value; }
     void height(uint32_t value) noexcept { height_ = value; }
     // clang-format on
+
+    bool operator==(const Dimensions&) const = default;
 };
