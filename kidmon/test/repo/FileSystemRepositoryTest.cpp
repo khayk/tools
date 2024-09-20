@@ -160,7 +160,7 @@ TEST(FileSystemRepositoryTest, QueryEntriesMultipleUsers)
     constexpr int numEntriesPerUser = 4;
 
     EXPECT_CALL(repo, add(_)).Times(numUsers * numEntriesPerUser);
-    EXPECT_CALL(repo, queryUsers(_)).Times(1);
+    EXPECT_CALL(repo, queryUsers(_)).Times(2);
     EXPECT_CALL(repo, queryEntries(_, _)).Times(numUsers);
     bindActions(repo);
 
@@ -202,6 +202,15 @@ TEST(FileSystemRepositoryTest, QueryEntriesMultipleUsers)
     });
     EXPECT_EQ(usersEnumrated, numUsers);
 
+    
+    usersEnumrated = 0;
+    repo.queryUsers(
+        [&entries, &usersEnumrated](const std::string&) mutable {
+            ++usersEnumrated;
+            return false;   // instruct to stop enumaration
+        });
+    EXPECT_EQ(1, usersEnumrated);
+    
     int entriesEnumarated = 0;
     for (int i = 0; i < numUsers; ++i)
     {
@@ -217,4 +226,56 @@ TEST(FileSystemRepositoryTest, QueryEntriesMultipleUsers)
     }
 
     EXPECT_EQ(numEntriesPerUser * numUsers, entriesEnumarated);
+}
+
+
+TEST(FileSystemRepositoryTest, QueringLogic)
+{
+    file::TempDir reportsDir("kdmn-tst");
+    FileSystemRepository repo(reportsDir.path());
+
+    const auto now = SystemClock::now();
+    const auto username = "user-x";
+    const auto numEntries = 10;
+
+    for (size_t i = 0; i < numEntries; ++i)
+    {
+        Entry e;
+        e.timestamp.capture = now + i * 1s;
+        e.username = username;
+        e.processInfo.processPath = fmt::format("proc-{}", i);
+
+        repo.add(e);
+    }
+
+    Filter filter(username);
+    size_t numCalls = 0;
+    repo.queryEntries(filter, [&numCalls](const Entry&) {
+        ++numCalls;
+        return true;
+    });
+    EXPECT_EQ(numEntries, numCalls);
+
+    numCalls = 0;
+    repo.queryEntries(filter, [&numCalls](const Entry&) {
+        // This should result immidiate stop of enumaration
+        ++numCalls;
+        return false;
+    });
+    EXPECT_EQ(1, numCalls);
+
+    for (size_t i = 0; i < numEntries; ++i)
+    {
+        std::vector<Entry> entries;
+        const fs::path expectedPath = fmt::format("proc-{}", i);
+        const auto ts = now + i * 1s;
+        filter = Filter(username, ts - 100ms, ts + 100ms);
+
+        repo.queryEntries(filter, [&entries](const Entry& entry) {
+            entries.push_back(entry);
+            return true;
+        });
+        ASSERT_EQ(1, entries.size());
+        EXPECT_EQ(expectedPath, entries.back().processInfo.processPath);
+    }
 }
