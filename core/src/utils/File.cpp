@@ -29,7 +29,7 @@ void write(const fs::path& file, const char* const data, size_t size)
 {
     std::ofstream ofs;
     open(file, std::ios::out | std::ios::binary, ofs);
-    ofs.write(data, size);
+    ofs.write(data, static_cast<std::streamsize>(size));
 }
 
 void write(const fs::path& file, const std::string_view data)
@@ -42,7 +42,7 @@ void append(const fs::path& file, const char* const data, size_t size)
 {
     std::ofstream ofs;
     open(file, std::ios::app | std::ios::binary, ofs);
-    ofs.write(data, size);
+    ofs.write(data, static_cast<std::streamsize>(size));
 }
 
 void append(const fs::path& file, std::string_view data)

@@ -8,7 +8,7 @@ public:
     explicit FileSystemRepository(fs::path reportsDir);
     ~FileSystemRepository() override;
 
-    const fs::path& reportsDir() const noexcept;
+    [[nodiscard]] const fs::path& reportsDir() const noexcept;
 
     // Overrides
     void add(const Entry& entry) override;

@@ -8,7 +8,7 @@ public:
     explicit Filter(std::string username,
                     TimePoint from = TimePoint::min(),
                     TimePoint to = TimePoint::max())
-        : username_ {username}
+        : username_ {std::move(username)}
         , from_ {from}
         , to_ {to}
     {
@@ -28,7 +28,6 @@ public:
     {
         return from_;
     }
-
 
 private:
     std::string username_;

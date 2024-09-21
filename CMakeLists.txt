@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 
+# @todo:hayk - checkout the CMakeLists.txt files style from the "Professional CMake a Practical Guide"
+
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
 if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)

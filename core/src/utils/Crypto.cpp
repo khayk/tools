@@ -70,7 +70,7 @@ std::string fileSha256(const fs::path& file)
     while (in)
     {
         in.read(buffer, bufferSize);
-        if (!EVP_DigestUpdate(ctx.get(), buffer, in.gcount()))
+        if (!EVP_DigestUpdate(ctx.get(), buffer, static_cast<size_t>(in.gcount())))
         {
             throw std::runtime_error("Digest update failed");
         }
@@ -90,12 +90,12 @@ void encodeBase64(std::string_view byteSeq, std::string& base64Seq)
 {
     const auto len = 4 * ((byteSeq.size() + 2) / 3);
     base64Seq.resize(len);
-    const size_t res =
+    const auto res =
         EVP_EncodeBlock(reinterpret_cast<unsigned char*>(base64Seq.data()),
                         reinterpret_cast<const unsigned char*>(byteSeq.data()),
                         static_cast<int>(byteSeq.size()));
 
-    if (res != len)
+    if (res != static_cast<int>(len))
     {
         const auto s = fmt::format("Encode predicted {} but we got {}", len, res);
         throw std::system_error(std::make_error_code(std::errc::result_out_of_range),
@@ -115,11 +115,11 @@ void decodeBase64(const std::string& base64Seq, std::string& byteSeq)
 {
     const auto len = 3 * base64Seq.size() / 4;
     byteSeq.resize(len);
-    const size_t res =
+    const auto res =
         EVP_DecodeBlock(reinterpret_cast<unsigned char*>(byteSeq.data()),
                         reinterpret_cast<const unsigned char*>(base64Seq.data()),
                         static_cast<int>(base64Seq.size()));
-    if (res != len)
+    if (res != static_cast<int>(len))
     {
         const auto s = fmt::format("Encode predicted {} but we got {}", len, res);
         throw std::system_error(std::make_error_code(std::errc::result_out_of_range), s);

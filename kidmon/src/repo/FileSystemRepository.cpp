@@ -20,11 +20,6 @@ struct ReportDirs
     // fs::path weeklyDir;
 };
 
-
-bool isYearValid(int year) {
-    return year >= 1970 && year <= 2100;
-}
-
 int yearFromTimeT(const time_t tt)
 {
     const auto tm = utl::timet2tm(tt);
@@ -36,12 +31,6 @@ int yearFromTimePoint(const TimePoint tp)
 {
     return yearFromTimeT(SystemClock::to_time_t(tp));
 }
-
-int yearNow()
-{
-    return yearFromTimeT(std::time(0));
-}
-
 
 class Dirs
 {
@@ -136,12 +125,12 @@ void readLines(const fs::path& file, const LineCb& cb)
     std::string line;
     boost::iostreams::mapped_file mmap(file.string(),
                                        boost::iostreams::mapped_file::readonly);
-    auto f = mmap.const_data();
-    auto e = f + mmap.size();
+    const auto* f = mmap.const_data();
+    const auto* e = f + mmap.size();
 
     while (f && f != e)
     {
-        auto p = static_cast<const char*>(memchr(f, '\n', e - f));
+        const auto* p = static_cast<const char*>(memchr(f, '\n', e - f));
         if (p)
         {
             line.assign(f, p);
@@ -174,7 +163,7 @@ class FileSystemRepository::Impl
 
 public:
     explicit Impl(fs::path reportsDir)
-        : dirs_(std::move(reportsDir))
+        : dirs_ {std::move(reportsDir)}
     {
     }
 
@@ -226,7 +215,7 @@ public:
         {
             return;
         }
-        
+
         for (auto const& it : fs::directory_iterator(dirs_.getUserDir(filter.username())))
         {
             if (!it.is_directory())
@@ -235,8 +224,8 @@ public:
             }
 
             const int year = std::stoi(it.path().filename().string());
-            const auto& dataDirs = dirs_.dataDirs(filter.username(), year);           
-            
+            const auto& dataDirs = dirs_.dataDirs(filter.username(), year);
+
             if (!queryRawDataDir(filter, cb, dataDirs.rawDir))
             {
                 return;
@@ -262,8 +251,8 @@ private:
 
         for (auto const& it : fs::directory_iterator(rawDir))
         {
-            const auto fn = it.path().filename();  
-            if ((!fnFrom.empty() && fn < fnFrom) || 
+            const auto fn = it.path().filename();
+            if ((!fnFrom.empty() && fn < fnFrom) ||
                 (!fnTo.empty() && fn > fnTo))
             {
                 continue;
@@ -272,7 +261,7 @@ private:
             if (keepGoing && it.is_regular_file())
             {
                 readEntries(it.path(), [&keepGoing, &cb, &filter](const Entry& entry) {
-                    if (entry.timestamp.capture >= filter.from() && 
+                    if (entry.timestamp.capture >= filter.from() &&
                         entry.timestamp.capture <= filter.to())
                     {
                         keepGoing = cb(entry);
@@ -305,8 +294,8 @@ private:
 
             auto& wnd = json["wnd"];
             entry.windowInfo.title = wnd["title"].get<std::string>();
-            
-            const Point leftTop(getAs<int>(wnd["lt"][0]), 
+
+            const Point leftTop(getAs<int>(wnd["lt"][0]),
                                 getAs<int>(wnd["lt"][1]));
             const Dimensions dimensions(getAs<int>(wnd["wh"][0]),
                                         getAs<int>(wnd["wh"][1]));

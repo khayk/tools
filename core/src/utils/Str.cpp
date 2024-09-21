@@ -1,7 +1,6 @@
 #include <core/utils/Str.h>
-
-#include <codecvt>
-#include <locale>
+#include <cassert>
+#include <clocale>
 
 namespace str {
 
@@ -55,8 +54,10 @@ void ws2s(std::wstring_view utf16, std::string& utf8)
 
 #ifdef _WIN32
     auto err = wcsrtombs_s(&len, nullptr, 0, &wstr, 0, &state);
+    assert(err == 0);
     utf8.resize(len > 0 ? len - 1 : 0);
-    err = wcsrtombs_s(&len, &utf8[0], len, &wstr, len, &state);
+    err = wcsrtombs_s(&len, utf8.data(), len, &wstr, len, &state);
+    assert(err == 0);
 #else
     len = std::wcsrtombs(nullptr, &wstr, 0, &state);
     utf8.resize(len);
