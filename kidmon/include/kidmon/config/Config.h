@@ -19,7 +19,7 @@ struct Config
     std::chrono::milliseconds peerDropTimeout {activityCheckInterval.count() + 2000};
     bool takeSnapshots {false};
 
-    uint16_t serverPort {1234};
+    uint16_t serverPort {51097};
     bool spawnAgent {true};
     bool calcSha {false};
     std::string authToken;

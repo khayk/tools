@@ -14,7 +14,7 @@ void Config::applyDefaults()
     peerDropTimeout = activityCheckInterval + 2s;
     snapshotInterval = 5min;
 
-    serverPort = 1234;
+    serverPort = 51097;
 }
 
 void Config::applyOverrides(const fs::path& filename)
