@@ -19,36 +19,45 @@ AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
     , comm_(*this)
 {
     comm_.onMsg([this](const std::string& msg) {
-        spdlog::debug("Server rcvd: {} bytes", msg.size());
-
-        const auto payload = nlohmann::json::parse(msg);
-        nlohmann::json answer;
-        std::string error;
-
-        if (currentState_ == State::Authorized)
+        try
         {
-            dataHandler_.handle(payload, answer, error);
+            spdlog::debug("Server rcvd: {} bytes", msg.size());
+
+            const auto payload = nlohmann::json::parse(msg);
+            nlohmann::json answer;
+            std::string error;
+
+            if (currentState_ == State::Authorized)
+            {
+                dataHandler_.handle(payload, answer, error);
+            }
+            else if (authHandler_.handle(payload, answer, error))
+            {
+                transitionTo(State::Authorized);
+            }
+
+            if (!error.empty())
+            {
+                spdlog::error("Request handling failed, details: {}", error);
+
+                // This means unknown or bad message
+                transitionTo(State::Disconnected);
+                close();
+                return;
+            }
+
+            nlohmann::ordered_json js;
+            msgs::buildResponse(0, answer, js);
+            const auto res = js.dump();
+            spdlog::debug("Server sent: {} bytes", res.size());
+            comm_.sendAsync(res);
         }
-        else if (authHandler_.handle(payload, answer, error))
+        catch (const std::exception& ex)
         {
-            transitionTo(State::Authorized);
-        }
-
-        if (!error.empty())
-        {
-            spdlog::error("Request handling failed, details: {}", error);
-
-            // This means unknown or bad message
+            spdlog::error("Excepting in request handling, details: {}", ex.what());
             transitionTo(State::Disconnected);
             close();
-            return;
         }
-
-        nlohmann::ordered_json js;
-        msgs::buildResponse(0, answer, js);
-        const auto res = js.dump();
-        spdlog::debug("Server sent: {} bytes", res.size());
-        comm_.sendAsync(res);
     });
 
     onError([this](const ErrorCode& ec) {
@@ -70,7 +79,8 @@ AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
 
         const auto activeUsername = str::ws2s(sys::activeUserName());
 
-        if (!authHandler_.username().empty() && !activeUsername.empty() &&
+        if (!authHandler_.username().empty() && 
+            !activeUsername.empty() &&
             authHandler_.username() != activeUsername)
         {
             spdlog::info("Active user changed from '{}' to '{}'. Dropping peer",
