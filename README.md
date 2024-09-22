@@ -41,7 +41,8 @@ Own implementation of different tools.
         * Linux - `./build/core/test/core-test`
     * [Creating and running tests with CTest](https://coderefinery.github.io/cmake-workshop/testing/)
 * Install
-    * `cmake --install build --prefix ./ --config <cfg>`
+    * `cmake --install build --prefix ./`   # Configuration picked up from the build dir
+    * `cmake --install build --prefix ./ --config <cfg>`    # Update this part
 
 ## Run
 
