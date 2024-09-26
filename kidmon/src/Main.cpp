@@ -88,6 +88,7 @@ int main(int argc, char* argv[])
     {
         auto result = opts.parse(argc, argv);
         const bool agentMode = result["agent"].as<bool>();
+        const std::string token = result["token"].as<std::string>();
 
         if (result.count("help"))
         {
@@ -106,13 +107,11 @@ int main(int argc, char* argv[])
             return 1;
         }
 
-        Config cfg;
-
-        cfg.applyDefaults();
-        cfg.applyOverrides(logFile);
-        configureLogger(cfg.logsDir, cfg.logFilename);
-        cfg.authToken = result["token"].as<std::string>();
-        cfg.spawnAgent = !result["passive"].as<bool>();
+        AppConfig appConf;
+        appConf.logFilename = logFile;
+        
+        // Configure logger as soon as possible
+        configureLogger(appConf.logsDir, appConf.logFilename);
 
         trace.emplace("",
                       fmt::format("{:-^80s}", "> START <"),
@@ -125,11 +124,18 @@ int main(int argc, char* argv[])
 
         if (agentMode)
         {
-            app = std::make_shared<KidmonAgent>(cfg);
+            KidmonAgent::Config conf;
+            conf.authToken = token;
+
+            app = std::make_shared<KidmonAgent>(conf);
         }
         else
         {
-            app = std::make_shared<KidmonServer>(cfg);
+            KidmonServer::Config conf(appConf.appDataDir);
+            conf.authToken = token;
+            conf.spawnAgent = !result["passive"].as<bool>();
+
+            app = std::make_shared<KidmonServer>(conf);
         }
 
         if (isInteractive)

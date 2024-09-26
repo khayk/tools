@@ -4,7 +4,6 @@
 #include <kidmon/repo/FileSystemRepository.h>
 #include <kidmon/server/AgentManager.h>
 #include <kidmon/os/Api.h>
-#include <kidmon/config/Config.h>
 #include <kidmon/common/Utils.h>
 
 #include <core/network/TcpServer.h>
@@ -60,7 +59,7 @@ public:
                                                     cfg.peerDropTimeout);
 
         tcp::Server::Options opts;
-        opts.port = cfg.serverPort;
+        opts.port = cfg.listenPort;
 
         svr_.listen(opts);
     }
@@ -103,6 +102,11 @@ public:
         }
     }
 };
+
+KidmonServer::Config::Config(fs::path appDataDir)
+{
+    reportsDir = appDataDir / "reports";
+}
 
 KidmonServer::KidmonServer(const Config& cfg)
     : impl_(std::make_unique<Impl>(cfg))

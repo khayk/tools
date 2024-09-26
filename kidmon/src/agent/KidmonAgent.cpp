@@ -161,7 +161,7 @@ class KidmonAgent::Impl
     using clock_type = net::steady_timer::clock_type;
     using time_point = net::steady_timer::time_point;
 
-    const Config& cfg_;
+    Config cfg_;
 
     CachedFileSha256 shaCache_;
     net::io_context ioc_;
@@ -244,6 +244,8 @@ class KidmonAgent::Impl
         });
 
         tcp::Client::Options opts {"127.0.0.1", cfg_.serverPort};
+        spdlog::info("Attempting to connect: {}:{}", opts.host, opts.port);
+
         tcpClient_.connect(opts);
     }
 
@@ -340,8 +342,8 @@ class KidmonAgent::Impl
 
 
 public:
-    explicit Impl(const Config& cfg)
-        : cfg_(cfg)
+    explicit Impl(Config cfg)
+        : cfg_(std::move(cfg))
         , timer_(ioc_)
         , workGuard_(ioc_.get_executor())
         , timeout_(cfg.activityCheckInterval)
@@ -376,8 +378,8 @@ public:
     }
 };
 
-KidmonAgent::KidmonAgent(const Config& cfg)
-    : impl_(std::make_unique<Impl>(cfg))
+KidmonAgent::KidmonAgent(Config cfg)
+    : impl_(std::make_unique<Impl>(std::move(cfg)))
 {
 }
 

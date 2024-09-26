@@ -12,3 +12,4 @@
     * Logs
         * kidmon-server-2024-08-31.log
         * kidmon-server-2024-08-08.log
+* Server and agent should have their own config
