@@ -252,35 +252,38 @@ private:
         for (auto const& it : fs::directory_iterator(rawDir))
         {
             const auto fn = it.path().filename();
+
             if ((!fnFrom.empty() && fn < fnFrom) ||
-                (!fnTo.empty() && fn > fnTo))
+                (!fnTo.empty() && fn > fnTo) ||
+                !keepGoing || !it.is_regular_file())
             {
                 continue;
             }
 
-            if (keepGoing && it.is_regular_file())
-            {
-                readEntries(it.path(), [&keepGoing, &cb, &filter](const Entry& entry) {
-                    if (entry.timestamp.capture >= filter.from() &&
-                        entry.timestamp.capture <= filter.to())
-                    {
-                        keepGoing = cb(entry);
-                    }
+            readEntries(filter.username(),
+                        it.path(),
+                        [&keepGoing, &cb, &filter](const Entry& entry) {
+                            if (entry.timestamp.capture >= filter.from() &&
+                                entry.timestamp.capture <= filter.to())
+                            {
+                                keepGoing = cb(entry);
+                            }
 
-                    return keepGoing;
-                });
-            }
+                            return keepGoing;
+                        });
         }
 
         return keepGoing;
     }
 
-    void readEntries(const fs::path& file, const EntryCb& cb) const
+    void readEntries(const std::string& username,
+                     const fs::path& file,
+                     const EntryCb& cb) const
     {
         Entry entry;
         glz::json_t json {};
 
-        entry.username = file.parent_path().parent_path().parent_path().filename().string();
+        entry.username = username;
 
         readLines(file, [&cb, &entry, &json, this](const std::string& line) {
             if (glz::read_json(json, line))
@@ -288,28 +291,35 @@ private:
                 return true;
             }
 
-            auto& proc = json["proc"];
-            entry.processInfo.processPath = proc["path"].get<std::string>();
-            entry.processInfo.sha256 = proc["sha256"].get<std::string>();
+            try
+            {
+                auto& proc = json["proc"];
+                entry.processInfo.processPath = proc["path"].get<std::string>();
+                entry.processInfo.sha256 = proc["sha256"].get<std::string>();
 
-            auto& wnd = json["wnd"];
-            entry.windowInfo.title = wnd["title"].get<std::string>();
+                auto& wnd = json["wnd"];
+                entry.windowInfo.title = wnd["title"].get<std::string>();
 
-            const Point leftTop(getAs<int>(wnd["lt"][0]),
-                                getAs<int>(wnd["lt"][1]));
-            const Dimensions dimensions(getAs<int>(wnd["wh"][0]),
-                                        getAs<int>(wnd["wh"][1]));
-            entry.windowInfo.placement = Rect(leftTop, dimensions);
+                const Point leftTop(getAs<int>(wnd["lt"][0]), getAs<int>(wnd["lt"][1]));
+                const Dimensions dimensions(getAs<int>(wnd["wh"][0]),
+                                            getAs<int>(wnd["wh"][1]));
+                entry.windowInfo.placement = Rect(leftTop, dimensions);
 
-            auto& img = wnd["img"];
-            entry.windowInfo.image.name = img["name"].get<std::string>();
-            entry.windowInfo.image.bytes = img["bytes"].get<std::string>();
-            entry.windowInfo.image.encoded= img["encoded"].get<bool>();
+                auto& img = wnd["img"];
+                entry.windowInfo.image.name = img["name"].get<std::string>();
+                entry.windowInfo.image.bytes = img["bytes"].get<std::string>();
+                entry.windowInfo.image.encoded = img["encoded"].get<bool>();
 
-            const auto& ts = json["ts"];
-            entry.timestamp.capture =
-                TimePoint(std::chrono::milliseconds(getAs<long long>(ts["when"])));
-            entry.timestamp.duration = std::chrono::milliseconds(getAs<long long>(ts["dur"]));
+                const auto& ts = json["ts"];
+                entry.timestamp.capture =
+                    TimePoint(std::chrono::milliseconds(getAs<long long>(ts["when"])));
+                entry.timestamp.duration =
+                    std::chrono::milliseconds(getAs<long long>(ts["dur"]));
+            }
+            catch (const std::exception&)
+            {
+                entry = Entry();
+            }
 
             return cb(entry);
         });
