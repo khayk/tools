@@ -57,8 +57,8 @@ int main(int argc, char* argv[])
         ("t,token", "Authorization token for agent", cxxopts::value<std::string>()->default_value(""))
         ("a,agent", "Run as an agent", cxxopts::value<bool>()->default_value("false"))
         ("p,passive", "Run server in a passive mode", cxxopts::value<bool>()->default_value("false"));
-
     // clang-format on
+
     try
     {
         auto result = opts.parse(argc, argv);

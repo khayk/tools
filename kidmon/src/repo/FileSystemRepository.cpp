@@ -55,7 +55,7 @@ public:
             throw std::runtime_error("Empty username");
         }
 
-        return fs::path(reportsDir_).append(str::s2ws(username));
+        return fs::path(reportsDir_).append(str::s2ws(username)).lexically_normal();
     }
 
     const ReportDirs& dataDirs(const std::string& username, int year) const
@@ -216,7 +216,9 @@ public:
             return;
         }
 
-        for (auto const& it : fs::directory_iterator(dirs_.getUserDir(filter.username())))
+        const auto userDir = dirs_.getUserDir(filter.username()).lexically_normal();
+
+        for (auto const& it : fs::directory_iterator(userDir))
         {
             if (!it.is_directory())
             {
