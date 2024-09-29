@@ -21,14 +21,21 @@
             "project": "CMakeLists.txt",
             "projectTarget": "kidmon-test.exe (kidmon\\test\\kidmon-test.exe)",
             "name": "kidmon-test.exe (kidmon\\test\\kidmon-test.exe)",
-            "args": [ "--gtest_filter=*" ]
+            "args": [ "--gtest_filter=*FileSystemRepositoryTest*" ]
         },
         {
             "type": "default",
             "project": "CMakeLists.txt",
             "projectTarget": "kidmon-app.exe (kidmon\\src\\kidmon-app.exe)",
             "name": "kidmon-app.exe (kidmon\\src\\kidmon-app.exe)",
-            "args": [ "--token", "1234" ]
+            "args": []
+        },
+        {
+            "type": "default",
+            "project": "CMakeLists.txt",
+            "projectTarget": "kidmon-reports-app.exe (kidmon-reports\\src\\kidmon-reports-app.exe)",
+            "name": "kidmon-reports-app.exe (kidmon-reports\\src\\kidmon-reports-app.exe)",
+            "args": [ "--user hayk" ]
         }
     ]
 }
