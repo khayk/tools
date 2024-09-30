@@ -18,14 +18,13 @@ TimePoint makeTimepoint(int year = 2024,
                         int min = 0,
                         int sec = 0)
 {
-    std::tm tm = {
-        /* .tm_sec  = */ sec,
-        /* .tm_min  = */ min,
-        /* .tm_hour = */ hour,
-        /* .tm_mday = */ day,
-        /* .tm_mon  = */ month - 1,
-        /* .tm_year = */ year - 1900,
-    };
+    std::tm tm = {};
+    tm.tm_sec = sec;
+    tm.tm_min = min;
+    tm.tm_hour = hour;
+    tm.tm_mday = day;
+    tm.tm_mon = month - 1;
+    tm.tm_year = year - 1900;
     tm.tm_isdst = -1; // Use DST value from local time zone
 
     return std::chrono::system_clock::from_time_t(std::mktime(&tm));
