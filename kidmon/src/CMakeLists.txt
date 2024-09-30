@@ -43,7 +43,7 @@ list(FILTER LIB_SRCS EXCLUDE REGEX ".*Main.cpp")
 
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(cxxopts CONFIG REQUIRED)
-find_package(Boost CONFIG REQUIRED)
+#find_package(Boost CONFIG REQUIRED)
 find_package(glaze CONFIG REQUIRED)
 # find_package(msgpack-c CONFIG REQUIRED)
 
