@@ -7,6 +7,7 @@
 
 #include <fmt/format.h>
 #include <fstream>
+#include <atomic>
 
 namespace file {
 

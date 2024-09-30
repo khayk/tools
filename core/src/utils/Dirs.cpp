@@ -2,6 +2,7 @@
     #include <Shlobj.h>
     #include <Knownfolders.h>
 #else
+    #include <fmt/format.h>
 #endif
 
 #include <core/utils/Dirs.h>
