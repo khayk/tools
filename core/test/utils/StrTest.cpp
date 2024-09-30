@@ -29,6 +29,7 @@ TEST(UtilsStrTests, U8S2WS)
     const auto s = u8"Բարև.";
     const auto ws = s2ws(u8tos(s));
 
+    ASSERT_GE(ws.size(), 5);
     EXPECT_EQ(ws[0], 0x0532);
     EXPECT_EQ(ws[1], 0x0561);
     EXPECT_EQ(ws[2], 0x0580);
@@ -50,7 +51,7 @@ TEST(UtilsStrTests, U8Conversions)
         const auto ss = ws2s(ws);
         const auto s8 = stou8(ss);
 
-        EXPECT_EQ(s, s8);
+        ASSERT_EQ(s, s8);
     }
 }
 
@@ -65,7 +66,7 @@ TEST(UtilsStrTests, U8S2WSPerf)
         s2ws(u8tos(s), ws);
         ws2s(ws, ss);
         const auto s8 = stou8(ss);
-        EXPECT_EQ(s, s8);
+        ASSERT_EQ(s, s8);
     }
 }
 
