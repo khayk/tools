@@ -4,6 +4,8 @@
 
     #pragma comment(lib, "Wtsapi32.lib")
 #else
+    #include <sys/types.h>
+    #include <sys/stat.h>
 #endif
 
 #include <core/utils/Sys.h>
@@ -129,7 +131,7 @@ std::string constructLastErrorMsg(std::string_view message)
 #ifdef _WIN32
     return constructErrorMsg(message, GetLastError());
 #else
-    return constructErrorMsg(message, errno);
+    return constructErrorMsg(message, static_cast<uint64_t>(errno));
 #endif
 }
 
@@ -144,7 +146,7 @@ void logLastError(const std::string_view message)
 #ifdef _WIN32
     logError(message, GetLastError());
 #else
-    logError(message, errno);
+    logError(message, static_cast<uint64_t>(errno));
 #endif
 }
 
@@ -153,17 +155,35 @@ uint32_t currentProcessId() noexcept
 #ifdef _WIN32
     return GetCurrentProcessId();
 #else
-    return getpid();
+    return static_cast<uint32_t>(getpid());
 #endif // _WIN32
 }
 
 fs::path currentProcessPath()
 {
+#ifdef _WIN32
+
     std::array<wchar_t, MAX_PATH> buf {};
 
     DWORD sz = GetModuleFileNameW(nullptr, buf.data(), static_cast<DWORD>(buf.size()));
+    if (sz > 0)
+    {
+        return fs::path(buf.data(), buf.data() + sz).lexically_normal();
+    }
+#else
+    auto pid = getpid();
 
-    return fs::path(buf.data(), buf.data() + sz).lexically_normal();
+    char buff[PATH_MAX];
+    sprintf(buff, "/proc/%d/exe", pid);
+
+    struct stat statbuf;
+    if (stat(buff, &statbuf) == 0)
+    {
+        return fs::path(buff);
+    }
+#endif // _WIN32
+
+    return {};
 }
 
 } // namespace sys
