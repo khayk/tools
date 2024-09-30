@@ -32,8 +32,8 @@ void s2ws(std::string_view utf8, std::wstring& wstr)
     wstr.resize(len > 0 ? len - 1 : 0);
     mbsrtowcs_s(&len, &wstr[0], len, &mbstr, len, &state);
 #else
-    std::size_t len = std::mbsrtowcs(nullptr, &mbstr, 0, &state);
-    wstr.resize(len);
+    len = 1 + std::mbsrtowcs(nullptr, &mbstr, 0, &state);
+    wstr.resize(len > 0 ? len - 1 : 0);
     std::mbsrtowcs(&wstr[0], &mbstr, wstr.size(), &state);
 #endif
 }
