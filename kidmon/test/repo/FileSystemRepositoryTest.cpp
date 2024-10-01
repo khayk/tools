@@ -5,6 +5,7 @@
 #include <core/utils/File.h>
 
 #include <fmt/format.h>
+#include <unordered_set>
 
 using namespace std::chrono_literals;
 using ::testing::Return;
@@ -194,35 +195,42 @@ TEST(FileSystemRepositoryTest, QueryEntriesMultipleUsers)
     }
 
     int usersEnumrated = 0;
-    repo.queryUsers([&entries, &usersEnumrated, i = 0](const std::string& usename) mutable {
-        EXPECT_EQ(entries[i].username, usename);
-        i += numEntriesPerUser;
-        ++usersEnumrated;
-        return true;
-    });
+    std::unordered_set<std::string> names;
+    for (size_t i = 0; i < entries.size(); i += numEntriesPerUser)
+    {
+        names.insert(entries[i].username);
+    }
+
+    repo.queryUsers(
+        [&names, &usersEnumrated](const std::string& username) mutable {
+            EXPECT_TRUE(names.count(username) > 0);
+            names.erase(username);
+            ++usersEnumrated;
+            return true;
+        });
     EXPECT_EQ(usersEnumrated, numUsers);
 
     
     usersEnumrated = 0;
     repo.queryUsers(
-        [&entries, &usersEnumrated](const std::string&) mutable {
+        [&usersEnumrated](const std::string&) mutable {
             ++usersEnumrated;
             return false;   // instruct to stop enumaration
         });
     EXPECT_EQ(1, usersEnumrated);
     
-    int entriesEnumarated = 0;
-    for (int i = 0; i < numUsers; ++i)
+    size_t entriesEnumarated = 0;
+    for (size_t i = 0; i < static_cast<size_t>(numUsers); ++i)
     {
         Filter filter(entries[numEntriesPerUser * i].username);
         repo.queryEntries(filter,
                           [&entries, j = numEntriesPerUser * i, &entriesEnumarated](
                               const Entry& entry) mutable {
-            EXPECT_EQ(entries[j], entry);
-            ++j;
-            ++entriesEnumarated;
-            return true;
-        });  
+                              EXPECT_EQ(entries[j], entry);
+                              ++j;
+                              ++entriesEnumarated;
+                              return true;
+                          });
     }
 
     EXPECT_EQ(numEntriesPerUser * numUsers, entriesEnumarated);

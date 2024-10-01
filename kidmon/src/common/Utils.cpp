@@ -20,7 +20,7 @@ std::string generateToken(const size_t length)
         constexpr std::string_view charset = "0123456789"
                                              "abcdefghijklmnopqrstuvwxyz"
                                              "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        return charset[rand() % (charset.size() - 1)];
+        return charset[static_cast<unsigned long>(rand()) % (charset.size() - 1)];
     };
 
     std::string token(length, 0);
@@ -36,13 +36,14 @@ bool timet2tm(time_t dt, tm& d)
     {
         return false;
     }
-
-    return true;
 #else
-    std::ignore = dt;
-    std::ignore = d;
-    throw std::logic_error(fmt::format("Not implemented: {}", __func__));
+    if (!localtime_r(&dt, &d) || errno == EOVERFLOW)
+    {
+        return false;
+    }
 #endif
+
+    return d.tm_year >= 0 && d.tm_year <= 200;
 }
 
 tm timet2tm(const time_t dt)
