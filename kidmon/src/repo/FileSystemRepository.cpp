@@ -130,7 +130,8 @@ void readLines(const fs::path& file, const LineCb& cb)
 
     while (f && f != e)
     {
-        const auto* p = static_cast<const char*>(memchr(f, '\n', e - f));
+        const auto* p =
+            static_cast<const char*>(memchr(f, '\n', static_cast<size_t>(e - f)));
         if (p)
         {
             line.assign(f, p);
@@ -303,8 +304,8 @@ private:
                 entry.windowInfo.title = wnd["title"].get<std::string>();
 
                 const Point leftTop(getAs<int>(wnd["lt"][0]), getAs<int>(wnd["lt"][1]));
-                const Dimensions dimensions(getAs<int>(wnd["wh"][0]),
-                                            getAs<int>(wnd["wh"][1]));
+                const Dimensions dimensions(getAs<uint32_t>(wnd["wh"][0]),
+                                            getAs<uint32_t>(wnd["wh"][1]));
                 entry.windowInfo.placement = Rect(leftTop, dimensions);
 
                 auto& img = wnd["img"];
