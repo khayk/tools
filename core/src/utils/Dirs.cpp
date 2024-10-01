@@ -80,8 +80,7 @@ fs::path temp(std::error_code& ec)
         path.assign(std::wstring_view(buffer, length));
     }
 #else
-    std::ignore = ec;
-    throw std::runtime_error(fmt::format("Not implemented: {}", __func__));
+    return std::filesystem::temp_directory_path(ec);
 #endif
 
     return path;
