@@ -2,7 +2,7 @@
 
 ## Issues
 
-* New issues goes here
+* Figure out why u8'*' tests are failing on linux
 
 ## Done
 
