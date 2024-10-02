@@ -205,7 +205,7 @@ int main(int argc, char* argv[])
             handleQueryUser(reportsConf);
         }
 
-        spdlog::info("Processing took: {}ms", utl::humanizeDuration(sw.elapsed()));
+        spdlog::info("Processing took: {}", utl::humanizeDuration(sw.elapsed()));
     }
     catch (const std::exception& e)
     {
