@@ -51,8 +51,8 @@ void reportsConfigFromOpts(const cxxopts::ParseResult& res, ReportsConfig& conf)
     maybeGet("case-sensitive", res, conf.caseSensitiveLookup);
 }
 
-TimePoint makeTimepoint(int year = 2024,
-                        int month = 1,
+TimePoint makeTimepoint(int year,
+                        int month,
                         int day = 1,
                         int hour = 0,
                         int min = 0,
