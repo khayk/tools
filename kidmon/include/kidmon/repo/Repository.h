@@ -7,7 +7,7 @@ class IRepository
 {
 public:
     using UserCb = std::function<bool(const std::string&)>;
-    using EntryCb = std::function<bool(const Entry&)>;
+    using EntryCb = std::function<bool(Entry&)>;
 
     virtual ~IRepository() = default;
 

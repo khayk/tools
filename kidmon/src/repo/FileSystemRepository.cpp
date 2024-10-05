@@ -265,7 +265,7 @@ private:
 
             readEntries(filter.username(),
                         it.path(),
-                        [&keepGoing, &cb, &filter](const Entry& entry) {
+                        [&keepGoing, &cb, &filter](Entry& entry) {
                             if (entry.timestamp.capture >= filter.from() &&
                                 entry.timestamp.capture <= filter.to())
                             {
