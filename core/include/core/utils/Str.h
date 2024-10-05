@@ -45,4 +45,34 @@ std::string& trimRight(std::string& s);
  */
 std::string& trim(std::string& s);
 
+
+/**
+ * @brief Converts given string to lowercase, by modifying input string
+ *
+ * @param str Input string to be converted to lowercase
+ *
+ * @return  Reference the to input string, in lowercase
+ */
+std::string& lowerInplace(std::string& str);
+
+
+/**
+ * @brief Converts given wstring to lowercase, by modifying input string
+ *
+ * @param str Input wstring to be converted to lowercase
+ *
+ * @return  Reference the to input wstring, in lowercase
+ */
+std::wstring& lowerInplace(std::wstring& str);
+
+
+/**
+ * @brief Converts input string to lowercase producing a new string
+ *
+ * @param input An input string to be converted to lowercase
+ *
+ * @return  A new string object, in lowercase
+ */
+std::string lower(std::string input);
+
 } // namespace str

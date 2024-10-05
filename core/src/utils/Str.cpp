@@ -1,6 +1,7 @@
 #include <core/utils/Str.h>
 #include <cassert>
 #include <clocale>
+#include <algorithm>
 
 namespace str {
 
@@ -123,6 +124,32 @@ std::string& trimRight(std::string& s)
 std::string& trim(std::string& s)
 {
     return trimLeft(trimRight(s));
+}
+
+std::string& lowerInplace(std::string& str)
+{
+    std::transform(str.begin(),
+                   str.end(),
+                   str.begin(),
+                   [](const unsigned char c) noexcept {
+                       return static_cast<char>(std::tolower(c));
+                   });
+
+    return str;
+}
+
+std::wstring& lowerInplace(std::wstring& str)
+{
+    std::transform(str.begin(), str.end(), str.begin(), [](const auto& c) noexcept {
+        return static_cast<std::wstring::value_type>(towlower(c));
+    });
+    return str;
+}
+
+std::string lower(std::string input)
+{
+    lowerInplace(input);
+    return input;
 }
 
 } // namespace str
