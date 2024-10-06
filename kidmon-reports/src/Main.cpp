@@ -1,3 +1,6 @@
+#include "transform/Transforms.h"
+#include "condition/Conditions.h"
+
 #include <core/utils/Log.h>
 #include <core/utils/StopWatch.h>
 
@@ -11,7 +14,7 @@
 
 namespace {
 
-const fs::path g_reportsDir =
+const std::string_view g_reportsDir =
     "C:/Windows/System32/config/systemprofile/AppData/Local/kidmon/reports";
 
 struct ReportsConfig
@@ -22,11 +25,36 @@ struct ReportsConfig
     uint32_t months {0};
     std::vector<int> range;
     std::vector<std::string> fields;
-    std::string title {};
-    std::string process {};
+    std::vector<std::string> titles {};
+    std::vector<std::string> processes {};
     std::string username {};
-    bool caseSensitiveLookup {false};
+    bool caseInsensitive {false};
 };
+
+class QueryVisualizer
+{
+    StopWatch sw_ {true};
+    int numEntries_ = 0;
+    int64_t prevUpdate_ {100};   // don't show progress for short queries
+
+public:
+    void update()
+    {
+        ++numEntries_;
+
+        if (sw_.elapsedMs() - prevUpdate_ > 100)
+        {
+            prevUpdate_ = sw_.elapsedMs();
+            std::cout << "Processed: " << numEntries_ << "\r";
+        }
+    }
+
+    void display(const std::vector<Entry>& entries) const
+    {
+        std::cout << "Filtered: " << entries.size() << " out of " << numEntries_ << '\n';
+    }
+};
+
 
 template <typename T>
 void maybeGet(const std::string& name, const cxxopts::ParseResult& res, T& dest)
@@ -39,16 +67,16 @@ void maybeGet(const std::string& name, const cxxopts::ParseResult& res, T& dest)
 
 void reportsConfigFromOpts(const cxxopts::ParseResult& res, ReportsConfig& conf)
 {
-    maybeGet("user",           res, conf.username);
-    maybeGet("minutes",        res, conf.minutes);
-    maybeGet("hours",          res, conf.hours);
-    maybeGet("days",           res, conf.days);
-    maybeGet("months",         res, conf.months);
-    maybeGet("range",          res, conf.range);
-    maybeGet("fields",         res, conf.fields);
-    maybeGet("title",          res, conf.title);
-    maybeGet("process",        res, conf.process);
-    maybeGet("case-sensitive", res, conf.caseSensitiveLookup);
+    maybeGet("user",             res, conf.username);
+    maybeGet("minutes",          res, conf.minutes);
+    maybeGet("hours",            res, conf.hours);
+    maybeGet("days",             res, conf.days);
+    maybeGet("months",           res, conf.months);
+    maybeGet("range",            res, conf.range);
+    maybeGet("fields",           res, conf.fields);
+    maybeGet("title",            res, conf.titles);
+    maybeGet("process",          res, conf.processes);
+    maybeGet("case-insensitive", res, conf.caseInsensitive);
 }
 
 TimePoint makeTimepoint(int year,
@@ -85,6 +113,115 @@ TimePoint makeTimepoint(uint32_t date)
 }
 
 
+Filter buildFilter(const ReportsConfig& conf)
+{
+    TimePoint to = SystemClock::now();
+    TimePoint from = to;
+
+    if (conf.range.empty())
+    {
+        from -= std::chrono::minutes(conf.minutes);
+        from -= std::chrono::hours(conf.hours);
+        from -= std::chrono::days(conf.days);
+        from -= std::chrono::months(conf.months);
+    }
+    else
+    {
+        from = (!conf.range.empty()) ? makeTimepoint(conf.range[0]) : TimePoint::min();
+        to = (conf.range.size() > 1) ? makeTimepoint(conf.range[1]) : SystemClock::now();
+    }
+
+    return Filter(conf.username, from, to);
+}
+
+QueryVisualizer buildVisualizer(const ReportsConfig& conf)
+{
+    std::ignore = conf;
+    QueryVisualizer queryVis;
+    
+    return queryVis;
+}
+
+template <typename LogicType>
+ConditionPtr combineConditions(std::vector<ConditionPtr>&& conditions)
+{
+    if (conditions.empty())
+    {
+        return {};
+    }
+
+    ConditionPtr cond = std::move(conditions.back());
+    conditions.pop_back();
+
+    if (conditions.empty())
+    {
+        return cond;
+    }
+
+    return std::make_unique<LogicType>(
+        combineConditions<LogicType>(std::move(conditions)),
+        std::move(cond)
+    );
+}
+
+template <typename CondType>
+std::vector<ConditionPtr> createConditions(const std::vector<std::string>& values)
+{
+    std::vector<ConditionPtr> conds;
+    
+    for (const auto& value : values)
+    {
+        conds.push_back(std::make_unique<CondType>(value));
+    }
+
+    return conds;
+}
+
+ConditionPtr buildCondition(const ReportsConfig& conf)
+{
+    std::vector<ConditionPtr> conditions;
+
+    if (!conf.processes.empty())
+    {
+        conditions.push_back(
+            combineConditions<LogicalOR>(
+                createConditions<HasProcessCondition>(conf.processes)
+            )
+        );
+    }
+
+    if (!conf.titles.empty())
+    {
+        conditions.push_back(
+            combineConditions<LogicalOR>(
+                createConditions<HasTitleCondition>(conf.titles)
+            )
+        );
+    }
+    
+    return combineConditions<LogicalAND>(std::move(conditions));
+}
+
+TransformPtr buildTransform(const ReportsConfig& conf)
+{
+    std::vector<TransformPtr> transformers;
+
+    if (conf.caseInsensitive)
+    {
+        if (!conf.processes.empty())
+        {
+            transformers.push_back(std::make_unique<ProcessPathToLowerTransform>());
+        }
+
+        if (!conf.titles.empty())
+        {
+            transformers.push_back(std::make_unique<TitleToLowerTransform>());
+        }
+    }
+
+    return std::make_unique<SpreadTransform>(std::move(transformers));
+}
+
 bool validateArguments(const cxxopts::ParseResult& result)
 {
     std::ignore = result;
@@ -112,40 +249,35 @@ void handleListUsers()
 void handleQueryUser(const ReportsConfig& conf)
 {
     FileSystemRepository repo(g_reportsDir);
-    TimePoint to = SystemClock::now();
-    TimePoint from = to;
 
-    if (conf.range.empty())
-    {
-        from -= std::chrono::minutes(conf.minutes);
-        from -= std::chrono::hours(conf.hours);
-        from -= std::chrono::days(conf.days);
-        from -= std::chrono::months(conf.months);
-    }
-    else
-    {
-        from = (conf.range.size() > 0) ? makeTimepoint(conf.range[0]) : TimePoint::min();
-        to = (conf.range.size() > 1) ? makeTimepoint(conf.range[1]) : SystemClock::now();
-    }
+    const auto queryFilter    = buildFilter(conf);
+    const auto queryCondition = buildCondition(conf);
+    const auto transform      = buildTransform(conf);
+    
+    std::ostringstream oss;
+    queryCondition->write(oss);
+    
+    spdlog::info("Query condition: {}", oss.str());
 
-    Filter filter(conf.username, from, to);
+    QueryVisualizer queryVisualizer = buildVisualizer(conf);
+    std::vector<Entry> filtered;
+    
+    repo.queryEntries(
+        queryFilter,
+        [&queryVisualizer, &filtered, &queryCondition, &transform](Entry& entry) {
+            queryVisualizer.update();
 
-    StopWatch sw(true);
-    int64_t prevUpdate {100};   // skip logging the status for short queries
-    int numEntries = 0;
+            transform->apply(entry);
 
-    repo.queryEntries(filter, [&sw, &numEntries, &prevUpdate, &conf](const Entry& entry) {
-        if (sw.elapsedMs() - prevUpdate > 100)
-        {
-            prevUpdate = sw.elapsedMs();
-            std::cout << "Processed: " << numEntries << "\r";
-        }
+            if (queryCondition->met(entry))
+            {
+                filtered.push_back(entry);
+            }
 
-        std::ignore = entry;
+            return true;
+        });
 
-        ++numEntries;
-        return true;
-    });
+    queryVisualizer.display(filtered);
 }
 
 } // namespace
@@ -160,7 +292,7 @@ int main(int argc, char* argv[])
 
         // clang-format off
         opts.add_options()
-            ("c,case-sensitive", "Enables case-sensitive search", cxxopts::value<bool>()->default_value("false"))
+            ("c,case-insensitive", "Enables case-insensitive search")
             ("l,list", "Lists available users")
             ("u,user", "The name of the user to be queried", cxxopts::value<std::string>())
             ("m,minutes", "The last 'm' minutes", cxxopts::value<uint32_t>())
@@ -169,8 +301,8 @@ int main(int argc, char* argv[])
             ("M,months", "The last 'M' months", cxxopts::value<uint32_t>())
             ("r,range", "The dates range (ex: 20240913,20241030)", cxxopts::value<std::vector<int>>())
             ("f,fields", "The fields to be displayed", cxxopts::value<std::vector<std::string>>()->default_value(""))
-            ("t,title", "The window title", cxxopts::value<std::string>())
-            ("p,process", "The process name", cxxopts::value<std::string>())
+            ("t,title", "The window titles", cxxopts::value<std::vector<std::string>>())
+            ("p,process", "The process names", cxxopts::value<std::vector<std::string>>())
             ("e,help", "Print usage")
         ;
         // clang-format on
@@ -187,7 +319,7 @@ int main(int argc, char* argv[])
 
         if (result.count("help") || !validateArguments(result))
         {
-            std::cout << opts.help() << std::endl;
+            std::cout << opts.help() << '\n';
             return 2;
         }
 

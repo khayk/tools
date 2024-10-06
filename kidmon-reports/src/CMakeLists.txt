@@ -1,4 +1,8 @@
 file(GLOB APP_SRCS
+   "condition/*.h"
+   "condition/*.cpp"
+   "transform/*.h"
+   "transform/*.cpp"
    "*.h"
    "*.cpp"
 )
