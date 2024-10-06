@@ -4,6 +4,26 @@
 
 #include <fmt/format.h>
 
+void TrueCondition::write(std::ostream& os) const
+{
+    os << "true";
+}
+
+bool TrueCondition::met(const Entry&) const
+{
+    return true;
+}
+
+void FalseCondition ::write(std::ostream& os) const
+{
+    os << "false";
+}
+
+bool FalseCondition::met(const Entry&) const
+{
+    return false;
+}
+
 BinaryCondition::BinaryCondition(ConditionPtr lhs, ConditionPtr rhs)
     : lhs_(std::move(lhs))
     , rhs_(std::move(rhs))

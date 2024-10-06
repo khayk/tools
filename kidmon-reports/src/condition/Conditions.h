@@ -3,6 +3,20 @@
 #include "ICondition.h"
 #include <kidmon/data/Types.h>
 
+class TrueCondition : public ICondition
+{
+public:
+    void write(std::ostream& os) const override;
+    bool met(const Entry& entry) const override;
+};
+
+class FalseCondition : public ICondition
+{
+public:
+    void write(std::ostream& os) const override;
+    bool met(const Entry& entry) const override;
+};
+
 class BinaryCondition : public ICondition
 {
     ConditionPtr lhs_;
