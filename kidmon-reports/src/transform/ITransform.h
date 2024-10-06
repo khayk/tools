@@ -7,6 +7,8 @@ struct Entry;
 class ITransform
 {
 public:
+    virtual ~ITransform() = default;
+
     virtual void apply(Entry& entry) = 0;
 };
 
