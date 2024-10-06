@@ -25,6 +25,10 @@ void hexadecimal(unsigned char* const hash, size_t size, std::string& out)
         written = sprintf(out.data() + 2 * i, "%02x", hash[i]);
 #endif
         assert(written >= 0);
+        if (written < 0)
+        {
+            throw std::runtime_error("Failed to write in hexadecimal format");
+        }
     }
 }
 } // namespace

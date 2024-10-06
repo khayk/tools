@@ -16,7 +16,12 @@
 namespace {
 
 const std::string_view g_reportsDir =
-    "C:/Windows/System32/config/systemprofile/AppData/Local/kidmon/reports";
+#ifdef _WIN32
+    "C:"
+#else
+    "/mnt/c"
+#endif
+    "/Windows/System32/config/systemprofile/AppData/Local/kidmon/reports";
 
 struct ReportsConfig
 {
@@ -46,7 +51,7 @@ public:
         if (sw_.elapsedMs() - prevUpdate_ > 100)
         {
             prevUpdate_ = sw_.elapsedMs();
-            std::cout << "Processed: " << numEntries_ << "\r";
+            std::cout << "Processed: " << numEntries_ << "\r" << std::flush;
         }
     }
 
@@ -280,7 +285,7 @@ void handleQueryUser(const ReportsConfig& conf)
     const auto queryFilter    = buildFilter(conf);
     const auto queryCondition = buildCondition(conf);
     const auto transform      = buildTransform(conf);
-    
+
     std::ostringstream oss;
     queryCondition->write(oss);
     
