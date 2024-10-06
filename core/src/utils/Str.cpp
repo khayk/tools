@@ -2,6 +2,7 @@
 #include <cassert>
 #include <clocale>
 #include <algorithm>
+#include <wctype.h>
 
 namespace str {
 
