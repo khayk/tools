@@ -2,6 +2,7 @@
 #include "condition/Conditions.h"
 
 #include <core/utils/Log.h>
+#include <core/utils/Str.h>
 #include <core/utils/StopWatch.h>
 
 #include <kidmon/common/Tracer.h>
@@ -34,7 +35,7 @@ struct ReportsConfig
 class QueryVisualizer
 {
     StopWatch sw_ {true};
-    int numEntries_ = 0;
+    int numEntries_ {};
     int64_t prevUpdate_ {100};   // don't show progress for short queries
 
 public:
@@ -62,6 +63,27 @@ void maybeGet(const std::string& name, const cxxopts::ParseResult& res, T& dest)
     if (res.count(name) > 0)
     {
         dest = res[name].as<T>();
+    }
+}
+
+void makeLowercase(std::vector<std::string>& data)
+{
+    std::wstring wstr;
+
+    for (auto& str : data)
+    {
+        str::s2ws(str, wstr);
+        str::lowerInplace(wstr);
+        str::ws2s(wstr, str);
+    }
+}
+
+void reportsNormalization(ReportsConfig& conf)
+{
+    if (conf.caseInsensitive)
+    {
+        makeLowercase(conf.titles);
+        makeLowercase(conf.processes);
     }
 }
 
@@ -199,6 +221,11 @@ ConditionPtr buildCondition(const ReportsConfig& conf)
         );
     }
     
+    if (conditions.empty())
+    {
+        return std::make_unique<TrueCondition>();
+    }
+
     return combineConditions<LogicalAND>(std::move(conditions));
 }
 
@@ -288,7 +315,7 @@ int main(int argc, char* argv[])
 
     try
     {
-        cxxopts::Options opts("kidmon-reports", "Produce reports for the user activity");
+        cxxopts::Options opts("kidmon-reports", "Produce reports for user activity");
 
         // clang-format off
         opts.add_options()
@@ -334,6 +361,8 @@ int main(int argc, char* argv[])
         {
             ReportsConfig reportsConf;
             reportsConfigFromOpts(result, reportsConf);
+            reportsNormalization(reportsConf);
+
             handleQueryUser(reportsConf);
         }
 
