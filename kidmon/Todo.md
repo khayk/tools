@@ -1,8 +1,13 @@
 # Todo
 
-## Issues
+## Open Issues
 
 * Figure out why u8'*' tests are failing on linux
+* Add version to the app
+
+## In Progress
+
+* 
 
 ## Done
 
