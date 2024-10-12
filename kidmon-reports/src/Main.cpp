@@ -41,10 +41,11 @@ class QueryVisualizer
 {
     StopWatch sw_ {true};
     int numEntries_ {};
-    int64_t prevUpdate_ {100};   // don't show progress for short queries
+    int64_t prevUpdate_ {100}; // don't show progress for short queries
+    std::vector<Entry> entries_;
 
 public:
-    void update()
+    void update(const Entry&)
     {
         ++numEntries_;
 
@@ -55,9 +56,14 @@ public:
         }
     }
 
-    void display(const std::vector<Entry>& entries) const
+    void add(const Entry& entry)
     {
-        std::cout << "Filtered: " << entries.size() << " out of " << numEntries_ << '\n';
+        entries_.push_back(entry);
+    }
+
+    void display() const
+    {
+        std::cout << "Filtered: " << entries_.size() << " out of " << numEntries_ << '\n';
     }
 };
 
@@ -83,7 +89,7 @@ void makeLowercase(std::vector<std::string>& data)
     }
 }
 
-void reportsNormalization(ReportsConfig& conf)
+void applyCaseTransform(ReportsConfig& conf)
 {
     if (conf.caseInsensitive)
     {
@@ -92,7 +98,7 @@ void reportsNormalization(ReportsConfig& conf)
     }
 }
 
-void reportsConfigFromOpts(const cxxopts::ParseResult& res, ReportsConfig& conf)
+void initReportsConf(const cxxopts::ParseResult& res, ReportsConfig& conf)
 {
     maybeGet("user",             res, conf.username);
     maybeGet("minutes",          res, conf.minutes);
@@ -165,7 +171,7 @@ QueryVisualizer buildVisualizer(const ReportsConfig& conf)
 {
     std::ignore = conf;
     QueryVisualizer queryVis;
-    
+
     return queryVis;
 }
 
@@ -195,7 +201,7 @@ template <typename CondType>
 std::vector<ConditionPtr> createConditions(const std::vector<std::string>& values)
 {
     std::vector<ConditionPtr> conds;
-    
+
     for (const auto& value : values)
     {
         conds.push_back(std::make_unique<CondType>(value));
@@ -225,7 +231,7 @@ ConditionPtr buildCondition(const ReportsConfig& conf)
             )
         );
     }
-    
+
     if (conditions.empty())
     {
         return std::make_unique<TrueCondition>();
@@ -278,38 +284,30 @@ void handleListUsers()
 }
 
 
-void handleQueryUser(const ReportsConfig& conf)
+void handleQueryUser(const IRepository& repo,
+                     const ReportsConfig& conf,
+                     QueryVisualizer& queryVisualizer)
 {
-    FileSystemRepository repo(g_reportsDir);
-
     const auto queryFilter    = buildFilter(conf);
     const auto queryCondition = buildCondition(conf);
     const auto transform      = buildTransform(conf);
 
     std::ostringstream oss;
     queryCondition->write(oss);
-    
     spdlog::info("Query condition: {}", oss.str());
 
-    QueryVisualizer queryVisualizer = buildVisualizer(conf);
-    std::vector<Entry> filtered;
-    
-    repo.queryEntries(
-        queryFilter,
-        [&queryVisualizer, &filtered, &queryCondition, &transform](Entry& entry) {
-            queryVisualizer.update();
+    repo.queryEntries(queryFilter,
+                      [&queryVisualizer, &queryCondition, &transform](Entry& entry) {
+                          transform->apply(entry);
+                          queryVisualizer.update(entry);
 
-            transform->apply(entry);
+                          if (queryCondition->met(entry))
+                          {
+                              queryVisualizer.add(entry);
+                          }
 
-            if (queryCondition->met(entry))
-            {
-                filtered.push_back(entry);
-            }
-
-            return true;
-        });
-
-    queryVisualizer.display(filtered);
+                          return true;
+                      });
 }
 
 } // namespace
@@ -365,10 +363,15 @@ int main(int argc, char* argv[])
         else
         {
             ReportsConfig reportsConf;
-            reportsConfigFromOpts(result, reportsConf);
-            reportsNormalization(reportsConf);
 
-            handleQueryUser(reportsConf);
+            initReportsConf(result, reportsConf);
+            applyCaseTransform(reportsConf);
+
+            FileSystemRepository repo(g_reportsDir);
+            QueryVisualizer queryVisualizer = buildVisualizer(reportsConf);
+
+            handleQueryUser(repo, reportsConf, queryVisualizer);
+            queryVisualizer.display();
         }
 
         spdlog::info("Processing took: {}", utl::humanizeDuration(sw.elapsed()));
