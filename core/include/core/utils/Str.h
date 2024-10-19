@@ -53,26 +53,51 @@ std::string& trim(std::string& s);
  *
  * @return  Reference the to input string, in lowercase
  */
-std::string& lowerInplace(std::string& str);
+std::string& asciiLowerInplace(std::string& str);
+
+/**
+ * @brief Converts given string to lowercase, by modifying input string
+ *
+ * @param str Input string to be converted to lowercase
+ * @param buf Input wstring, useful to imporve performance. If provided,
+ *            the underlying implementation will use it to convert string to
+ *            wide string before doing lowercase transformation
+ *
+ * @return  Reference the to input string, in lowercase
+ */
+std::string& utf8LowerInplace(std::string& str, std::wstring* buf = 0);
 
 
 /**
  * @brief Converts given wstring to lowercase, by modifying input string
  *
- * @param str Input wstring to be converted to lowercase
+ * @param wstr Input wstring to be converted to lowercase
  *
  * @return  Reference the to input wstring, in lowercase
  */
-std::wstring& lowerInplace(std::wstring& str);
+std::wstring& lowerInplace(std::wstring& wstr);
 
 
 /**
  * @brief Converts input string to lowercase producing a new string
  *
- * @param input An input string to be converted to lowercase
+ * @param str An input string to be converted to lowercase
  *
  * @return  A new string object, in lowercase
  */
-std::string lower(std::string input);
+std::string asciiLower(const std::string& str);
+
+
+/**
+ * @brief Converts input string to lowercase producing a new string
+ *
+ * @param str An input string to be converted to lowercase
+ * @param buf Input wstring, useful to imporve performance. If provided,
+ *            the underlying implementation will use it to convert string to
+ *            wide string before doing lowercase transformation
+ *
+ * @return  A new string object, in lowercase
+ */
+std::string utf8Lower(const std::string& str, std::wstring* buf = 0);
 
 } // namespace str

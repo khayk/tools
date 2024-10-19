@@ -127,4 +127,43 @@ TEST(UtilsStrTests, Trim)
     EXPECT_EQ(s, "");
 }
 
+TEST(UtilsStrTests, AsciiLowerInplace)
+{
+    std::string input {"SoME RANdom messaGE"};
+    asciiLowerInplace(input);
+    EXPECT_EQ(input, "some random message");
+}
+
+TEST(UtilsStrTests, AsciiLower)
+{
+    std::string input {"SoME RANdom messaGE"};
+    input = asciiLower(input);
+    EXPECT_EQ(input, "some random message");
+}
+
+TEST(UtilsStrTests, WStrLowerInplace)
+{
+    std::wstring input {L"SoME RANdom messaGE"};
+    lowerInplace(input);
+    EXPECT_EQ(input, L"some random message");
+
+    input.assign(L"ՀԱՅերեն");
+    lowerInplace(input);
+    EXPECT_EQ(input, L"հայերեն");
+
+    input.assign(L"Что то на РУССКОМ");
+    lowerInplace(input);
+    EXPECT_EQ(input, L"что то на русском");
+}
+
+TEST(UtilsStrTests, Utf8Lower)
+{
+    std::string input(u8tos(u8"Մակեդոնիա"));
+    input = utf8Lower(input);
+    const std::u8string s8(stou8(input));
+    const std::u8string expected(u8"մակեդոնիա");
+    // Don't check with EXPECT_EQ, because gtest is not built with c++20 support 
+    EXPECT_TRUE(s8 == expected);
+}
+
 } // namespace
