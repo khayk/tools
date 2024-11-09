@@ -286,7 +286,7 @@ class KidmonAgent::Impl
 
             if (entry.processInfo.processPath.empty())
             {
-                spdlog::warn("Unable to retrieve the path of the process {}",
+                spdlog::warn("Unable to retrieve the full path of the processId: {}",
                              window->ownerProcessId());
                 return;
             }
