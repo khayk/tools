@@ -1,8 +1,11 @@
+#include "aggregate/Aggregate.h"
+#include "aggregate/Predicate.h"
 #include "transform/Transforms.h"
 #include "condition/Conditions.h"
 
 #include <core/utils/Log.h>
 #include <core/utils/Str.h>
+#include <core/utils/File.h>
 #include <core/utils/StopWatch.h>
 
 #include <kidmon/common/Tracer.h>
@@ -12,6 +15,8 @@
 
 #include <cxxopts.hpp>
 #include <iostream>
+#include <numeric>
+#include <set>
 
 namespace {
 
@@ -29,6 +34,7 @@ struct ReportsConfig
     uint32_t hours {0};
     uint32_t days {0};
     uint32_t months {0};
+    uint32_t topN {0};
     std::vector<int> range;
     std::vector<std::string> fields;
     std::vector<std::string> titles {};
@@ -39,12 +45,27 @@ struct ReportsConfig
 
 class QueryVisualizer
 {
-    StopWatch sw_ {true};
-    int numEntries_ {};
-    int64_t prevUpdate_ {100}; // don't show progress for short queries
-    std::vector<Entry> entries_;
+    std::wstring buf_;
+    AggregatePtr pathByNameAggr_;
 
 public:
+    struct Config
+    {
+        std::vector<std::string> fields_;
+        int topN_ {10};
+    };
+
+    QueryVisualizer(Config conf)
+        : conf_(std::move(conf))
+    {
+        //using TitleAggr    = Aggregate<Data, TitleKeyBuilder>;
+	    using ProcPathAggr = Aggregate<Data, ProcPathKeyBuilder, DescendingOrder>;
+	    //using SplitterAggr = Splitter<ProcPathAggr, TitleAggr>;
+	    using ProcNameAggr = Aggregate<ProcPathAggr, ProcNameKeyBuilder, DescendingOrder>;
+
+        pathByNameAggr_ = std::make_unique<ProcNameAggr>();
+    }
+
     void update(const Entry&)
     {
         ++numEntries_;
@@ -58,13 +79,41 @@ public:
 
     void add(const Entry& entry)
     {
-        entries_.push_back(entry);
+        auto procname = file::path2s(entry.processInfo.processPath.filename());
+        str::utf8LowerInplace(procname, &buf_);
+
+        pathByNameAggr_->update(entry);
     }
 
     void display() const
     {
         std::cout << "Filtered: " << entries_.size() << " out of " << numEntries_ << '\n';
+
+        //pathByNameAggr_->write(std::cout, conf_.topN_, 0);
+        //pathByNameAggr_->write(std::cout, 0);
+
+        pathByNameAggr_->enumarate(
+            conf_.topN_,
+            0,
+            [](std::string_view name, int depth, const Data& data) {
+                if (name.empty() && depth != 0)
+                {
+                    return;
+                }
+
+                std::cout << std::string(4 * depth, ' ') << "name: "
+                          << name
+                          << ", duration: " << utl::humanizeDuration(data.duration())
+                          << '\n';
+            });
     }
+
+private:
+    Config conf_;
+    StopWatch sw_ {true};
+    int numEntries_ {};
+    int64_t prevUpdate_ {100}; // don't show progress for short queries
+    std::vector<Entry> entries_;
 };
 
 
@@ -83,9 +132,7 @@ void makeLowercase(std::vector<std::string>& data)
 
     for (auto& str : data)
     {
-        str::s2ws(str, wstr);
-        str::lowerInplace(wstr);
-        str::ws2s(wstr, str);
+        str::utf8LowerInplace(str, &wstr);
     }
 }
 
@@ -109,6 +156,7 @@ void initReportsConf(const cxxopts::ParseResult& res, ReportsConfig& conf)
     maybeGet("fields",           res, conf.fields);
     maybeGet("title",            res, conf.titles);
     maybeGet("process",          res, conf.processes);
+    maybeGet("top",              res, conf.topN);
     maybeGet("case-insensitive", res, conf.caseInsensitive);
 }
 
@@ -167,10 +215,11 @@ Filter buildFilter(const ReportsConfig& conf)
     return Filter(conf.username, from, to);
 }
 
-QueryVisualizer buildVisualizer(const ReportsConfig& conf)
+QueryVisualizer buildVisualizer(const ReportsConfig& reportsConf)
 {
-    std::ignore = conf;
-    QueryVisualizer queryVis;
+    QueryVisualizer::Config conf;
+    conf.topN_ = reportsConf.topN;
+    QueryVisualizer queryVis(conf);
 
     return queryVis;
 }
@@ -333,6 +382,7 @@ int main(int argc, char* argv[])
             ("f,fields", "The fields to be displayed", cxxopts::value<std::vector<std::string>>()->default_value(""))
             ("t,title", "The window titles", cxxopts::value<std::vector<std::string>>())
             ("p,process", "The process names", cxxopts::value<std::vector<std::string>>())
+            ("T,top", "The top N results", cxxopts::value<uint32_t>()->default_value("10"))
             ("e,help", "Print usage")
         ;
         // clang-format on

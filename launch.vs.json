@@ -35,7 +35,20 @@
             "project": "CMakeLists.txt",
             "projectTarget": "kidmon-reports-app.exe (kidmon-reports\\src\\kidmon-reports-app.exe)",
             "name": "kidmon-reports-app.exe (kidmon-reports\\src\\kidmon-reports-app.exe)",
-            "args": [ "--user hayk" ]
+            "args": [
+                "--user Hayk",
+                "--case-insensitive",
+                "--minutes 0",
+                "--hours 0",
+                "--days 10",
+                "--months 0",
+                "--top 3",
+                //"--process chrome.exe",
+                ///"--title Firefox",
+                //"--range 20240901,20241001",
+                "--fields a,b"
+                //"--list"
+            ]
         }
     ]
 }
