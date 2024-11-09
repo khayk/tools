@@ -98,29 +98,24 @@ std::string WindowImpl::className() const
 fs::path WindowImpl::ownerProcessPath() const
 {
     DWORD procId = static_cast<DWORD>(ownerProcessId());
-    HANDLE proc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, procId);
+    HANDLE proc = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, procId);
 
     if (nullptr == proc)
     {
         return {};
     }
 
-    HMODULE modules {nullptr};
-    DWORD modulesCount {0};
-    DWORD sz {0};
-    std::array<wchar_t, 256> modulePath {};
+    std::array<wchar_t, 256> imagePath {};
+    DWORD sz = static_cast<DWORD>(imagePath.size());
 
-    if (EnumProcessModules(proc, &modules, sizeof(modules), &modulesCount))
+    if (!QueryFullProcessImageNameW(proc, 0, imagePath.data(), &sz))
     {
-        sz = GetModuleFileNameExW(proc,
-                                  modules,
-                                  modulePath.data(),
-                                  static_cast<DWORD>(modulePath.size()));
+        sz = 0;
     }
 
     CloseHandle(proc);
 
-    return fs::path(std::wstring_view(modulePath.data(), sz));
+    return fs::path(std::wstring_view(imagePath.data(), sz));
 }
 
 uint64_t WindowImpl::ownerProcessId() const noexcept

@@ -43,7 +43,7 @@ bool timet2tm(time_t dt, tm& d)
     }
 #endif
 
-    return d.tm_year >= 0 && d.tm_year <= 200;
+    return d.tm_year >= 0 && d.tm_year <= 300;
 }
 
 tm timet2tm(const time_t dt)
@@ -70,11 +70,19 @@ std::string humanizeDuration(std::chrono::milliseconds ms, int units)
     auto secs = duration_cast<seconds>(ms);
     ms -= duration_cast<milliseconds>(secs);
     auto mins = duration_cast<minutes>(secs);
-    secs -= duration_cast<seconds>(mins);
-    const auto hour = duration_cast<hours>(mins);
+    secs -= duration_cast<seconds>(mins);    
+    auto hour = duration_cast<hours>(mins);
     mins -= duration_cast<minutes>(hour);
+    auto day = duration_cast<days>(hour);
+    hour -= duration_cast<hours>(day);
 
     std::ostringstream oss;
+
+    if (day.count() > 0 && units > 0)
+    {
+        --units;
+        oss << day.count() << "d ";
+    }
 
     if (hour.count() > 0 && units > 0)
     {

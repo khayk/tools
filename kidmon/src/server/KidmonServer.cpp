@@ -61,6 +61,11 @@ public:
         tcp::Server::Options opts;
         opts.port = cfg.listenPort;
 
+        svr_.onError([&](const ErrorCode& ec) {
+            spdlog::error("Server error - ec: {}, msg: {}", ec.value(), ec.message());
+            ioc_.stop();
+        });
+
         svr_.listen(opts);
     }
 

@@ -127,7 +127,7 @@ std::string& trim(std::string& s)
     return trimLeft(trimRight(s));
 }
 
-std::string& lowerInplace(std::string& str)
+std::string& asciiLowerInplace(std::string& str)
 {
     std::transform(str.begin(),
                    str.end(),
@@ -135,6 +135,17 @@ std::string& lowerInplace(std::string& str)
                    [](const unsigned char c) noexcept {
                        return static_cast<char>(std::tolower(c));
                    });
+
+    return str;
+}
+
+std::string& utf8LowerInplace(std::string& str, std::wstring* buf)
+{
+    std::wstring wstr;
+    buf = (buf ? buf : &wstr);
+    s2ws(str, *buf);
+    lowerInplace(*buf);
+    ws2s(*buf, str);
 
     return str;
 }
@@ -147,10 +158,21 @@ std::wstring& lowerInplace(std::wstring& str)
     return str;
 }
 
-std::string lower(std::string input)
+std::string asciiLower(const std::string& str)
 {
-    lowerInplace(input);
-    return input;
+    std::string tmp = str;
+    asciiLowerInplace(tmp);
+
+    return tmp;
 }
+
+std::string utf8Lower(const std::string& str, std::wstring* buf)
+{
+    std::string tmp = str;
+    utf8LowerInplace(tmp, buf);
+
+    return tmp;
+}
+
 
 } // namespace str

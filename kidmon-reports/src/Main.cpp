@@ -1,8 +1,11 @@
+#include "aggregate/Aggregate.h"
+#include "aggregate/Predicate.h"
 #include "transform/Transforms.h"
 #include "condition/Conditions.h"
 
 #include <core/utils/Log.h>
 #include <core/utils/Str.h>
+#include <core/utils/File.h>
 #include <core/utils/StopWatch.h>
 
 #include <kidmon/common/Tracer.h>
@@ -12,6 +15,8 @@
 
 #include <cxxopts.hpp>
 #include <iostream>
+#include <numeric>
+#include <set>
 
 namespace {
 
@@ -29,6 +34,7 @@ struct ReportsConfig
     uint32_t hours {0};
     uint32_t days {0};
     uint32_t months {0};
+    uint32_t topN {0};
     std::vector<int> range;
     std::vector<std::string> fields;
     std::vector<std::string> titles {};
@@ -39,12 +45,28 @@ struct ReportsConfig
 
 class QueryVisualizer
 {
-    StopWatch sw_ {true};
-    int numEntries_ {};
-    int64_t prevUpdate_ {100};   // don't show progress for short queries
+    std::wstring buf_;
+    AggregatePtr pathByNameAggr_;
 
 public:
-    void update()
+    struct Config
+    {
+        std::vector<std::string> fields_;
+        int topN_ {10};
+    };
+
+    QueryVisualizer(Config conf)
+        : conf_(std::move(conf))
+    {
+        //using TitleAggr    = Aggregate<Data, TitleKeyBuilder>;
+	    using ProcPathAggr = Aggregate<Data, ProcPathKeyBuilder, DescendingOrder>;
+	    //using SplitterAggr = Splitter<ProcPathAggr, TitleAggr>;
+	    using ProcNameAggr = Aggregate<ProcPathAggr, ProcNameKeyBuilder, DescendingOrder>;
+
+        pathByNameAggr_ = std::make_unique<ProcNameAggr>();
+    }
+
+    void update(const Entry&)
     {
         ++numEntries_;
 
@@ -55,10 +77,43 @@ public:
         }
     }
 
-    void display(const std::vector<Entry>& entries) const
+    void add(const Entry& entry)
     {
-        std::cout << "Filtered: " << entries.size() << " out of " << numEntries_ << '\n';
+        auto procname = file::path2s(entry.processInfo.processPath.filename());
+        str::utf8LowerInplace(procname, &buf_);
+
+        pathByNameAggr_->update(entry);
     }
+
+    void display() const
+    {
+        std::cout << "Filtered: " << entries_.size() << " out of " << numEntries_ << '\n';
+
+        //pathByNameAggr_->write(std::cout, conf_.topN_, 0);
+        //pathByNameAggr_->write(std::cout, 0);
+
+        pathByNameAggr_->enumarate(
+            conf_.topN_,
+            0,
+            [](std::string_view name, int depth, const Data& data) {
+                if (name.empty() && depth != 0)
+                {
+                    return;
+                }
+
+                std::cout << std::string(4 * depth, ' ') << "name: "
+                          << name
+                          << ", duration: " << utl::humanizeDuration(data.duration())
+                          << '\n';
+            });
+    }
+
+private:
+    Config conf_;
+    StopWatch sw_ {true};
+    int numEntries_ {};
+    int64_t prevUpdate_ {100}; // don't show progress for short queries
+    std::vector<Entry> entries_;
 };
 
 
@@ -77,13 +132,11 @@ void makeLowercase(std::vector<std::string>& data)
 
     for (auto& str : data)
     {
-        str::s2ws(str, wstr);
-        str::lowerInplace(wstr);
-        str::ws2s(wstr, str);
+        str::utf8LowerInplace(str, &wstr);
     }
 }
 
-void reportsNormalization(ReportsConfig& conf)
+void applyCaseTransform(ReportsConfig& conf)
 {
     if (conf.caseInsensitive)
     {
@@ -92,7 +145,7 @@ void reportsNormalization(ReportsConfig& conf)
     }
 }
 
-void reportsConfigFromOpts(const cxxopts::ParseResult& res, ReportsConfig& conf)
+void initReportsConf(const cxxopts::ParseResult& res, ReportsConfig& conf)
 {
     maybeGet("user",             res, conf.username);
     maybeGet("minutes",          res, conf.minutes);
@@ -103,6 +156,7 @@ void reportsConfigFromOpts(const cxxopts::ParseResult& res, ReportsConfig& conf)
     maybeGet("fields",           res, conf.fields);
     maybeGet("title",            res, conf.titles);
     maybeGet("process",          res, conf.processes);
+    maybeGet("top",              res, conf.topN);
     maybeGet("case-insensitive", res, conf.caseInsensitive);
 }
 
@@ -161,11 +215,12 @@ Filter buildFilter(const ReportsConfig& conf)
     return Filter(conf.username, from, to);
 }
 
-QueryVisualizer buildVisualizer(const ReportsConfig& conf)
+QueryVisualizer buildVisualizer(const ReportsConfig& reportsConf)
 {
-    std::ignore = conf;
-    QueryVisualizer queryVis;
-    
+    QueryVisualizer::Config conf;
+    conf.topN_ = reportsConf.topN;
+    QueryVisualizer queryVis(conf);
+
     return queryVis;
 }
 
@@ -195,7 +250,7 @@ template <typename CondType>
 std::vector<ConditionPtr> createConditions(const std::vector<std::string>& values)
 {
     std::vector<ConditionPtr> conds;
-    
+
     for (const auto& value : values)
     {
         conds.push_back(std::make_unique<CondType>(value));
@@ -225,7 +280,7 @@ ConditionPtr buildCondition(const ReportsConfig& conf)
             )
         );
     }
-    
+
     if (conditions.empty())
     {
         return std::make_unique<TrueCondition>();
@@ -278,38 +333,30 @@ void handleListUsers()
 }
 
 
-void handleQueryUser(const ReportsConfig& conf)
+void handleQueryUser(const IRepository& repo,
+                     const ReportsConfig& conf,
+                     QueryVisualizer& queryVisualizer)
 {
-    FileSystemRepository repo(g_reportsDir);
-
     const auto queryFilter    = buildFilter(conf);
     const auto queryCondition = buildCondition(conf);
     const auto transform      = buildTransform(conf);
 
     std::ostringstream oss;
     queryCondition->write(oss);
-    
     spdlog::info("Query condition: {}", oss.str());
 
-    QueryVisualizer queryVisualizer = buildVisualizer(conf);
-    std::vector<Entry> filtered;
-    
-    repo.queryEntries(
-        queryFilter,
-        [&queryVisualizer, &filtered, &queryCondition, &transform](Entry& entry) {
-            queryVisualizer.update();
+    repo.queryEntries(queryFilter,
+                      [&queryVisualizer, &queryCondition, &transform](Entry& entry) {
+                          transform->apply(entry);
+                          queryVisualizer.update(entry);
 
-            transform->apply(entry);
+                          if (queryCondition->met(entry))
+                          {
+                              queryVisualizer.add(entry);
+                          }
 
-            if (queryCondition->met(entry))
-            {
-                filtered.push_back(entry);
-            }
-
-            return true;
-        });
-
-    queryVisualizer.display(filtered);
+                          return true;
+                      });
 }
 
 } // namespace
@@ -335,6 +382,7 @@ int main(int argc, char* argv[])
             ("f,fields", "The fields to be displayed", cxxopts::value<std::vector<std::string>>()->default_value(""))
             ("t,title", "The window titles", cxxopts::value<std::vector<std::string>>())
             ("p,process", "The process names", cxxopts::value<std::vector<std::string>>())
+            ("T,top", "The top N results", cxxopts::value<uint32_t>()->default_value("10"))
             ("e,help", "Print usage")
         ;
         // clang-format on
@@ -365,10 +413,15 @@ int main(int argc, char* argv[])
         else
         {
             ReportsConfig reportsConf;
-            reportsConfigFromOpts(result, reportsConf);
-            reportsNormalization(reportsConf);
 
-            handleQueryUser(reportsConf);
+            initReportsConf(result, reportsConf);
+            applyCaseTransform(reportsConf);
+
+            FileSystemRepository repo(g_reportsDir);
+            QueryVisualizer queryVisualizer = buildVisualizer(reportsConf);
+
+            handleQueryUser(repo, reportsConf, queryVisualizer);
+            queryVisualizer.display();
         }
 
         spdlog::info("Processing took: {}", utl::humanizeDuration(sw.elapsed()));

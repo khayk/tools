@@ -244,7 +244,7 @@ class KidmonAgent::Impl
         });
 
         tcp::Client::Options opts {"127.0.0.1", cfg_.serverPort};
-        spdlog::info("Attempting to connect: {}:{}", opts.host, opts.port);
+        spdlog::info("Connection attempt to: {}:{}", opts.host, opts.port);
 
         tcpClient_.connect(opts);
     }
@@ -286,7 +286,7 @@ class KidmonAgent::Impl
 
             if (entry.processInfo.processPath.empty())
             {
-                spdlog::warn("Unable to retrieve the path of the process {}",
+                spdlog::warn("Unable to retrieve the full path of the processId: {}",
                              window->ownerProcessId());
                 return;
             }
