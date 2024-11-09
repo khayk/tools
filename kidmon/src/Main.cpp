@@ -51,6 +51,7 @@ int main(int argc, char* argv[])
 {
     cxxopts::Options opts("kidmon", "Monitor kid activity on a PC");
     std::optional<ScopedTrace> trace;
+    std::optional<ScopedTrace> traceMain;
 
     // clang-format off
     opts.add_options()
@@ -91,7 +92,7 @@ int main(int argc, char* argv[])
         trace.emplace("",
                       fmt::format("{:-^80s}", "> START <"),
                       fmt::format("{:-^80s}\n", "> END <"));
-        ScopedTrace main(__FUNCTION__);
+        traceMain.emplace(__FUNCTION__);
         spdlog::debug("Active username: {}", str::ws2s(sys::activeUserName()));
 
         std::shared_ptr<Runnable> app;
