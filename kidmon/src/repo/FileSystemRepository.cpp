@@ -20,16 +20,27 @@ struct ReportDirs
     // fs::path weeklyDir;
 };
 
-int yearFromTimeT(const time_t tt)
+int yearFromTimeT(const time_t tt, bool throwIfInvalid)
 {
-    const auto tm = utl::timet2tm(tt);
+    tm tm {};
 
+    if (!utl::timet2tm(tt, tm))
+    {
+        if (throwIfInvalid)
+        {
+            throw std::runtime_error(
+                fmt::format("Unable to convert '{}' to local time", tt));
+        }
+
+        return 0;
+    }
+    
     return tm.tm_year + 1900;
 }
 
-int yearFromTimePoint(const TimePoint tp)
+int yearFromTimePoint(const TimePoint tp, bool throwIfInvalid)
 {
-    return yearFromTimeT(SystemClock::to_time_t(tp));
+    return yearFromTimeT(SystemClock::to_time_t(tp), throwIfInvalid);
 }
 
 class Dirs
@@ -175,7 +186,7 @@ public:
 
     void add(const Entry& entry)
     {
-        const int year = yearFromTimePoint(entry.timestamp.capture);
+        const int year = yearFromTimePoint(entry.timestamp.capture, true);
         const auto& userDirs = dirs_.dataDirs(entry.username, year);
         const auto& bytes = entry.windowInfo.image.bytes;
 
@@ -227,9 +238,8 @@ public:
             }
 
             const int year = std::stoi(it.path().filename().string());
-            const auto& dataDirs = dirs_.dataDirs(filter.username(), year);
 
-            if (!queryRawDataDir(filter, cb, dataDirs.rawDir))
+            if (!queryRawDataDir(filter, cb, year))
             {
                 return;
             }
@@ -246,19 +256,37 @@ private:
 
     bool queryRawDataDir(const Filter& filter,
                          const EntryCb& cb,
-                         const fs::path& rawDir) const
+                         const int year) const
     {
+        const int yearFrom = yearFromTimePoint(filter.from(), false);
+        const int yearTo   = yearFromTimePoint(filter.to(), false);
+
+        if ((yearTo != 0 && yearTo < year) || 
+            (yearFrom != 0 && year < yearFrom))
+        {
+            return true;
+        }
+
         bool keepGoing    = true;
         const auto fnFrom = buildRawFilename(filter.from());
         const auto fnTo   = buildRawFilename(filter.to());
+        const auto& dataDirs = dirs_.dataDirs(filter.username(), year);
+        const fs::path& rawDir = dataDirs.rawDir;
 
         for (auto const& it : fs::directory_iterator(rawDir))
         {
             const auto fn = it.path().filename();
 
-            if ((!fnFrom.empty() && fn < fnFrom) ||
-                (!fnTo.empty() && fn > fnTo) ||
-                !keepGoing || !it.is_regular_file())
+            if ((yearFrom == year && fn < fnFrom) || 
+                (yearTo == year && fn > fnTo))
+            {
+                continue;
+            }
+
+            if ((yearFrom == yearTo) && 
+                ((!fnFrom.empty() && fn < fnFrom) ||
+                 (!fnTo.empty() && fn > fnTo) ||
+                 !keepGoing || !it.is_regular_file()))
             {
                 continue;
             }

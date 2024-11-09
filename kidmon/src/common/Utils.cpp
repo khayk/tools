@@ -43,7 +43,7 @@ bool timet2tm(time_t dt, tm& d)
     }
 #endif
 
-    return d.tm_year >= 0 && d.tm_year <= 200;
+    return d.tm_year >= 0 && d.tm_year <= 300;
 }
 
 tm timet2tm(const time_t dt)

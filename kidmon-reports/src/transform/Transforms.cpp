@@ -5,9 +5,7 @@
 
 void TitleToLowerTransform::apply(Entry& entry)
 {
-    str::s2ws(entry.windowInfo.title, wbuffer_);
-    str::lowerInplace(wbuffer_);
-    str::ws2s(wbuffer_, entry.windowInfo.title);
+    str::utf8LowerInplace(entry.windowInfo.title, &wbuffer_);
 }
 
 
