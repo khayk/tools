@@ -244,7 +244,7 @@ class KidmonAgent::Impl
         });
 
         tcp::Client::Options opts {"127.0.0.1", cfg_.serverPort};
-        spdlog::info("Attempting to connect: {}:{}", opts.host, opts.port);
+        spdlog::info("Connection attempt to: {}:{}", opts.host, opts.port);
 
         tcpClient_.connect(opts);
     }
