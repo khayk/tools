@@ -1,6 +1,7 @@
 #pragma once
 
 #include <kidmon/data/Types.h>
+#include <core/utils/File.h>
 
 class ProcNameKeyBuilder
 {
