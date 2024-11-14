@@ -24,6 +24,30 @@ bool FalseCondition::met(const Entry&) const
     return false;
 }
 
+
+UnaryCondition::UnaryCondition(ConditionPtr cond)
+    : cond_ {std::move(cond)}
+{
+}
+
+const ConditionPtr& UnaryCondition::condition() const
+{
+    return cond_;
+}
+
+ConditionPtr& UnaryCondition::condition()
+{
+    return cond_;
+}
+
+void UnaryCondition::write(std::ostream& os) const
+{
+    os << name() << '(';
+    condition()->write(os);
+    os << ")";
+}
+
+
 BinaryCondition::BinaryCondition(ConditionPtr lhs, ConditionPtr rhs)
     : lhs_(std::move(lhs))
     , rhs_(std::move(rhs))
@@ -94,6 +118,23 @@ bool LogicalOR::met(const Entry& entry) const
 {
     return lhs()->met(entry) || rhs()->met(entry);
 }
+
+
+Negate::Negate(ConditionPtr cond)
+    : UnaryCondition(std::move(cond))
+{
+}
+
+std::string_view Negate::name() const noexcept
+{
+    return "!";
+}
+
+bool Negate::met(const Entry& entry) const
+{
+    return !condition()->met(entry);
+}
+
 
 const std::string& StringCondition::value(const Entry& entry) const
 {

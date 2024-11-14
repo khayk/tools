@@ -17,6 +17,23 @@ public:
     bool met(const Entry& entry) const override;
 };
 
+class UnaryCondition : public ICondition
+{
+public:
+    UnaryCondition(ConditionPtr cond);
+
+    const ConditionPtr& condition() const;
+    ConditionPtr& condition();
+
+    void write(std::ostream& os) const override;
+
+private:
+    virtual std::string_view name() const noexcept = 0;
+
+    ConditionPtr cond_;
+};
+
+
 class BinaryCondition : public ICondition
 {
     ConditionPtr lhs_;
@@ -53,6 +70,17 @@ class LogicalOR : public BinaryCondition
 {
 public:
     LogicalOR(ConditionPtr lhs, ConditionPtr rhs);
+
+    std::string_view name() const noexcept override;
+
+    bool met(const Entry& entry) const override;
+};
+
+
+class Negate : public UnaryCondition
+{
+public:
+    Negate(ConditionPtr cond);
 
     std::string_view name() const noexcept override;
 
