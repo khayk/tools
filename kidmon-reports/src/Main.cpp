@@ -39,6 +39,8 @@ struct ReportsConfig
     std::vector<std::string> fields;
     std::vector<std::string> titles {};
     std::vector<std::string> processes {};
+    std::vector<std::string> excludeTitles {};
+    std::vector<std::string> excludeProcesses {};
     std::string username {};
     bool caseInsensitive {false};
 };
@@ -58,10 +60,10 @@ public:
     QueryVisualizer(Config conf)
         : conf_(std::move(conf))
     {
-        //using TitleAggr    = Aggregate<Data, TitleKeyBuilder>;
-	    using ProcPathAggr = Aggregate<Data, ProcPathKeyBuilder, DescendingOrder>;
 	    //using SplitterAggr = Splitter<ProcPathAggr, TitleAggr>;
-	    using ProcNameAggr = Aggregate<ProcPathAggr, ProcNameKeyBuilder, DescendingOrder>;
+        using TitleAggr    = Aggregate<Data, TitleBuilder>;
+	    using ProcPathAggr = Aggregate<TitleAggr, ProcPathBuilder>;
+	    using ProcNameAggr = Aggregate<ProcPathAggr, ProcNameBuilder>;
 
         pathByNameAggr_ = std::make_unique<ProcNameAggr>();
     }
@@ -93,19 +95,27 @@ public:
         //pathByNameAggr_->write(std::cout, 0);
 
         pathByNameAggr_->enumarate(
-            conf_.topN_,
-            0,
-            [](std::string_view name, int depth, const Data& data) {
-                if (name.empty() && depth != 0)
+            conf_.topN_, 0,
+            [](std::string_view field, std::string_view value,
+               int depth, const Data& data) 
+            {
+                if (value.empty() && depth != 0)
                 {
                     return;
                 }
 
-                std::cout << std::string(4 * depth, ' ') << "name: "
-                          << name
-                          << ", duration: " << utl::humanizeDuration(data.duration())
-                          << '\n';
-            });
+                std::cout << std::string(4 * depth, ' ') << field;
+
+                if (!value.empty())
+                {
+                    std::cout << ": " << value << ", ";
+                }
+
+                std::cout << "duration: "
+                            << utl::humanizeDuration(data.duration())
+                            << '\n';
+            }
+        );
     }
 
 private:
@@ -158,6 +168,8 @@ void initReportsConf(const cxxopts::ParseResult& res, ReportsConfig& conf)
     maybeGet("process",          res, conf.processes);
     maybeGet("top",              res, conf.topN);
     maybeGet("case-insensitive", res, conf.caseInsensitive);
+    maybeGet("exclude-process",  res, conf.excludeProcesses);
+    maybeGet("exclude-title",    res, conf.excludeTitles);
 }
 
 TimePoint makeTimepoint(int year,
@@ -259,7 +271,36 @@ std::vector<ConditionPtr> createConditions(const std::vector<std::string>& value
     return conds;
 }
 
-ConditionPtr buildCondition(const ReportsConfig& conf)
+
+ConditionPtr buildExcludeCondition(const ReportsConfig& conf)
+{
+    std::vector<ConditionPtr> conditions;
+
+    if (!conf.excludeProcesses.empty())
+    {
+        for (auto& cond : createConditions<HasProcessCondition>(conf.excludeProcesses))
+        {
+            conditions.push_back(std::move(cond));
+        }
+    }
+
+    if (!conf.excludeTitles.empty())
+    {
+        for (auto& cond : createConditions<HasTitleCondition>(conf.excludeTitles))
+        {
+            conditions.push_back(std::move(cond));
+        }
+    }
+
+    if (conditions.empty())
+    {
+        return std::make_unique<FalseCondition>();
+    }
+
+    return combineConditions<LogicalOR>(std::move(conditions));
+}
+
+ConditionPtr buildIncludeCondition(const ReportsConfig& conf)
 {
     std::vector<ConditionPtr> conditions;
 
@@ -289,18 +330,28 @@ ConditionPtr buildCondition(const ReportsConfig& conf)
     return combineConditions<LogicalAND>(std::move(conditions));
 }
 
+ConditionPtr buildCondition(const ReportsConfig& conf)
+{
+    auto excludeCondition = std::make_unique<Negate>(buildExcludeCondition(conf));
+    auto includeCondition = buildIncludeCondition(conf);
+
+    return std::make_unique<LogicalAND>(std::move(excludeCondition),
+                                        std::move(includeCondition));
+}
+
+
 TransformPtr buildTransform(const ReportsConfig& conf)
 {
     std::vector<TransformPtr> transformers;
 
     if (conf.caseInsensitive)
     {
-        if (!conf.processes.empty())
+        if (!conf.processes.empty() || !conf.excludeProcesses.empty())
         {
             transformers.push_back(std::make_unique<ProcessPathToLowerTransform>());
         }
 
-        if (!conf.titles.empty())
+        if (!conf.titles.empty() || !conf.excludeTitles.empty())
         {
             transformers.push_back(std::make_unique<TitleToLowerTransform>());
         }
@@ -383,6 +434,8 @@ int main(int argc, char* argv[])
             ("t,title", "The window titles", cxxopts::value<std::vector<std::string>>())
             ("p,process", "The process names", cxxopts::value<std::vector<std::string>>())
             ("T,top", "The top N results", cxxopts::value<uint32_t>()->default_value("10"))
+            ("exclude-process", "The process names to exclude", cxxopts::value<std::vector<std::string>>())
+            ("exclude-title", "The window titles to exclude", cxxopts::value<std::vector<std::string>>())
             ("e,help", "Print usage")
         ;
         // clang-format on
