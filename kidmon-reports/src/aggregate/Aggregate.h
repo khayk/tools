@@ -7,7 +7,8 @@
 #include <chrono>
 
 class Data;
-using DataCb = std::function<void(std::string_view key, int depth, const Data& data)>;
+using DataCb = std::function<void(std::string_view field, std::string_view value, 
+                                  int depth, const Data& data)>;
 
 class IAggregate
 {
@@ -41,7 +42,7 @@ public:
     void enumarate(size_t topN, int depth, const DataCb& dataCb) const override
     {
         std::ignore = topN;
-        dataCb("", depth , *this);
+        dataCb("", "", depth , *this);
     }
 
     std::chrono::milliseconds duration() const noexcept
@@ -58,6 +59,7 @@ public:
 using AggregatePtr = std::unique_ptr<IAggregate>;
 
 
+/*
 template <typename First, typename Second>
 class Splitter : public IAggregate
 {
@@ -87,15 +89,26 @@ public:
         return os;
     }
 };
+*/
 
-template <typename AggregateType, typename KeyBuilder, typename Ordering>
+
+class DescendingOrder
+{
+public:
+    bool operator()(const Data& lhs, const Data& rhs) const noexcept
+    {
+        return lhs.duration() > rhs.duration();
+    }
+};
+
+
+template <typename AggregateType, typename FieldBuilder>
 class Aggregate : public Data
 {
     using MapType = std::map<std::string, AggregateType>;
     using IterVec = std::vector<typename MapType::const_iterator>;
 
-    KeyBuilder keyBuilder_;
-    Ordering ordering_;
+    FieldBuilder fieldBuilder_;
     MapType data_;
 
     IterVec orderedVec(size_t topN) const
@@ -108,8 +121,9 @@ class Aggregate : public Data
             reorder.push_back(cit);
         }
 
-        std::ranges::sort(reorder, [this](const auto& lhs, const auto& rhs) {
-            return ordering_(lhs->second, rhs->second);
+        DescendingOrder ordering;
+        std::ranges::sort(reorder, [&ordering](const auto& lhs, const auto& rhs) {
+            return ordering(lhs->second, rhs->second);
         });
 
         while (reorder.size() > topN)
@@ -123,7 +137,7 @@ class Aggregate : public Data
 public:
     void update(const Entry& entry) override
     {
-        std::string key = keyBuilder_(entry);
+        std::string key = fieldBuilder_.value(entry);
         Data::update(entry);
 
         data_[key].update(entry);
@@ -132,15 +146,16 @@ public:
     void enumarate(size_t topN, int depth, const DataCb& dataCb) const override
     {
         const auto reorder = orderedVec(topN);
-        dataCb("", depth, *this);
+        const auto field   = fieldBuilder_.field();
+        dataCb("total ", "", depth, *this);
         ++depth;
 
         for (const auto it : reorder)
         {
-            const auto& key   = it->first;
-            const auto& value = it->second;
-            dataCb(key, depth, value);
-            value.enumarate(topN, depth, dataCb);
+            const auto& key  = it->first;
+            const auto& type = it->second;
+            dataCb(field, key, depth, type);
+            type.enumarate(topN, depth, dataCb);
         }
     }
 
