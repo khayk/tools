@@ -35,7 +35,7 @@ struct ReportsConfig
     uint32_t days {0};
     uint32_t months {0};
     uint32_t topN {0};
-    std::vector<int> range;
+    std::vector<uint32_t> range;
     std::vector<std::string> fields;
     std::vector<std::string> titles {};
     std::vector<std::string> processes {};
@@ -54,7 +54,7 @@ public:
     struct Config
     {
         std::vector<std::string> fields_;
-        int topN_ {10};
+        uint32_t topN_ {10};
     };
 
     QueryVisualizer(Config conf)
@@ -97,7 +97,8 @@ public:
         pathByNameAggr_->enumarate(
             conf_.topN_, 0,
             [](std::string_view field, std::string_view value,
-               int depth, const Data& data) 
+               uint32_t depth,
+               const Data& data) 
             {
                 if (value.empty() && depth != 0)
                 {
@@ -172,20 +173,20 @@ void initReportsConf(const cxxopts::ParseResult& res, ReportsConfig& conf)
     maybeGet("exclude-title",    res, conf.excludeTitles);
 }
 
-TimePoint makeTimepoint(int year,
-                        int month,
-                        int day = 1,
-                        int hour = 0,
-                        int min = 0,
-                        int sec = 0)
+TimePoint makeTimepoint(uint32_t year,
+                        uint32_t month,
+                        uint32_t day = 1,
+                        uint32_t hour = 0,
+                        uint32_t min = 0,
+                        uint32_t sec = 0)
 {
     std::tm tm = {};
-    tm.tm_sec = sec;
-    tm.tm_min = min;
-    tm.tm_hour = hour;
-    tm.tm_mday = day;
-    tm.tm_mon = month - 1;
-    tm.tm_year = year - 1900;
+    tm.tm_sec   = static_cast<int>(sec);
+    tm.tm_min   = static_cast<int>(min);
+    tm.tm_hour  = static_cast<int>(hour);
+    tm.tm_mday  = static_cast<int>(day);
+    tm.tm_mon   = static_cast<int>(month - 1);
+    tm.tm_year  = static_cast<int>(year - 1900);
     tm.tm_isdst = -1; // Use DST value from local time zone
 
     return std::chrono::system_clock::from_time_t(std::mktime(&tm));
@@ -196,11 +197,11 @@ TimePoint makeTimepoint(int year,
  */
 TimePoint makeTimepoint(uint32_t date)
 {
-    int day = date % 100;
+    uint32_t day = date % 100;
     date /= 100;
-    int month = date % 100;
+    uint32_t month = date % 100;
     date /= 100;
-    int year = date;
+    uint32_t year = date;
 
     return makeTimepoint(year, month, day);
 }
@@ -429,7 +430,7 @@ int main(int argc, char* argv[])
             ("h,hours", "The last 'h' hours", cxxopts::value<uint32_t>())
             ("d,days", "The last 'd' days", cxxopts::value<uint32_t>())
             ("M,months", "The last 'M' months", cxxopts::value<uint32_t>())
-            ("r,range", "The dates range (ex: 20240913,20241030)", cxxopts::value<std::vector<int>>())
+            ("r,range", "The dates range (ex: 20240913,20241030)", cxxopts::value<std::vector<uint32_t>>())
             ("f,fields", "The fields to be displayed", cxxopts::value<std::vector<std::string>>()->default_value(""))
             ("t,title", "The window titles", cxxopts::value<std::vector<std::string>>())
             ("p,process", "The process names", cxxopts::value<std::vector<std::string>>())

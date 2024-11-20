@@ -153,7 +153,7 @@ std::string& utf8LowerInplace(std::string& str, std::wstring* buf)
 std::wstring& lowerInplace(std::wstring& str)
 {
     std::transform(str.begin(), str.end(), str.begin(), [](const auto& c) noexcept {
-        return static_cast<std::wstring::value_type>(towlower(c));
+        return static_cast<std::wstring::value_type>(towlower(static_cast<wint_t>(c)));
     });
     return str;
 }

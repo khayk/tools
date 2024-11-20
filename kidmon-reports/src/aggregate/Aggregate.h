@@ -2,22 +2,24 @@
 
 #include <kidmon/data/Types.h>
 
+#include <algorithm>
 #include <functional>
 #include <memory>
 #include <chrono>
 
 class Data;
 using DataCb = std::function<void(std::string_view field, std::string_view value, 
-                                  int depth, const Data& data)>;
+                                  uint32_t depth,
+                                  const Data& data)>;
 
 class IAggregate
 {
 public:
     virtual ~IAggregate() = default;
     virtual void update(const Entry& entry) = 0;
-    virtual void enumarate(size_t topN, int depth, const DataCb & dataCb) const = 0;
+    virtual void enumarate(size_t topN, uint32_t depth, const DataCb& dataCb) const = 0;
 
-    virtual std::ostream& write(std::ostream& os, int prefix = 0) const = 0;
+    virtual std::ostream& write(std::ostream& os, uint32_t prefix = 0) const = 0;
 };
 
 class Data : public IAggregate
@@ -32,14 +34,14 @@ public:
         ++frequency_;
     }
 
-    std::ostream& write(std::ostream& os, int prefix) const override
+    std::ostream& write(std::ostream& os, uint32_t prefix) const override
     {
         os << std::string(prefix, ' ') << "dur: " << duration_.count()
            << ", freq: " << frequency_;
         return os;
     }
 
-    void enumarate(size_t topN, int depth, const DataCb& dataCb) const override
+    void enumarate(size_t topN, uint32_t depth, const DataCb& dataCb) const override
     {
         std::ignore = topN;
         dataCb("", "", depth , *this);
@@ -73,13 +75,13 @@ public:
         second.update(entry);
     }
 
-    void enumarate(size_t topN, int depth, const DataCb& dataCb) const override
+    void enumarate(size_t topN, uint32_t depth, const DataCb& dataCb) const override
     {
         first.enumarate(topN, depth, dataCb);
         second.enumarate(topN, depth, dataCb);
     }
 
-    std::ostream& write(std::ostream& os, int prefix) const
+    std::ostream& write(std::ostream& os, uint32_t prefix) const
     {
         os << std::string(prefix, ' ') << "split ------- \n";
         prefix += 3;
@@ -143,7 +145,7 @@ public:
         data_[key].update(entry);
     }
 
-    void enumarate(size_t topN, int depth, const DataCb& dataCb) const override
+    void enumarate(size_t topN, uint32_t depth, const DataCb& dataCb) const override
     {
         const auto reorder = orderedVec(topN);
         const auto field   = fieldBuilder_.field();
@@ -159,7 +161,7 @@ public:
         }
     }
 
-    std::ostream& write(std::ostream& os, int prefix) const override
+    std::ostream& write(std::ostream& os, uint32_t prefix) const override
     {
         Data::write(os, prefix);
         prefix += 3;
