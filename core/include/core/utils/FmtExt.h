@@ -6,21 +6,17 @@
 namespace fs = std::filesystem;
 
 template <>
-struct fmt::formatter<fs::path> // NOSONAR cpp:S1642 "struct" names should comply with a
-                                // naming convention
+class fmt::formatter<fs::path>
 {
-    template <typename ParseContext> // NOSONAR cpp:S6024 Free functions should be
-                                     // preferred to member functions when accessing a
-                                     // container in a generic context
-    constexpr auto parse(ParseContext& ctx) // NOSONAR cpp:S4334 "auto" should not
-                                            // be used to deduce raw pointers
+public:
+    constexpr auto parse(format_parse_context& ctx)
     {
         return ctx.begin();
     }
-
-    template <typename FormatContext>
-    auto format(const fs::path& ph, FormatContext& ctx)
+    template <typename Context>
+    constexpr auto format(fs::path const& ph, Context& ctx) const
     {
-        return fmt::format_to(ctx.out(), "{}", file::path2s(ph));
+        return format_to(ctx.out(), "{}", file::path2s(ph));
     }
 };
+
