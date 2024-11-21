@@ -20,8 +20,8 @@ Own implementation of different tools.
         * `cmake -B build -S .`
     * Otherwise
         * `cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=<vcpkg_path>/scripts/buildsystems/vcpkg.cmake`
-    * Additionally build type can be specified as below
-        * `-DCMAKE_BUILD_TYPE=Release`
+    * Additionally build type can be specified as below: `Debug`, `Release`, ...
+        * `-DCMAKE_BUILD_TYPE=<cfg>`
 * Build
     * `cmake --build build --parallel 8 --config <cfg>`
 * Extras
