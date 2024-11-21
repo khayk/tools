@@ -8,7 +8,7 @@ Own implementation of different tools.
 
 1. Install `vcpkg`
 2. Install libraries
-    * `./vcpkg install gtest spdlog openssl boost-asio nlohmann-json cxxopts glaze --triplet=<platform>`  # cereal
+    * `./vcpkg install gtest spdlog openssl boost-asio boost-iostreams nlohmann-json cxxopts glaze --triplet=<platform>`  # cereal
         * Windows `<platform>` can be `x64-windows`
         * Linux   `<platform>` can be `x64-linux`
 
@@ -61,7 +61,7 @@ Own implementation of different tools.
 
         ```bat
         OpenCppCoverage.exe --sources tools\core --modules test.exe --export_type=html:.reports/core/  -- out\build\x64-Debug\core\test\core-test.exe
-        OpenCppCoverage.exe --sources tools\kidmon --modules test.exe --export_type=html:.reports/kidmon/  -- out\build\x64-Debug\kidmon\test\kidmon-test.exe 
+        OpenCppCoverage.exe --sources tools\kidmon --modules test.exe --export_type=html:.reports/kidmon/  -- out\build\x64-Debug\kidmon\test\kidmon-test.exe
         ```
 
     * TBD - the command line above is for reference only, later create a script to produce coverage
