@@ -16,6 +16,16 @@ public:
     LocaleInitializer()
     {
         prevLocale_ = std::setlocale(LC_ALL, "en_US.utf8");
+
+        if (prevLocale_ == nullptr)
+        {
+            prevLocale_ = std::setlocale(LC_ALL, "C.utf8");
+        }
+
+        if (prevLocale_ == nullptr)
+        {
+            std::puts("WARNING: Failed to set local, utf8 conversions wan't work");
+        }
     }
 };
 
