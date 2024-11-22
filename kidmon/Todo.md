@@ -6,7 +6,7 @@
 
 ## In Progress
 
-* 
+* N/A
 
 ## Done
 
@@ -17,3 +17,4 @@
         * kidmon-server-2024-08-31.log
         * kidmon-server-2024-08-08.log
 * Server and agent should have their own config
+* Figure out why u8'*' tests are failing on linux
