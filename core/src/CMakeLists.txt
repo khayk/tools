@@ -22,7 +22,6 @@ target_include_directories(${PROJECT_LIB} PUBLIC ../include)
 
 set(SPDLOG_COMPILED_LIB true)
 
-find_package(fmt REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 

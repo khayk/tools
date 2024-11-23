@@ -40,12 +40,14 @@
                 "--case-insensitive",
                 "--minutes 0",
                 "--hours 0",
-                "--days 10",
+                //"--days 9",
                 "--months 0",
-                "--top 3",
-                //"--process chrome.exe",
-                ///"--title Firefox",
-                //"--range 20240901,20241001",
+                "--top 10",
+                "--process devenv.exe,code.exe",
+                //"--title gmail",
+                //"--exclude-title s02e05,s02e06",
+                "--exclude-process chrome.exe",
+                "--range 20241111,20241118",
                 "--fields a,b"
                 //"--list"
             ]

@@ -43,11 +43,11 @@ list(FILTER LIB_SRCS EXCLUDE REGEX ".*Main.cpp")
 
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(cxxopts CONFIG REQUIRED)
-#find_package(Boost CONFIG REQUIRED)
 find_package(glaze CONFIG REQUIRED)
 # find_package(msgpack-c CONFIG REQUIRED)
 
-find_package(Boost REQUIRED COMPONENTS iostreams)
+# find_package(Boost REQUIRED COMPONENTS iostreams)
+find_package(Boost CONFIG REQUIRED COMPONENTS iostreams)
 
 if(Boost_FOUND)
    message("Boost found           : ${Boost_INCLUDE_DIRS}")
@@ -67,7 +67,7 @@ message("Boost library         : ${Boost_LIBRARY_DIRS}")
 # Adding a library project
 add_library(${PROJECT_LIB} ${LIB_SRCS})
 
-message("${PROJECT_NAME} sources     : ${CMAKE_CURRENT_SOURCE_DIR}")
+message("${PROJECT_NAME} sources        : ${CMAKE_CURRENT_SOURCE_DIR}")
 target_include_directories(${PROJECT_LIB} PUBLIC ../include)
 
 target_link_libraries(${PROJECT_LIB} PUBLIC

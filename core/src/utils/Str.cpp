@@ -16,6 +16,16 @@ public:
     LocaleInitializer()
     {
         prevLocale_ = std::setlocale(LC_ALL, "en_US.utf8");
+
+        if (prevLocale_ == nullptr)
+        {
+            prevLocale_ = std::setlocale(LC_ALL, "C.utf8");
+        }
+
+        if (prevLocale_ == nullptr)
+        {
+            std::puts("WARNING: Failed to set local, utf8 conversions wan't work");
+        }
     }
 };
 
@@ -153,7 +163,7 @@ std::string& utf8LowerInplace(std::string& str, std::wstring* buf)
 std::wstring& lowerInplace(std::wstring& str)
 {
     std::transform(str.begin(), str.end(), str.begin(), [](const auto& c) noexcept {
-        return static_cast<std::wstring::value_type>(towlower(c));
+        return static_cast<std::wstring::value_type>(towlower(static_cast<wint_t>(c)));
     });
     return str;
 }

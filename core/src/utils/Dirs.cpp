@@ -2,6 +2,7 @@
     #include <Shlobj.h>
     #include <Knownfolders.h>
 #else
+    #include <cstdlib>
     #include <fmt/format.h>
 #endif
 
@@ -44,8 +45,14 @@ fs::path home(std::error_code& ec)
 #ifdef _WIN32
     return getKnownFolderPath(FOLDERID_Profile, ec);
 #else
-    std::ignore = ec;
-    throw std::runtime_error(fmt::format("Not implemented: {}", __func__));
+    const char* homeDir = std::getenv("HOME");
+    if (!homeDir)
+    {
+        ec.assign(static_cast<int>(std::errc::invalid_argument), std::system_category());
+        return {};
+    }
+
+    return fs::path(homeDir);
 #endif
 }
 
@@ -104,8 +111,14 @@ fs::path data(std::error_code& ec)
 #ifdef _WIN32
     return getKnownFolderPath(FOLDERID_LocalAppData, ec);
 #else
-    std::ignore = ec;
-    throw std::logic_error(fmt::format("Not implemented: {}", __func__));
+    fs::path dir = home(ec);
+    
+    if (!ec)
+    {
+        dir.append(".data");
+    }
+
+    return dir;
 #endif
 }
 
@@ -128,8 +141,14 @@ fs::path config(std::error_code& ec)
 #ifdef _WIN32
     return getKnownFolderPath(FOLDERID_ProgramData, ec);
 #else
-    std::ignore = ec;
-    throw std::logic_error(fmt::format("Not implemented: {}", __func__));
+    fs::path dir = home(ec);
+
+    if (!ec)
+    {
+        dir.append(".config");
+    }
+
+    return dir;
 #endif
 }
 
