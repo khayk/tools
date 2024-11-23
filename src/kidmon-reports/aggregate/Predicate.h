@@ -10,7 +10,7 @@ public:
     {
         return "proc_name";
     }
-    
+
     std::string value(const Entry& entry) const
     {
         return file::path2s(entry.processInfo.processPath.filename());

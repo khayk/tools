@@ -1,3 +1,8 @@
+project(kidmon VERSION 0.0.1)
+
+set(PROJECT_LIB "${PROJECT_NAME}")
+set(PROJECT_APP "${PROJECT_NAME}-app")
+
 file(GLOB LIB_SRCS
    "*.h"
    "*.cpp"
@@ -68,14 +73,14 @@ message("Boost library         : ${Boost_LIBRARY_DIRS}")
 add_library(${PROJECT_LIB} ${LIB_SRCS})
 
 message("${PROJECT_NAME} sources        : ${CMAKE_CURRENT_SOURCE_DIR}")
-target_include_directories(${PROJECT_LIB} PUBLIC ../include)
+target_include_directories(${PROJECT_LIB} PUBLIC include)
 
 target_link_libraries(${PROJECT_LIB} PUBLIC
     nlohmann_json::nlohmann_json
     core
 )
 
-target_link_libraries(${PROJECT_LIB} PRIVATE 
+target_link_libraries(${PROJECT_LIB} PRIVATE
     Boost::iostreams
     glaze::glaze
 )
@@ -102,9 +107,9 @@ else()
 endif(MSVC)
 
 install(
-    TARGETS ${PROJECT_APP} 
+    TARGETS ${PROJECT_APP}
     DESTINATION bin
-    RUNTIME_DEPENDENCIES 
+    RUNTIME_DEPENDENCIES
     PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-"
     POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
 )

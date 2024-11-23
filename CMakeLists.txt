@@ -1,8 +1,10 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.20)
 
 # @todo:hayk - checkout the CMakeLists.txt files style from the "Professional CMake a Practical Guide"
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
+set(CMAKE_DISABLE_SOURCE_CHANGES ON)
+set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
 if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
    set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
@@ -10,7 +12,10 @@ if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
    message("CMAKE_TOOLCHAIN_FILE: ${CMAKE_TOOLCHAIN_FILE}")
 endif()
 
-project(tools)
+
+project(tools LANGUAGES CXX)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+
 
 message("CMake tool chain file : ${CMAKE_TOOLCHAIN_FILE}")
 message("Project binary dir    : ${PROJECT_BINARY_DIR}")
@@ -71,18 +76,16 @@ message("Config types          : ${CMAKE_CONFIGURATION_TYPES}")
 option(TOOLS_TIDY "run clang-tidy" OFF)
 
 if(TOOLS_TIDY)
-    set(CMAKE_CXX_CLANG_TIDY "clang-tidy")
-    set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-    message(STATUS "Enabled clang-tidy")
+   set(CMAKE_CXX_CLANG_TIDY "clang-tidy")
+   set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+   message(STATUS "Enabled clang-tidy")
 endif()
 
 option(BUILD_TESTS "Tests enabled by default" ON)
 
-if(BUILD_TESTS)
-    enable_testing()
-endif()
+add_subdirectory(src)
 
-add_subdirectory(core)
-add_subdirectory(duplicates)
-add_subdirectory(kidmon)
-add_subdirectory(kidmon-reports)
+if(BUILD_TESTS)
+   enable_testing()
+   add_subdirectory(test)
+endif()
