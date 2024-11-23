@@ -1,3 +1,5 @@
+set(PROJECT_TST core-test)
+
 file(GLOB NETWORK_FILES
     "network/data/*.cpp"
     "network/data/*.h"
@@ -16,16 +18,9 @@ file(GLOB PATTERNS_FILES
 )
 
 set(TEST_SRCS ${NETWORK_FILES} ${UTILS_FILES} ${PATTERNS_FILES})
-
-find_package(GTest REQUIRED)
-message("Gtest libraries       : ${GTEST_BOTH_LIBRARIES}")
-
 add_executable(${PROJECT_TST} ${TEST_SRCS})
 
-target_link_libraries(${PROJECT_TST} PRIVATE
-    ${PROJECT_LIB}
-    GTest::gmock_main
-)
+target_link_libraries(${PROJECT_TST} PRIVATE core)
 
-enable_testing()
-gtest_discover_tests(${PROJECT_TST})
+AddTests(${PROJECT_TST})
+

@@ -8,7 +8,7 @@ Own implementation of different tools.
 
 1. Install `vcpkg`
 2. Install libraries
-    * `./vcpkg install gtest spdlog openssl boost-asio boost-iostreams nlohmann-json cxxopts glaze --triplet=<platform>`  # cereal
+    * `./vcpkg install gtest spdlog openssl boost-asio boost-iostreams nlohmann-json cxxopts glaze --triplet=<platform>`
         * Windows `<platform>` can be `x64-windows`
         * Linux   `<platform>` can be `x64-linux`
 
@@ -35,7 +35,9 @@ Own implementation of different tools.
 * Tests
     * CTest
         * `ctest --test-dir build --build-config <cfg>`
-        * `ctest --test-dir build -C <cfg>`
+        * `ctest --test-dir build --build-config <cfg> [--tests-regex <regex>]`  # .*Pattern.*
+        * `ctest --test-dir build -C <cfg> [-R <regex>]`
+        * `-N` additional options disables execution and only prints a list of test
     * Manually run application with ending with name `-test` (TBD, utilize `ctest`)
         * Windows - `build\core\test\Debug\core-test.exe`
         * Linux - `./build/core/test/core-test`
@@ -75,3 +77,24 @@ Own implementation of different tools.
     * Open bash, navigate the root directory of the project
     * Ensure `clang-format` version `17.0.1` is installed
     * Run `find . -iname *.h -o -iname *.cpp | xargs clang-format -i`, to format all `{h,cpp}` files in place
+
+## How-to
+
+* Debug and Run
+    * Visual Studio 2022
+        * Customize debug/launch arguments
+            * Select configuration
+            * Select target
+            * Select `Debug -> Debug and Launch Settings For <Target>` from menu
+            * Add `"args": []` section in the same level where located attribute `name` and provide desired command line arguments
+    * Visual Studio Code
+        * Install `CMake Tools` extension
+        * From Command Palette
+            * Select `CMake: Set Launch/Debug Target`
+            * Select `CMake: Debug`
+        * If you need to pass custom command line argument to debugger check [this](https://github.com/microsoft/vscode-cmake-tools/blob/main/docs/debug-launch.md) documentation.
+        * Activate `Run and Debug` in the Sidebar
+        * Click `create a launch.json file` and select `C++ (GDB)/(LLDB)`
+        * Copy paste desired settings from section `Debug using a launch.json file` from the link above.
+            * If you debug with `msvc` use that setting
+        * Add custom arguments into `"args": [],`

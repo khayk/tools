@@ -1,0 +1,5 @@
+include(Testing)
+add_subdirectory(core)
+add_subdirectory(duplicates)
+add_subdirectory(kidmon)
+add_subdirectory(kidmon-reports)

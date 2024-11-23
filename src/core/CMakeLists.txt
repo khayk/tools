@@ -1,3 +1,11 @@
+project(core VERSION 0.0.1)
+
+set(PROJECT_LIB  ${PROJECT_NAME})
+
+if(MSVC)
+    add_compile_definitions(PSAPI_VERSION=1)
+endif()
+
 file(GLOB NETWORK_FILES
     "network/data/*.cpp"
     "network/data/*.h"
@@ -18,7 +26,7 @@ file(GLOB UTILS_FILES
 # Source list for the library
 set(LIB_SRCS  ${NETWORK_FILES} ${PATTERNS_FILES} ${UTILS_FILES})
 add_library(${PROJECT_LIB} STATIC ${LIB_SRCS})
-target_include_directories(${PROJECT_LIB} PUBLIC ../include)
+target_include_directories(${PROJECT_LIB} PUBLIC include)
 
 set(SPDLOG_COMPILED_LIB true)
 

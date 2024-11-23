@@ -1,3 +1,8 @@
+project(kidmon-reports VERSION 0.0.1)
+
+set(PROJECT_LIB "${PROJECT_NAME}")
+set(PROJECT_APP "${PROJECT_NAME}-app")
+
 file(GLOB APP_SRCS
    "condition/*.h"
    "condition/*.cpp"

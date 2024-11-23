@@ -1,3 +1,8 @@
+project(duplicates VERSION 0.0.1)
+
+set(PROJECT_LIB "${PROJECT_NAME}")
+set(PROJECT_APP "${PROJECT_NAME}-app")
+
 file(GLOB LIB_SRCS
    "*.h"
    "*.cpp"
@@ -10,7 +15,7 @@ list(FILTER LIB_SRCS EXCLUDE REGEX ".*Main.cpp")
 
 # Adding a library project
 add_library(${PROJECT_LIB} ${LIB_SRCS})
-target_include_directories(${PROJECT_LIB} PUBLIC ../include)
+target_include_directories(${PROJECT_LIB} PUBLIC include)
 target_link_libraries(${PROJECT_LIB} PUBLIC core)
 
 # Adding executable project
