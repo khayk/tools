@@ -6,7 +6,39 @@
 
 ## In Progress
 
-* N/A
+* Structure project as displayed below
+
+```txt
+project/
+    cmake/
+        include/
+        module/
+        script/
+    src/
+        app1/
+            include/
+                a_file.h
+            a.file.cpp
+
+            lib3/
+            test/
+        app2
+        lib1
+            include
+                lib1/
+
+        lib2
+    doc/
+    extern/
+    test/
+```
+
+```txt
+    core
+    duplicate
+    kidmon
+    kidmon-reports
+```
 
 ## Done
 
