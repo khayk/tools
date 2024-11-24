@@ -5,6 +5,7 @@
 #include <kidmon/common/Service.h>
 #include <kidmon/common/Tracer.h>
 #include <kidmon/common/Utils.h>
+#include <BuildInfo.h>
 
 #include <core/utils/Str.h>
 #include <core/utils/Sys.h>
@@ -85,7 +86,7 @@ int main(int argc, char* argv[])
 
         AppConfig appConf;
         appConf.logFilename = logFile;
-        
+
         // Configure logger as soon as possible
         utl::configureLogger(appConf.logsDir, appConf.logFilename);
 
@@ -93,6 +94,10 @@ int main(int argc, char* argv[])
                       fmt::format("{:-^80s}", "> START <"),
                       fmt::format("{:-^80s}\n", "> END <"));
         traceMain.emplace(__FUNCTION__);
+
+        spdlog::info("Build time: {}", BuildInfo::Timestamp);
+        spdlog::info("Commit SHA: {}", BuildInfo::CommitSHA);
+        spdlog::info("Version: {}", BuildInfo::Version);
         spdlog::debug("Active username: {}", str::ws2s(sys::activeUserName()));
 
         std::shared_ptr<Runnable> app;
