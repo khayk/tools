@@ -10,9 +10,9 @@ template <class... Args>
 class Callback
 {
 public:
-    using Function    = std::function<void(Args...)>;
+    using Function = std::function<void(Args...)>;
     using FunctionPtr = std::shared_ptr<Function>;
-    using Functions   = std::vector<FunctionPtr>;
+    using Functions = std::vector<FunctionPtr>;
 
     FunctionPtr add(Function&& fn)
     {

@@ -7,8 +7,8 @@
 namespace num {
 
 /**
- * @brief Convert str to number. If an error occurred, the value specified in def will be
- * returned.
+ * @brief Convert str to number. If an error occurred, the value specified in def
+ * will be returned.
  *
  * @param str An input string
  * @param def The default value to be returned in case of any error during conversion

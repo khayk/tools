@@ -18,8 +18,9 @@ public:
         std::string authToken;
 
         std::chrono::milliseconds activityCheckInterval {2000};
-        std::chrono::milliseconds peerDropTimeout {activityCheckInterval.count() + 2000};
-        
+        std::chrono::milliseconds peerDropTimeout {activityCheckInterval.count() +
+                                                   2000};
+
         uint16_t listenPort {51'097};
         bool spawnAgent {true};
     };

@@ -60,10 +60,10 @@ public:
     QueryVisualizer(Config conf)
         : conf_(std::move(conf))
     {
-	    //using SplitterAggr = Splitter<ProcPathAggr, TitleAggr>;
-        using TitleAggr    = Aggregate<Data, TitleBuilder>;
-	    using ProcPathAggr = Aggregate<TitleAggr, ProcPathBuilder>;
-	    using ProcNameAggr = Aggregate<ProcPathAggr, ProcNameBuilder>;
+        // using SplitterAggr = Splitter<ProcPathAggr, TitleAggr>;
+        using TitleAggr = Aggregate<Data, TitleBuilder>;
+        using ProcPathAggr = Aggregate<TitleAggr, ProcPathBuilder>;
+        using ProcNameAggr = Aggregate<ProcPathAggr, ProcNameBuilder>;
 
         pathByNameAggr_ = std::make_unique<ProcNameAggr>();
     }
@@ -89,17 +89,19 @@ public:
 
     void display() const
     {
-        std::cout << "Filtered: " << entries_.size() << " out of " << numEntries_ << '\n';
+        std::cout << "Filtered: " << entries_.size() << " out of " << numEntries_
+                  << '\n';
 
-        //pathByNameAggr_->write(std::cout, conf_.topN_, 0);
-        //pathByNameAggr_->write(std::cout, 0);
+        // pathByNameAggr_->write(std::cout, conf_.topN_, 0);
+        // pathByNameAggr_->write(std::cout, 0);
 
         pathByNameAggr_->enumarate(
-            conf_.topN_, 0,
-            [](std::string_view field, std::string_view value,
+            conf_.topN_,
+            0,
+            [](std::string_view field,
+               std::string_view value,
                uint32_t depth,
-               const Data& data) 
-            {
+               const Data& data) {
                 if (value.empty() && depth != 0)
                 {
                     return;
@@ -112,11 +114,9 @@ public:
                     std::cout << ": " << value << ", ";
                 }
 
-                std::cout << "duration: "
-                            << utl::humanizeDuration(data.duration())
-                            << '\n';
-            }
-        );
+                std::cout << "duration: " << utl::humanizeDuration(data.duration())
+                          << '\n';
+            });
     }
 
 private:
@@ -158,19 +158,19 @@ void applyCaseTransform(ReportsConfig& conf)
 
 void initReportsConf(const cxxopts::ParseResult& res, ReportsConfig& conf)
 {
-    maybeGet("user",             res, conf.username);
-    maybeGet("minutes",          res, conf.minutes);
-    maybeGet("hours",            res, conf.hours);
-    maybeGet("days",             res, conf.days);
-    maybeGet("months",           res, conf.months);
-    maybeGet("range",            res, conf.range);
-    maybeGet("fields",           res, conf.fields);
-    maybeGet("title",            res, conf.titles);
-    maybeGet("process",          res, conf.processes);
-    maybeGet("top",              res, conf.topN);
+    maybeGet("user", res, conf.username);
+    maybeGet("minutes", res, conf.minutes);
+    maybeGet("hours", res, conf.hours);
+    maybeGet("days", res, conf.days);
+    maybeGet("months", res, conf.months);
+    maybeGet("range", res, conf.range);
+    maybeGet("fields", res, conf.fields);
+    maybeGet("title", res, conf.titles);
+    maybeGet("process", res, conf.processes);
+    maybeGet("top", res, conf.topN);
     maybeGet("case-insensitive", res, conf.caseInsensitive);
-    maybeGet("exclude-process",  res, conf.excludeProcesses);
-    maybeGet("exclude-title",    res, conf.excludeTitles);
+    maybeGet("exclude-process", res, conf.excludeProcesses);
+    maybeGet("exclude-title", res, conf.excludeTitles);
 }
 
 TimePoint makeTimepoint(uint32_t year,
@@ -181,12 +181,12 @@ TimePoint makeTimepoint(uint32_t year,
                         uint32_t sec = 0)
 {
     std::tm tm = {};
-    tm.tm_sec   = static_cast<int>(sec);
-    tm.tm_min   = static_cast<int>(min);
-    tm.tm_hour  = static_cast<int>(hour);
-    tm.tm_mday  = static_cast<int>(day);
-    tm.tm_mon   = static_cast<int>(month - 1);
-    tm.tm_year  = static_cast<int>(year - 1900);
+    tm.tm_sec = static_cast<int>(sec);
+    tm.tm_min = static_cast<int>(min);
+    tm.tm_hour = static_cast<int>(hour);
+    tm.tm_mday = static_cast<int>(day);
+    tm.tm_mon = static_cast<int>(month - 1);
+    tm.tm_year = static_cast<int>(year - 1900);
     tm.tm_isdst = -1; // Use DST value from local time zone
 
     return std::chrono::system_clock::from_time_t(std::mktime(&tm));
@@ -222,7 +222,8 @@ Filter buildFilter(const ReportsConfig& conf)
     else
     {
         from = (!conf.range.empty()) ? makeTimepoint(conf.range[0]) : TimePoint::min();
-        to = (conf.range.size() > 1) ? makeTimepoint(conf.range[1]) : SystemClock::now();
+        to = (conf.range.size() > 1) ? makeTimepoint(conf.range[1])
+                                     : SystemClock::now();
     }
 
     return Filter(conf.username, from, to);
@@ -255,8 +256,7 @@ ConditionPtr combineConditions(std::vector<ConditionPtr>&& conditions)
 
     return std::make_unique<LogicType>(
         combineConditions<LogicType>(std::move(conditions)),
-        std::move(cond)
-    );
+        std::move(cond));
 }
 
 template <typename CondType>
@@ -307,20 +307,14 @@ ConditionPtr buildIncludeCondition(const ReportsConfig& conf)
 
     if (!conf.processes.empty())
     {
-        conditions.push_back(
-            combineConditions<LogicalOR>(
-                createConditions<HasProcessCondition>(conf.processes)
-            )
-        );
+        conditions.push_back(combineConditions<LogicalOR>(
+            createConditions<HasProcessCondition>(conf.processes)));
     }
 
     if (!conf.titles.empty())
     {
-        conditions.push_back(
-            combineConditions<LogicalOR>(
-                createConditions<HasTitleCondition>(conf.titles)
-            )
-        );
+        conditions.push_back(combineConditions<LogicalOR>(
+            createConditions<HasTitleCondition>(conf.titles)));
     }
 
     if (conditions.empty())
@@ -389,9 +383,9 @@ void handleQueryUser(const IRepository& repo,
                      const ReportsConfig& conf,
                      QueryVisualizer& queryVisualizer)
 {
-    const auto queryFilter    = buildFilter(conf);
+    const auto queryFilter = buildFilter(conf);
     const auto queryCondition = buildCondition(conf);
-    const auto transform      = buildTransform(conf);
+    const auto transform = buildTransform(conf);
 
     std::ostringstream oss;
     queryCondition->write(oss);

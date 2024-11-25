@@ -30,9 +30,9 @@ std::string path2s(const fs::path& path);
 
 
 /**
- * @brief  Constructs path with unique name, taking into account provided prefix and temp
- * directory. It will create path object only, the underlying path will not be created on
- * file system.
+ * @brief  Constructs path with unique name, taking into account provided prefix and
+ * temp directory. It will create path object only, the underlying path will not be
+ * created on file system.
  *
  * The resulting path will be equal to:
  *
@@ -96,8 +96,8 @@ public:
 
 
 /**
- * @brief  See TempFile. On destruction recursively deletes unique temporary directory
- *         held by this object
+ * @brief  See TempFile. On destruction recursively deletes unique temporary
+ * directory held by this object
  */
 class TempDir : public ScopedDir
 {

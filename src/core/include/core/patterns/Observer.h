@@ -33,12 +33,13 @@ public:
     }
 
     /**
-     * @brief Notify observers about change, handle functions with any number of arguments
+     * @brief Notify observers about change, handle functions with any number of
+     * arguments
      *
      * @tparam Fn   Type of the function.
      * @tparam Args Type of the arguments.
-     * @param fn    Pointer to member function to be called, it should be the part of an
-     *              interface for the Observer type.
+     * @param fn    Pointer to member function to be called, it should be the part of
+     * an interface for the Observer type.
      * @param args  Variable arguments providing [in,out] The arguments.
      */
     template <typename Fn, typename... Args>

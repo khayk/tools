@@ -11,7 +11,6 @@
 namespace fs = std::filesystem;
 
 
-
 namespace utl {
 
 std::string generateToken(const size_t length)
@@ -52,7 +51,8 @@ tm timet2tm(const time_t dt)
 
     if (!timet2tm(dt, d))
     {
-        throw std::runtime_error(fmt::format("Unable to convert '{}' to local time", dt));
+        throw std::runtime_error(
+            fmt::format("Unable to convert '{}' to local time", dt));
     }
 
     return d;
@@ -70,7 +70,7 @@ std::string humanizeDuration(std::chrono::milliseconds ms, int units)
     auto secs = duration_cast<seconds>(ms);
     ms -= duration_cast<milliseconds>(secs);
     auto mins = duration_cast<minutes>(secs);
-    secs -= duration_cast<seconds>(mins);    
+    secs -= duration_cast<seconds>(mins);
     auto hour = duration_cast<hours>(mins);
     mins -= duration_cast<minutes>(hour);
     auto day = duration_cast<days>(hour);

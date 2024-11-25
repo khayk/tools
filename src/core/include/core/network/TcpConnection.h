@@ -8,31 +8,30 @@
 #include <chrono>
 #include <memory>
 
-namespace net       = boost::asio;
-using ErrorCode     = boost::system::error_code;
-using IoContext     = net::io_context;
-using ConstBuffer   = net::const_buffer;
+namespace net = boost::asio;
+using ErrorCode = boost::system::error_code;
+using IoContext = net::io_context;
+using ConstBuffer = net::const_buffer;
 
 namespace tcp {
 
-using Socket        = net::ip::tcp::socket;
-using Endpoint      = net::ip::tcp::endpoint;
+using Socket = net::ip::tcp::socket;
+using Endpoint = net::ip::tcp::endpoint;
 
-class Connection
-    : public std::enable_shared_from_this<Connection>
+class Connection : public std::enable_shared_from_this<Connection>
 {
-    using ReadCbs       = dp::Callback<const char*, size_t>;
-    using SentCbs       = dp::Callback<size_t>;
-    using ErrorCbs      = dp::Callback<const ErrorCode&>;
-    using TimeoutCbs    = dp::Callback<const ErrorCode&>;
+    using ReadCbs = dp::Callback<const char*, size_t>;
+    using SentCbs = dp::Callback<size_t>;
+    using ErrorCbs = dp::Callback<const ErrorCode&>;
+    using TimeoutCbs = dp::Callback<const ErrorCode&>;
     using DisconnectCbs = dp::Callback<>;
 
 public:
-    using ReadCb        = ReadCbs::Function;
-    using SentCb        = SentCbs::Function;
-    using ErrorCb       = ErrorCbs::Function;
-    using DisconnectCb  = DisconnectCbs::Function;
-    using TimeoutCb     = TimeoutCbs::Function;
+    using ReadCb = ReadCbs::Function;
+    using SentCb = SentCbs::Function;
+    using ErrorCb = ErrorCbs::Function;
+    using DisconnectCb = DisconnectCbs::Function;
+    using TimeoutCb = TimeoutCbs::Function;
 
     explicit Connection(Socket socket, uint16_t bufferSize = 4096) noexcept;
     ~Connection();
@@ -63,7 +62,7 @@ private:
 
     std::mutex mutex_;
     std::string data_;
-    std::chrono::milliseconds timeout_{};
+    std::chrono::milliseconds timeout_ {};
     net::steady_timer timer_;
 };
 

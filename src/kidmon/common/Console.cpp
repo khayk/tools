@@ -67,8 +67,8 @@ public:
     {
         shutdown();
 
-        // Wait until all other references dropped on this object, so that the destruction
-        // takes place in the main thread
+        // Wait until all other references dropped on this object, so that the
+        // destruction takes place in the main thread
         while (runnable_.use_count() > 1)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(10));

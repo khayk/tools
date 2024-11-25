@@ -58,18 +58,18 @@ TEST(UtilsCryptoTests, CheckEncodeDecode64)
 
     testData.emplace_back("", "");
     testData.emplace_back("abcd", "YWJjZA==");
-    testData.emplace_back("hdsajfhsufhssfh632746324h2462h32k4324327482h4",
-                          "aGRzYWpmaHN1Zmhzc2ZoNjMyNzQ2MzI0aDI0NjJoMzJrNDMyNDMyNzQ4Mmg0");
+    testData.emplace_back(
+        "hdsajfhsufhssfh632746324h2462h32k4324327482h4",
+        "aGRzYWpmaHN1Zmhzc2ZoNjMyNzQ2MzI0aDI0NjJoMzJrNDMyNDMyNzQ4Mmg0");
     testData.emplace_back("48029347348274234242432746",
                           "NDgwMjkzNDczNDgyNzQyMzQyNDI0MzI3NDY=");
     testData.emplace_back("Hello world! How're you doing?",
                           "SGVsbG8gd29ybGQhIEhvdydyZSB5b3UgZG9pbmc/");
-    testData.emplace_back("<!------------>",
-                          "PCEtLS0tLS0tLS0tLS0+");
-    testData.emplace_back("1",     "MQ==");
-    testData.emplace_back("12",    "MTI=");
-    testData.emplace_back("123",   "MTIz");
-    testData.emplace_back("1234",  "MTIzNA==");
+    testData.emplace_back("<!------------>", "PCEtLS0tLS0tLS0tLS0+");
+    testData.emplace_back("1", "MQ==");
+    testData.emplace_back("12", "MTI=");
+    testData.emplace_back("123", "MTIz");
+    testData.emplace_back("1234", "MTIzNA==");
     testData.emplace_back("12345", "MTIzNDU=");
 
     std::string encoded;

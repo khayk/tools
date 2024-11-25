@@ -55,8 +55,7 @@ public:
         data::Packer packer(src);
 
         wq_.emplace("", std::move(sentCb));
-        while (packer.get(wq_.back().first) > 0)
-            ;
+        while (packer.get(wq_.back().first) > 0);
 
         sendInternal();
     }
@@ -90,7 +89,7 @@ private:
             }
         }
 
-        conn_->read();        
+        conn_->read();
     }
 
 
@@ -131,8 +130,7 @@ Communicator::Communicator(Connection& conn)
 {
 }
 
-Communicator::~Communicator()
-{}
+Communicator::~Communicator() {}
 
 bool Communicator::onMsg(MsgCb msgCb)
 {

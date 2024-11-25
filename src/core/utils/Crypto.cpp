@@ -61,7 +61,8 @@ std::string fileSha256(const fs::path& file)
             s);
     }
 
-    constexpr const std::size_t bufferSize {static_cast<unsigned long long>(1UL) << 12};
+    constexpr const std::size_t bufferSize {static_cast<unsigned long long>(1UL)
+                                            << 12};
     char buffer[bufferSize];
     unsigned char hash[EVP_MAX_MD_SIZE] = {0};
 
@@ -103,7 +104,7 @@ void encodeBase64(std::string_view byteSeq, std::string& base64Seq)
     {
         const auto s = fmt::format("Encode predicted {} but we got {}", len, res);
         throw std::system_error(std::make_error_code(std::errc::result_out_of_range),
-            s);
+                                s);
     }
 }
 
@@ -126,7 +127,8 @@ void decodeBase64(const std::string& base64Seq, std::string& byteSeq)
     if (res != static_cast<int>(len))
     {
         const auto s = fmt::format("Encode predicted {} but we got {}", len, res);
-        throw std::system_error(std::make_error_code(std::errc::result_out_of_range), s);
+        throw std::system_error(std::make_error_code(std::errc::result_out_of_range),
+                                s);
     }
 
     while (!byteSeq.empty() && byteSeq.back() == 0)

@@ -8,7 +8,8 @@
 #include <chrono>
 
 class Data;
-using DataCb = std::function<void(std::string_view field, std::string_view value, 
+using DataCb = std::function<void(std::string_view field,
+                                  std::string_view value,
                                   uint32_t depth,
                                   const Data& data)>;
 
@@ -17,7 +18,9 @@ class IAggregate
 public:
     virtual ~IAggregate() = default;
     virtual void update(const Entry& entry) = 0;
-    virtual void enumarate(size_t topN, uint32_t depth, const DataCb& dataCb) const = 0;
+    virtual void enumarate(size_t topN,
+                           uint32_t depth,
+                           const DataCb& dataCb) const = 0;
 
     virtual std::ostream& write(std::ostream& os, uint32_t prefix = 0) const = 0;
 };
@@ -44,7 +47,7 @@ public:
     void enumarate(size_t topN, uint32_t depth, const DataCb& dataCb) const override
     {
         std::ignore = topN;
-        dataCb("", "", depth , *this);
+        dataCb("", "", depth, *this);
     }
 
     std::chrono::milliseconds duration() const noexcept
@@ -117,7 +120,7 @@ class Aggregate : public Data
     {
         IterVec reorder;
         reorder.reserve(data_.size());
-        
+
         for (auto cit = data_.begin(); cit != data_.end(); ++cit)
         {
             reorder.push_back(cit);
@@ -148,13 +151,13 @@ public:
     void enumarate(size_t topN, uint32_t depth, const DataCb& dataCb) const override
     {
         const auto reorder = orderedVec(topN);
-        const auto field   = fieldBuilder_.field();
+        const auto field = fieldBuilder_.field();
         dataCb("total ", "", depth, *this);
         ++depth;
 
         for (const auto it : reorder)
         {
-            const auto& key  = it->first;
+            const auto& key = it->first;
             const auto& type = it->second;
             dataCb(field, key, depth, type);
             type.enumarate(topN, depth, dataCb);
@@ -181,4 +184,3 @@ public:
         return os;
     }
 };
-

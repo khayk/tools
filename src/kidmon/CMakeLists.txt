@@ -1,4 +1,4 @@
-project(kidmon VERSION 0.0.1)
+project(kidmon)
 
 set(PROJECT_LIB "${PROJECT_NAME}")
 set(PROJECT_APP "${PROJECT_NAME}-app")
@@ -91,6 +91,7 @@ target_link_libraries(${PROJECT_LIB} PRIVATE
 
 # Adding executable project
 add_executable(${PROJECT_APP} Main.cpp)
+BuildInfo(${PROJECT_APP})
 target_link_libraries (${PROJECT_APP} PRIVATE ${PROJECT_LIB} cxxopts::cxxopts)
 
 # target_link_libraries(${PROJECT_APP} sqlite_orm::sqlite_orm)

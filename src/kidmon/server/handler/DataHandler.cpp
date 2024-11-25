@@ -28,7 +28,8 @@ bool DataHandler::handle(const nlohmann::json& payload,
         fromJson(msg["entry"], entry);
         entry.username = msg["username"];
 
-        if (entry.username.empty() || entry.username != str::ws2s(sys::activeUserName()))
+        if (entry.username.empty() ||
+            entry.username != str::ws2s(sys::activeUserName()))
         {
             error = "Username mismatch";
             return false;

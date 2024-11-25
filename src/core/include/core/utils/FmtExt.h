@@ -19,4 +19,3 @@ public:
         return format_to(ctx.out(), "{}", file::path2s(ph));
     }
 };
-

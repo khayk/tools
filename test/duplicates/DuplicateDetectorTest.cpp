@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
-TEST(DuplicateDetectorTest, WindowsPaths) {
+TEST(DuplicateDetectorTest, WindowsPaths)
+{
     EXPECT_EQ(5, 5);
 }

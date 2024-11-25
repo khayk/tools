@@ -7,11 +7,11 @@ namespace tcp {
 class Client
 {
     using ConnectCbs = dp::Callback<Connection&>;
-    using ErrorCbs   = dp::Callback<const ErrorCode&>;
+    using ErrorCbs = dp::Callback<const ErrorCode&>;
 
 public:
-    using ConnectCb  = ConnectCbs::Function;
-    using ErrorCb    = ErrorCbs::Function;
+    using ConnectCb = ConnectCbs::Function;
+    using ErrorCb = ErrorCbs::Function;
 
     struct Options
     {

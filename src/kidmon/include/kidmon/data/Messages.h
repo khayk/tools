@@ -12,7 +12,9 @@ void buildResponse(int status,
                    const nlohmann::json& answer,
                    nlohmann::ordered_json& js);
 
-void buildResponse(int status, const nlohmann::json& answer, nlohmann::ordered_json& js);
+void buildResponse(int status,
+                   const nlohmann::json& answer,
+                   nlohmann::ordered_json& js);
 
 bool isAuthMsg(const nlohmann::ordered_json& js);
 bool isDataMsg(const nlohmann::ordered_json& js);

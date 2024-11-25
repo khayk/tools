@@ -79,8 +79,7 @@ AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
 
         const auto activeUsername = str::ws2s(sys::activeUserName());
 
-        if (!authHandler_.username().empty() && 
-            !activeUsername.empty() &&
+        if (!authHandler_.username().empty() && !activeUsername.empty() &&
             authHandler_.username() != activeUsername)
         {
             spdlog::info("Active user changed from '{}' to '{}'. Dropping peer",

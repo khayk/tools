@@ -43,7 +43,8 @@ public:
 
             if (off < sent.size())
             {
-                conn.write(sent.data() + off, std::min<size_t>(4096, sent.size() - off));
+                conn.write(sent.data() + off,
+                           std::min<size_t>(4096, sent.size() - off));
             }
             else if (rcvd.size() >= rcvdMax)
             {
@@ -83,7 +84,8 @@ TEST(TcpConnectionTest, DataTransfer)
     });
 
     svr.onConnection([&](Connection& conn) {
-        serverMngr = std::make_unique<Manager>(conn, serverToSend, clientToSend.size());
+        serverMngr =
+            std::make_unique<Manager>(conn, serverToSend, clientToSend.size());
         conn.onDisconnect([&]() {
             svr.close();
         });
@@ -96,7 +98,8 @@ TEST(TcpConnectionTest, DataTransfer)
     Client::Options copts {"127.0.0.1", sopts.port};
 
     cnt.onConnect([&](Connection& conn) {
-        clientMngr = std::make_unique<Manager>(conn, clientToSend, serverToSend.size());
+        clientMngr =
+            std::make_unique<Manager>(conn, clientToSend, serverToSend.size());
     });
     cnt.connect(copts);
 
