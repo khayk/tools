@@ -64,12 +64,11 @@ TEST(UtilsCryptoTests, CheckEncodeDecode64)
                           "NDgwMjkzNDczNDgyNzQyMzQyNDI0MzI3NDY=");
     testData.emplace_back("Hello world! How're you doing?",
                           "SGVsbG8gd29ybGQhIEhvdydyZSB5b3UgZG9pbmc/");
-    testData.emplace_back("<!------------>",
-                          "PCEtLS0tLS0tLS0tLS0+");
-    testData.emplace_back("1",     "MQ==");
-    testData.emplace_back("12",    "MTI=");
-    testData.emplace_back("123",   "MTIz");
-    testData.emplace_back("1234",  "MTIzNA==");
+    testData.emplace_back("<!------------>", "PCEtLS0tLS0tLS0tLS0+");
+    testData.emplace_back("1", "MQ==");
+    testData.emplace_back("12", "MTI=");
+    testData.emplace_back("123", "MTIz");
+    testData.emplace_back("1234", "MTIzNA==");
     testData.emplace_back("12345", "MTIzNDU=");
 
     std::string encoded;

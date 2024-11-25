@@ -42,8 +42,7 @@ std::string pack(std::string_view data)
     Packer packer(src);
 
     std::string packed;
-    while (packer.get(packed))
-        ;
+    while (packer.get(packed));
 
     return packed;
 }
@@ -142,7 +141,6 @@ TEST(UnpackerTest, UnpackIncompleteData_BigChunks)
     unpackIncompleteData(data, 3 * data.size() / 2);
     unpackIncompleteData(data, 4 * data.size());
 }
-
 
 
 TEST(UnpackerTest, UnpackBatchData)

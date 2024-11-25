@@ -112,7 +112,7 @@ fs::path data(std::error_code& ec)
     return getKnownFolderPath(FOLDERID_LocalAppData, ec);
 #else
     fs::path dir = home(ec);
-    
+
     if (!ec)
     {
         dir.append(".data");

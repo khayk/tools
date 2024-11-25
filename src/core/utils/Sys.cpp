@@ -38,7 +38,7 @@ std::wstring userNameBySessionId(unsigned long sessionId)
 }
 #endif
 
-}
+} // namespace
 
 
 namespace sys {

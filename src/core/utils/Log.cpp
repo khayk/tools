@@ -29,4 +29,4 @@ void configureLogger(const fs::path& logsDir, const fs::path& logFilename)
     spdlog::flush_every(std::chrono::seconds(10));
 }
 
-} // namespace utl 
+} // namespace utl

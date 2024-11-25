@@ -131,4 +131,3 @@ TEST(TcpCommunicatorTest, Data20Mb)
 
     asyncCommunicatorTest(input);
 }
-

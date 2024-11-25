@@ -36,12 +36,12 @@ uint32_t daysSinceYearStart(time_t dt = std::time(nullptr));
 
 /**
  * @brief  Converts the value into human friendly text
- * 
+ *
  * @param value  The duration in milliseconds
- * @param groups  The number of units to show   
+ * @param groups  The number of units to show
  *
  * @return  The string representation of the value
- * 
+ *
  *    1h 3m 4s  ->  1h       (units = 1)
  *    1h 3m 4s  ->  1h 3m    (units = 2)
  *    1h 3m 4s  ->  1h 3m 4s (units = 3)

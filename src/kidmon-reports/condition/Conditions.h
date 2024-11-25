@@ -1,4 +1,4 @@
-#pragma once 
+#pragma once
 
 #include "ICondition.h"
 #include <kidmon/data/Types.h>
@@ -132,6 +132,7 @@ public:
 class HasProcessCondition : public HasStringCondition
 {
     void fetchValue(const Entry& entry, std::string& value) const override;
+
 public:
     HasProcessCondition(std::string processName);
 };
@@ -140,6 +141,7 @@ public:
 class HasTitleCondition : public HasStringCondition
 {
     void fetchValue(const Entry& entry, std::string& value) const override;
+
 public:
-    HasTitleCondition(std::string title);    
+    HasTitleCondition(std::string title);
 };

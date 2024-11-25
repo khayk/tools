@@ -57,11 +57,12 @@ TEST(UtilsStrTests, U8Conversions)
 
 TEST(UtilsStrTests, U8S2WSPerf)
 {
-    const auto s = u8"Լաւ է հանգիստ վաստակել մի բուռ, քան չարչարանքով ու տանջանքով՝ երկու բուռ։";
+    const auto s =
+        u8"Լաւ է հանգիստ վաստակել մի բուռ, քան չարչարանքով ու տանջանքով՝ երկու բուռ։";
     std::wstring ws;
     std::string ss;
 
-    for (int i = 0; i < 10000; ++i)
+    for (int i = 0; i < 10'000; ++i)
     {
         s2ws(u8tos(s), ws);
         ws2s(ws, ss);
@@ -117,11 +118,11 @@ TEST(UtilsStrTests, Trim)
     s = "a";
     trim(s);
     EXPECT_EQ(s, "a");
-    
+
     s = "";
     trim(s);
     EXPECT_EQ(s, "");
-    
+
     s = "  \t \n  \r \0";
     trim(s);
     EXPECT_EQ(s, "");
@@ -162,7 +163,7 @@ TEST(UtilsStrTests, Utf8Lower)
     input = utf8Lower(input);
     const std::u8string s8(stou8(input));
     const std::u8string expected(u8"մակեդոնիա");
-    // Don't check with EXPECT_EQ, because gtest is not built with c++20 support 
+    // Don't check with EXPECT_EQ, because gtest is not built with c++20 support
     EXPECT_TRUE(s8 == expected);
 }
 

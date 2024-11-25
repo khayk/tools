@@ -102,8 +102,7 @@ void encodeBase64(std::string_view byteSeq, std::string& base64Seq)
     if (res != static_cast<int>(len))
     {
         const auto s = fmt::format("Encode predicted {} but we got {}", len, res);
-        throw std::system_error(std::make_error_code(std::errc::result_out_of_range),
-            s);
+        throw std::system_error(std::make_error_code(std::errc::result_out_of_range), s);
     }
 }
 

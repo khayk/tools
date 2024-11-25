@@ -11,7 +11,6 @@
 namespace fs = std::filesystem;
 
 
-
 namespace utl {
 
 std::string generateToken(const size_t length)
@@ -70,7 +69,7 @@ std::string humanizeDuration(std::chrono::milliseconds ms, int units)
     auto secs = duration_cast<seconds>(ms);
     ms -= duration_cast<milliseconds>(secs);
     auto mins = duration_cast<minutes>(secs);
-    secs -= duration_cast<seconds>(mins);    
+    secs -= duration_cast<seconds>(mins);
     auto hour = duration_cast<hours>(mins);
     mins -= duration_cast<minutes>(hour);
     auto day = duration_cast<days>(hour);
