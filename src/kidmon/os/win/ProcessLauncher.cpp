@@ -162,7 +162,8 @@ bool interactiveLaunch(const fs::path& exec,
     const auto envBlockDeleter = [](auto* envPtr) noexcept {
         DestroyEnvironmentBlock(envPtr);
     };
-    const std::unique_ptr<void, decltype(envBlockDeleter)> envBlock(ptr, envBlockDeleter);
+    const std::unique_ptr<void, decltype(envBlockDeleter)> envBlock(ptr,
+                                                                    envBlockDeleter);
 
     DWORD creationFlags = NORMAL_PRIORITY_CLASS | CREATE_UNICODE_ENVIRONMENT;
     std::wstring name = L"winsta0\\default";

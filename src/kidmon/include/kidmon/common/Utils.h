@@ -26,7 +26,8 @@ tm timet2tm(time_t dt);
 bool timet2tm(time_t dt, tm&);
 
 /**
- * @brief  Calculate days since January 1 for the year represented by the given date time
+ * @brief  Calculate days since January 1 for the year represented by the given date
+ * time
  *
  * @param date  Specified dt
  *

@@ -34,7 +34,7 @@ int yearFromTimeT(const time_t tt, bool throwIfInvalid)
 
         return 0;
     }
-    
+
     return tm.tm_year + 1900;
 }
 
@@ -77,7 +77,8 @@ public:
             return it->second;
         }
 
-        fs::path userReportsRoot = getUserDir(username).append(fmt::format("{}", year));
+        fs::path userReportsRoot =
+            getUserDir(username).append(fmt::format("{}", year));
 
         // Reports directory structure looks like this
         //
@@ -254,22 +255,19 @@ private:
         return static_cast<T>(value);
     }
 
-    bool queryRawDataDir(const Filter& filter,
-                         const EntryCb& cb,
-                         const int year) const
+    bool queryRawDataDir(const Filter& filter, const EntryCb& cb, const int year) const
     {
         const int yearFrom = yearFromTimePoint(filter.from(), false);
-        const int yearTo   = yearFromTimePoint(filter.to(), false);
+        const int yearTo = yearFromTimePoint(filter.to(), false);
 
-        if ((yearTo != 0 && yearTo < year) || 
-            (yearFrom != 0 && year < yearFrom))
+        if ((yearTo != 0 && yearTo < year) || (yearFrom != 0 && year < yearFrom))
         {
             return true;
         }
 
-        bool keepGoing    = true;
+        bool keepGoing = true;
         const auto fnFrom = buildRawFilename(filter.from());
-        const auto fnTo   = buildRawFilename(filter.to());
+        const auto fnTo = buildRawFilename(filter.to());
         const auto& dataDirs = dirs_.dataDirs(filter.username(), year);
         const fs::path& rawDir = dataDirs.rawDir;
 
@@ -277,15 +275,13 @@ private:
         {
             const auto fn = it.path().filename();
 
-            if ((yearFrom == year && fn < fnFrom) || 
-                (yearTo == year && fn > fnTo))
+            if ((yearFrom == year && fn < fnFrom) || (yearTo == year && fn > fnTo))
             {
                 continue;
             }
 
-            if ((yearFrom == yearTo) && 
-                ((!fnFrom.empty() && fn < fnFrom) ||
-                 (!fnTo.empty() && fn > fnTo) ||
+            if ((yearFrom == yearTo) &&
+                ((!fnFrom.empty() && fn < fnFrom) || (!fnTo.empty() && fn > fnTo) ||
                  !keepGoing || !it.is_regular_file()))
             {
                 continue;
@@ -331,7 +327,8 @@ private:
                 auto& wnd = json["wnd"];
                 entry.windowInfo.title = wnd["title"].get<std::string>();
 
-                const Point leftTop(getAs<int>(wnd["lt"][0]), getAs<int>(wnd["lt"][1]));
+                const Point leftTop(getAs<int>(wnd["lt"][0]),
+                                    getAs<int>(wnd["lt"][1]));
                 const Dimensions dimensions(getAs<uint32_t>(wnd["wh"][0]),
                                             getAs<uint32_t>(wnd["wh"][1]));
                 entry.windowInfo.placement = Rect(leftTop, dimensions);

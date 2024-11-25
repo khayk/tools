@@ -8,8 +8,8 @@
 #include <unordered_set>
 
 using namespace std::chrono_literals;
-using ::testing::Return;
 using ::testing::_;
+using ::testing::Return;
 
 namespace {
 
@@ -41,29 +41,25 @@ WindowInfo sampleWndInfo(const std::string& title = "title",
                          const Rect& plcmnt = sampleRect(),
                          const Image& img = sampleImage())
 {
-    return {
-        plcmnt,
-        img,
-        title
-    };
+    return {plcmnt, img, title};
 }
 
 Entry sampleEntry(const std::string& username = "john",
-                      const ProcessInfo& pi = sampleProcInfo(),
-                      const WindowInfo& wi = sampleWndInfo(),
-                      const Timestamp ts = sampleTimestamp())
+                  const ProcessInfo& pi = sampleProcInfo(),
+                  const WindowInfo& wi = sampleWndInfo(),
+                  const Timestamp ts = sampleTimestamp())
 {
     return {username, pi, wi, ts};
 }
 
 class MockRepo : public FileSystemRepository
 {
-public: 
+public:
     MockRepo(fs::path reportsDir)
         : FileSystemRepository(reportsDir)
     {
     }
-    
+
     // Overrides
     MOCK_METHOD(void, add, (const Entry& entry), (override));
     MOCK_METHOD(void, queryUsers, (const UserCb& cb), (const, override));
@@ -83,7 +79,7 @@ TEST(FileSystemRepositoryTest, ReportsDirNotCreated)
     FileSystemRepository repo(reportsDir.path());
 
     EXPECT_EQ(reportsDir.path(), repo.reportsDir());
-    
+
     // Directory will be created when we add something
     EXPECT_FALSE(fs::exists(reportsDir.path()));
 }
@@ -93,7 +89,7 @@ TEST(FileSystemRepositoryTest, ReportsDirCreated)
     file::TempDir reportsDir("kdmn-tst", TempDir::CreateMode::Manual);
     FileSystemRepository repo(reportsDir.path());
 
-    const Entry entry = sampleEntry();    
+    const Entry entry = sampleEntry();
     EXPECT_NO_THROW(repo.add(entry));
     EXPECT_TRUE(fs::exists(reportsDir.path()));
 }
@@ -145,7 +141,7 @@ TEST(FileSystemRepositoryTest, AddEntriesOneUser)
     EXPECT_NO_THROW(repo.add(entry));
     EXPECT_NO_THROW(repo.add(entry));
     EXPECT_NO_THROW(repo.add(entry));
-    
+
     repo.queryUsers([&entry](const std::string& usename) {
         EXPECT_EQ(entry.username, usename);
         return true;
@@ -156,7 +152,7 @@ TEST(FileSystemRepositoryTest, QueryEntriesMultipleUsers)
 {
     file::TempDir reportsDir("kdmn-tst");
     MockRepo repo(reportsDir.path());
-    
+
     constexpr int numUsers = 3;
     constexpr int numEntriesPerUser = 4;
 
@@ -170,26 +166,25 @@ TEST(FileSystemRepositoryTest, QueryEntriesMultipleUsers)
     for (int i = 0; i < numUsers; ++i)
     {
         const auto name = fmt::format("name-{}", i);
-        
+
         for (int j = 1; j <= numEntriesPerUser; ++j)
         {
-            auto ts = sampleTimestamp(SystemClock::now() + (i * numEntriesPerUser + j) * 1s, j * 1s);
-            const auto x = std::chrono::duration_cast<std::chrono::milliseconds>(ts.capture.time_since_epoch());
+            using std::chrono::duration_cast;
+            using std::chrono::milliseconds;
+
+            auto ts =
+                sampleTimestamp(SystemClock::now() + (i * numEntriesPerUser + j) * 1s,
+                                j * 1s);
+            const auto x = duration_cast<milliseconds>(ts.capture.time_since_epoch());
             ts.capture = TimePoint {x};
 
             entries.push_back(
-                sampleEntry(
-                    name, 
-                    sampleProcInfo(), 
-                    sampleWndInfo(), 
-                    ts
-                )
-            );     
+                sampleEntry(name, sampleProcInfo(), sampleWndInfo(), ts));
         }
     }
 
     // Deliberately add them in a wrong order
-    for (const auto& e: entries)
+    for (const auto& e : entries)
     {
         EXPECT_NO_THROW(repo.add(e));
     }
@@ -201,24 +196,22 @@ TEST(FileSystemRepositoryTest, QueryEntriesMultipleUsers)
         names.insert(entries[i].username);
     }
 
-    repo.queryUsers(
-        [&names, &usersEnumrated](const std::string& username) mutable {
-            EXPECT_TRUE(names.count(username) > 0);
-            names.erase(username);
-            ++usersEnumrated;
-            return true;
-        });
+    repo.queryUsers([&names, &usersEnumrated](const std::string& username) mutable {
+        EXPECT_TRUE(names.count(username) > 0);
+        names.erase(username);
+        ++usersEnumrated;
+        return true;
+    });
     EXPECT_EQ(usersEnumrated, numUsers);
 
-    
+
     usersEnumrated = 0;
-    repo.queryUsers(
-        [&usersEnumrated](const std::string&) mutable {
-            ++usersEnumrated;
-            return false;   // instruct to stop enumaration
-        });
+    repo.queryUsers([&usersEnumrated](const std::string&) mutable {
+        ++usersEnumrated;
+        return false; // instruct to stop enumaration
+    });
     EXPECT_EQ(1, usersEnumrated);
-    
+
     size_t entriesEnumarated = 0;
     for (size_t i = 0; i < static_cast<size_t>(numUsers); ++i)
     {

@@ -57,8 +57,8 @@ TEST(UtilsStrTests, U8Conversions)
 
 TEST(UtilsStrTests, U8S2WSPerf)
 {
-    const auto s =
-        u8"Լաւ է հանգիստ վաստակել մի բուռ, քան չարչարանքով ու տանջանքով՝ երկու բուռ։";
+    const auto s = u8"Լաւ է հանգիստ վաստակել մի բուռ, քան չարչարանքով ու տանջանքով՝ "
+                   u8"երկու բուռ։";
     std::wstring ws;
     std::string ss;
 

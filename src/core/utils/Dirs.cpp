@@ -48,7 +48,8 @@ fs::path home(std::error_code& ec)
     const char* homeDir = std::getenv("HOME");
     if (!homeDir)
     {
-        ec.assign(static_cast<int>(std::errc::invalid_argument), std::system_category());
+        ec.assign(static_cast<int>(std::errc::invalid_argument),
+                  std::system_category());
         return {};
     }
 

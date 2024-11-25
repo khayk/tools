@@ -6,7 +6,8 @@
 // * Entry          // full representation of the event
 // * Statistics     // statistical data about multiple entries (part of report)
 //
-// * Report         // summary of the collection of an event based on a certain criteria
+// * Report         // summary of the collection of an event based on a certain
+// criteria
 // * ReportBuilder  // interface for producing a report
 //
 // * IRepository

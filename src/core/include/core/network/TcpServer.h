@@ -6,16 +6,16 @@ namespace tcp {
 
 class Server
 {
-    using ListeningCbs   = dp::Callback<uint16_t>;
-    using ConnectionCbs  = dp::Callback<Connection&>;
-    using CloseCbs       = dp::Callback<>;
-    using ErrorCbs       = dp::Callback<const ErrorCode&>;
+    using ListeningCbs = dp::Callback<uint16_t>;
+    using ConnectionCbs = dp::Callback<Connection&>;
+    using CloseCbs = dp::Callback<>;
+    using ErrorCbs = dp::Callback<const ErrorCode&>;
 
 public:
-    using ListeningCb    = ListeningCbs::Function;
-    using ConnectionCb   = ConnectionCbs::Function;
-    using CloseCb        = CloseCbs::Function;
-    using ErrorCb        = ErrorCbs::Function;
+    using ListeningCb = ListeningCbs::Function;
+    using ConnectionCb = ConnectionCbs::Function;
+    using CloseCb = CloseCbs::Function;
+    using ErrorCb = ErrorCbs::Function;
 
     using CreateConnectionCb = std::function<std::shared_ptr<Connection>(Socket&&)>;
 

@@ -37,7 +37,9 @@ void buildResponse(int status,
     }
 }
 
-void buildResponse(int status, const nlohmann::json& answer, nlohmann::ordered_json& js)
+void buildResponse(int status,
+                   const nlohmann::json& answer,
+                   nlohmann::ordered_json& js)
 {
     buildResponse(status, "", answer, js);
 }

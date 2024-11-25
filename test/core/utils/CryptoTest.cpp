@@ -58,8 +58,9 @@ TEST(UtilsCryptoTests, CheckEncodeDecode64)
 
     testData.emplace_back("", "");
     testData.emplace_back("abcd", "YWJjZA==");
-    testData.emplace_back("hdsajfhsufhssfh632746324h2462h32k4324327482h4",
-                          "aGRzYWpmaHN1Zmhzc2ZoNjMyNzQ2MzI0aDI0NjJoMzJrNDMyNDMyNzQ4Mmg0");
+    testData.emplace_back(
+        "hdsajfhsufhssfh632746324h2462h32k4324327482h4",
+        "aGRzYWpmaHN1Zmhzc2ZoNjMyNzQ2MzI0aDI0NjJoMzJrNDMyNDMyNzQ4Mmg0");
     testData.emplace_back("48029347348274234242432746",
                           "NDgwMjkzNDczNDgyNzQyMzQyNDI0MzI3NDY=");
     testData.emplace_back("Hello world! How're you doing?",

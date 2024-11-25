@@ -110,11 +110,12 @@ void DuplicateDetector::detect(const Options& options)
         }
 
         // Remove files with unique hashes
-        auto it = std::remove_if(std::begin(nodes),
-                                 std::end(nodes),
-                                 [&hashes](const Node* const node) {
-                                     return hashes.find(node->sha256()) == hashes.end();
-                                 });
+        auto it =
+            std::remove_if(std::begin(nodes),
+                           std::end(nodes),
+                           [&hashes](const Node* const node) {
+                               return hashes.find(node->sha256()) == hashes.end();
+                           });
 
         nodes.erase(it, nodes.end());
 

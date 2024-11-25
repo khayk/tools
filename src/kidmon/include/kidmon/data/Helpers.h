@@ -4,7 +4,10 @@
 namespace jsu {
 
 template <typename Value>
-void get(const nlohmann::json& js, std::string_view key, Value& v, bool required = true)
+void get(const nlohmann::json& js,
+         std::string_view key,
+         Value& v,
+         bool required = true)
 {
     if (const auto it = js.find(key); it != js.end())
     {

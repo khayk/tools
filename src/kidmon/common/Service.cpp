@@ -86,7 +86,8 @@ public:
 
         if (0 == ::StartServiceCtrlDispatcher(startTable.data()))
         {
-            spdlog::error("Failed to start service ctrl dispatcher: {0}", GetLastError());
+            spdlog::error("Failed to start service ctrl dispatcher: {0}",
+                          GetLastError());
         }
 #else
         throw std::runtime_error(fmt::format("Not implemented: {}", __func__));
@@ -239,18 +240,19 @@ private:
                 break;
         }
 
-        // It is very important to update the status to SERVICE_STOP_PENDING, only then
-        // call the shutdown, otherwise, if, as a result of shutdown, the other thread
-        // sets service status to SERVICE_STOPPED and after that we set the status to
-        // SERVICE_STOP_PENDING, service control manager will hang and wait until we set
-        // the status to SERVICE_STOPPED.
+        // It is very important to update the status to SERVICE_STOP_PENDING, only
+        // then call the shutdown, otherwise, if, as a result of shutdown, the other
+        // thread sets service status to SERVICE_STOPPED and after that we set the
+        // status to SERVICE_STOP_PENDING, service control manager will hang and wait
+        // until we set the status to SERVICE_STOPPED.
         if (!::SetServiceStatus(handle_, &status_))
         {
             spdlog::error("Failed to update service status: {0}", GetLastError());
         }
         else
         {
-            spdlog::info("Service state: {}", serviceStateToStr(status_.dwCurrentState));
+            spdlog::info("Service state: {}",
+                         serviceStateToStr(status_.dwCurrentState));
         }
 
         if (status_.dwCurrentState == SERVICE_STOP_PENDING)

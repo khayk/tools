@@ -9,7 +9,7 @@ class Communicator
     static void defHandler(bool) {}
 
 public:
-    using MsgCb  = std::function<void(const std::string&)>;
+    using MsgCb = std::function<void(const std::string&)>;
     using SentCb = std::function<void(bool)>;
 
     explicit Communicator(Connection& conn);
