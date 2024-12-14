@@ -2,7 +2,8 @@
 #include <cassert>
 #include <clocale>
 #include <algorithm>
-#include <wctype.h>
+#include <cwctype>
+#include <ranges>
 
 namespace str {
 
@@ -10,13 +11,11 @@ namespace {
 
 class LocaleInitializer
 {
-    const char* prevLocale_ {nullptr};
+    const char* prevLocale_ {std::setlocale(LC_ALL, "en_US.utf8")};
 
 public:
     LocaleInitializer()
     {
-        prevLocale_ = std::setlocale(LC_ALL, "en_US.utf8");
-
         if (prevLocale_ == nullptr)
         {
             prevLocale_ = std::setlocale(LC_ALL, "C.utf8");
@@ -42,7 +41,7 @@ void s2ws(std::string_view utf8, std::wstring& wstr)
 #ifdef _WIN32
     mbsrtowcs_s(&len, nullptr, 0, &mbstr, 0, &state);
     wstr.resize(len > 0 ? len - 1 : 0);
-    mbsrtowcs_s(&len, &wstr[0], len, &mbstr, len, &state);
+    mbsrtowcs_s(&len, wstr.data(), len, &mbstr, len, &state);
 #else
     len = 1 + std::mbsrtowcs(nullptr, &mbstr, 0, &state);
     wstr.resize(len > 0 ? len - 1 : 0);
@@ -112,7 +111,7 @@ std::u8string_view stou8(std::string_view sv)
 std::string& trimLeft(std::string& s)
 {
     s.erase(s.begin(),
-            std::find_if(s.begin(), s.end(), [](const unsigned char ch) noexcept {
+            std::ranges::find_if(s, [](const unsigned char ch) noexcept {
                 return std::isgraph(ch);
             }));
 
@@ -121,8 +120,7 @@ std::string& trimLeft(std::string& s)
 
 std::string& trimRight(std::string& s)
 {
-    s.erase(std::find_if(s.rbegin(),
-                         s.rend(),
+    s.erase(std::ranges::find_if(std::ranges::reverse_view(s),
                          [](const unsigned char ch) noexcept {
                              return std::isgraph(ch);
                          })
@@ -139,8 +137,7 @@ std::string& trim(std::string& s)
 
 std::string& asciiLowerInplace(std::string& str)
 {
-    std::transform(str.begin(),
-                   str.end(),
+    std::ranges::transform(str,
                    str.begin(),
                    [](const unsigned char c) noexcept {
                        return static_cast<char>(std::tolower(c));
@@ -162,7 +159,7 @@ std::string& utf8LowerInplace(std::string& str, std::wstring* buf)
 
 std::wstring& lowerInplace(std::wstring& str)
 {
-    std::transform(str.begin(), str.end(), str.begin(), [](const auto& c) noexcept {
+    std::ranges::transform(str, str.begin(), [](const auto& c) noexcept {
         return static_cast<std::wstring::value_type>(towlower(static_cast<wint_t>(c)));
     });
     return str;

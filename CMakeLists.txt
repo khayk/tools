@@ -23,6 +23,7 @@ message("CMake source dir      : ${CMAKE_SOURCE_DIR}")
 message("CMake generator       : ${CMAKE_GENERATOR}")
 message("Object dir            : ${OBJECT_DIR}")
 message("CMake build type      : ${CMAKE_BUILD_TYPE}")
+message("Config types          : ${CMAKE_CONFIGURATION_TYPES}")
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -54,28 +55,20 @@ else()
     # add_link_options(-fsanitize=address -fsanitize=undefined)
 
     # Not tested, taken from spdlog
-    add_compile_options(
-        -fsanitize=address,undefined
-        -fno-sanitize=signed-integer-overflow
-        -fno-sanitize-recover=all
-        -fno-omit-frame-pointer
-    )
-    add_link_options(
-        -fsanitize=address,undefined
-        -fuse-ld=gold
-    )
+    # add_compile_options(
+    #     -fsanitize=address,undefined
+    #     -fno-sanitize=signed-integer-overflow
+    #     -fno-sanitize-recover=all
+    #     -fno-omit-frame-pointer
+    # )
+    # add_link_options(
+    #     -fsanitize=address,undefined
+    #     -fuse-ld=gold
+    # )
 endif()
 
-# Diagnostic information
-message("Config types          : ${CMAKE_CONFIGURATION_TYPES}")
-
-option(TOOLS_TIDY "run clang-tidy" OFF)
-
-if(TOOLS_TIDY)
-    set(CMAKE_CXX_CLANG_TIDY "clang-tidy")
-    set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-    message(STATUS "Enabled clang-tidy")
-endif()
+option(TOOLS_TIDY "Use clang-tidy" OFF)
+include(ClangTidy)
 
 option(BUILD_TESTS "Tests enabled by default" ON)
 

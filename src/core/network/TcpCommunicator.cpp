@@ -130,7 +130,7 @@ Communicator::Communicator(Connection& conn)
 {
 }
 
-Communicator::~Communicator() {}
+Communicator::~Communicator() = default;
 
 bool Communicator::onMsg(MsgCb msgCb)
 {

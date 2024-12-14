@@ -42,8 +42,6 @@ elseif(UNIX AND NOT APPLE)
    list(APPEND LIB_SRCS ${OS_LINUX})
 endif()
 
-# include_directories(".")
-
 list(FILTER LIB_SRCS EXCLUDE REGEX ".*Main.cpp")
 
 find_package(nlohmann_json CONFIG REQUIRED)

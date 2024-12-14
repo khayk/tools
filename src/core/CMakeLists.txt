@@ -41,3 +41,5 @@ target_link_libraries(${PROJECT_LIB} PUBLIC
     ${OPENSSL_LIBRARIES}
     spdlog::spdlog
 )
+
+AddClangTidy(${PROJECT_LIB})

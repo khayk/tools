@@ -1,4 +1,4 @@
-Checks: 'cppcoreguidelines-*,
+Checks: 'cppcoreguidelines-*,cppcoreguidelines-pro-type-reinterpret-cast
 performance-*,
 modernize-*,
 google-*,
@@ -11,9 +11,10 @@ clang-analyzer-*,
 -cppcoreguidelines-avoid-non-const-global-variables,
 -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
 -cppcoreguidelines-pro-bounds-pointer-arithmetic,
--cppcoreguidelines-pro-type-static-cast-downcast
+-cppcoreguidelines-pro-type-reinterpret-cast,
+-cppcoreguidelines-pro-type-static-cast-downcast,
 -cppcoreguidelines-pro-type-vararg,
--cppcoreguidelines-special-member-functions
+-cppcoreguidelines-special-member-functions,
 -google-readability-braces-around-statements,
 -google-runtime-int,
 -google-runtime-references,
@@ -27,13 +28,13 @@ clang-analyzer-*,
 -readability-identifier-length,
 -readability-magic-numbers,
 -readability-named-parameter,
+-readability-math-missing-parentheses,
 -cert-env33-c
 '
 
 
 WarningsAsErrors: ''
 HeaderFilterRegex: '*spdlog/[^f].*'
-AnalyzeTemporaryDtors: false
 FormatStyle:     none
 
 CheckOptions:
