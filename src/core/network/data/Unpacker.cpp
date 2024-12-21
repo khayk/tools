@@ -7,7 +7,7 @@ void Unpacker::put(std::string_view bytes)
     buffer_ += bytes;
     readSize();
 
-    if (bytes.size() > 0)
+    if (!bytes.empty())
     {
         status_ = Status::HasMore;
     }
@@ -29,7 +29,7 @@ Unpacker::Status Unpacker::status() const noexcept
 Unpacker::Status Unpacker::get(std::string& buf, size_t maxSize)
 {
     status_ = Status::NeedMore;
-    const auto bytes = std::min(std::min(rem_, maxSize), buffer_.size() - off_);
+    const auto bytes = std::min({rem_, maxSize, buffer_.size() - off_});
 
     if (bytes == 0)
     {

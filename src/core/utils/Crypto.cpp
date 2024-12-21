@@ -36,7 +36,7 @@ void hexadecimal(unsigned char* const hash, size_t size, std::string& out)
 void sha256(const std::string_view data, std::string& out)
 {
     std::array<unsigned char, SHA256_DIGEST_LENGTH> hash {};
-    auto in = reinterpret_cast<const unsigned char*>(data.data());
+    const auto* in = reinterpret_cast<const unsigned char*>(data.data());
     SHA256(in, data.size(), hash.data());
     hexadecimal(hash.data(), hash.size(), out);
 }
