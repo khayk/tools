@@ -80,7 +80,7 @@ void asyncCommunicatorTest(const std::vector<std::string>& input)
 
     // This is a maximum time dedicated for the test, but
     // in reality, test will take a few milliseconds
-    ioc.run_for(1s);
+    ioc.run_for(3s);
 
     ASSERT_EQ(input.size(), received.size());
 

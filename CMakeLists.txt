@@ -41,6 +41,7 @@ if(MSVC)
     add_compile_definitions(_WIN32_WINNT=_WIN32_WINNT_WIN10)
     add_compile_definitions(NOMINMAX)
 else()
+    # Use options below to enable build with sanitization
     add_compile_options(
         -Wall
         -Wextra
@@ -48,11 +49,14 @@ else()
         -Wconversion
         -Werror
         -Wfatal-errors
+        -fsanitize=address
+        -fsanitize=undefined
     )
 
-    # Use options below to enable build with sanitization
-    # add_compile_options(-Wall -Wextra -Wpedantic -fsanitize=address  -fsanitize=undefined)
-    # add_link_options(-fsanitize=address -fsanitize=undefined)
+    add_link_options(
+        -fsanitize=address
+        -fsanitize=undefined
+    )
 
     # Not tested, taken from spdlog
     # add_compile_options(
