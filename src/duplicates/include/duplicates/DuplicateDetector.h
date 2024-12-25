@@ -9,50 +9,48 @@
 
 namespace fs = std::filesystem;
 
+namespace tools {
+namespace dups {
+
 struct DupEntry
 {
-    std::wstring dir;
-    std::wstring filename;
-    size_t size;
-    std::string sha;
+    fs::path dir;
+    fs::path filename;
+    size_t size {};
+    std::string sha256;
 };
 
 struct DupGroup
 {
-    size_t groupId;
+    size_t groupId {};
     std::vector<DupEntry> entires;
-};
-
-struct Options
-{
-    size_t minSize {0};
-    size_t maxSize {0};
 };
 
 class DuplicateDetector
 {
 public:
-    using FileCallback = std::function<void(const std::wstring&)>;
+    using FileCallback = std::function<void(const fs::path&)>;
     using DupGroupCallback = std::function<void(const DupGroup&)>;
+
+    struct Options
+    {
+        size_t minSize {};
+        size_t maxSize {};
+    };
 
     DuplicateDetector();
     ~DuplicateDetector();
 
-    void add(const fs::path& path);
-    size_t files() const noexcept;
-    size_t groups() const noexcept;
+    void addFile(const fs::path& path);
+    
+    size_t numFiles() const noexcept;
+    size_t numGroups() const noexcept;
 
     void detect(const Options& options);
+    void reset();
 
-    void enumFiles(FileCallback cb) const;
-    void enumDuplicates(DupGroupCallback cb) const;
-
-    /**
-     * @brief Print the content as a tree
-     *
-     * @param os The output stream
-     */
-    void treeDump(std::ostream& os);
+    void enumFiles(const FileCallback& cb) const;
+    void enumDuplicates(const DupGroupCallback& cb) const;
 
 private:
     using Nodes = std::vector<const Node*>;
@@ -62,3 +60,6 @@ private:
     std::unique_ptr<Node> root_;
     MapBySize dups_;
 };
+
+} // namespace dups
+} // namespace tools

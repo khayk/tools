@@ -1,27 +1,23 @@
 #include <duplicates/DuplicateDetector.h>
 #include <duplicates/Utils.h>
 
-#include <core/utils/StopWatch.h>
-#include <core/utils/Str.h>
-
-#include <iostream>
+namespace tools {
+namespace dups {
 
 DuplicateDetector::DuplicateDetector()
 {
-    names_.emplace(L"");
-    root_ = std::make_unique<Node>(*names_.begin());
+    reset();
 }
 
 DuplicateDetector::~DuplicateDetector()
 {
-    std::cout << "Total nodes count: " << root_->nodesCount() << std::endl;
 }
 
-void DuplicateDetector::add(const fs::path& path)
+void DuplicateDetector::addFile(const fs::path& path)
 {
     Node* node = root_.get();
     auto separator = fs::path::preferred_separator;
-    std::wstring wpath = path.wstring();
+    std::wstring wpath = path.lexically_normal().wstring();
     std::wstring_view wsv = wpath;
 
     while (!wsv.empty())
@@ -42,12 +38,12 @@ void DuplicateDetector::add(const fs::path& path)
     }
 }
 
-size_t DuplicateDetector::files() const noexcept
+size_t DuplicateDetector::numFiles() const noexcept
 {
-    return root_->leafsCount();
+    return !root_->leaf() ? root_->leafsCount() : 0;
 }
 
-size_t DuplicateDetector::groups() const noexcept
+size_t DuplicateDetector::numGroups() const noexcept
 {
     return dups_.size();
 }
@@ -74,12 +70,12 @@ void DuplicateDetector::detect(const Options& options)
     });
 
     // Files with unique size can be quickly excluded
-    eraseIf(dups_, [](const auto& vt) {
+    util::eraseIf(dups_, [](const auto& vt) {
         return vt.second.size() < 2;
     });
 
     // Here we have files with the same size
-    eraseIf(dups_, [](auto& vt) {
+    util::eraseIf(dups_, [](auto& vt) {
         std::map<std::string, Nodes> hashes;
 
         Nodes& nodes = vt.second;
@@ -99,7 +95,7 @@ void DuplicateDetector::detect(const Options& options)
         }
 
         // Remove all unique items
-        eraseIf(hashes, [](const auto& vt) {
+        util::eraseIf(hashes, [](const auto& vt) {
             return vt.second.size() < 2;
         });
 
@@ -123,7 +119,17 @@ void DuplicateDetector::detect(const Options& options)
     });
 }
 
-void DuplicateDetector::enumFiles(FileCallback cb) const
+void DuplicateDetector::reset()
+{
+    dups_.clear();
+    root_.reset();
+    names_.clear();
+
+    names_.emplace(L"");
+    root_ = std::make_unique<Node>(*names_.begin());
+}
+
+void DuplicateDetector::enumFiles(const FileCallback& cb) const
 {
     std::wstring ws;
 
@@ -133,7 +139,7 @@ void DuplicateDetector::enumFiles(FileCallback cb) const
     });
 }
 
-void DuplicateDetector::enumDuplicates(DupGroupCallback cb) const
+void DuplicateDetector::enumDuplicates(const DupGroupCallback& cb) const
 {
     DupGroup group;
     std::wstring ws;
@@ -159,7 +165,7 @@ void DuplicateDetector::enumDuplicates(DupGroupCallback cb) const
             e.dir = folder;
             e.filename = filename;
             e.size = i->size();
-            e.sha = i->sha256();
+            e.sha256 = i->sha256();
         }
 
         cb(group);
@@ -167,21 +173,5 @@ void DuplicateDetector::enumDuplicates(DupGroupCallback cb) const
     }
 }
 
-void DuplicateDetector::treeDump(std::ostream& os)
-{
-    root_->enumNodes([&os](const Node* node) {
-        std::wstring ws(node->name());
-        os << std::string(2 * node->depth(), ' ');
-
-        if (!node->leaf())
-        {
-            os << "- ";
-        }
-        else
-        {
-            os << "* ";
-        }
-
-        os << str::ws2s(ws) << " (" << node->size() << ")\n";
-    });
-}
+} // namespace dups
+} // namespace tools
