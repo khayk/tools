@@ -1,12 +1,18 @@
 #include <duplicates/DuplicateDetector.h>
 #include <core/utils/StopWatch.h>
 #include <core/utils/Str.h>
+#include <core/utils/File.h>
 
 #include <iostream>
 #include <codecvt>
 #include <locale>
 #include <string_view>
 #include <fstream>
+
+
+using namespace tools::dups;
+
+namespace {
 
 void printUsage()
 {
@@ -31,10 +37,12 @@ void dumpToFile(const DuplicateDetector& detector, std::string_view filePath)
                              new std::codecvt_utf16<wchar_t, MaxCode, Mode>);
     pathsFile.imbue(utf16_locale);
 
-    detector.enumFiles([&pathsFile](const std::wstring& ws) {
-        pathsFile << ws << '\n';
+    detector.enumFiles([&pathsFile](const fs::path& p) {
+        pathsFile << p << '\n';
     });
 }
+
+} // namespace
 
 int main(int argc, const char* argv[])
 {
@@ -53,31 +61,41 @@ int main(int argc, const char* argv[])
         DuplicateDetector detector;
         StopWatch sw(true);
 
-        for (fs::recursive_directory_iterator i(srcDir), end; i != end; ++i)
-        {
-            if (!fs::is_directory(i->path()))
-            {
-                const auto& p = i->path();
-                detector.add(p);
-            }
-        }
+        std::vector<std::string> excludedDirs {".git"};
+        file::enumFilesRecursive(
+            srcDir,
+            excludedDirs,
+            [&detector](const auto& p, const std::error_code& ec) {
+                if (ec)
+                {
+                    std::cerr << "Error while processing path: " << p << std::endl; 
+                    return;
+                }
 
-        std::cout << "Discovered files: " << detector.files();
+                if (fs::is_regular_file(p))
+                {
+                    detector.addFile(p);
+                }
+            });
+        
+        std::cout << "Discovered files: " << detector.numFiles();
         std::cout << ", elapsed: " << sw.elapsedMs() << " ms" << std::endl;
 
         // Dump content
         std::cout << "\nPrinting the content of the directory...\n\n";
-        detector.enumFiles([](const std::wstring& ws) {
-            std::cout << str::ws2s(ws) << '\n';
+        std::ofstream outf("files.txt", std::ios::out | std::ios::binary);
+
+        detector.enumFiles([&outf](const fs::path& p) {
+            outf << p << '\n';
         });
         std::cout << "\nPrinting completed.\n";
 
         sw.start();
         std::cout << "\nDetecting duplicates...:\n";
-        detector.detect(Options {});
+        detector.detect(DuplicateDetector::Options {});
         std::cout << "Detection took: " << sw.elapsedMs() << " ms" << std::endl;
 
-        detector.treeDump(std::cout);
+        //detector.treeDump(std::cout);
 
         detector.enumDuplicates([](const DupGroup& group) {
             if (group.entires.size() > 2)
@@ -87,9 +105,12 @@ int main(int argc, const char* argv[])
 
             for (const auto& e : group.entires)
             {
-                std::cout << group.groupId << ',' << str::ws2s(e.dir) << ','
-                          << str::ws2s(e.filename) << ','
-                          << std::string_view(e.sha).substr(0, 10) << ',' << e.size
+                std::cout << "[" << std::setw(3) << group.groupId << "] - " 
+                          << std::string_view(e.sha256).substr(0, 10) << ',' 
+                          << std::setw(15) << e.size << " "
+                          << e.dir 
+                          << " -> "
+                          << e.filename
                           << "\n";
             }
 
