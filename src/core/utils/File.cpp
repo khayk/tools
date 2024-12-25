@@ -185,4 +185,47 @@ TempDir::TempDir(const std::string_view namePrefix,
     }
 }
 
+
+void enumFilesRecursive(const fs::path& dir,
+                        const std::vector<std::string>& excludedDirs,
+                        const PathCallback& cb)
+{
+    try
+    {
+        std::error_code ec {};
+
+        for (const auto& entry : fs::directory_iterator(dir))
+        {
+            const fs::path& currentPath = entry.path();
+
+            if (fs::is_directory(currentPath))
+            {
+                const std::string currentName = currentPath.filename().string();
+
+                // Check if the current directory should be excluded
+                if (std::find(excludedDirs.begin(), excludedDirs.end(), currentName) !=
+                    excludedDirs.end())
+                {
+                    continue; // Skip to the next entry
+                }
+
+                cb(currentPath, ec);
+                enumFilesRecursive(currentPath, excludedDirs, cb);
+            }
+            else
+            {
+                cb(currentPath, ec);
+            }
+        }
+    }
+    catch (const std::system_error& error)
+    {
+        cb(dir, error.code());
+    }
+    catch (const std::exception&)
+    {
+        cb(dir, std::make_error_code(std::errc::no_such_file_or_directory));
+    }
+}
+
 } // namespace file
