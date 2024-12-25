@@ -5,6 +5,8 @@
 
 namespace fs = std::filesystem;
 
+namespace tools {
+namespace dups {
 namespace detail {
 
 void fullPathHelper(const Node* node, size_t size, std::wstring& dest)
@@ -25,11 +27,11 @@ void fullPathHelper(const Node* node, size_t size, std::wstring& dest)
     dest.append(node->name());
 }
 
-size_t tryGetFileSize(const std::wstring& ws)
+bool tryGetFileSize(const std::wstring& ws, size_t& size)
 {
-    std::error_code ec;
-
-    return fs::file_size(fs::path(ws), ec);
+    std::error_code ec {};
+    size = fs::file_size(fs::path(ws), ec);
+    return !ec;
 }
 
 } // namespace detail
@@ -181,6 +183,11 @@ size_t Node::nodesCount() const noexcept
 
 size_t Node::leafsCount() const noexcept
 {
+    if (leaf())
+    {
+        return 1;
+    }
+
     size_t count = 0;
 
     for (const auto& it : childs_)
@@ -189,7 +196,7 @@ size_t Node::leafsCount() const noexcept
         count += child->leafsCount();
     }
 
-    return count + ((childs_.size() == 0) ? 1 : 0);
+    return count;
 }
 
 void Node::update()
@@ -209,8 +216,7 @@ void Node::updateHelper(Node* node, std::wstring& ws)
     {
         ws.clear();
         node->fullPath(ws);
-        node->size_ = detail::tryGetFileSize(ws);
-
+        detail::tryGetFileSize(ws, node->size_);
         return;
     }
 
@@ -225,3 +231,6 @@ void Node::updateHelper(Node* node, std::wstring& ws)
         node->size_ += child->size();
     }
 }
+
+} // namespace dups
+} // namespace tools

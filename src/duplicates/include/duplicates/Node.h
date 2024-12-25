@@ -5,6 +5,9 @@
 #include <string>
 #include <map>
 
+namespace tools {
+namespace dups {
+
 class Node
 {
 public:
@@ -50,3 +53,6 @@ private:
 
     void updateHelper(Node* node, std::wstring& ws);
 };
+
+} // namespace dups
+} // namespace tools
