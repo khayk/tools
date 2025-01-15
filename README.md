@@ -100,3 +100,4 @@ Own implementation of different tools.
         * Add custom arguments into `"args": [],`
 * Other - x
 hello
+hello
