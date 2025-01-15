@@ -98,3 +98,4 @@ Own implementation of different tools.
         * Copy paste desired settings from section `Debug using a launch.json file` from the link above.
             * If you debug with `msvc` use that setting
         * Add custom arguments into `"args": [],`
+* Other
