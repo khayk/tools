@@ -99,3 +99,4 @@ Own implementation of different tools.
             * If you debug with `msvc` use that setting
         * Add custom arguments into `"args": [],`
 * Other - x
+hello
