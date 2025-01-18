@@ -182,5 +182,10 @@ void DuplicateDetector::enumDuplicates(const DupGroupCallback& cb) const
     }
 }
 
+const Node* DuplicateDetector::root() const
+{
+    return root_.get();
+}
+
 } // namespace tools::dups
 

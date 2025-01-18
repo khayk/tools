@@ -51,6 +51,7 @@ public:
     void enumFiles(const FileCallback& cb) const;
     void enumDuplicates(const DupGroupCallback& cb) const;
 
+    const Node* root() const;
 private:
     using Nodes = std::vector<const Node*>;
     using MapBySize = std::map<size_t, Nodes>;

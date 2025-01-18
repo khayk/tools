@@ -1,12 +1,10 @@
 #include <duplicates/DuplicateDetector.h>
+#include <duplicates/Utils.h>
 #include <core/utils/StopWatch.h>
 #include <core/utils/Str.h>
 #include <core/utils/File.h>
 
 #include <iostream>
-#include <codecvt>
-#include <locale>
-#include <string_view>
 #include <fstream>
 
 
@@ -76,7 +74,7 @@ int main(int argc, const char* argv[])
         detector.detect(DuplicateDetector::Options {});
         std::cout << "Detection took: " << sw.elapsedMs() << " ms" << std::endl;
 
-        //detector.treeDump(std::cout);
+        util::treeDump(detector.root(), std::cout);
 
         detector.enumDuplicates([](const DupGroup& group) {
             if (group.entires.size() > 2)

@@ -22,22 +22,15 @@ uint16_t digits(size_t n)
 void treeDump(const Node* root, std::ostream& os)
 {
     root->enumNodes([&os](const Node* node) {
+        if (node->depth() == 0)
+        {
+            return;
+        }
+
         std::wstring ws(node->name());
-        os << std::string(2 * node->depth(), ' ');
-
-        if (!node->leaf())
-        {
-            os << "- ";
-        }
-        else
-        {
-            os << "* ";
-        }
-
-        os << str::ws2s(ws) << " (" << node->size() << ")\n";
+        os << std::string(1 * (node->depth() - 1), ' ');
+        os << str::ws2s(ws) << (node->leaf() ? "" : "/") << '\n';
     });
 }
 
 } // namespace tools::dups::util
-
-
