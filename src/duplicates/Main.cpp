@@ -22,25 +22,6 @@ Usage:
 )";
 }
 
-void dumpToFile(const DuplicateDetector& detector, std::string_view filePath)
-{
-    std::wofstream pathsFile(std::string(filePath), std::ios::out | std::ios::binary);
-
-    if (!pathsFile)
-    {
-        std::cerr << "Failed to open file: " << filePath << std::endl;
-    }
-
-    const unsigned long MaxCode = 0x10ffff;
-    const std::codecvt_mode Mode = std::generate_header;
-    std::locale utf16_locale(pathsFile.getloc(),
-                             new std::codecvt_utf16<wchar_t, MaxCode, Mode>);
-    pathsFile.imbue(utf16_locale);
-
-    detector.enumFiles([&pathsFile](const fs::path& p) {
-        pathsFile << p << '\n';
-    });
-}
 
 } // namespace
 
@@ -68,7 +49,7 @@ int main(int argc, const char* argv[])
             [&detector](const auto& p, const std::error_code& ec) {
                 if (ec)
                 {
-                    std::cerr << "Error while processing path: " << p << std::endl; 
+                    std::cerr << "Error while processing path: " << p << std::endl;
                     return;
                 }
 
@@ -77,7 +58,7 @@ int main(int argc, const char* argv[])
                     detector.addFile(p);
                 }
             });
-        
+
         std::cout << "Discovered files: " << detector.numFiles();
         std::cout << ", elapsed: " << sw.elapsedMs() << " ms" << std::endl;
 
@@ -105,10 +86,10 @@ int main(int argc, const char* argv[])
 
             for (const auto& e : group.entires)
             {
-                std::cout << "[" << std::setw(3) << group.groupId << "] - " 
-                          << std::string_view(e.sha256).substr(0, 10) << ',' 
+                std::cout << "[" << std::setw(3) << group.groupId << "] - "
+                          << std::string_view(e.sha256).substr(0, 10) << ','
                           << std::setw(15) << e.size << " "
-                          << e.dir 
+                          << e.dir
                           << " -> "
                           << e.filename
                           << "\n";
