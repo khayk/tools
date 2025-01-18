@@ -4,9 +4,7 @@
 
 #include <ostream>
 
-namespace tools {
-namespace dups {
-namespace util {
+namespace tools::dups::util {
 
 uint16_t digits(size_t n)
 {
@@ -40,6 +38,6 @@ void treeDump(const Node* root, std::ostream& os)
     });
 }
 
-} // namespace util
-} // namespace dups
-} // namespace tools
+} // namespace tools::dups::util
+
+

@@ -5,8 +5,7 @@
 
 namespace fs = std::filesystem;
 
-namespace tools {
-namespace dups {
+namespace tools::dups {
 namespace detail {
 
 void fullPathHelper(const Node* node, size_t size, std::wstring& dest)
@@ -19,7 +18,7 @@ void fullPathHelper(const Node* node, size_t size, std::wstring& dest)
 
     fullPathHelper(node->parent(), size + node->name().size() + 1, dest);
 
-    if (!dest.empty())
+    if (!dest.empty() || !node->name().empty())
     {
         dest.push_back(fs::path::preferred_separator);
     }
@@ -39,7 +38,6 @@ bool tryGetFileSize(const std::wstring& ws, size_t& size)
 Node::Node(std::wstring_view name, Node* parent)
     : name_(name)
     , parent_(parent)
-    , size_(0)
     , depth_(parent ? parent->depth() + 1 : 0)
 {
 }
@@ -56,7 +54,7 @@ Node* Node::parent() const noexcept
 
 bool Node::leaf() const noexcept
 {
-    return childs_.size() == 0;
+    return childs_.empty();
 }
 
 size_t Node::size() const noexcept
@@ -114,7 +112,7 @@ Node* Node::addChild(std::wstring_view name)
 
 void Node::enumLeafs(ConstNodeCallback cb) const
 {
-    if (childs_.size() == 0)
+    if (childs_.empty())
     {
         cb(this);
     }
@@ -128,7 +126,7 @@ void Node::enumLeafs(ConstNodeCallback cb) const
 
 void Node::enumLeafs(MutableNodeCallback cb)
 {
-    if (childs_.size() == 0)
+    if (childs_.empty())
     {
         cb(this);
     }
@@ -232,5 +230,5 @@ void Node::updateHelper(Node* node, std::wstring& ws)
     }
 }
 
-} // namespace dups
-} // namespace tools
+} // namespace tools::dups
+

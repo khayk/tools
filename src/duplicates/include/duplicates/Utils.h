@@ -5,8 +5,7 @@
 #include <cstddef>
 #include <iosfwd>
 
-namespace tools {
-namespace dups {
+namespace tools::dups {
 
 class Node;
 
@@ -38,5 +37,5 @@ void eraseIf(std::map<Key, T, Compare, Alloc>& c, Pred pred)
 void treeDump(const Node* root, std::ostream& os);
 
 } // namespace util
-} // namespace dups
-} // namespace tools
+} // namespace tools::dups
+

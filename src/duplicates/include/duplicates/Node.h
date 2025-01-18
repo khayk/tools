@@ -5,13 +5,12 @@
 #include <string>
 #include <map>
 
-namespace tools {
-namespace dups {
+namespace tools::dups {
 
 class Node
 {
 public:
-    Node(std::wstring_view name, Node* parent = nullptr);
+    explicit Node(std::wstring_view name, Node* parent = nullptr);
 
     std::wstring_view name() const noexcept;
     Node* parent() const noexcept;
@@ -54,5 +53,5 @@ private:
     void updateHelper(Node* node, std::wstring& ws);
 };
 
-} // namespace dups
-} // namespace tools
+} // namespace tools::dups
+
