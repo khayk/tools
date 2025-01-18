@@ -9,8 +9,7 @@
 
 namespace fs = std::filesystem;
 
-namespace tools {
-namespace dups {
+namespace tools::dups {
 
 struct DupEntry
 {
@@ -42,7 +41,7 @@ public:
     ~DuplicateDetector();
 
     void addFile(const fs::path& path);
-    
+
     size_t numFiles() const noexcept;
     size_t numGroups() const noexcept;
 
@@ -55,11 +54,13 @@ public:
 private:
     using Nodes = std::vector<const Node*>;
     using MapBySize = std::map<size_t, Nodes>;
+    using MapByHash = std::map<std::string_view, const Nodes*>;
 
     std::unordered_set<std::wstring> names_;
     std::unique_ptr<Node> root_;
     MapBySize dups_;
+    MapByHash grps_;
 };
 
-} // namespace dups
-} // namespace tools
+} // namespace tools::dups
+

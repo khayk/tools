@@ -1,8 +1,8 @@
 #include <duplicates/DuplicateDetector.h>
 #include <duplicates/Utils.h>
 
-namespace tools {
-namespace dups {
+
+namespace tools::dups {
 
 DuplicateDetector::DuplicateDetector()
 {
@@ -23,7 +23,6 @@ void DuplicateDetector::addFile(const fs::path& path)
     while (!wsv.empty())
     {
         auto p = wsv.find_first_of(separator);
-
         std::wstring name(wsv.substr(0, p));
         auto [it, ok] = names_.emplace(std::move(name));
 
@@ -52,6 +51,7 @@ void DuplicateDetector::detect(const Options& options)
 {
     std::ignore = options;
     dups_.clear();
+    grps_.clear();
 
     std::wstring ws;
     root_->update();
@@ -80,7 +80,7 @@ void DuplicateDetector::detect(const Options& options)
 
         Nodes& nodes = vt.second;
 
-        for (auto node : nodes)
+        for (const auto* node : nodes)
         {
             auto it = hashes.find(node->sha256());
 
@@ -101,7 +101,7 @@ void DuplicateDetector::detect(const Options& options)
 
         if (hashes.empty())
         {
-            // Instruct to remove the current Nodes object
+            // Instruct to remove the current Node object
             return true;
         }
 
@@ -117,15 +117,24 @@ void DuplicateDetector::detect(const Options& options)
 
         return false;
     });
+
+    for (const auto& [sz, nodes] : dups_)
+    {
+        for (const auto& node : nodes)
+        {
+            grps_[node->sha256()] = &nodes;
+        }
+    }
 }
 
 void DuplicateDetector::reset()
 {
+    grps_.clear();
     dups_.clear();
     root_.reset();
     names_.clear();
-
     names_.emplace(L"");
+
     root_ = std::make_unique<Node>(*names_.begin());
 }
 
@@ -145,12 +154,12 @@ void DuplicateDetector::enumDuplicates(const DupGroupCallback& cb) const
     std::wstring ws;
     size_t duplicates = 0;
 
-    for (const auto& [k, v] : dups_)
+    for (const auto& [k, v] : grps_)
     {
         group.groupId = ++duplicates;
         group.entires.clear();
 
-        for (const auto& i : v)
+        for (const auto& i : *v)
         {
             group.entires.emplace_back();
             DupEntry& e = group.entires.back();
@@ -173,5 +182,5 @@ void DuplicateDetector::enumDuplicates(const DupGroupCallback& cb) const
     }
 }
 
-} // namespace dups
-} // namespace tools
+} // namespace tools::dups
+
