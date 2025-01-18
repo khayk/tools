@@ -288,3 +288,5 @@ TEST(FileSystemRepositoryTest, Checks)
 //};
 
 
+    //EXPECT_EQ(7, dd.rootNode()->nodesCount());
+    //std::cout << "Total nodes count: " << dd.rootNode()->nodesCount() << std::endl;
