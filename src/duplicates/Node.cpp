@@ -18,7 +18,12 @@ void fullPathHelper(const Node* node, size_t size, std::wstring& dest)
 
     fullPathHelper(node->parent(), size + node->name().size() + 1, dest);
 
-    if (!dest.empty() || !node->name().empty())
+    if (!dest.empty())
+    {
+        dest.push_back(fs::path::preferred_separator);
+    }
+    else if (!node->name().empty() &&
+             (node->name().size() != 2 || node->name()[1] != ':'))
     {
         dest.push_back(fs::path::preferred_separator);
     }
