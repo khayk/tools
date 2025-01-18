@@ -7,18 +7,18 @@ Own implementation of different tools.
 ### Prerequisite
 
 1. Tested with
-	* IDEs
-		* Visual Studio 2022
-		* Visual Studio Code
-	* Compilers
-		* msvc14+
-		* gcc-{11, 12, 13}
-	
+    * IDEs
+        * Visual Studio 2022
+        * Visual Studio Code
+    * Compilers
+        * msvc14+
+        * gcc-{11, 12, 13}
+
 2. Install `vcpkg`
-	* Checkout tag 2024.12.16 - `git checkout tags/2024.12.16 -b tag-2024.12.16`
-	* For the first time setup [see](https://learn.microsoft.com/en-us/vcpkg/get_started/get-started)
-	* Consider using `-disableMetrics` options while bootstraping vspkg
-	
+    * Checkout tag 2024.12.16 - `git checkout tags/2024.12.16 -b tag-2024.12.16`
+    * For the first time setup [see](https://learn.microsoft.com/en-us/vcpkg/get_started/get-started)
+    * Consider using `-disableMetrics` options while bootstraping vspkg
+
 3. Install libraries
     * `./vcpkg install gtest spdlog openssl boost-asio boost-iostreams nlohmann-json cxxopts glaze --triplet=<platform>`
         * Windows `<platform>` can be `x64-windows`
