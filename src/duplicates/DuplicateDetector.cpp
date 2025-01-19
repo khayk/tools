@@ -47,14 +47,18 @@ size_t DuplicateDetector::numGroups() const noexcept
     return dups_.size();
 }
 
-void DuplicateDetector::detect(const Options& options)
+void DuplicateDetector::detect(const Options& options, ProgressCallback cb)
 {
     std::ignore = options;
     dups_.clear();
     grps_.clear();
 
     std::wstring ws;
-    root_->update();
+    size_t totalFiles = numFiles();
+    root_->update([i = 0U, totalFiles, &cb](const Node* node) mutable {
+        cb(Stage::Prepare, node, ++i * 100 / totalFiles);
+    });
+
     root_->enumLeafs([&ws, this](Node* node) {
         node->fullPath(ws);
         auto it = dups_.find(node->size());
@@ -70,12 +74,19 @@ void DuplicateDetector::detect(const Options& options)
     });
 
     // Files with unique size can be quickly excluded
-    util::eraseIf(dups_, [](const auto& vt) {
-        return vt.second.size() < 2;
+    size_t numUniqueFiles = 0;
+    util::eraseIf(dups_, [&numUniqueFiles](const auto& vt) {
+        if (vt.second.size() < 2) {
+            ++numUniqueFiles;
+            return true;
+        }
+        return false;
     });
 
+    totalFiles -= numUniqueFiles;
+
     // Here we have files with the same size
-    util::eraseIf(dups_, [](auto& vt) {
+    util::eraseIf(dups_, [i = 0U, &cb, totalFiles](auto& vt) mutable {
         std::map<std::string, Nodes> hashes;
 
         Nodes& nodes = vt.second;
@@ -83,6 +94,7 @@ void DuplicateDetector::detect(const Options& options)
         for (const auto* node : nodes)
         {
             auto it = hashes.find(node->sha256());
+            cb(Stage::Calculate, node, ++i * 100 / totalFiles);
 
             if (it == hashes.end())
             {

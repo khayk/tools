@@ -202,13 +202,13 @@ size_t Node::leafsCount() const noexcept
     return count;
 }
 
-void Node::update()
+void Node::update(UpdateCallback cb)
 {
     std::wstring ws;
-    updateHelper(this, ws);
+    updateHelper(cb, this, ws);
 }
 
-void Node::updateHelper(Node* node, std::wstring& ws)
+void Node::updateHelper(const UpdateCallback& cb, Node* node, std::wstring& ws)
 {
     if (node == nullptr)
     {
@@ -220,6 +220,7 @@ void Node::updateHelper(Node* node, std::wstring& ws)
         ws.clear();
         node->fullPath(ws);
         detail::tryGetFileSize(ws, node->size_);
+        cb(node);
         return;
     }
 
@@ -230,7 +231,7 @@ void Node::updateHelper(Node* node, std::wstring& ws)
     {
         Node* child = it.second.get();
 
-        updateHelper(child, ws);
+        updateHelper(cb, child, ws);
         node->size_ += child->size();
     }
 }

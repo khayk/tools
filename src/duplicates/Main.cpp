@@ -1,14 +1,19 @@
 #include <duplicates/DuplicateDetector.h>
 #include <duplicates/Utils.h>
+#include <duplicates/Node.h>
 #include <core/utils/StopWatch.h>
 #include <core/utils/Str.h>
 #include <core/utils/File.h>
+#include <core/utils/Number.h>
 
 #include <iostream>
 #include <fstream>
 
+using tools::dups::DuplicateDetector;
+using tools::dups::DupGroup;
+using tools::dups::Node;
 
-using namespace tools::dups;
+namespace util = tools::dups::util;
 
 namespace {
 
@@ -64,39 +69,46 @@ int main(int argc, const char* argv[])
         std::cout << "\nPrinting the content of the directory...\n\n";
         std::ofstream outf("files.txt", std::ios::out | std::ios::binary);
 
-        detector.enumFiles([&outf](const fs::path& p) {
-            outf << p << '\n';
-        });
+        util::treeDump(detector.root(), outf);
         std::cout << "\nPrinting completed.\n";
 
         sw.start();
         std::cout << "\nDetecting duplicates...:\n";
-        detector.detect(DuplicateDetector::Options {});
+        detector.detect(DuplicateDetector::Options {},
+                        [lastUpdate = 0LL, &sw](const DuplicateDetector::Stage stage,
+                                                const Node*,
+                                                size_t percent) mutable {
+                            if (sw.elapsedMs() - lastUpdate > 100)
+                            {
+                                std::cout
+                                    << "Stage: "
+                                    << (stage == DuplicateDetector::Stage::Prepare
+                                            ? "Prepare"
+                                            : "Calculate")
+                                    << ", " << percent << "%" << '\r';
+                                lastUpdate = sw.elapsedMs();
+                            }
+                        });
         std::cout << "Detection took: " << sw.elapsedMs() << " ms" << std::endl;
 
-        util::treeDump(detector.root(), std::cout);
+        std::ofstream dupf("dups.txt", std::ios::out | std::ios::binary);
+        const auto grpDigits = static_cast<int>(num::digits(detector.numGroups()));
 
-        detector.enumDuplicates([](const DupGroup& group) {
-            if (group.entires.size() > 2)
-            {
-                std::cout << "\nLarge group (" << group.entires.size() << ")\n";
-            }
+        detector.enumDuplicates(
+            [&out = dupf, grpDigits, sizeDigits = 15](const DupGroup& group) {
+                if (group.entires.size() > 2)
+                {
+                    out << "\nLarge group (" << group.entires.size() << ")\n";
+                }
 
-            for (const auto& e : group.entires)
-            {
-                std::cout << "[" << std::setw(3) << group.groupId << "] - "
-                          << std::string_view(e.sha256).substr(0, 10) << ','
-                          << std::setw(15) << e.size << " "
-                          << e.dir
-                          << " -> "
-                          << e.filename
-                          << "\n";
-            }
-
-            //<< "size: " << i->size()
-            //<< ", sha256: " << std::string_view(i->sha256()).substr(0, 10)
-            //<< ", path: " << ws2s(ws) << std::endl;
-        });
+                for (const auto& e : group.entires)
+                {
+                    out << "[" << std::setw(grpDigits) << group.groupId << "] - "
+                        << std::string_view(e.sha256).substr(0, 10) << ','
+                        << std::setw(sizeDigits) << e.size << " " << e.dir << " -> "
+                        << e.filename << "\n";
+                }
+            });
     }
     catch (const std::system_error& se)
     {

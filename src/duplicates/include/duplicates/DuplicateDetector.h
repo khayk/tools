@@ -28,15 +28,23 @@ struct DupGroup
 class DuplicateDetector
 {
 public:
-    using FileCallback = std::function<void(const fs::path&)>;
-    using DupGroupCallback = std::function<void(const DupGroup&)>;
-
     struct Options
     {
         size_t minSize {};
         size_t maxSize {};
     };
 
+    enum class Stage
+    {
+        Prepare,
+        Calculate
+    };
+
+    using FileCallback = std::function<void(const fs::path&)>;
+    using DupGroupCallback = std::function<void(const DupGroup&)>;
+    using ProgressCallback = std::function<void(const Stage stage,
+                                                const Node* node,
+                                                size_t percent)>;
     DuplicateDetector();
     ~DuplicateDetector();
 
@@ -45,7 +53,8 @@ public:
     size_t numFiles() const noexcept;
     size_t numGroups() const noexcept;
 
-    void detect(const Options& options);
+    void detect(const Options& options,
+                ProgressCallback cb = [](const Stage, const Node*, size_t) {});
     void reset();
 
     void enumFiles(const FileCallback& cb) const;
