@@ -9,9 +9,10 @@
 #include <iostream>
 #include <fstream>
 
-using tools::dups::DuplicateDetector;
 using tools::dups::DupGroup;
+using tools::dups::DuplicateDetector;
 using tools::dups::Node;
+using tools::dups::stage2str;
 
 namespace util = tools::dups::util;
 
@@ -74,23 +75,20 @@ int main(int argc, const char* argv[])
 
         sw.start();
         std::cout << "\nDetecting duplicates...:\n";
+
         detector.detect(DuplicateDetector::Options {},
                         [lastUpdate = 0LL, &sw](const DuplicateDetector::Stage stage,
                                                 const Node*,
                                                 size_t percent) mutable {
                             if (sw.elapsedMs() - lastUpdate > 100)
                             {
-                                std::cout
-                                    << "Stage: "
-                                    << (stage == DuplicateDetector::Stage::Prepare
-                                            ? "Prepare"
-                                            : "Calculate")
-                                    << ", " << percent << "%" << '\r';
+                                std::cout << "Stage: " << stage2str(stage) << ", "
+                                          << percent << "%" << '\r';
                                 lastUpdate = sw.elapsedMs();
                             }
                         });
-        std::cout << "Detection took: " << sw.elapsedMs() << " ms" << std::endl;
 
+        std::cout << "Detection took: " << sw.elapsedMs() << " ms" << std::endl;
         std::ofstream dupf("dups.txt", std::ios::out | std::ios::binary);
         const auto grpDigits = static_cast<int>(num::digits(detector.numGroups()));
 
