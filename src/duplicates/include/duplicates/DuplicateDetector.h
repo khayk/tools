@@ -72,5 +72,14 @@ private:
     MapByHash grps_;
 };
 
+constexpr std::string_view stage2str(DuplicateDetector::Stage stage)
+{
+    switch (stage) {
+        case DuplicateDetector::Stage::Prepare: return "Prepare";
+        case DuplicateDetector::Stage::Calculate: return "Calculate";
+    }
+    return "Unknown";
+}
+
 } // namespace tools::dups
 
