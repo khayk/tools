@@ -190,7 +190,6 @@ void DuplicateDetector::enumDuplicates(const DupGroupCallback& cb) const
         }
 
         cb(group);
-        ++duplicates;
     }
 }
 
