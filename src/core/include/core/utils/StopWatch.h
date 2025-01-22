@@ -30,6 +30,11 @@ public:
     void stop() noexcept;
 
     /**
+     * @brief Resets and starts timer
+     */
+    void restart() noexcept;
+
+    /**
      * @brief Resets timer
      */
     void reset() noexcept;
