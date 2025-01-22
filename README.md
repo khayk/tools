@@ -105,8 +105,20 @@ Own implementation of different tools.
             * Select `CMake: Set Launch/Debug Target`
             * Select `CMake: Debug`
         * If you need to pass custom command line argument to debugger check [this](https://github.com/microsoft/vscode-cmake-tools/blob/main/docs/debug-launch.md) documentation.
-        * Activate `Run and Debug` in the Sidebar
-        * Click `create a launch.json file` and select `C++ (GDB)/(LLDB)`
-        * Copy paste desired settings from section `Debug using a launch.json file` from the link above.
-            * If you debug with `msvc` use that setting
-        * Add custom arguments into `"args": [],`
+        * Method 1
+            * Activate `Run and Debug` in the Sidebar
+            * Click `create a launch.json file` and select `C++ (GDB)/(LLDB)`
+            * Copy paste desired settings from section `Debug using a launch.json file` from the link above.
+                * If you debug with `msvc` use that setting
+            * Add custom arguments into `"args": [],`
+        * Method 2
+            * Create `settings.json` file under the `vscode` directory
+            * Consider adding this
+
+                ```json
+                {
+                    "cmake.debugConfig": {
+                        "args": ["command arguments"]
+                    }
+                }
+                ```
