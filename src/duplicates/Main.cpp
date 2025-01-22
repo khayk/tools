@@ -26,8 +26,34 @@ Usage:
 )";
 }
 
-
 } // namespace
+
+class Progress
+{
+public:
+    using DisplayCb = std::function<void(std::ostream&)>;
+
+    explicit Progress(std::chrono::milliseconds freq = std::chrono::milliseconds(100))
+        : sw_(true)
+        , freq_ {freq}
+    {
+    }
+
+    void update(const DisplayCb& cb)
+    {
+        if (sw_.elapsed() > freq_)
+        {
+            cb(std::cout);
+            std::cout << '\r';
+            std::cout.flush();
+            sw_.restart();
+        }
+    }
+
+private:
+    StopWatch sw_;
+    std::chrono::milliseconds freq_ {};
+};
 
 int main(int argc, const char* argv[])
 {
@@ -44,13 +70,14 @@ int main(int argc, const char* argv[])
         std::cout << "Scanning directory: " << srcDir << '\n';
 
         DuplicateDetector detector;
-        StopWatch sw(true);
+        StopWatch sw;
 
-        std::vector<std::string> excludedDirs {".git"};
+        std::vector<std::string> excludedDirs {".git", "vcpkg", "build", "keepassxc", "snap", "Zeal"};
+        Progress progress;
         file::enumFilesRecursive(
             srcDir,
             excludedDirs,
-            [&detector](const auto& p, const std::error_code& ec) {
+            [numFiles = 0, &detector, &progress](const auto& p, const std::error_code& ec) mutable {
                 if (ec)
                 {
                     std::cerr << "Error while processing path: " << p << std::endl;
@@ -60,6 +87,10 @@ int main(int argc, const char* argv[])
                 if (fs::is_regular_file(p))
                 {
                     detector.addFile(p);
+                    ++numFiles;
+                    progress.update([&numFiles](std::ostream& os) {
+                        os << "Scanned files: " << numFiles;
+                    });
                 }
             });
 
@@ -67,7 +98,7 @@ int main(int argc, const char* argv[])
         std::cout << ", elapsed: " << sw.elapsedMs() << " ms" << std::endl;
 
         // Dump content
-        std::cout << "\nPrinting the content of the directory...\n\n";
+        std::cout << "Printing the content of the directory...\n";
         std::ofstream outf("files.txt", std::ios::out | std::ios::binary);
 
         util::treeDump(detector.root(), outf);
@@ -76,19 +107,21 @@ int main(int argc, const char* argv[])
         sw.start();
         std::cout << "\nDetecting duplicates...:\n";
 
-        detector.detect(DuplicateDetector::Options {},
-                        [lastUpdate = 0LL, &sw](const DuplicateDetector::Stage stage,
-                                                const Node*,
-                                                size_t percent) mutable {
-                            if (sw.elapsedMs() - lastUpdate > 100)
-                            {
-                                std::cout << "Stage: " << stage2str(stage) << ", "
-                                          << percent << "%" << '\r';
-                                lastUpdate = sw.elapsedMs();
-                            }
+        DuplicateDetector::Options opts{};
+        opts.minSizeBytes = 4 * 1024;
+
+        detector.detect(opts,
+                        [&progress](const DuplicateDetector::Stage stage,
+                                    const Node*,
+                                    size_t percent) mutable {
+                            progress.update([&](std::ostream& os) {
+                                os << "Stage: " << stage2str(stage) << " - " << percent
+                                   << "%";
+                            });
                         });
 
         std::cout << "Detection took: " << sw.elapsedMs() << " ms" << std::endl;
+
         std::ofstream dupf("dups.txt", std::ios::out | std::ios::binary);
         const auto grpDigits = static_cast<int>(num::digits(detector.numGroups()));
 
@@ -106,6 +139,7 @@ int main(int argc, const char* argv[])
                         << std::setw(sizeDigits) << e.size << " " << e.dir << " -> "
                         << e.filename << "\n";
                 }
+                out << '\n';
             });
     }
     catch (const std::system_error& se)

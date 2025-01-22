@@ -2,6 +2,7 @@
 
 #include "Node.h"
 
+#include <limits>
 #include <unordered_set>
 #include <filesystem>
 #include <vector>
@@ -30,8 +31,8 @@ class DuplicateDetector
 public:
     struct Options
     {
-        size_t minSize {};
-        size_t maxSize {};
+        size_t minSizeBytes {};
+        size_t maxSizeBytes {std::numeric_limits<size_t>::max()};
     };
 
     enum class Stage
@@ -53,7 +54,7 @@ public:
     size_t numFiles() const noexcept;
     size_t numGroups() const noexcept;
 
-    void detect(const Options& options,
+    void detect(const Options& opts,
                 ProgressCallback cb = [](const Stage, const Node*, size_t) {});
     void reset();
 
@@ -64,7 +65,7 @@ public:
 private:
     using Nodes = std::vector<const Node*>;
     using MapBySize = std::map<size_t, Nodes>;
-    using MapByHash = std::map<std::string_view, const Nodes*>;
+    using MapByHash = std::map<std::string_view, Nodes>;
 
     std::unordered_set<std::wstring> names_;
     std::unique_ptr<Node> root_;

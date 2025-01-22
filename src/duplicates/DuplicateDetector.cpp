@@ -44,12 +44,11 @@ size_t DuplicateDetector::numFiles() const noexcept
 
 size_t DuplicateDetector::numGroups() const noexcept
 {
-    return dups_.size();
+    return grps_.size();
 }
 
-void DuplicateDetector::detect(const Options& options, ProgressCallback cb)
+void DuplicateDetector::detect(const Options& opts, ProgressCallback cb)
 {
-    std::ignore = options;
     dups_.clear();
     grps_.clear();
 
@@ -59,7 +58,13 @@ void DuplicateDetector::detect(const Options& options, ProgressCallback cb)
         cb(Stage::Prepare, node, ++i * 100 / totalFiles);
     });
 
-    root_->enumLeafs([&ws, this](Node* node) {
+    root_->enumLeafs([&opts, &ws, this](Node* node) {
+        if (node->size() < opts.minSizeBytes ||
+            node->size() > opts.maxSizeBytes)
+        {
+            return;
+        }
+
         node->fullPath(ws);
         auto it = dups_.find(node->size());
 
@@ -132,9 +137,9 @@ void DuplicateDetector::detect(const Options& options, ProgressCallback cb)
 
     for (const auto& [sz, nodes] : dups_)
     {
-        for (const auto& node : nodes)
+        for (const auto* node : nodes)
         {
-            grps_[node->sha256()] = &nodes;
+            grps_[node->sha256()].push_back(node);
         }
     }
 }
@@ -165,28 +170,45 @@ void DuplicateDetector::enumDuplicates(const DupGroupCallback& cb) const
     DupGroup group;
     std::wstring ws;
     size_t duplicates = 0;
+    std::unordered_set<std::string_view> visit;
 
-    for (const auto& [k, v] : grps_)
+    for (const auto& [sz, nodes] : dups_)
     {
-        group.groupId = ++duplicates;
-        group.entires.clear();
-
-        for (const auto& i : *v)
+        visit.clear();
+        for (const auto* i : nodes)
         {
-            group.entires.emplace_back();
-            DupEntry& e = group.entires.back();
+            visit.insert(i->sha256());
+        }
 
-            i->fullPath(ws);
-            auto sv = ws;
-            auto separator = fs::path::preferred_separator;
-            auto p = sv.find_last_of(separator);
-            auto filename = sv.substr(p + 1);
-            auto folder = sv.substr(0, p);
+        for (const auto& sha: visit)
+        {
+            group.groupId = ++duplicates;
+            group.entires.clear();
 
-            e.dir = folder;
-            e.filename = filename;
-            e.size = i->size();
-            e.sha256 = i->sha256();
+            const auto it = grps_.find(sha);
+            if (it == grps_.end())
+            {
+                continue;
+            }
+
+            const Nodes& nodes = it->second;
+            for (const auto* i: nodes)
+            {
+                group.entires.emplace_back();
+                DupEntry& e = group.entires.back();
+
+                i->fullPath(ws);
+                auto sv = ws;
+                auto separator = fs::path::preferred_separator;
+                auto p = sv.find_last_of(separator);
+                auto filename = sv.substr(p + 1);
+                auto folder = sv.substr(0, p);
+
+                e.dir = folder;
+                e.filename = filename;
+                e.size = i->size();
+                e.sha256 = i->sha256();
+            }
         }
 
         cb(group);
