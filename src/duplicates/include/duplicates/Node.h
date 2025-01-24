@@ -29,9 +29,9 @@ public:
     bool hasChild(std::wstring_view name) const;
     Node* addChild(std::wstring_view name);
 
-    void enumLeafs(ConstNodeCallback cb) const;
-    void enumLeafs(MutableNodeCallback cb);
-    void enumNodes(ConstNodeCallback cb) const;
+    void enumLeafs(const ConstNodeCallback& cb) const;
+    void enumLeafs(const MutableNodeCallback& cb);
+    void enumNodes(const ConstNodeCallback& cb) const;
 
     size_t nodesCount() const noexcept;
     size_t leafsCount() const noexcept;
@@ -41,7 +41,7 @@ public:
      *
      * @param cb Delivers updates about the progress of the update
      */
-    void update(UpdateCallback cb = [](const Node*) {});
+    void update(const UpdateCallback& cb = [](const Node*) {});
 
 private:
     std::map<std::wstring_view, std::unique_ptr<Node>> childs_;

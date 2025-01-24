@@ -209,9 +209,9 @@ void DuplicateDetector::enumDuplicates(const DupGroupCallback& cb) const
                 e.size = i->size();
                 e.sha256 = i->sha256();
             }
-        }
 
-        cb(group);
+            cb(group);
+        }
     }
 }
 

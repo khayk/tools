@@ -115,7 +115,7 @@ Node* Node::addChild(std::wstring_view name)
     return it->second.get();
 }
 
-void Node::enumLeafs(ConstNodeCallback cb) const
+void Node::enumLeafs(const ConstNodeCallback& cb) const
 {
     if (childs_.empty())
     {
@@ -129,7 +129,7 @@ void Node::enumLeafs(ConstNodeCallback cb) const
     }
 }
 
-void Node::enumLeafs(MutableNodeCallback cb)
+void Node::enumLeafs(const MutableNodeCallback& cb)
 {
     if (childs_.empty())
     {
@@ -143,7 +143,7 @@ void Node::enumLeafs(MutableNodeCallback cb)
     }
 }
 
-void Node::enumNodes(ConstNodeCallback cb) const
+void Node::enumNodes(const ConstNodeCallback& cb) const
 {
     if (depth() != 0)
     {
@@ -202,7 +202,7 @@ size_t Node::leafsCount() const noexcept
     return count;
 }
 
-void Node::update(UpdateCallback cb)
+void Node::update(const UpdateCallback& cb)
 {
     std::wstring ws;
     updateHelper(cb, this, ws);
