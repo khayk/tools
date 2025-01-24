@@ -1,12 +1,22 @@
 #include <duplicates/DuplicateDetector.h>
+#include <duplicates/Utils.h>
+#include <duplicates/Node.h>
 #include <core/utils/StopWatch.h>
 #include <core/utils/Str.h>
+#include <core/utils/File.h>
+#include <core/utils/Number.h>
 
 #include <iostream>
-#include <codecvt>
-#include <locale>
-#include <string_view>
 #include <fstream>
+
+using tools::dups::DupGroup;
+using tools::dups::DuplicateDetector;
+using tools::dups::Node;
+using tools::dups::stage2str;
+
+namespace util = tools::dups::util;
+
+namespace {
 
 void printUsage()
 {
@@ -16,25 +26,34 @@ Usage:
 )";
 }
 
-void dumpToFile(const DuplicateDetector& detector, std::string_view filePath)
-{
-    std::wofstream pathsFile(std::string(filePath), std::ios::out | std::ios::binary);
+} // namespace
 
-    if (!pathsFile)
+class Progress
+{
+public:
+    using DisplayCb = std::function<void(std::ostream&)>;
+
+    explicit Progress(std::chrono::milliseconds freq = std::chrono::milliseconds(100))
+        : sw_(true)
+        , freq_ {freq}
     {
-        std::cerr << "Failed to open file: " << filePath << std::endl;
     }
 
-    const unsigned long MaxCode = 0x10ffff;
-    const std::codecvt_mode Mode = std::generate_header;
-    std::locale utf16_locale(pathsFile.getloc(),
-                             new std::codecvt_utf16<wchar_t, MaxCode, Mode>);
-    pathsFile.imbue(utf16_locale);
+    void update(const DisplayCb& cb)
+    {
+        if (sw_.elapsed() > freq_)
+        {
+            cb(std::cout);
+            std::cout << '\r';
+            std::cout.flush();
+            sw_.restart();
+        }
+    }
 
-    detector.enumFiles([&pathsFile](const std::wstring& ws) {
-        pathsFile << ws << '\n';
-    });
-}
+private:
+    StopWatch sw_;
+    std::chrono::milliseconds freq_ {};
+};
 
 int main(int argc, const char* argv[])
 {
@@ -51,52 +70,77 @@ int main(int argc, const char* argv[])
         std::cout << "Scanning directory: " << srcDir << '\n';
 
         DuplicateDetector detector;
-        StopWatch sw(true);
+        StopWatch sw;
 
-        for (fs::recursive_directory_iterator i(srcDir), end; i != end; ++i)
-        {
-            if (!fs::is_directory(i->path()))
-            {
-                const auto& p = i->path();
-                detector.add(p);
-            }
-        }
+        std::vector<std::string> excludedDirs {".git", "vcpkg", "build", "keepassxc", "snap", "Zeal"};
+        Progress progress;
+        file::enumFilesRecursive(
+            srcDir,
+            excludedDirs,
+            [numFiles = 0, &detector, &progress](const auto& p, const std::error_code& ec) mutable {
+                if (ec)
+                {
+                    std::cerr << "Error while processing path: " << p << std::endl;
+                    return;
+                }
 
-        std::cout << "Discovered files: " << detector.files();
+                if (fs::is_regular_file(p))
+                {
+                    detector.addFile(p);
+                    ++numFiles;
+                    progress.update([&numFiles](std::ostream& os) {
+                        os << "Scanned files: " << numFiles;
+                    });
+                }
+            });
+
+        std::cout << "Discovered files: " << detector.numFiles();
         std::cout << ", elapsed: " << sw.elapsedMs() << " ms" << std::endl;
 
         // Dump content
-        std::cout << "\nPrinting the content of the directory...\n\n";
-        detector.enumFiles([](const std::wstring& ws) {
-            std::cout << str::ws2s(ws) << '\n';
-        });
+        std::cout << "Printing the content of the directory...\n";
+        std::ofstream outf("files.txt", std::ios::out | std::ios::binary);
+
+        util::treeDump(detector.root(), outf);
         std::cout << "\nPrinting completed.\n";
 
         sw.start();
         std::cout << "\nDetecting duplicates...:\n";
-        detector.detect(Options {});
+
+        DuplicateDetector::Options opts{};
+        opts.minSizeBytes = 4 * 1024;
+
+        detector.detect(opts,
+                        [&progress](const DuplicateDetector::Stage stage,
+                                    const Node*,
+                                    size_t percent) mutable {
+                            progress.update([&](std::ostream& os) {
+                                os << "Stage: " << stage2str(stage) << " - " << percent
+                                   << "%";
+                            });
+                        });
+
         std::cout << "Detection took: " << sw.elapsedMs() << " ms" << std::endl;
 
-        detector.treeDump(std::cout);
+        std::ofstream dupf("dups.txt", std::ios::out | std::ios::binary);
+        const auto grpDigits = static_cast<int>(num::digits(detector.numGroups()));
 
-        detector.enumDuplicates([](const DupGroup& group) {
-            if (group.entires.size() > 2)
-            {
-                std::cout << "\nLarge group (" << group.entires.size() << ")\n";
-            }
+        detector.enumDuplicates(
+            [&out = dupf, grpDigits, sizeDigits = 15](const DupGroup& group) {
+                if (group.entires.size() > 2)
+                {
+                    out << "\nLarge group (" << group.entires.size() << ")\n";
+                }
 
-            for (const auto& e : group.entires)
-            {
-                std::cout << group.groupId << ',' << str::ws2s(e.dir) << ','
-                          << str::ws2s(e.filename) << ','
-                          << std::string_view(e.sha).substr(0, 10) << ',' << e.size
-                          << "\n";
-            }
-
-            //<< "size: " << i->size()
-            //<< ", sha256: " << std::string_view(i->sha256()).substr(0, 10)
-            //<< ", path: " << ws2s(ws) << std::endl;
-        });
+                for (const auto& e : group.entires)
+                {
+                    out << "[" << std::setw(grpDigits) << group.groupId << "] - "
+                        << std::string_view(e.sha256).substr(0, 10) << ','
+                        << std::setw(sizeDigits) << e.size << " " << e.dir << " -> "
+                        << e.filename << "\n";
+                }
+                out << '\n';
+            });
     }
     catch (const std::system_error& se)
     {

@@ -6,8 +6,20 @@ Own implementation of different tools.
 
 ### Prerequisite
 
-1. Install `vcpkg`
-2. Install libraries
+1. Tested with
+    * IDEs
+        * Visual Studio 2022
+        * Visual Studio Code
+    * Compilers
+        * msvc14+
+        * gcc-{11, 12, 13}
+
+2. Install `vcpkg`
+    * Checkout tag 2024.12.16 - `git checkout tags/2024.12.16 -b tag-2024.12.16`
+    * For the first time setup [see](https://learn.microsoft.com/en-us/vcpkg/get_started/get-started)
+    * Consider using `-disableMetrics` options while bootstraping vspkg
+
+3. Install libraries
     * `./vcpkg install gtest spdlog openssl boost-asio boost-iostreams nlohmann-json cxxopts glaze --triplet=<platform>`
         * Windows `<platform>` can be `x64-windows`
         * Linux   `<platform>` can be `x64-linux`
@@ -75,7 +87,7 @@ Own implementation of different tools.
 
 * The project is formatted based on the settings in `.clang-format`
     * Open bash, navigate the root directory of the project
-    * Ensure `clang-format` version `17.0.1` is installed
+    * Ensure `clang-format` version `17.0.1` (or above) is installed
     * Run `find . -iname *.h -o -iname *.cpp | xargs clang-format -i`, to format all `{h,cpp}` files in place
 
 ## How-to
@@ -93,8 +105,20 @@ Own implementation of different tools.
             * Select `CMake: Set Launch/Debug Target`
             * Select `CMake: Debug`
         * If you need to pass custom command line argument to debugger check [this](https://github.com/microsoft/vscode-cmake-tools/blob/main/docs/debug-launch.md) documentation.
-        * Activate `Run and Debug` in the Sidebar
-        * Click `create a launch.json file` and select `C++ (GDB)/(LLDB)`
-        * Copy paste desired settings from section `Debug using a launch.json file` from the link above.
-            * If you debug with `msvc` use that setting
-        * Add custom arguments into `"args": [],`
+        * Method 1
+            * Activate `Run and Debug` in the Sidebar
+            * Click `create a launch.json file` and select `C++ (GDB)/(LLDB)`
+            * Copy paste desired settings from section `Debug using a launch.json file` from the link above.
+                * If you debug with `msvc` use that setting
+            * Add custom arguments into `"args": [],`
+        * Method 2
+            * Create `settings.json` file under the `vscode` directory
+            * Consider adding this
+
+                ```json
+                {
+                    "cmake.debugConfig": {
+                        "args": ["command arguments"]
+                    }
+                }
+                ```

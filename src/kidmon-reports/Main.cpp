@@ -15,8 +15,6 @@
 
 #include <cxxopts.hpp>
 #include <iostream>
-#include <numeric>
-#include <set>
 
 namespace {
 

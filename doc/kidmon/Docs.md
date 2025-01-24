@@ -116,9 +116,6 @@ cereal::cereal
 
 # target_link_libraries(main PRIVATE cereal::cereal)
 
-
-
-
 //namespace glz::detail {
 //template <>
 //struct from_json<std::chrono::milliseconds>
@@ -201,8 +198,6 @@ cereal::cereal
 
 =============================================================>
 
-
-
 /*
 namespace {
 
@@ -212,7 +207,6 @@ bool criteriaMet(const Entry& entry, const std::string& s)
     return entry.processInfo.processPath.string().find("vlc") != std::string::npos;
 }
 
-
 } // namespace
 
 TEST(FileSystemRepositoryTest, Checks)
@@ -220,7 +214,6 @@ TEST(FileSystemRepositoryTest, Checks)
     using Processes = std::map<fs::path, std::chrono::milliseconds>;
     using Titles = std::map<std::string, std::chrono::milliseconds>;
 
-   
     size_t entriesQty = 0;
     Processes timeByProc;
     Titles titles;
@@ -276,8 +269,6 @@ TEST(FileSystemRepositoryTest, Checks)
 }
 */
 
-
-
 //class IFieldBuilder
 //{
 //public:
@@ -287,4 +278,46 @@ TEST(FileSystemRepositoryTest, Checks)
 //    virtual std::string      value(const Entry& entry) const = 0;
 //};
 
+    //EXPECT_EQ(7, dd.rootNode()->nodesCount());
+    //std::cout << "Total nodes count: " << dd.rootNode()->nodesCount() << std::endl;
 
+/*
+using FileCb = std::function<void (const std::filesystem::path& p)>;
+void treeLoad(std::istream& is, FileCb cb)
+{
+    std::string s;
+    std::wstring ws;
+    std::filesystnamespace fs =em::path p;
+
+    auto extract = [](const std::string& s) {
+        size_t n = 0;
+        auto [ptr, ec] = std::from_chars(s.data(), s.data() + s.size(), n);
+
+        if (ec == std::errc())
+        {
+            return std::make_pair(n, std::string_view(ptr));
+        }
+
+        throw std::runtime_error("Corrupted data");
+    };
+
+    std::vector<std::wstring> files;
+    while (is)
+    {
+        std::getline(is, s);
+        auto [n, sv] = extract(s);
+
+        while (n <= files.size())
+        {
+            files.pop_back();
+        }
+
+        str::s2ws(s, ws);
+        files.push_back(ws);
+        cb(p);
+    }
+}
+# include <filesystem>
+# include <charconv>
+
+*/

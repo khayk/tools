@@ -2,9 +2,10 @@
 
 #include <string_view>
 #include <filesystem>
+#include <system_error>
+#include <functional>
 
 namespace fs = std::filesystem;
-
 
 namespace file {
 
@@ -115,5 +116,19 @@ public:
             const CreateMode createMode = CreateMode::Auto,
             const fs::path& tempDir = fs::path());
 };
+
+
+using PathCallback = std::function<void(const fs::path&, const std::error_code&)>;
+
+/**
+ * @brief Recursively list files in the given directory
+ *
+ * @param dir Input directory
+ * @param excludedDirs Directory names to exclude from the enumaration
+ * @param cb Callback for emitting results
+ */
+void enumFilesRecursive(const fs::path& dir,
+                        const std::vector<std::string>& excludedDirs,
+                        const PathCallback& cb);
 
 } // namespace file

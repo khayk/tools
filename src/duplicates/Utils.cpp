@@ -1,4 +1,10 @@
 #include <duplicates/Utils.h>
+#include <duplicates/Node.h>
+#include <core/utils/Str.h>
+
+#include <ostream>
+
+namespace tools::dups::util {
 
 uint16_t digits(size_t n)
 {
@@ -12,3 +18,19 @@ uint16_t digits(size_t n)
 
     return d;
 }
+
+void treeDump(const Node* root, std::ostream& os)
+{
+    root->enumNodes([&os](const Node* node) {
+        if (node->depth() == 0)
+        {
+            return;
+        }
+
+        std::wstring ws(node->name());
+        os << std::string(1 * (node->depth() - 1), ' ');
+        os << str::ws2s(ws) << (node->leaf() ? "" : "/") << '\n';
+    });
+}
+
+} // namespace tools::dups::util

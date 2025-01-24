@@ -3,6 +3,13 @@
 #include <map>
 #include <cstdint>
 #include <cstddef>
+#include <iosfwd>
+
+namespace tools::dups {
+
+class Node;
+
+namespace util {
 
 uint16_t digits(size_t n);
 
@@ -21,3 +28,14 @@ void eraseIf(std::map<Key, T, Compare, Alloc>& c, Pred pred)
         }
     }
 }
+
+/**
+ * @brief Print the content as a tree
+ *
+ * @param os The output stream
+ */
+void treeDump(const Node* root, std::ostream& os);
+
+} // namespace util
+} // namespace tools::dups
+

@@ -1,0 +1,12 @@
+{
+  "dependencies": [
+    "gtest",
+    "spdlog",
+    "openssl",
+    "boost-asio",
+    "boost-iostreams",
+    "nlohmann-json",
+    "cxxopts",
+    "glaze"
+  ]
+}

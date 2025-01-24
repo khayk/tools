@@ -47,4 +47,34 @@ std::string num2s(T num)
     return {};
 }
 
+/**
+ * @brief  Returns the number of digits of the given number
+ *
+ * @param number
+ * @return
+ */
+template <typename T>
+size_t digits(T number)
+{
+    size_t digits = 0;
+
+    if (number < 0)
+    {
+        number = -number;
+        digits = 1; // remove this line if '-' counts as a digit
+    }
+    else if (number == 0)
+    {
+        return 1;
+    }
+
+    while (number)
+    {
+        number /= 10;
+        ++digits;
+    }
+
+    return digits;
+}
+
 } // namespace num

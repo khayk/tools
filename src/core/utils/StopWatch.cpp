@@ -2,6 +2,8 @@
 
 StopWatch::StopWatch(const bool autoStart)
 {
+    reset();
+
     if (autoStart)
     {
         start();
@@ -10,6 +12,11 @@ StopWatch::StopWatch(const bool autoStart)
 
 void StopWatch::start() noexcept
 {
+    if (!stopped_)
+    {
+        return;
+    }
+
     start_ = ClockType::now();
     end_ = start_;
     stopped_ = false;
@@ -17,8 +24,19 @@ void StopWatch::start() noexcept
 
 void StopWatch::stop() noexcept
 {
+    if (stopped_)
+    {
+        return;
+    }
+
     end_ = ClockType::now();
     stopped_ = true;
+}
+
+void StopWatch::restart() noexcept
+{
+    reset();
+    start();
 }
 
 void StopWatch::reset() noexcept

@@ -5,6 +5,7 @@
 
 namespace fs = std::filesystem;
 
+namespace tools::dups {
 namespace detail {
 
 void fullPathHelper(const Node* node, size_t size, std::wstring& dest)
@@ -21,15 +22,20 @@ void fullPathHelper(const Node* node, size_t size, std::wstring& dest)
     {
         dest.push_back(fs::path::preferred_separator);
     }
+    else if (!node->name().empty() &&
+             (node->name().size() != 2 || node->name()[1] != ':'))
+    {
+        dest.push_back(fs::path::preferred_separator);
+    }
 
     dest.append(node->name());
 }
 
-size_t tryGetFileSize(const std::wstring& ws)
+bool tryGetFileSize(const std::wstring& ws, size_t& size)
 {
-    std::error_code ec;
-
-    return fs::file_size(fs::path(ws), ec);
+    std::error_code ec {};
+    size = fs::file_size(fs::path(ws), ec);
+    return !ec;
 }
 
 } // namespace detail
@@ -37,7 +43,6 @@ size_t tryGetFileSize(const std::wstring& ws)
 Node::Node(std::wstring_view name, Node* parent)
     : name_(name)
     , parent_(parent)
-    , size_(0)
     , depth_(parent ? parent->depth() + 1 : 0)
 {
 }
@@ -54,7 +59,7 @@ Node* Node::parent() const noexcept
 
 bool Node::leaf() const noexcept
 {
-    return childs_.size() == 0;
+    return childs_.empty();
 }
 
 size_t Node::size() const noexcept
@@ -110,9 +115,9 @@ Node* Node::addChild(std::wstring_view name)
     return it->second.get();
 }
 
-void Node::enumLeafs(ConstNodeCallback cb) const
+void Node::enumLeafs(const ConstNodeCallback& cb) const
 {
-    if (childs_.size() == 0)
+    if (childs_.empty())
     {
         cb(this);
     }
@@ -124,9 +129,9 @@ void Node::enumLeafs(ConstNodeCallback cb) const
     }
 }
 
-void Node::enumLeafs(MutableNodeCallback cb)
+void Node::enumLeafs(const MutableNodeCallback& cb)
 {
-    if (childs_.size() == 0)
+    if (childs_.empty())
     {
         cb(this);
     }
@@ -138,7 +143,7 @@ void Node::enumLeafs(MutableNodeCallback cb)
     }
 }
 
-void Node::enumNodes(ConstNodeCallback cb) const
+void Node::enumNodes(const ConstNodeCallback& cb) const
 {
     if (depth() != 0)
     {
@@ -181,6 +186,11 @@ size_t Node::nodesCount() const noexcept
 
 size_t Node::leafsCount() const noexcept
 {
+    if (leaf())
+    {
+        return 1;
+    }
+
     size_t count = 0;
 
     for (const auto& it : childs_)
@@ -189,16 +199,16 @@ size_t Node::leafsCount() const noexcept
         count += child->leafsCount();
     }
 
-    return count + ((childs_.size() == 0) ? 1 : 0);
+    return count;
 }
 
-void Node::update()
+void Node::update(const UpdateCallback& cb)
 {
     std::wstring ws;
-    updateHelper(this, ws);
+    updateHelper(cb, this, ws);
 }
 
-void Node::updateHelper(Node* node, std::wstring& ws)
+void Node::updateHelper(const UpdateCallback& cb, Node* node, std::wstring& ws)
 {
     if (node == nullptr)
     {
@@ -209,8 +219,8 @@ void Node::updateHelper(Node* node, std::wstring& ws)
     {
         ws.clear();
         node->fullPath(ws);
-        node->size_ = detail::tryGetFileSize(ws);
-
+        detail::tryGetFileSize(ws, node->size_);
+        cb(node);
         return;
     }
 
@@ -221,7 +231,10 @@ void Node::updateHelper(Node* node, std::wstring& ws)
     {
         Node* child = it.second.get();
 
-        updateHelper(child, ws);
+        updateHelper(cb, child, ws);
         node->size_ += child->size();
     }
 }
+
+} // namespace tools::dups
+

@@ -1,33 +1,28 @@
 #include <duplicates/DuplicateDetector.h>
 #include <duplicates/Utils.h>
 
-#include <core/utils/StopWatch.h>
-#include <core/utils/Str.h>
 
-#include <iostream>
+namespace tools::dups {
 
 DuplicateDetector::DuplicateDetector()
 {
-    names_.emplace(L"");
-    root_ = std::make_unique<Node>(*names_.begin());
+    reset();
 }
 
 DuplicateDetector::~DuplicateDetector()
 {
-    std::cout << "Total nodes count: " << root_->nodesCount() << std::endl;
 }
 
-void DuplicateDetector::add(const fs::path& path)
+void DuplicateDetector::addFile(const fs::path& path)
 {
     Node* node = root_.get();
     auto separator = fs::path::preferred_separator;
-    std::wstring wpath = path.wstring();
+    std::wstring wpath = path.lexically_normal().wstring();
     std::wstring_view wsv = wpath;
 
     while (!wsv.empty())
     {
         auto p = wsv.find_first_of(separator);
-
         std::wstring name(wsv.substr(0, p));
         auto [it, ok] = names_.emplace(std::move(name));
 
@@ -42,24 +37,34 @@ void DuplicateDetector::add(const fs::path& path)
     }
 }
 
-size_t DuplicateDetector::files() const noexcept
+size_t DuplicateDetector::numFiles() const noexcept
 {
-    return root_->leafsCount();
+    return !root_->leaf() ? root_->leafsCount() : 0;
 }
 
-size_t DuplicateDetector::groups() const noexcept
+size_t DuplicateDetector::numGroups() const noexcept
 {
-    return dups_.size();
+    return grps_.size();
 }
 
-void DuplicateDetector::detect(const Options& options)
+void DuplicateDetector::detect(const Options& opts, ProgressCallback cb)
 {
-    std::ignore = options;
     dups_.clear();
+    grps_.clear();
 
     std::wstring ws;
-    root_->update();
-    root_->enumLeafs([&ws, this](Node* node) {
+    size_t totalFiles = numFiles();
+    root_->update([i = 0U, totalFiles, &cb](const Node* node) mutable {
+        cb(Stage::Prepare, node, ++i * 100 / totalFiles);
+    });
+
+    root_->enumLeafs([&opts, &ws, this](Node* node) {
+        if (node->size() < opts.minSizeBytes ||
+            node->size() > opts.maxSizeBytes)
+        {
+            return;
+        }
+
         node->fullPath(ws);
         auto it = dups_.find(node->size());
 
@@ -74,19 +79,27 @@ void DuplicateDetector::detect(const Options& options)
     });
 
     // Files with unique size can be quickly excluded
-    eraseIf(dups_, [](const auto& vt) {
-        return vt.second.size() < 2;
+    size_t numUniqueFiles = 0;
+    util::eraseIf(dups_, [&numUniqueFiles](const auto& vt) {
+        if (vt.second.size() < 2) {
+            ++numUniqueFiles;
+            return true;
+        }
+        return false;
     });
 
+    totalFiles -= numUniqueFiles;
+
     // Here we have files with the same size
-    eraseIf(dups_, [](auto& vt) {
+    util::eraseIf(dups_, [i = 0U, &cb, totalFiles](auto& vt) mutable {
         std::map<std::string, Nodes> hashes;
 
         Nodes& nodes = vt.second;
 
-        for (auto node : nodes)
+        for (const auto* node : nodes)
         {
             auto it = hashes.find(node->sha256());
+            cb(Stage::Calculate, node, ++i * 100 / totalFiles);
 
             if (it == hashes.end())
             {
@@ -99,13 +112,13 @@ void DuplicateDetector::detect(const Options& options)
         }
 
         // Remove all unique items
-        eraseIf(hashes, [](const auto& vt) {
+        util::eraseIf(hashes, [](const auto& vt) {
             return vt.second.size() < 2;
         });
 
         if (hashes.empty())
         {
-            // Instruct to remove the current Nodes object
+            // Instruct to remove the current Node object
             return true;
         }
 
@@ -121,9 +134,28 @@ void DuplicateDetector::detect(const Options& options)
 
         return false;
     });
+
+    for (const auto& [sz, nodes] : dups_)
+    {
+        for (const auto* node : nodes)
+        {
+            grps_[node->sha256()].push_back(node);
+        }
+    }
 }
 
-void DuplicateDetector::enumFiles(FileCallback cb) const
+void DuplicateDetector::reset()
+{
+    grps_.clear();
+    dups_.clear();
+    root_.reset();
+    names_.clear();
+    names_.emplace(L"");
+
+    root_ = std::make_unique<Node>(*names_.begin());
+}
+
+void DuplicateDetector::enumFiles(const FileCallback& cb) const
 {
     std::wstring ws;
 
@@ -133,55 +165,60 @@ void DuplicateDetector::enumFiles(FileCallback cb) const
     });
 }
 
-void DuplicateDetector::enumDuplicates(DupGroupCallback cb) const
+void DuplicateDetector::enumDuplicates(const DupGroupCallback& cb) const
 {
     DupGroup group;
     std::wstring ws;
     size_t duplicates = 0;
+    std::unordered_set<std::string_view> visit;
 
-    for (const auto& [k, v] : dups_)
+    for (const auto& [sz, nodes] : dups_)
     {
-        group.groupId = ++duplicates;
-        group.entires.clear();
-
-        for (const auto& i : v)
+        visit.clear();
+        for (const auto* i : nodes)
         {
-            group.entires.emplace_back();
-            DupEntry& e = group.entires.back();
-
-            i->fullPath(ws);
-            auto sv = ws;
-            auto separator = fs::path::preferred_separator;
-            auto p = sv.find_last_of(separator);
-            auto filename = sv.substr(p + 1);
-            auto folder = sv.substr(0, p);
-
-            e.dir = folder;
-            e.filename = filename;
-            e.size = i->size();
-            e.sha = i->sha256();
+            visit.insert(i->sha256());
         }
 
-        cb(group);
-        ++duplicates;
+        for (const auto& sha: visit)
+        {
+            group.groupId = ++duplicates;
+            group.entires.clear();
+
+            const auto it = grps_.find(sha);
+            if (it == grps_.end())
+            {
+                continue;
+            }
+
+            const Nodes& nodes = it->second;
+            for (const auto* i: nodes)
+            {
+                group.entires.emplace_back();
+                DupEntry& e = group.entires.back();
+
+                i->fullPath(ws);
+                auto sv = ws;
+                auto separator = fs::path::preferred_separator;
+                auto p = sv.find_last_of(separator);
+                auto filename = sv.substr(p + 1);
+                auto folder = sv.substr(0, p);
+
+                e.dir = folder;
+                e.filename = filename;
+                e.size = i->size();
+                e.sha256 = i->sha256();
+            }
+
+            cb(group);
+        }
     }
 }
 
-void DuplicateDetector::treeDump(std::ostream& os)
+const Node* DuplicateDetector::root() const
 {
-    root_->enumNodes([&os](const Node* node) {
-        std::wstring ws(node->name());
-        os << std::string(2 * node->depth(), ' ');
-
-        if (!node->leaf())
-        {
-            os << "- ";
-        }
-        else
-        {
-            os << "* ";
-        }
-
-        os << str::ws2s(ws) << " (" << node->size() << ")\n";
-    });
+    return root_.get();
 }
+
+} // namespace tools::dups
+

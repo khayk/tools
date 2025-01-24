@@ -53,7 +53,7 @@ std::string fileSha256(const fs::path& file)
 {
     std::ifstream in(file, std::ios::in | std::ios::binary);
 
-    if (!in.good())
+    if (!in)
     {
         const auto s = fmt::format("Unable to open file: {}", file);
         throw std::system_error(
