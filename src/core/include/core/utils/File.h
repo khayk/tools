@@ -5,8 +5,7 @@
 #include <system_error>
 #include <functional>
 
-    namespace fs = std::filesystem;
-
+namespace fs = std::filesystem;
 
 namespace file {
 
@@ -122,8 +121,8 @@ public:
 using PathCallback = std::function<void(const fs::path&, const std::error_code&)>;
 
 /**
- * @brief Recursively list files in the given directory 
- * 
+ * @brief Recursively list files in the given directory
+ *
  * @param dir Input directory
  * @param excludedDirs Directory names to exclude from the enumaration
  * @param cb Callback for emitting results
