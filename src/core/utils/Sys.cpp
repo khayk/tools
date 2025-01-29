@@ -176,7 +176,7 @@ fs::path currentProcessPath()
     char buff[PATH_MAX];
     sprintf(buff, "/proc/%d/exe", pid);
 
-    struct stat statbuf;
+    struct stat statbuf{};
     if (stat(buff, &statbuf) == 0)
     {
         return fs::path(buff);
