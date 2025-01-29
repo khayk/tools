@@ -58,12 +58,16 @@ size_t digits(T number)
 {
     size_t digits = 0;
 
-    if (number < 0)
+    if constexpr (std::is_signed_v<T>)
     {
-        number = -number;
-        digits = 1; // remove this line if '-' counts as a digit
+        if (number < 0)
+        {
+            number = -number;
+            digits = 1; // remove this line if '-' counts as a digit
+        }
     }
-    else if (number == 0)
+
+    if (number == 0)
     {
         return 1;
     }

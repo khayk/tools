@@ -191,8 +191,8 @@ void DuplicateDetector::enumDuplicates(const DupGroupCallback& cb) const
                 continue;
             }
 
-            const Nodes& nodes = it->second;
-            for (const auto* i: nodes)
+            const Nodes& nodesInGroup = it->second;
+            for (const auto* i : nodesInGroup)
             {
                 group.entires.emplace_back();
                 DupEntry& e = group.entires.back();
