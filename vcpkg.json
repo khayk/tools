@@ -8,6 +8,7 @@
     "nlohmann-json",
     "openssl",
     "spdlog",
+    "pkgconf",
     "tomlplusplus"
   ]
 }
