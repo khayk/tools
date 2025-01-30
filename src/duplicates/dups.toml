@@ -1,0 +1,34 @@
+# Directories to scan
+scan_directories = [
+    "dir1",
+    "dir2",
+    # ...
+    "dirN",
+]
+
+# Directories to exclude
+exclude_directories = [
+    ".git",
+    ".vscode",
+    "build",
+    "snap"
+]
+
+# Cache directory
+cache_directory = ".dups_cache"
+
+# Ignore files smaller then this
+min_file_size_bytes = 1
+
+# Ignore files larger then this
+max_file_size_bytes = 500000000
+
+# Frequency of the updates, interval of the update progress of duplicate detection
+# Value 0 disables updates
+update_freq_ms = 100
+
+# File to dump paths of all scanned files
+all_files = "files.txt"
+
+# File to dump the duplicates
+dup_files = "dups.txt"

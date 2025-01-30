@@ -35,11 +35,11 @@ struct ReportsConfig
     uint32_t topN {0};
     std::vector<uint32_t> range;
     std::vector<std::string> fields;
-    std::vector<std::string> titles {};
-    std::vector<std::string> processes {};
-    std::vector<std::string> excludeTitles {};
-    std::vector<std::string> excludeProcesses {};
-    std::string username {};
+    std::vector<std::string> titles;
+    std::vector<std::string> processes;
+    std::vector<std::string> excludeTitles;
+    std::vector<std::string> excludeProcesses;
+    std::string username;
     bool caseInsensitive {false};
 };
 
@@ -55,7 +55,7 @@ public:
         uint32_t topN_ {10};
     };
 
-    QueryVisualizer(Config conf)
+    explicit QueryVisualizer(Config conf)
         : conf_(std::move(conf))
     {
         // using SplitterAggr = Splitter<ProcPathAggr, TitleAggr>;
