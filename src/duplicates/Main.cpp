@@ -173,7 +173,7 @@ int main(int argc, const char* argv[])
             });
 
         std::cout << "Detected: " << detector.numGroups() << " duplicates groups\n";
-        std::cout << "All group combined have: " << totalFiles << " files\n";
+        std::cout << "All groups combined have: " << totalFiles << " files\n";
         std::cout << "That means: " << totalFiles - detector.numGroups() << " duplicate files\n";
     }
     catch (const std::system_error& se)
