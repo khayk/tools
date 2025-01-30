@@ -8,15 +8,17 @@ file(GLOB LIB_SRCS
    "*.cpp"
 )
 
-add_compile_definitions(_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
-add_compile_definitions(_SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(tomlplusplus REQUIRED IMPORTED_TARGET tomlplusplus)
+
+find_package(nlohmann_json CONFIG REQUIRED)
 
 list(FILTER LIB_SRCS EXCLUDE REGEX ".*Main.cpp")
 
 # Adding a library project
 add_library(${PROJECT_LIB} ${LIB_SRCS})
 target_include_directories(${PROJECT_LIB} PUBLIC include)
-target_link_libraries(${PROJECT_LIB} PUBLIC core)
+target_link_libraries(${PROJECT_LIB} PUBLIC core PkgConfig::tomlplusplus)
 
 # Adding executable project
 add_executable(${PROJECT_APP} Main.cpp)
