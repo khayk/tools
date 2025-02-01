@@ -209,7 +209,7 @@ public:
 
     void queryUsers(const UserCb& cb) const
     {
-        for (auto const& it : fs::directory_iterator(dirs_.reportsDir()))
+        for (const auto& it : fs::directory_iterator(dirs_.reportsDir()))
         {
             if (it.is_directory())
             {
@@ -231,7 +231,7 @@ public:
 
         const auto userDir = dirs_.getUserDir(filter.username()).lexically_normal();
 
-        for (auto const& it : fs::directory_iterator(userDir))
+        for (const auto& it : fs::directory_iterator(userDir))
         {
             if (!it.is_directory())
             {
@@ -271,7 +271,7 @@ private:
         const auto& dataDirs = dirs_.dataDirs(filter.username(), year);
         const fs::path& rawDir = dataDirs.rawDir;
 
-        for (auto const& it : fs::directory_iterator(rawDir))
+        for (const auto& it : fs::directory_iterator(rawDir))
         {
             const auto fn = it.path().filename();
 

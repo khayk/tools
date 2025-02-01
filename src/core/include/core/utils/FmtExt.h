@@ -14,7 +14,7 @@ public:
         return ctx.begin();
     }
     template <typename Context>
-    constexpr auto format(fs::path const& ph, Context& ctx) const
+    constexpr auto format(const fs::path& ph, Context& ctx) const
     {
         return format_to(ctx.out(), "{}", file::path2s(ph));
     }
