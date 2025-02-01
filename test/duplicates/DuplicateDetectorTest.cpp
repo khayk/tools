@@ -6,9 +6,9 @@
 
 #include <unordered_map>
 
+using testing::_;
 using testing::MockFunction;
 using testing::Return;
-using testing::_;
 
 namespace tools::dups {
 namespace {
@@ -34,7 +34,7 @@ TEST(DuplicateDetectorTest, AddFiles)
 
     EXPECT_EQ(0, dd.numFiles());
 
-    for (const auto& [path, ignore]: files)
+    for (const auto& [path, ignore] : files)
     {
         std::ignore = ignore;
         const auto numFiles = dd.numFiles();
@@ -108,8 +108,6 @@ TEST(DuplicateDetectorTest, BasicUsage)
 }
 
 
-TEST(DuplicateDetectorTest, AdvancedUsage)
-{
-}
+TEST(DuplicateDetectorTest, AdvancedUsage) {}
 
 } // namespace tools::dups

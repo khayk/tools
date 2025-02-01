@@ -110,8 +110,7 @@ std::u8string_view stou8(std::string_view sv)
 
 std::string& trimLeft(std::string& s)
 {
-    s.erase(s.begin(),
-            std::ranges::find_if(s, [](const unsigned char ch) noexcept {
+    s.erase(s.begin(), std::ranges::find_if(s, [](const unsigned char ch) noexcept {
                 return std::isgraph(ch);
             }));
 
@@ -121,9 +120,9 @@ std::string& trimLeft(std::string& s)
 std::string& trimRight(std::string& s)
 {
     s.erase(std::ranges::find_if(std::ranges::reverse_view(s),
-                         [](const unsigned char ch) noexcept {
-                             return std::isgraph(ch);
-                         })
+                                 [](const unsigned char ch) noexcept {
+                                     return std::isgraph(ch);
+                                 })
                 .base(),
             s.end());
 
@@ -137,11 +136,9 @@ std::string& trim(std::string& s)
 
 std::string& asciiLowerInplace(std::string& str)
 {
-    std::ranges::transform(str,
-                   str.begin(),
-                   [](const unsigned char c) noexcept {
-                       return static_cast<char>(std::tolower(c));
-                   });
+    std::ranges::transform(str, str.begin(), [](const unsigned char c) noexcept {
+        return static_cast<char>(std::tolower(c));
+    });
 
     return str;
 }

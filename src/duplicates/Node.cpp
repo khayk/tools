@@ -237,4 +237,3 @@ void Node::updateHelper(const UpdateCallback& cb, Node* node, std::wstring& ws)
 }
 
 } // namespace tools::dups
-

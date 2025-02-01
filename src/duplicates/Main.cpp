@@ -72,33 +72,38 @@ int main(int argc, const char* argv[])
         auto config = toml::parse_file(argv[1]);
 
         std::vector<std::string> excludedDirs;
-        config["exclude_directories"].as_array()->for_each([&excludedDirs](const auto& value) {
-            if constexpr (toml::is_string<decltype(value)>) {
-                excludedDirs.emplace_back(value.value_or(""sv));
-            }
-        });
+        config["exclude_directories"].as_array()->for_each(
+            [&excludedDirs](const auto& value) {
+                if constexpr (toml::is_string<decltype(value)>)
+                {
+                    excludedDirs.emplace_back(value.value_or(""sv));
+                }
+            });
 
         std::vector<std::string> scanDirs;
-        config["scan_directories"].as_array()->for_each([&scanDirs](const auto& value) {
-            if constexpr (toml::is_string<decltype(value)>) {
-                scanDirs.emplace_back(value.value_or(""sv));
-            }
-        });
+        config["scan_directories"].as_array()->for_each(
+            [&scanDirs](const auto& value) {
+                if constexpr (toml::is_string<decltype(value)>)
+                {
+                    scanDirs.emplace_back(value.value_or(""sv));
+                }
+            });
 
-        const DuplicateDetector::Options opts{
+        const DuplicateDetector::Options opts {
             .minSizeBytes = config["min_file_size_bytes"].value_or(0ULL),
-            .maxSizeBytes = config["max_file_size_bytes"].value_or(0ULL)
-        };
+            .maxSizeBytes = config["max_file_size_bytes"].value_or(0ULL)};
 
-        std::chrono::milliseconds updateFrequency(config["update_freq_ms"].value_or(0));
+        std::chrono::milliseconds updateFrequency(
+            config["update_freq_ms"].value_or(0));
         std::string allFiles = config["all_files"].value_or("");
-        std::string dupFiles = config["dup_files"].value_or("");;
+        std::string dupFiles = config["dup_files"].value_or("");
+        ;
 
         DuplicateDetector detector;
         Progress progress(updateFrequency);
         StopWatch sw;
 
-        for (const auto& scanDir: scanDirs)
+        for (const auto& scanDir : scanDirs)
         {
             fs::path srcDir = scanDir;
             srcDir = srcDir.lexically_normal();
@@ -107,7 +112,9 @@ int main(int argc, const char* argv[])
             file::enumFilesRecursive(
                 srcDir,
                 excludedDirs,
-                [numFiles = 0, &detector, &progress](const auto& p, const std::error_code& ec) mutable {
+                [numFiles = 0,
+                 &detector,
+                 &progress](const auto& p, const std::error_code& ec) mutable {
                     if (ec)
                     {
                         std::cerr << "Error while processing path: " << p << std::endl;
@@ -154,27 +161,28 @@ int main(int argc, const char* argv[])
         const auto grpDigits = static_cast<int>(num::digits(detector.numGroups()));
         size_t totalFiles = 0;
 
-        detector.enumDuplicates(
-            [&out = dupf, grpDigits, sizeDigits = 15, &totalFiles](const DupGroup& group) {
-                if (group.entires.size() > 2)
-                {
-                    out << "\nLarge group (" << group.entires.size() << ")\n";
-                }
+        detector.enumDuplicates([&out = dupf, grpDigits, sizeDigits = 15, &totalFiles](
+                                    const DupGroup& group) {
+            if (group.entires.size() > 2)
+            {
+                out << "\nLarge group (" << group.entires.size() << ")\n";
+            }
 
-                totalFiles += group.entires.size();
-                for (const auto& e : group.entires)
-                {
-                    out << "[" << std::setw(grpDigits) << group.groupId << "] - "
-                        << std::string_view(e.sha256).substr(0, 10) << ','
-                        << std::setw(sizeDigits) << e.size << " " << e.dir << " -> "
-                        << e.filename << "\n";
-                }
-                out << '\n';
-            });
+            totalFiles += group.entires.size();
+            for (const auto& e : group.entires)
+            {
+                out << "[" << std::setw(grpDigits) << group.groupId << "] - "
+                    << std::string_view(e.sha256).substr(0, 10) << ','
+                    << std::setw(sizeDigits) << e.size << " " << e.dir << " -> "
+                    << e.filename << "\n";
+            }
+            out << '\n';
+        });
 
         std::cout << "Detected: " << detector.numGroups() << " duplicates groups\n";
         std::cout << "All groups combined have: " << totalFiles << " files\n";
-        std::cout << "That means: " << totalFiles - detector.numGroups() << " duplicate files\n";
+        std::cout << "That means: " << totalFiles - detector.numGroups()
+                  << " duplicate files\n";
     }
     catch (const std::system_error& se)
     {

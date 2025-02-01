@@ -9,9 +9,7 @@ DuplicateDetector::DuplicateDetector()
     reset();
 }
 
-DuplicateDetector::~DuplicateDetector()
-{
-}
+DuplicateDetector::~DuplicateDetector() {}
 
 void DuplicateDetector::addFile(const fs::path& path)
 {
@@ -65,8 +63,7 @@ void DuplicateDetector::detect(const Options& opts, ProgressCallback cb)
 
     std::wstring ws;
     root_->enumLeafs([&opts, &ws, this](Node* node) {
-        if (node->size() < opts.minSizeBytes ||
-            node->size() > opts.maxSizeBytes)
+        if (node->size() < opts.minSizeBytes || node->size() > opts.maxSizeBytes)
         {
             return;
         }
@@ -87,7 +84,8 @@ void DuplicateDetector::detect(const Options& opts, ProgressCallback cb)
     // Files with unique size can be quickly excluded
     size_t numUniqueFiles = 0;
     util::eraseIf(dups_, [&numUniqueFiles](const auto& vt) {
-        if (vt.second.size() < 2) {
+        if (vt.second.size() < 2)
+        {
             ++numUniqueFiles;
             return true;
         }
@@ -186,7 +184,7 @@ void DuplicateDetector::enumDuplicates(const DupGroupCallback& cb) const
             visit.insert(i->sha256());
         }
 
-        for (const auto& sha: visit)
+        for (const auto& sha : visit)
         {
             group.groupId = ++duplicates;
             group.entires.clear();
@@ -227,4 +225,3 @@ const Node* DuplicateDetector::root() const
 }
 
 } // namespace tools::dups
-

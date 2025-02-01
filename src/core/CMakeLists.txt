@@ -38,7 +38,7 @@ target_include_directories(${PROJECT_LIB} PUBLIC include)
 
 target_link_libraries(${PROJECT_LIB} PUBLIC
     fmt::fmt
-    ${OPENSSL_LIBRARIES}
+    OpenSSL::Crypto
     spdlog::spdlog
 )
 
