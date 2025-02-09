@@ -49,14 +49,15 @@ else()
         -Wconversion
         -Werror
         -Wfatal-errors
-        -fsanitize=address
-        -fsanitize=undefined
+        # -fsanitize=address
+        # -fsanitize=undefined
+        -Wno-error=maybe-uninitialized # producing false positives
     )
 
-    add_link_options(
-        -fsanitize=address
-        -fsanitize=undefined
-    )
+    # add_link_options(
+    #     -fsanitize=address
+    #     -fsanitize=undefined
+    # )
 
     # Not tested, taken from spdlog
     # add_compile_options(

@@ -112,7 +112,7 @@ public:
                     std::cout << ": " << value << ", ";
                 }
 
-                std::cout << "duration: " << utl::humanizeDuration(data.duration())
+                std::cout << "duration: " << str::humanizeDuration(data.duration())
                           << '\n';
             });
     }
@@ -470,7 +470,7 @@ int main(int argc, char* argv[])
             queryVisualizer.display();
         }
 
-        spdlog::info("Processing took: {}", utl::humanizeDuration(sw.elapsed()));
+        spdlog::info("Processing took: {}", str::humanizeDuration(sw.elapsed()));
     }
     catch (const std::exception& e)
     {
