@@ -2,10 +2,6 @@
 #include <core/utils/Str.h>
 
 #include <spdlog/spdlog.h>
-
-#include <system_error>
-#include <filesystem>
-#include <array>
 #include <ctime>
 
 namespace fs = std::filesystem;
@@ -61,55 +57,6 @@ tm timet2tm(const time_t dt)
 uint32_t daysSinceYearStart(time_t dt)
 {
     return static_cast<uint32_t>(timet2tm(dt).tm_yday);
-}
-
-
-std::string humanizeDuration(std::chrono::milliseconds ms, int units)
-{
-    using namespace std::chrono;
-    auto secs = duration_cast<seconds>(ms);
-    ms -= duration_cast<milliseconds>(secs);
-    auto mins = duration_cast<minutes>(secs);
-    secs -= duration_cast<seconds>(mins);
-    auto hour = duration_cast<hours>(mins);
-    mins -= duration_cast<minutes>(hour);
-    auto day = duration_cast<days>(hour);
-    hour -= duration_cast<hours>(day);
-
-    std::ostringstream oss;
-
-    if (day.count() > 0 && units > 0)
-    {
-        --units;
-        oss << day.count() << "d ";
-    }
-
-    if (hour.count() > 0 && units > 0)
-    {
-        --units;
-        oss << hour.count() << "h ";
-    }
-
-    if (mins.count() > 0 && units > 0)
-    {
-        --units;
-        oss << mins.count() << "m ";
-    }
-
-    if (secs.count() > 0 && units > 0)
-    {
-        --units;
-        oss << secs.count() << "s ";
-    }
-
-    if (ms.count() > 0 && units > 0)
-    {
-        oss << ms.count() << "ms ";
-    }
-
-    std::string out = oss.str();
-
-    return out;
 }
 
 } // namespace utl

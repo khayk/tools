@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <chrono>
 
 namespace str {
 
@@ -59,7 +60,7 @@ std::string& asciiLowerInplace(std::string& str);
  * @brief Converts given string to lowercase, by modifying input string
  *
  * @param str Input string to be converted to lowercase
- * @param buf Input wstring, useful to imporve performance. If provided,
+ * @param buf Input wstring, useful to improve performance. If provided,
  *            the underlying implementation will use it to convert string to
  *            wide string before doing lowercase transformation
  *
@@ -92,12 +93,35 @@ std::string asciiLower(const std::string& str);
  * @brief Converts input string to lowercase producing a new string
  *
  * @param str An input string to be converted to lowercase
- * @param buf Input wstring, useful to imporve performance. If provided,
- *            the underlying implementation will use it to convert string to
- *            wide string before doing lowercase transformation
+ * @param buf Input wstring, reusing same buffer can result to improved performance.
+ *            When provided, the underlying implementation will use it to convert string
+ *            to wide string before doing lowercase transformation
  *
  * @return  A new string object, in lowercase
  */
 std::string utf8Lower(const std::string& str, std::wstring* buf = 0);
+
+/**
+ * @brief  Converts the value into human friendly text
+ *
+ * @param value  The duration in milliseconds
+ * @param units  The number of units to show
+ *
+ * @return  The string representation of the value
+ *
+ *    1h 3m 4s  ->  1h       (units = 1)
+ *    1h 3m 4s  ->  1h 3m    (units = 2)
+ *    1h 3m 4s  ->  1h 3m 4s (units = 3)
+ */
+std::string humanizeDuration(std::chrono::milliseconds ms, int units = 2);
+
+/**
+ * @brief  Constructs a human friendly representation of bytes
+ *
+ * @param bytes  Number of bytes
+ *
+ * @return  The string representation of the given number of bytes
+ */
+std::string humanizeBytes(size_t bytes);
 
 } // namespace str

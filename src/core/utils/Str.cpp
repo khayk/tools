@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cwctype>
 #include <ranges>
+#include <fmt/format.h>
 
 namespace str {
 
@@ -176,6 +177,74 @@ std::string utf8Lower(const std::string& str, std::wstring* buf)
     utf8LowerInplace(tmp, buf);
 
     return tmp;
+}
+
+
+std::string humanizeDuration(std::chrono::milliseconds ms, int units)
+{
+    using namespace std::chrono;
+    auto secs = duration_cast<seconds>(ms);
+    ms -= duration_cast<milliseconds>(secs);
+    auto mins = duration_cast<minutes>(secs);
+    secs -= duration_cast<seconds>(mins);
+    auto hour = duration_cast<hours>(mins);
+    mins -= duration_cast<minutes>(hour);
+    auto day = duration_cast<days>(hour);
+    hour -= duration_cast<hours>(day);
+
+    std::ostringstream oss;
+
+    if (day.count() > 0 && units > 0)
+    {
+        --units;
+        oss << day.count() << "d ";
+    }
+
+    if (hour.count() > 0 && units > 0)
+    {
+        --units;
+        oss << hour.count() << "h ";
+    }
+
+    if (mins.count() > 0 && units > 0)
+    {
+        --units;
+        oss << mins.count() << "m ";
+    }
+
+    if (secs.count() > 0 && units > 0)
+    {
+        --units;
+        oss << secs.count() << "s ";
+    }
+
+    if (ms.count() > 0 && units > 0)
+    {
+        oss << ms.count() << "ms ";
+    }
+
+    std::string out = oss.str();
+    if (!out.empty() && out.back() == ' ')
+    {
+        out.pop_back();
+    }
+
+    return out;
+}
+
+
+std::string humanizeBytes(size_t bytes)
+{
+    const char* const units[] = {"B", "Kb", "Mb", "Gb", "Tb", "Pb"};
+    int i = 0;
+    double size = static_cast<double>(bytes);
+
+    while (size >= 1024 && i < 5) {
+        size /= 1024;
+        i++;
+    }
+
+    return fmt::format("{:.2f} {}", size, units[i]);
 }
 
 
