@@ -22,7 +22,7 @@ void hexadecimal(unsigned char* const hash, size_t size, std::string& out)
 #ifdef _WIN32
         written = sprintf_s(out.data() + 2 * i, 3, "%02x", hash[i]);
 #else
-        written = sprintf(out.data() + 2 * i, "%02x", hash[i]);
+        written = snprintf(out.data() + 2 * i, 3, "%02x", hash[i]);
 #endif
         assert(written >= 0);
         if (written < 0)
