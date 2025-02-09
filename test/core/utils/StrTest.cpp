@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <core/utils/Str.h>
 #include <array>
+#include <chrono>
 
 using namespace str;
 
@@ -165,6 +166,30 @@ TEST(UtilsStrTests, Utf8Lower)
     const std::u8string expected(u8"մակեդոնիա");
     // Don't check with EXPECT_EQ, because gtest is not built with c++20 support
     EXPECT_TRUE(s8 == expected);
+}
+
+
+TEST(UtilsStrTests, HumanizeDuration)
+{
+    using namespace std::chrono_literals;
+
+    EXPECT_EQ("123ms", humanizeDuration(123ms));
+    EXPECT_EQ("1s", humanizeDuration(1000ms));
+    EXPECT_EQ("1s 549ms", humanizeDuration(1549ms));
+    EXPECT_EQ("1h 5m 8s", humanizeDuration(65min + 8s, 3));
+    EXPECT_EQ("7h 5m 4s 99ms", humanizeDuration(7h + 5min + 4s + 99ms, 4));
+}
+
+TEST(UtilsStrTests, HumanizeBytes)
+{
+    EXPECT_EQ("1023.00 B", humanizeBytes(1023));
+    EXPECT_EQ("1.00 Kb", humanizeBytes(1024));
+    EXPECT_EQ("1.50 Mb", humanizeBytes(3 * 1024 * 1024 / 2));
+    EXPECT_EQ("768.00 Mb", humanizeBytes(3UL * 1024 * 1024 * 1024 / 4));
+    EXPECT_EQ("1.00 Gb", humanizeBytes(1UL * 1024 * 1024 * 1024));
+    EXPECT_EQ("3.00 Tb", humanizeBytes(6UL * 1024 * 1024 * 1024 * 1024 / 2));
+    EXPECT_EQ("2.67 Pb", humanizeBytes(8UL * 1024 * 1024 * 1024 * 1024 * 1024 / 3));
+    EXPECT_EQ("1024.00 Pb", humanizeBytes(1024UL * 1024 * 1024 * 1024 * 1024 * 1024));
 }
 
 } // namespace
