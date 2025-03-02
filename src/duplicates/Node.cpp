@@ -59,7 +59,7 @@ Node* Node::parent() const noexcept
 
 bool Node::leaf() const noexcept
 {
-    return childs_.empty();
+    return children_.empty();
 }
 
 size_t Node::size() const noexcept
@@ -67,7 +67,7 @@ size_t Node::size() const noexcept
     return size_;
 }
 
-size_t Node::depth() const noexcept
+uint16_t Node::depth() const noexcept
 {
     return depth_;
 }
@@ -98,14 +98,14 @@ std::wstring Node::fullPath() const
 
 bool Node::hasChild(std::wstring_view name) const
 {
-    auto it = childs_.find(name);
+    auto it = children_.find(name);
 
-    return it != childs_.end();
+    return it != children_.end();
 }
 
 Node* Node::addChild(std::wstring_view name)
 {
-    auto [it, ok] = childs_.emplace(name, nullptr);
+    auto [it, ok] = children_.emplace(name, nullptr);
 
     if (ok)
     {
@@ -117,12 +117,12 @@ Node* Node::addChild(std::wstring_view name)
 
 void Node::enumLeafs(const ConstNodeCallback& cb) const
 {
-    if (childs_.empty())
+    if (children_.empty())
     {
         cb(this);
     }
 
-    for (const auto& it : childs_)
+    for (const auto& it : children_)
     {
         const Node* node = it.second.get();
         node->enumLeafs(cb);
@@ -131,12 +131,12 @@ void Node::enumLeafs(const ConstNodeCallback& cb) const
 
 void Node::enumLeafs(const MutableNodeCallback& cb)
 {
-    if (childs_.empty())
+    if (children_.empty())
     {
         cb(this);
     }
 
-    for (auto& it : childs_)
+    for (auto& it : children_)
     {
         Node* child = it.second.get();
         child->enumLeafs(cb);
@@ -151,7 +151,7 @@ void Node::enumNodes(const ConstNodeCallback& cb) const
     }
 
     // Non-leafs
-    for (const auto& it : childs_)
+    for (const auto& it : children_)
     {
         const Node* node = it.second.get();
         if (!node->leaf())
@@ -161,7 +161,7 @@ void Node::enumNodes(const ConstNodeCallback& cb) const
     }
 
     // Leafs
-    for (const auto& it : childs_)
+    for (const auto& it : children_)
     {
         const Node* node = it.second.get();
         if (node->leaf())
@@ -175,7 +175,7 @@ size_t Node::nodesCount() const noexcept
 {
     size_t count = 0;
 
-    for (const auto& it : childs_)
+    for (const auto& it : children_)
     {
         const auto& child = it.second;
         count += child->nodesCount();
@@ -193,7 +193,7 @@ size_t Node::leafsCount() const noexcept
 
     size_t count = 0;
 
-    for (const auto& it : childs_)
+    for (const auto& it : children_)
     {
         const auto& child = it.second;
         count += child->leafsCount();
@@ -215,7 +215,7 @@ void Node::updateHelper(const UpdateCallback& cb, Node* node, std::wstring& ws)
         return;
     }
 
-    if (node->childs_.empty())
+    if (node->children_.empty())
     {
         ws.clear();
         node->fullPath(ws);
@@ -227,7 +227,7 @@ void Node::updateHelper(const UpdateCallback& cb, Node* node, std::wstring& ws)
     node->size_ = 0;
     node->sha256_.clear();
 
-    for (auto& it : node->childs_)
+    for (auto& it : node->children_)
     {
         Node* child = it.second.get();
 
