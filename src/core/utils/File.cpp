@@ -11,6 +11,19 @@
 
 namespace file {
 
+bool open(const fs::path& file, const std::ios_base::openmode mode, std::ifstream& ifs, std::error_code& ec)
+{
+    ec.clear();
+    ifs.open(file, mode);
+
+    if (!ifs)
+    {
+        ec = std::make_error_code(std::errc::no_such_file_or_directory);
+    }
+
+    return !ec;
+}
+
 void open(const fs::path& file, const std::ios_base::openmode mode, std::ofstream& ofs)
 {
     ofs.open(file, mode);
@@ -26,7 +39,6 @@ void open(const fs::path& file, const std::ios_base::openmode mode, std::ofstrea
 
 
 void write(const fs::path& file, const char* const data, size_t size)
-
 {
     std::ofstream ofs;
     open(file, std::ios::out | std::ios::binary, ofs);
@@ -54,13 +66,9 @@ void append(const fs::path& file, std::string_view data)
 
 bool read(const fs::path& file, std::string& data, std::error_code& ec)
 {
-    std::ifstream ifs {file, std::ios::in | std::ios::binary};
-    ec.clear();
-
-    if (!ifs)
+    std::ifstream ifs;
+    if (!open(file, std::ios::in | std::ios::binary, ifs, ec))
     {
-        ec.assign(static_cast<int>(std::errc::no_such_file_or_directory),
-                  std::iostream_category());
         return false;
     }
 
@@ -83,6 +91,46 @@ bool read(const fs::path& file, std::string& data, std::error_code& ec)
     {
         ec.assign(static_cast<int>(std::errc::invalid_seek), std::iostream_category());
         return false;
+    }
+
+    return true;
+}
+
+
+void readLines(const fs::path& file, const LineCb& cb)
+{
+    std::error_code ec;
+
+    if (!readLines(file, cb, ec))
+    {
+        const auto s = fmt::format("Unable to open file: {}", file);
+        throw std::system_error(ec, s);
+    }
+}
+
+bool readLines(const fs::path& file, const LineCb& cb, std::error_code& ec)
+{
+    std::ifstream ifs;
+    if (!open(file, std::ios::in, ifs, ec))
+    {
+        return false;
+    }
+
+    std::string line;
+    while (true)
+    {
+        line.clear();
+        std::getline(ifs, line);
+
+        if (ifs.eof() && line.empty())
+        {
+            break;
+        }
+
+        if (!cb(line))
+        {
+            return false;
+        }
     }
 
     return true;

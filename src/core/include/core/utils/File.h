@@ -27,6 +27,35 @@ void append(const fs::path& file, const char* const data, size_t size);
  */
 bool read(const fs::path& file, std::string& data, std::error_code& ec);
 
+/**
+ * @brief Callback for readLines.
+ *        To stop enumeration immediately the callback should return false,
+ * otherwise true, in that case enumeration will be stop when there is more data
+ * to be enumerated
+ */
+using LineCb = std::function<bool(const std::string&)>;
+
+/**
+ * @brief Read the content of the file line by line
+ *
+ * @param file Path to the file.
+ * @param cb A functor to be invoked for each line
+ *
+ * @throw Throw an exception on error
+ */
+void readLines(const fs::path& file, const LineCb& cb);
+
+/**
+ * @brief Read the content of the file line by line
+ *
+ * @param file Path to the file.
+ * @param cb A functor to be invoked for each line
+ * @param ec Error code
+ *
+ * @return true if the operation completed successfully, otherwise false
+ */
+bool readLines(const fs::path& file, const LineCb& cb, std::error_code& ec);
+
 std::string path2s(const fs::path& path);
 
 
