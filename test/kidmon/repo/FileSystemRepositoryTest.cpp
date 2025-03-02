@@ -189,48 +189,48 @@ TEST(FileSystemRepositoryTest, QueryEntriesMultipleUsers)
         EXPECT_NO_THROW(repo.add(e));
     }
 
-    int usersEnumrated = 0;
+    int usersEnumerated = 0;
     std::unordered_set<std::string> names;
     for (size_t i = 0; i < entries.size(); i += numEntriesPerUser)
     {
         names.insert(entries[i].username);
     }
 
-    repo.queryUsers([&names, &usersEnumrated](const std::string& username) mutable {
+    repo.queryUsers([&names, &usersEnumerated](const std::string& username) mutable {
         EXPECT_TRUE(names.count(username) > 0);
         names.erase(username);
-        ++usersEnumrated;
+        ++usersEnumerated;
         return true;
     });
-    EXPECT_EQ(usersEnumrated, numUsers);
+    EXPECT_EQ(usersEnumerated, numUsers);
 
 
-    usersEnumrated = 0;
-    repo.queryUsers([&usersEnumrated](const std::string&) mutable {
-        ++usersEnumrated;
-        return false; // instruct to stop enumaration
+    usersEnumerated = 0;
+    repo.queryUsers([&usersEnumerated](const std::string&) mutable {
+        ++usersEnumerated;
+        return false; // instruct to stop enumeration
     });
-    EXPECT_EQ(1, usersEnumrated);
+    EXPECT_EQ(1, usersEnumerated);
 
-    size_t entriesEnumarated = 0;
+    size_t entriesEnumerated = 0;
     for (size_t i = 0; i < static_cast<size_t>(numUsers); ++i)
     {
         Filter filter(entries[numEntriesPerUser * i].username);
         repo.queryEntries(filter,
-                          [&entries, j = numEntriesPerUser * i, &entriesEnumarated](
+                          [&entries, j = numEntriesPerUser * i, &entriesEnumerated](
                               const Entry& entry) mutable {
                               EXPECT_EQ(entries[j], entry);
                               ++j;
-                              ++entriesEnumarated;
+                              ++entriesEnumerated;
                               return true;
                           });
     }
 
-    EXPECT_EQ(numEntriesPerUser * numUsers, entriesEnumarated);
+    EXPECT_EQ(numEntriesPerUser * numUsers, entriesEnumerated);
 }
 
 
-TEST(FileSystemRepositoryTest, QueringLogic)
+TEST(FileSystemRepositoryTest, QueryLogic)
 {
     file::TempDir reportsDir("kdmn-tst");
     FileSystemRepository repo(reportsDir.path());
