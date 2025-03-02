@@ -2,16 +2,18 @@
     #include <Windows.h>
     #include <WtsApi32.h>
 
+    #include <array>
+
     #pragma comment(lib, "Wtsapi32.lib")
 #else
     #include <sys/types.h>
     #include <sys/stat.h>
+
+    #include <fstream>
 #endif
 
 #include <core/utils/Sys.h>
 #include <spdlog/spdlog.h>
-
-#include <array>
 
 namespace {
 
@@ -184,6 +186,42 @@ fs::path currentProcessPath()
 #endif // _WIN32
 
     return {};
+}
+
+size_t processMemoryUsage(uint32_t pid)
+{
+#ifdef _WIN32
+    std::ignore = pid;
+    return 0;
+#else
+    std::string filename = fmt::format("/proc/{}/status", pid);
+    std::ifstream file(filename, std::ios::in);
+
+    if (!file.is_open())
+    {
+        return 0;
+    }
+
+    std::string line;
+    size_t memory = 0;
+    while (getline(file, line))
+    {
+        if (line.find("VmRSS:") == 0)
+        {
+            std::istringstream iss(line);
+            std::string label;
+            iss >> label >> memory;
+            break;
+        }
+    }
+
+    return memory * 1024;
+#endif
+}
+
+size_t currentProcessMemoryUsage()
+{
+    return processMemoryUsage(currentProcessId());
 }
 
 } // namespace sys

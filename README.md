@@ -89,6 +89,7 @@ Own implementation of different tools.
     * Open bash, navigate the root directory of the project
     * Ensure `clang-format` version `17.0.1` (or above) is installed
     * Run `find . -type f \( -name "*.cpp" -o -name "*.h" \) -not -path "./build/*" | xargs clang-format -i`, to format all `{h,cpp}` files in place
+    * Alternatively checkout this approach `clang-format -i {src,tests}/*.{h,cpp}`
 
 ## How-to
 

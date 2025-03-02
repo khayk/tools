@@ -32,5 +32,20 @@ uint32_t currentProcessId() noexcept;
  */
 fs::path currentProcessPath();
 
+/**
+ * @brief Returns number of bytes occupied by the process with given pid
+ *
+ * @param pid  Process ID
+ *
+ * @return Allocated memory in bytes
+ */
+size_t processMemoryUsage(uint32_t pid);
+
+/**
+ * @brief Returns number of bytes occupied by the current process
+ *
+ * @return Allocated memory in bytes
+ */
+ size_t currentProcessMemoryUsage();
 
 } // namespace sys
