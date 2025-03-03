@@ -153,7 +153,7 @@ using PathCallback = std::function<void(const fs::path&, const std::error_code&)
  * @brief Recursively list files in the given directory
  *
  * @param dir Input directory
- * @param excludedDirs Directory names to exclude from the enumaration
+ * @param excludedDirs Directory names to exclude from the enumeration
  * @param cb Callback for emitting results
  */
 void enumFilesRecursive(const fs::path& dir,
