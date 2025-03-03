@@ -259,7 +259,7 @@ TEST(FileSystemRepositoryTest, QueryLogic)
 
     numCalls = 0;
     repo.queryEntries(filter, [&numCalls](const Entry&) {
-        // This should result immidiate stop of enumaration
+        // This should result immediate stop of enumeration
         ++numCalls;
         return false;
     });
