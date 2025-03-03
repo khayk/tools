@@ -5,9 +5,12 @@
 #include <core/utils/Str.h>
 #include <core/utils/File.h>
 #include <core/utils/Number.h>
+#include <core/utils/Sys.h>
 
 #include <chrono>
+#include <system_error>
 #include <toml++/toml.hpp>
+#include <fmt/format.h>
 
 #include <iostream>
 #include <fstream>
@@ -28,6 +31,36 @@ void printUsage()
 Usage:
     duplicates <dir>   - Search duplicate items in the given directory.
 )";
+}
+
+void experimenting(const fs::path& file)
+{
+    DuplicateDetector detector;
+    StopWatch sw;
+
+    // "/home/khayk/Code/repo/github/khayk/tools/home.txt"
+    file::readLines(file, [&detector](const std::string& line) {
+        std::string_view sv = line;
+        if (line.size() >= 2)
+        {
+            sv.remove_prefix(1);
+            sv.remove_suffix(1);
+            detector.addFile(sv);
+        }
+        return true;
+    });
+
+    std::cout << "Memory: " << str::humanizeBytes(sys::currentProcessMemoryUsage()) << std::endl;
+    std::cout << "sizeof(path): " << sizeof(fs::path) << std::endl;
+    std::cout << "Files: " << detector.numFiles() << std::endl;
+    std::cout << "Nodes: " << detector.root()->nodesCount() << std::endl;
+    // std::cout << "MapSize: " << detector1.mapSize() << std::endl;
+    std::cout << "Elapsed: " << sw.elapsedMs() << " ms" << std::endl;
+    std::cout << sizeof(Node) << std::endl;
+    std::cout << "node: " << sizeof(Node) << std::endl;
+    std::cout << "wstring_view: " << sizeof(std::wstring_view) << std::endl;
+    std::cout << "string: " << sizeof(std::string) << std::endl;
+    std::cout << "parent_: " << sizeof(Node*) << std::endl;
 }
 
 } // namespace
@@ -69,7 +102,16 @@ int main(int argc, const char* argv[])
 
     try
     {
-        auto config = toml::parse_file(argv[1]);
+        const fs::path cfgFile(argv[1]);
+        bool skipDetection = true;
+
+        if (cfgFile.extension() != ".toml")
+        {
+            experimenting(cfgFile);
+            return 0;
+        }
+
+        auto config = toml::parse_file(cfgFile.string());
 
         std::vector<std::string> excludedDirs;
         config["exclude_directories"].as_array()->for_each(
@@ -97,7 +139,7 @@ int main(int argc, const char* argv[])
             config["update_freq_ms"].value_or(0));
         std::string allFiles = config["all_files"].value_or("");
         std::string dupFiles = config["dup_files"].value_or("");
-        ;
+        std::string cacheDir = config["cache_directory"].value_or("");
 
         DuplicateDetector detector;
         Progress progress(updateFrequency);
@@ -132,15 +174,31 @@ int main(int argc, const char* argv[])
                 });
         }
 
-        std::cout << "Discovered files: " << detector.numFiles();
-        std::cout << ", elapsed: " << sw.elapsedMs() << " ms" << std::endl;
+        std::cout << std::string(80, ' ') << '\r';
+        std::cout << "Discovered files: " << detector.numFiles() << std::endl;
+        std::cout << "Elapsed: " << sw.elapsedMs() << " ms" << std::endl;
+        std::cout << "Nodes: " << detector.root()->nodesCount() << std::endl;
 
         // Dump content
         std::cout << "Printing the content of the directory...\n";
         std::ofstream outf(allFiles, std::ios::out | std::ios::binary);
 
+        if (!outf)
+        {
+            const auto s = fmt::format("Unable to open file: {}", allFiles);
+            throw std::system_error(
+                std::make_error_code(std::errc::no_such_file_or_directory),
+                s);
+        }
+
         util::treeDump(detector.root(), outf);
         std::cout << "Printing completed.\n";
+
+        if (skipDetection)
+        {
+            std::cout << "Skipping duplicate detection\n";
+            return 0;
+        }
 
         sw.start();
         std::cout << "Detecting duplicates...\n";
