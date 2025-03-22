@@ -3,6 +3,7 @@
     "configurePresets": [
       {
         "name": "vcpkg",
+        "displayName": "ninja-vcpkg",
         "generator": "Ninja",
         "binaryDir": "${sourceDir}/build",
         "cacheVariables": {
