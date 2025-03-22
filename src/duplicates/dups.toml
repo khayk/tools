@@ -10,25 +10,28 @@ scan_directories = [
 exclude_directories = [
     ".git",
     ".vscode",
+    ".dups_cache",
     "build",
     "snap"
 ]
 
-# Cache directory
-cache_directory = ".dups_cache"
-
 # Ignore files smaller then this
-min_file_size_bytes = 1
+min_file_size_bytes = 1024
 
-# Ignore files larger then this
-max_file_size_bytes = 500000000
+# Ignore files larger then this (10 Gb)
+max_file_size_bytes = 10737418240
 
-# Frequency of the updates, interval of the update progress of duplicate detection
-# Value 0 disables updates
+# Frequency of the duplicate detection updates, it controls how frequently the application
+# should report about the detection progress. Value 0 disables updates
 update_freq_ms = 100
+
+# Cache directory. Application will maintain cache to quickly fetch information about
+# files which are already scanned
+cache_directory = ".dups_cache"
 
 # File to dump paths of all scanned files
 all_files = "files.txt"
 
 # File to dump the duplicates
 dup_files = "dups.txt"
+
