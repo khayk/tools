@@ -17,12 +17,13 @@ void DuplicateDetector::addFile(const fs::path& path)
     auto separator = fs::path::preferred_separator;
     std::wstring wpath = path.lexically_normal().wstring();
     std::wstring_view wsv = wpath;
+    std::wstring name;
 
     while (!wsv.empty())
     {
         auto p = wsv.find_first_of(separator);
-        std::wstring name(wsv.substr(0, p));
-        auto [it, ok] = names_.emplace(std::move(name));
+        name = wsv.substr(0, p);
+        auto [it, ok] = names_.insert(name);
 
         node = node->addChild(*it);
 
