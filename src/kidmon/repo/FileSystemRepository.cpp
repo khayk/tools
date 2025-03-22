@@ -5,7 +5,6 @@
 #include <core/utils/Str.h>
 
 #include <fmt/format.h>
-#include <boost/iostreams/device/mapped_file.hpp>
 #include <nlohmann/json.hpp>
 #include <glaze/glaze.hpp>
 
@@ -128,44 +127,6 @@ std::string buildRawFilename(const TimePoint tp)
 
     const auto day = utl::daysSinceYearStart(tt);
     return fmt::format("raw-{:03}-{:02}{:02}.dat", day, tm.tm_mon + 1, tm.tm_mday);
-}
-
-
-template <typename LineCb>
-void readLines(const fs::path& file, const LineCb& cb)
-{
-    std::string line;
-    boost::iostreams::mapped_file mmap(file.string(),
-                                       boost::iostreams::mapped_file::readonly);
-    const auto* f = mmap.const_data();
-    const auto* e = f + mmap.size();
-
-    while (f && f != e)
-    {
-        const auto* p =
-            static_cast<const char*>(memchr(f, '\n', static_cast<size_t>(e - f)));
-        if (p)
-        {
-            line.assign(f, p);
-            f = p + 1;
-        }
-        else
-        {
-            line.assign(f, e);
-            f = p;
-        }
-
-        str::trim(line);
-        if (line.empty())
-        {
-            continue;
-        }
-
-        if (!cb(line))
-        {
-            return;
-        }
-    }
 }
 
 } // namespace
@@ -312,8 +273,9 @@ private:
 
         entry.username = username;
 
-        readLines(file, [&cb, &entry, &json, this](const std::string& line) {
-            if (glz::read_json(json, line))
+        file::readLines(file, [&cb, &entry, &json, this](const std::string& line) {
+            const auto sv = str::trim(line);
+            if (glz::read_json(json, sv))
             {
                 return true;
             }
