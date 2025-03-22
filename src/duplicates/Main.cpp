@@ -63,6 +63,30 @@ void experimenting(const fs::path& file)
     std::cout << "parent_: " << sizeof(Node*) << std::endl;
 }
 
+void dumpContent(const std::string& allFiles, const DuplicateDetector& detector)
+{
+    if (allFiles.empty())
+    {
+        // File to dump paths of all scanned files
+        std::cout << "Skip dumping paths of all scanned files\n";
+        return;
+    }
+
+    std::cout << "Printing the content of the directory...\n";
+    std::ofstream outf(allFiles, std::ios::out | std::ios::binary);
+
+    if (!outf)
+    {
+        const auto s = fmt::format("Unable to open file: {}", allFiles);
+        throw std::system_error(
+            std::make_error_code(std::errc::no_such_file_or_directory),
+            s);
+    }
+
+    util::treeDump(detector.root(), outf);
+    std::cout << "Printing completed.\n";
+}
+
 } // namespace
 
 class Progress
@@ -147,8 +171,7 @@ int main(int argc, const char* argv[])
 
         for (const auto& scanDir : scanDirs)
         {
-            fs::path srcDir = scanDir;
-            srcDir = srcDir.lexically_normal();
+            const auto srcDir = fs::path(scanDir).lexically_normal();
             std::cout << "Scanning directory: " << srcDir << '\n';
 
             file::enumFilesRecursive(
@@ -180,19 +203,7 @@ int main(int argc, const char* argv[])
         std::cout << "Nodes: " << detector.root()->nodesCount() << std::endl;
 
         // Dump content
-        std::cout << "Printing the content of the directory...\n";
-        std::ofstream outf(allFiles, std::ios::out | std::ios::binary);
-
-        if (!outf)
-        {
-            const auto s = fmt::format("Unable to open file: {}", allFiles);
-            throw std::system_error(
-                std::make_error_code(std::errc::no_such_file_or_directory),
-                s);
-        }
-
-        util::treeDump(detector.root(), outf);
-        std::cout << "Printing completed.\n";
+        dumpContent(allFiles, detector);
 
         if (skipDetection)
         {
