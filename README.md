@@ -17,7 +17,7 @@ Own implementation of different tools.
 2. Install `vcpkg`
     * Checkout tag 2024.12.16 - `git checkout tags/2024.12.16 -b tag-2024.12.16`
     * For the first time setup [see](https://learn.microsoft.com/en-us/vcpkg/get_started/get-started)
-    * Consider using `-disableMetrics` options while bootstraping vspkg
+    * Consider using `-disableMetrics` options while bootstraping vcpkg
 
 3. Install libraries
     * `./vcpkg install gtest spdlog openssl boost-asio boost-iostreams nlohmann-json cxxopts glaze --triplet=<platform>`
@@ -123,3 +123,7 @@ Own implementation of different tools.
                     }
                 }
                 ```
+
+* Profiling
+    * Linux
+        * [See usage of perf](https://stackoverflow.com/questions/2229336/linux-application-profiling) or gemini
