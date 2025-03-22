@@ -26,7 +26,15 @@ file(GLOB UTILS_FILES
 set(SPDLOG_COMPILED_LIB true)
 find_package(OpenSSL REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
+find_package(Boost CONFIG REQUIRED COMPONENTS iostreams)
 
+if(Boost_FOUND)
+   message("Boost found           : ${Boost_INCLUDE_DIRS}")
+   include_directories(${Boost_INCLUDE_DIRS})
+endif()
+
+message("Boost include         : ${Boost_INCLUDE_DIRS}")
+message("Boost library         : ${Boost_LIBRARY_DIRS}")
 message("fmt library           : fmt::fmt")
 message("OpenSsl library       : ${OPENSSL_LIBRARIES}")
 message("Spdlog include        : ${spdlog_DIR}")
@@ -40,6 +48,7 @@ target_link_libraries(${PROJECT_LIB} PUBLIC
     fmt::fmt
     OpenSSL::Crypto
     spdlog::spdlog
+    Boost::iostreams
 )
 
 AddClangTidy(${PROJECT_LIB})

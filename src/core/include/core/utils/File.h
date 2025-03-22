@@ -45,17 +45,6 @@ using LineCb = std::function<bool(const std::string&)>;
  */
 void readLines(const fs::path& file, const LineCb& cb);
 
-/**
- * @brief Read the content of the file line by line
- *
- * @param file Path to the file.
- * @param cb A functor to be invoked for each line
- * @param ec Error code
- *
- * @return true if the operation completed successfully, otherwise false
- */
-bool readLines(const fs::path& file, const LineCb& cb, std::error_code& ec);
-
 std::string path2s(const fs::path& path);
 
 

@@ -5,6 +5,8 @@
 #include <core/utils/FmtExt.h>
 #include <core/utils/Number.h>
 
+#include <boost/iostreams/device/mapped_file.hpp>
+
 #include <fmt/format.h>
 #include <fstream>
 #include <atomic>
@@ -96,44 +98,34 @@ bool read(const fs::path& file, std::string& data, std::error_code& ec)
     return true;
 }
 
-
 void readLines(const fs::path& file, const LineCb& cb)
 {
-    std::error_code ec;
-
-    if (!readLines(file, cb, ec))
-    {
-        const auto s = fmt::format("Unable to open file: {}", file);
-        throw std::system_error(ec, s);
-    }
-}
-
-bool readLines(const fs::path& file, const LineCb& cb, std::error_code& ec)
-{
-    std::ifstream ifs;
-    if (!open(file, std::ios::in, ifs, ec))
-    {
-        return false;
-    }
-
     std::string line;
-    while (true)
-    {
-        line.clear();
-        std::getline(ifs, line);
+    boost::iostreams::mapped_file mmap(file,
+                                       boost::iostreams::mapped_file::readonly);
+    const auto* f = mmap.const_data();
+    const auto* e = f + mmap.size();
 
-        if (ifs.eof() && line.empty())
+    while (f && f != e)
+    {
+        const auto* p =
+            static_cast<const char*>(memchr(f, '\n', static_cast<size_t>(e - f)));
+        if (p)
         {
-            break;
+            line.assign(f, p);
+            f = p + 1;
+        }
+        else
+        {
+            line.assign(f, e);
+            f = p;
         }
 
         if (!cb(line))
         {
-            return false;
+            return;
         }
     }
-
-    return true;
 }
 
 
