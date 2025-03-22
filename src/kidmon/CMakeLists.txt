@@ -49,22 +49,12 @@ find_package(cxxopts CONFIG REQUIRED)
 find_package(glaze CONFIG REQUIRED)
 # find_package(msgpack-c CONFIG REQUIRED)
 
-# find_package(Boost REQUIRED COMPONENTS iostreams)
-find_package(Boost CONFIG REQUIRED COMPONENTS iostreams)
-
-if(Boost_FOUND)
-   message("Boost found           : ${Boost_INCLUDE_DIRS}")
-   include_directories(${Boost_INCLUDE_DIRS})
-endif()
-
 # find_package(SQLite3 REQUIRED)
 # find_package(SqliteOrm REQUIRED)
 # if(SqliteOrm_FOUND)
 #    message("SqliteOrm found    : ${SqliteOrm_INCLUDE_DIRS}")
 # endif()
 
-message("Boost include         : ${Boost_INCLUDE_DIRS}")
-message("Boost library         : ${Boost_LIBRARY_DIRS}")
 # message("Sqlite3 library    : ${SQLite3_LIBRARY}")
 
 # Adding a library project
@@ -79,7 +69,6 @@ target_link_libraries(${PROJECT_LIB} PUBLIC
 )
 
 target_link_libraries(${PROJECT_LIB} PRIVATE
-    Boost::iostreams
     glaze::glaze
 )
 
@@ -102,7 +91,6 @@ if(MSVC)
  		COMMAND "mt.exe" -manifest \"${CMAKE_CURRENT_SOURCE_DIR}\\os\\win\\manifest\\app.manifest\" -inputresource:\"$<TARGET_FILE:${PROJECT_APP}>\"\;\#1 -outputresource:\"$<TARGET_FILE:${PROJECT_APP}>\"\;\#1
  		COMMENT "Adding display aware manifest..."
    )
-else()
 endif(MSVC)
 
 install(
