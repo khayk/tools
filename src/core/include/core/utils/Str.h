@@ -20,31 +20,34 @@ std::u8string_view stou8(std::string_view sv);
 #endif
 
 /**
- * @brief Removes whitespace from the beginning of a string
+ * @brief Removes whitespaces and any control characters from the beginning of a string
  *
  * @param s string to be trimmed
  *
  * @return trimmed string
  */
 std::string& trimLeft(std::string& s);
+std::string_view trimLeft(std::string_view sv);
 
 /**
- * @brief Removes whitespace from the end of a string
+ * @brief Removes whitespaces and any control characters from the end of a string
  *
  * @param s string to be trimmed
  *
  * @return trimmed string
  */
 std::string& trimRight(std::string& s);
+std::string_view trimRight(std::string_view sv);
 
 /**
- * @brief Removes whitespace from both ends of a string
+ * @brief Removes whitespaces and any control characters from both ends of a string
  *
  * @param s string to be trimmed
  *
  * @return trimmed string
  */
 std::string& trim(std::string& s);
+std::string_view trim(std::string_view sv);
 
 
 /**

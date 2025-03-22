@@ -135,6 +135,31 @@ std::string& trim(std::string& s)
     return trimLeft(trimRight(s));
 }
 
+std::string_view trimLeft(std::string_view sv)
+{
+    while (!sv.empty() && !std::isgraph(static_cast<unsigned char>(sv.front())))
+    {
+        sv.remove_prefix(1);
+    }
+
+    return sv;
+}
+
+std::string_view trimRight(std::string_view sv)
+{
+    while (!sv.empty() && !std::isgraph(static_cast<unsigned char>(sv.back())))
+    {
+        sv.remove_suffix(1);
+    }
+
+    return sv;
+}
+
+std::string_view trim(std::string_view sv)
+{
+    return trimLeft(trimRight(sv));
+}
+
 std::string& asciiLowerInplace(std::string& str)
 {
     std::ranges::transform(str, str.begin(), [](const unsigned char c) noexcept {
