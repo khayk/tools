@@ -1,23 +1,25 @@
 #include <duplicates/DuplicateDetector.h>
 #include <duplicates/Utils.h>
 #include <duplicates/Node.h>
+#include <duplicates/Progress.h>
 #include <core/utils/StopWatch.h>
 #include <core/utils/Str.h>
 #include <core/utils/File.h>
 #include <core/utils/Number.h>
 #include <core/utils/Sys.h>
+#include <core/utils/FmtExt.h>
 
 #include <chrono>
 #include <system_error>
 #include <toml++/toml.hpp>
 #include <fmt/format.h>
-
 #include <iostream>
 #include <fstream>
 
 using tools::dups::DupGroup;
 using tools::dups::DuplicateDetector;
 using tools::dups::Node;
+using tools::dups::Progress;
 using tools::dups::stage2str;
 using namespace std::literals;
 
@@ -63,7 +65,7 @@ void experimenting(const fs::path& file)
     std::cout << "parent_: " << sizeof(Node*) << std::endl;
 }
 
-void dumpContent(const std::string& allFiles, const DuplicateDetector& detector)
+void dumpContent(const fs::path& allFiles, const DuplicateDetector& detector)
 {
     if (allFiles.empty())
     {
@@ -87,151 +89,129 @@ void dumpContent(const std::string& allFiles, const DuplicateDetector& detector)
     std::cout << "Printing completed.\n";
 }
 
-} // namespace
 
-class Progress
+struct Config
 {
-public:
-    using DisplayCb = std::function<void(std::ostream&)>;
-
-    explicit Progress(std::chrono::milliseconds freq = std::chrono::milliseconds(100))
-        : sw_(true)
-        , freq_ {freq}
-    {
-    }
-
-    void update(const DisplayCb& cb)
-    {
-        if (sw_.elapsed() > freq_)
-        {
-            cb(std::cout);
-            std::cout << '\r';
-            std::cout.flush();
-            sw_.restart();
-        }
-    }
-
-private:
-    StopWatch sw_;
-    std::chrono::milliseconds freq_ {};
+    std::vector<std::string> scanDirs;
+    std::vector<std::string> excludedDirs;
+    fs::path cacheDir;
+    fs::path allFilesPath;
+    fs::path dupFilesPath;
+    size_t minFileSizeBytes{};
+    size_t maxFileSizeBytes{};
+    std::chrono::milliseconds updateFrequency{};
+    bool skipDetection{true};
 };
 
-int main(int argc, const char* argv[])
+Config loadConfig(const fs::path& cfgFile)
 {
-    if (argc < 2)
+    Config cfg;
+    auto config = toml::parse_file(cfgFile.string());
+
+    config["exclude_directories"].as_array()->for_each(
+        [&cfg](const auto& value) {
+            if constexpr (toml::is_string<decltype(value)>)
+            {
+                cfg.excludedDirs.emplace_back(value.value_or(""sv));
+            }
+        });
+
+    config["scan_directories"].as_array()->for_each(
+        [&cfg](const auto& value) {
+            if constexpr (toml::is_string<decltype(value)>)
+            {
+                cfg.scanDirs.emplace_back(value.value_or(""sv));
+            }
+        });
+
+    cfg.minFileSizeBytes = config["min_file_size_bytes"].value_or(0ULL);
+    cfg.maxFileSizeBytes = config["max_file_size_bytes"].value_or(0ULL);
+    cfg.updateFrequency = std::chrono::milliseconds(config["update_freq_ms"].value_or(0));
+    cfg.allFilesPath = config["all_files"].value_or("");
+    cfg.dupFilesPath = config["dup_files"].value_or("");
+    cfg.cacheDir = config["cache_directory"].value_or("");
+
+    return cfg;
+}
+
+void scanDirectories(const Config& cfg, DuplicateDetector& detector, Progress& progress)
+{
+    StopWatch sw;
+
+    for (const auto& scanDir : cfg.scanDirs)
     {
-        printUsage();
-        return 1;
+        const auto srcDir = fs::path(scanDir).lexically_normal();
+        std::cout << "Scanning directory: " << srcDir << '\n';
+
+        file::enumFilesRecursive(
+            srcDir,
+            cfg.excludedDirs,
+            [numFiles = 0,
+             &detector,
+             &progress](const auto& p, const std::error_code& ec) mutable {
+                if (ec)
+                {
+                    std::cerr << "Error while processing path: " << p << std::endl;
+                    return;
+                }
+
+                if (fs::is_regular_file(p))
+                {
+                    detector.addFile(p);
+                    ++numFiles;
+                    progress.update([&numFiles](std::ostream& os) {
+                        os << "Scanned files: " << numFiles;
+                    });
+                }
+            });
     }
 
-    try
+    std::cout << std::string(80, ' ') << '\r';
+    std::cout << "Discovered files: " << detector.numFiles() << std::endl;
+    std::cout << "Elapsed: " << sw.elapsedMs() << " ms" << std::endl;
+    std::cout << "Nodes: " << detector.root()->nodesCount() << std::endl;
+
+    // Dump content
+    dumpContent(cfg.allFilesPath, detector);
+}
+
+void detectDuplicates(const Config& cfg,
+                      DuplicateDetector& detector,
+                      Progress& progress)
+{
+    if (cfg.skipDetection)
     {
-        const fs::path cfgFile(argv[1]);
-        bool skipDetection = true;
+        std::cout << "Skipping duplicate detection\n";
+        return;
+    }
 
-        if (cfgFile.extension() != ".toml")
-        {
-            experimenting(cfgFile);
-            return 0;
-        }
+    StopWatch sw;
+    const DuplicateDetector::Options opts {.minSizeBytes = cfg.minFileSizeBytes,
+                                           .maxSizeBytes = cfg.maxFileSizeBytes};
 
-        auto config = toml::parse_file(cfgFile.string());
+    std::cout << "Detecting duplicates...\n";
 
-        std::vector<std::string> excludedDirs;
-        config["exclude_directories"].as_array()->for_each(
-            [&excludedDirs](const auto& value) {
-                if constexpr (toml::is_string<decltype(value)>)
-                {
-                    excludedDirs.emplace_back(value.value_or(""sv));
-                }
-            });
-
-        std::vector<std::string> scanDirs;
-        config["scan_directories"].as_array()->for_each(
-            [&scanDirs](const auto& value) {
-                if constexpr (toml::is_string<decltype(value)>)
-                {
-                    scanDirs.emplace_back(value.value_or(""sv));
-                }
-            });
-
-        const DuplicateDetector::Options opts {
-            .minSizeBytes = config["min_file_size_bytes"].value_or(0ULL),
-            .maxSizeBytes = config["max_file_size_bytes"].value_or(0ULL)};
-
-        std::chrono::milliseconds updateFrequency(
-            config["update_freq_ms"].value_or(0));
-        std::string allFiles = config["all_files"].value_or("");
-        std::string dupFiles = config["dup_files"].value_or("");
-        std::string cacheDir = config["cache_directory"].value_or("");
-
-        DuplicateDetector detector;
-        Progress progress(updateFrequency);
-        StopWatch sw;
-
-        for (const auto& scanDir : scanDirs)
-        {
-            const auto srcDir = fs::path(scanDir).lexically_normal();
-            std::cout << "Scanning directory: " << srcDir << '\n';
-
-            file::enumFilesRecursive(
-                srcDir,
-                excludedDirs,
-                [numFiles = 0,
-                 &detector,
-                 &progress](const auto& p, const std::error_code& ec) mutable {
-                    if (ec)
-                    {
-                        std::cerr << "Error while processing path: " << p << std::endl;
-                        return;
-                    }
-
-                    if (fs::is_regular_file(p))
-                    {
-                        detector.addFile(p);
-                        ++numFiles;
-                        progress.update([&numFiles](std::ostream& os) {
-                            os << "Scanned files: " << numFiles;
+    detector.detect(opts,
+                    [&progress](const DuplicateDetector::Stage stage,
+                                const Node*,
+                                size_t percent) mutable {
+                        progress.update([&](std::ostream& os) {
+                            os << "Stage: " << stage2str(stage) << " - " << percent
+                               << "%";
                         });
-                    }
-                });
-        }
+                    });
 
-        std::cout << std::string(80, ' ') << '\r';
-        std::cout << "Discovered files: " << detector.numFiles() << std::endl;
-        std::cout << "Elapsed: " << sw.elapsedMs() << " ms" << std::endl;
-        std::cout << "Nodes: " << detector.root()->nodesCount() << std::endl;
+    std::cout << "Detection took: " << sw.elapsedMs() << " ms" << std::endl;
+}
 
-        // Dump content
-        dumpContent(allFiles, detector);
+void reportDuplicates(const Config& cfg, DuplicateDetector& detector)
+{
+    std::ofstream dupf(cfg.dupFilesPath, std::ios::out | std::ios::binary);
+    const auto grpDigits = static_cast<int>(num::digits(detector.numGroups()));
+    size_t totalFiles = 0;
 
-        if (skipDetection)
-        {
-            std::cout << "Skipping duplicate detection\n";
-            return 0;
-        }
-
-        sw.start();
-        std::cout << "Detecting duplicates...\n";
-
-        detector.detect(opts,
-                        [&progress](const DuplicateDetector::Stage stage,
-                                    const Node*,
-                                    size_t percent) mutable {
-                            progress.update([&](std::ostream& os) {
-                                os << "Stage: " << stage2str(stage) << " - " << percent
-                                   << "%";
-                            });
-                        });
-
-        std::cout << "Detection took: " << sw.elapsedMs() << " ms" << std::endl;
-
-        std::ofstream dupf(dupFiles, std::ios::out | std::ios::binary);
-        const auto grpDigits = static_cast<int>(num::digits(detector.numGroups()));
-        size_t totalFiles = 0;
-
-        detector.enumDuplicates([&out = dupf, grpDigits, sizeDigits = 15, &totalFiles](
-                                    const DupGroup& group) {
+    detector.enumDuplicates(
+        [&out = dupf, grpDigits, sizeDigits = 15, &totalFiles](const DupGroup& group) {
             if (group.entires.size() > 2)
             {
                 out << "\nLarge group (" << group.entires.size() << ")\n";
@@ -248,10 +228,39 @@ int main(int argc, const char* argv[])
             out << '\n';
         });
 
-        std::cout << "Detected: " << detector.numGroups() << " duplicates groups\n";
-        std::cout << "All groups combined have: " << totalFiles << " files\n";
-        std::cout << "That means: " << totalFiles - detector.numGroups()
-                  << " duplicate files\n";
+    std::cout << "Detected: " << detector.numGroups() << " duplicates groups\n";
+    std::cout << "All groups combined have: " << totalFiles << " files\n";
+    std::cout << "That means: " << totalFiles - detector.numGroups()
+              << " duplicate files\n";
+}
+
+} // namespace
+
+int main(int argc, const char* argv[])
+{
+    if (argc < 2)
+    {
+        printUsage();
+        return 1;
+    }
+
+    try
+    {
+        const fs::path cfgFile(argv[1]);
+
+        if (cfgFile.extension() != ".toml")
+        {
+            experimenting(cfgFile);
+            return 0;
+        }
+
+        const Config cfg = loadConfig(cfgFile);
+        DuplicateDetector detector;
+        Progress progress(cfg.updateFrequency);
+
+        scanDirectories(cfg, detector, progress);
+        detectDuplicates(cfg, detector, progress);
+        reportDuplicates(cfg, detector);
     }
     catch (const std::system_error& se)
     {
