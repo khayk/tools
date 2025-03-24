@@ -1,4 +1,4 @@
-set(BUILDINFO_TEMPLATE_DIR ${CMAKE_CURRENT_LIST_DIR})
+set(BUILD_INFO_TEMPLATE_DIR ${CMAKE_CURRENT_LIST_DIR})
 set(DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/BuildInfo")
 
 string(TIMESTAMP TIMESTAMP)
@@ -10,12 +10,12 @@ execute_process(COMMAND
 )
 
 configure_file(
-    "${BUILDINFO_TEMPLATE_DIR}/BuildInfo.h.in"
+    "${BUILD_INFO_TEMPLATE_DIR}/BuildInfo.h.in"
     "${DESTINATION}/BuildInfo.h" @ONLY
 )
 
 function(BuildInfo target)
-    target_include_directories(${target} PRIVATE 
+    target_include_directories(${target} PRIVATE
         ${DESTINATION}
     )
 endfunction()
