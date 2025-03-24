@@ -40,7 +40,7 @@ if(MSVC)
     add_compile_options("/MP${BUILD_JOBS}")
     add_compile_definitions(_WIN32_WINNT=_WIN32_WINNT_WIN10)
     add_compile_definitions(NOMINMAX)
-else()
+elseif(UNIX)
     # Use options below to enable build with sanitization
     add_compile_options(
         -Wall
@@ -49,27 +49,23 @@ else()
         -Wconversion
         -Werror
         -Wfatal-errors
-        # -fsanitize=address
-        # -fsanitize=undefined
         -Wno-error=maybe-uninitialized # producing false positives
     )
 
-    # add_link_options(
-    #     -fsanitize=address
-    #     -fsanitize=undefined
-    # )
-
-    # Not tested, taken from spdlog
-    # add_compile_options(
-    #     -fsanitize=address,undefined
-    #     -fno-sanitize=signed-integer-overflow
-    #     -fno-sanitize-recover=all
-    #     -fno-omit-frame-pointer
-    # )
-    # add_link_options(
-    #     -fsanitize=address,undefined
-    #     -fuse-ld=gold
-    # )
+    # Be aware, this increases memory usage by order of magnitude
+    # (6x-7x times)
+    if(ENABLE_SANITIZERS)
+        add_compile_options(
+            -fsanitize=address,undefined
+            -fno-sanitize=signed-integer-overflow
+            -fno-sanitize-recover=all
+            -fno-omit-frame-pointer
+        )
+        add_link_options(
+            -fsanitize=address,undefined
+            -fuse-ld=gold
+        )
+    endif()
 endif()
 
 option(TOOLS_TIDY "Use clang-tidy" OFF)
