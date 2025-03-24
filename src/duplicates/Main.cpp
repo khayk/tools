@@ -22,6 +22,7 @@ using tools::dups::Node;
 using tools::dups::Progress;
 using tools::dups::stage2str;
 using namespace std::literals;
+using std::chrono::milliseconds;
 
 namespace util = tools::dups::util;
 
@@ -52,7 +53,8 @@ void experimenting(const fs::path& file)
         return true;
     });
 
-    std::cout << "Memory: " << str::humanizeBytes(sys::currentProcessMemoryUsage()) << std::endl;
+    std::cout << "Memory: " << str::humanizeBytes(sys::currentProcessMemoryUsage())
+              << std::endl;
     std::cout << "sizeof(path): " << sizeof(fs::path) << std::endl;
     std::cout << "Files: " << detector.numFiles() << std::endl;
     std::cout << "Nodes: " << detector.root()->nodesCount() << std::endl;
@@ -97,10 +99,10 @@ struct Config
     fs::path cacheDir;
     fs::path allFilesPath;
     fs::path dupFilesPath;
-    size_t minFileSizeBytes{};
-    size_t maxFileSizeBytes{};
-    std::chrono::milliseconds updateFrequency{};
-    bool skipDetection{false};
+    size_t minFileSizeBytes {};
+    size_t maxFileSizeBytes {};
+    std::chrono::milliseconds updateFrequency {};
+    bool skipDetection {false};
 };
 
 Config loadConfig(const fs::path& cfgFile)
@@ -108,25 +110,23 @@ Config loadConfig(const fs::path& cfgFile)
     Config cfg;
     auto config = toml::parse_file(cfgFile.string());
 
-    config["exclude_directories"].as_array()->for_each(
-        [&cfg](const auto& value) {
-            if constexpr (toml::is_string<decltype(value)>)
-            {
-                cfg.excludedDirs.emplace_back(value.value_or(""sv));
-            }
-        });
+    config["exclude_directories"].as_array()->for_each([&cfg](const auto& value) {
+        if constexpr (toml::is_string<decltype(value)>)
+        {
+            cfg.excludedDirs.emplace_back(value.value_or(""sv));
+        }
+    });
 
-    config["scan_directories"].as_array()->for_each(
-        [&cfg](const auto& value) {
-            if constexpr (toml::is_string<decltype(value)>)
-            {
-                cfg.scanDirs.emplace_back(value.value_or(""sv));
-            }
-        });
+    config["scan_directories"].as_array()->for_each([&cfg](const auto& value) {
+        if constexpr (toml::is_string<decltype(value)>)
+        {
+            cfg.scanDirs.emplace_back(value.value_or(""sv));
+        }
+    });
 
     cfg.minFileSizeBytes = config["min_file_size_bytes"].value_or(0ULL);
     cfg.maxFileSizeBytes = config["max_file_size_bytes"].value_or(0ULL);
-    cfg.updateFrequency = std::chrono::milliseconds(config["update_freq_ms"].value_or(0));
+    cfg.updateFrequency = milliseconds(config["update_freq_ms"].value_or(0));
     cfg.allFilesPath = config["all_files"].value_or("");
     cfg.dupFilesPath = config["dup_files"].value_or("");
     cfg.cacheDir = config["cache_directory"].value_or("");
@@ -134,7 +134,9 @@ Config loadConfig(const fs::path& cfgFile)
     return cfg;
 }
 
-void scanDirectories(const Config& cfg, DuplicateDetector& detector, Progress& progress)
+void scanDirectories(const Config& cfg,
+                     DuplicateDetector& detector,
+                     Progress& progress)
 {
     StopWatch sw;
 
@@ -146,9 +148,8 @@ void scanDirectories(const Config& cfg, DuplicateDetector& detector, Progress& p
         file::enumFilesRecursive(
             srcDir,
             cfg.excludedDirs,
-            [numFiles = 0,
-             &detector,
-             &progress](const auto& p, const std::error_code& ec) mutable {
+            [numFiles = 0, &detector, &progress](const auto& p,
+                                                 const std::error_code& ec) mutable {
                 if (ec)
                 {
                     std::cerr << "Error while processing path: " << p << std::endl;
@@ -211,7 +212,7 @@ void reportDuplicates(const Config& cfg, DuplicateDetector& detector)
     size_t largestFileSize = 0;
 
     // Precalculations to produce nice output
-    detector.enumDuplicates([&largestFileSize, &totalFiles](const DupGroup& group){
+    detector.enumDuplicates([&largestFileSize, &totalFiles](const DupGroup& group) {
         totalFiles += group.entires.size();
         largestFileSize = std::max(largestFileSize, group.entires.front().size);
     });
