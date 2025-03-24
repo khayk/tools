@@ -100,7 +100,7 @@ struct Config
     size_t minFileSizeBytes{};
     size_t maxFileSizeBytes{};
     std::chrono::milliseconds updateFrequency{};
-    bool skipDetection{true};
+    bool skipDetection{false};
 };
 
 Config loadConfig(const fs::path& cfgFile)
@@ -207,22 +207,30 @@ void detectDuplicates(const Config& cfg,
 void reportDuplicates(const Config& cfg, DuplicateDetector& detector)
 {
     std::ofstream dupf(cfg.dupFilesPath, std::ios::out | std::ios::binary);
-    const auto grpDigits = static_cast<int>(num::digits(detector.numGroups()));
     size_t totalFiles = 0;
+    size_t largestFileSize = 0;
+
+    // Precalculations to produce nice output
+    detector.enumDuplicates([&largestFileSize, &totalFiles](const DupGroup& group){
+        totalFiles += group.entires.size();
+        largestFileSize = std::max(largestFileSize, group.entires.front().size);
+    });
+
+    const auto grpDigits = static_cast<int>(num::digits(detector.numGroups()));
+    const auto sizeDigits = static_cast<int>(num::digits(largestFileSize));
 
     detector.enumDuplicates(
-        [&out = dupf, grpDigits, sizeDigits = 15, &totalFiles](const DupGroup& group) {
+        [&out = dupf, grpDigits, sizeDigits](const DupGroup& group) {
             if (group.entires.size() > 2)
             {
-                out << "\nLarge group (" << group.entires.size() << ")\n";
+                out << "Large group (" << group.entires.size() << ")\n";
             }
 
-            totalFiles += group.entires.size();
             for (const auto& e : group.entires)
             {
                 out << "[" << std::setw(grpDigits) << group.groupId << "] - "
                     << std::string_view(e.sha256).substr(0, 10) << ','
-                    << std::setw(sizeDigits) << e.size << " " << e.dir << " -> "
+                    << std::setw(sizeDigits + 1) << e.size << " " << e.dir << " -> "
                     << e.filename << "\n";
             }
             out << '\n';
