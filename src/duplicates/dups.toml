@@ -8,11 +8,23 @@ scan_directories = [
 
 # Directories to exclude
 exclude_directories = [
-    ".git",
-    ".vscode",
+    ".cache",
+    ".cargo",
+    ".config",
     ".dups_cache",
+    ".git",
+    ".local",
+    ".vscode",
     "build",
     "snap"
+]
+
+# Patterns of the paths considered safe for deletion.
+# If a file is in the path, it will be considered safe for deletion.
+# The application will produce a warning when the all files in the duplicate group are
+# located in one of these paths
+safe_for_deletion_paths = [
+    "/pattern/of/the/path/considered/safe/for/deletion"
 ]
 
 # Ignore files smaller then this

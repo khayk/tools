@@ -32,6 +32,9 @@ void printUsage()
 {
     std::cout << R"(
 Usage:
+    @ todo: revise this
+    duplicates <cfg_file> - Scan directories and detect duplicates based on the
+                            configuration file.
     duplicates <dir>   - Search duplicate items in the given directory.
 )";
 }
@@ -207,7 +210,7 @@ void detectDuplicates(const Config& cfg,
 
 void reportDuplicates(const Config& cfg, DuplicateDetector& detector)
 {
-    std::ofstream dupf(cfg.dupFilesPath, std::ios::out | std::ios::binary);
+    std::ofstream out(cfg.dupFilesPath, std::ios::out | std::ios::binary);
     size_t totalFiles = 0;
     size_t largestFileSize = 0;
 
@@ -220,22 +223,14 @@ void reportDuplicates(const Config& cfg, DuplicateDetector& detector)
     const auto grpDigits = static_cast<int>(num::digits(detector.numGroups()));
     const auto sizeDigits = static_cast<int>(num::digits(largestFileSize));
 
-    detector.enumDuplicates(
-        [&out = dupf, grpDigits, sizeDigits](const DupGroup& group) {
-            if (group.entires.size() > 2)
-            {
-                out << "Large group (" << group.entires.size() << ")\n";
-            }
-
-            for (const auto& e : group.entires)
-            {
-                out << "[" << std::setw(grpDigits) << group.groupId << "] - "
-                    << std::string_view(e.sha256).substr(0, 10) << ','
-                    << std::setw(sizeDigits + 1) << e.size << " " << e.dir << " -> "
-                    << e.filename << "\n";
-            }
-            out << '\n';
-        });
+    detector.enumDuplicates([&out, grpDigits, sizeDigits](const DupGroup& group) {
+        for (const auto& e : group.entires)
+        {
+            out << group.groupId << ',' << std::string_view(e.sha256).substr(0, 16)
+                << ',' << e.size << ',' << e.dir / e.filename << '\n';
+        }
+        out << '\n';
+    });
 
     std::cout << "Detected: " << detector.numGroups() << " duplicates groups\n";
     std::cout << "All groups combined have: " << totalFiles << " files\n";
@@ -250,7 +245,7 @@ int main(int argc, const char* argv[])
     if (argc < 2)
     {
         printUsage();
-        return 1;
+        return 2;
     }
 
     try
@@ -270,6 +265,8 @@ int main(int argc, const char* argv[])
         scanDirectories(cfg, detector, progress);
         detectDuplicates(cfg, detector, progress);
         reportDuplicates(cfg, detector);
+
+        return 0;
     }
     catch (const std::system_error& se)
     {
@@ -280,5 +277,5 @@ int main(int argc, const char* argv[])
         std::cerr << "std::exception: " << e.what() << std::endl;
     }
 
-    return 0;
+    return 1;
 }
