@@ -84,19 +84,23 @@ void DuplicateDetector::detect(const Options& opts, ProgressCallback cb)
 
     // Files with unique size can be quickly excluded
     size_t numUniqueFiles = 0;
-    util::eraseIf(dups_, [&numUniqueFiles](const auto& vt) {
+    size_t outstandingSize = 0;
+
+    util::eraseIf(dups_, [&numUniqueFiles, &outstandingSize](const auto& vt) {
         if (vt.second.size() < 2)
         {
             ++numUniqueFiles;
             return true;
         }
+        outstandingSize += vt.second.size() * vt.second[0]->size();
         return false;
     });
 
     totalFiles -= numUniqueFiles;
+    size_t processedSize = 0;
 
     // Here we have files with the same size
-    util::eraseIf(dups_, [i = 0U, &cb, totalFiles](auto& vt) mutable {
+    util::eraseIf(dups_, [i = 0U, &cb, totalFiles, &processedSize, outstandingSize](auto& vt) mutable {
         std::map<std::string, Nodes> hashes;
 
         Nodes& nodes = vt.second;
@@ -104,7 +108,9 @@ void DuplicateDetector::detect(const Options& opts, ProgressCallback cb)
         for (const auto* node : nodes)
         {
             auto it = hashes.find(node->sha256());
-            cb(Stage::Calculate, node, ++i * 100 / totalFiles);
+            processedSize += node->size();
+            const auto percent = processedSize * 100 / outstandingSize;
+            cb(Stage::Calculate, node, percent);
 
             if (it == hashes.end())
             {
