@@ -65,7 +65,7 @@ public:
 
 private:
     using Nodes = std::vector<const Node*>;
-    using MapBySize = std::map<size_t, Nodes>;
+    using MapBySize = std::map<size_t, Nodes, std::greater<size_t>>;
     using MapByHash = std::map<std::string_view, Nodes>;
 
     std::unordered_set<std::wstring> names_;

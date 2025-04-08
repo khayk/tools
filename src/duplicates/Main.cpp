@@ -220,15 +220,29 @@ void reportDuplicates(const Config& cfg, DuplicateDetector& detector)
         largestFileSize = std::max(largestFileSize, group.entires.front().size);
     });
 
-    const auto grpDigits = static_cast<int>(num::digits(detector.numGroups()));
-    const auto sizeDigits = static_cast<int>(num::digits(largestFileSize));
+    const auto separator = '|';
+    std::ostringstream oss;
+    std::vector<std::string> sortedLines;
 
-    detector.enumDuplicates([&out, grpDigits, sizeDigits](const DupGroup& group) {
+    detector.enumDuplicates([&out, &oss, &sortedLines](const DupGroup& group) {
+        sortedLines.clear();
+
         for (const auto& e : group.entires)
         {
-            out << group.groupId << ',' << std::string_view(e.sha256).substr(0, 16)
-                << ',' << e.size << ',' << e.dir / e.filename << '\n';
+            oss.str("");
+            oss << group.groupId << separator
+                << std::string_view(e.sha256).substr(0, 16) << separator
+                << e.size << separator
+                << e.dir / e.filename;
+            sortedLines.emplace_back(oss.str());
         }
+
+        std::sort(sortedLines.begin(), sortedLines.end());
+        for (const auto& line : sortedLines)
+        {
+            out << line << '\n';
+        }
+
         out << '\n';
     });
 
