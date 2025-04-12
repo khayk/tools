@@ -6,15 +6,16 @@ scan_directories = [
     "dirN",
 ]
 
-# Directories to exclude
-exclude_directories = [
-    ".cache",
-    ".cargo",
-    ".config",
-    ".dups_cache",
-    ".git",
-    ".local",
-    ".vscode",
+# File and directories matching the patterns below will be excluded
+exclusion_patterns = [
+    "\\.(hpp|txt|log|cmake|json)$", # extensions defined with a single expression
+    "\\.cache",
+    "\\.cargo",
+    "\\.config",
+    "\\.dups_cache",
+    "\\.git",
+    "\\.local",
+    "\\.vscode",
     "build",
     "snap"
 ]

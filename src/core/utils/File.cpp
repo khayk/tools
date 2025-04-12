@@ -10,6 +10,7 @@
 #include <fmt/format.h>
 #include <fstream>
 #include <atomic>
+#include <regex>
 
 namespace file {
 
@@ -226,8 +227,24 @@ TempDir::TempDir(const std::string_view namePrefix,
 }
 
 
+bool shouldExclude(const fs::path& path, const std::vector<std::regex>& rules)
+{
+    const std::string pathStr = path.string();
+
+    for (const auto& rule : rules)
+    {
+        if (std::regex_search(pathStr, rule))
+        {
+            return true; // Exclude the path if it matches any rule
+        }
+    }
+
+    return false;
+}
+
+
 void enumFilesRecursive(const fs::path& dir,
-                        const std::vector<std::string>& excludedDirs,
+                        const std::vector<std::regex>& exclusionPatterns,
                         const PathCallback& cb)
 {
     try
@@ -236,21 +253,17 @@ void enumFilesRecursive(const fs::path& dir,
 
         for (const auto& entry : fs::directory_iterator(dir))
         {
-            const fs::path& currentPath = entry.path();
+            const auto& currentPath = entry.path();
+
+            if (shouldExclude(currentPath, exclusionPatterns))
+            {
+                continue; // Skip to the next entry
+            }
 
             if (fs::is_directory(currentPath))
             {
-                const std::string currentName = currentPath.filename().string();
-
-                // Check if the current directory should be excluded
-                if (std::find(excludedDirs.begin(), excludedDirs.end(), currentName) !=
-                    excludedDirs.end())
-                {
-                    continue; // Skip to the next entry
-                }
-
                 cb(currentPath, ec);
-                enumFilesRecursive(currentPath, excludedDirs, cb);
+                enumFilesRecursive(currentPath, exclusionPatterns, cb);
             }
             else
             {

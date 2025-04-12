@@ -15,6 +15,7 @@
 #include <fmt/format.h>
 #include <iostream>
 #include <fstream>
+#include <regex>
 
 using tools::dups::DupGroup;
 using tools::dups::DuplicateDetector;
@@ -98,7 +99,7 @@ void dumpContent(const fs::path& allFiles, const DuplicateDetector& detector)
 struct Config
 {
     std::vector<std::string> scanDirs;
-    std::vector<std::string> excludedDirs;
+    std::vector<std::regex> exclusionPatterns;
     fs::path cacheDir;
     fs::path allFilesPath;
     fs::path dupFilesPath;
@@ -113,10 +114,13 @@ Config loadConfig(const fs::path& cfgFile)
     Config cfg;
     auto config = toml::parse_file(cfgFile.string());
 
-    config["exclude_directories"].as_array()->for_each([&cfg](const auto& value) {
+    config["exclusion_patterns"].as_array()->for_each([&cfg](const auto& value) {
         if constexpr (toml::is_string<decltype(value)>)
         {
-            cfg.excludedDirs.emplace_back(value.value_or(""sv));
+            cfg.exclusionPatterns.emplace_back(
+                std::regex(std::string(value.value_or(""sv)),
+                           std::regex_constants::ECMAScript)
+            );
         }
     });
 
@@ -150,7 +154,7 @@ void scanDirectories(const Config& cfg,
 
         file::enumFilesRecursive(
             srcDir,
-            cfg.excludedDirs,
+            cfg.exclusionPatterns,
             [numFiles = 0, &detector, &progress](const auto& p,
                                                  const std::error_code& ec) mutable {
                 if (ec)
@@ -178,6 +182,7 @@ void scanDirectories(const Config& cfg,
     // Dump content
     dumpContent(cfg.allFilesPath, detector);
 }
+
 
 void detectDuplicates(const Config& cfg,
                       DuplicateDetector& detector,
@@ -208,7 +213,8 @@ void detectDuplicates(const Config& cfg,
     std::cout << "Detection took: " << sw.elapsedMs() << " ms" << std::endl;
 }
 
-void reportDuplicates(const Config& cfg, DuplicateDetector& detector)
+
+void reportDuplicates(const Config& cfg, const DuplicateDetector& detector)
 {
     std::ofstream out(cfg.dupFilesPath, std::ios::out | std::ios::binary);
     size_t totalFiles = 0;
@@ -252,6 +258,12 @@ void reportDuplicates(const Config& cfg, DuplicateDetector& detector)
               << " duplicate files\n";
 }
 
+
+void deleteDuplicateInteractive(const DuplicateDetector& detector)
+{
+    std::ignore = detector;
+}
+
 } // namespace
 
 int main(int argc, const char* argv[])
@@ -279,6 +291,7 @@ int main(int argc, const char* argv[])
         scanDirectories(cfg, detector, progress);
         detectDuplicates(cfg, detector, progress);
         reportDuplicates(cfg, detector);
+        deleteDuplicateInteractive(detector);
 
         return 0;
     }
