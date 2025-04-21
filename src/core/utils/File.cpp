@@ -8,6 +8,7 @@
 #include <boost/iostreams/device/mapped_file.hpp>
 
 #include <fmt/format.h>
+#include <filesystem>
 #include <fstream>
 #include <atomic>
 #include <regex>
@@ -17,11 +18,17 @@ namespace file {
 bool open(const fs::path& file, const std::ios_base::openmode mode, std::ifstream& ifs, std::error_code& ec)
 {
     ec.clear();
+    if (!fs::exists(file, ec))
+    {
+        ec = std::make_error_code(std::errc::no_such_file_or_directory);
+        return false;
+    }
+
     ifs.open(file, mode);
 
     if (!ifs)
     {
-        ec = std::make_error_code(std::errc::no_such_file_or_directory);
+        ec = std::make_error_code(std::errc::permission_denied);
     }
 
     return !ec;
@@ -255,7 +262,7 @@ void enumFilesRecursive(const fs::path& dir,
         {
             const auto& currentPath = entry.path();
 
-            if (shouldExclude(currentPath, exclusionPatterns))
+            if (shouldExclude(currentPath, exclusionPatterns) || is_symlink(currentPath))
             {
                 continue; // Skip to the next entry
             }
