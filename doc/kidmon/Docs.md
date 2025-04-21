@@ -317,7 +317,30 @@ void treeLoad(std::istream& is, FileCb cb)
         cb(p);
     }
 }
+
 # include <filesystem>
+
 # include <charconv>
 
 */
+
+// "Everything" only indexes file and folder names and generally takes a few seconds to build its database.
+
+// A fresh install of Windows 10 (about 120,000 files) will take about 1 second to index.
+
+// 1,000,000 files will take about 1 minute.
+
+# Dups handling scenarios
+
+1. Implement proper file/folder exclusion functionality
+
+2. Compare 2 folders
+    * Input `A`, `B`
+    * Discovered `G` groups of duplicates `typeof(G[i])` is a list of strings
+    * Ask pattern `K` to keep
+        * If in the duplicate group G[i] keep pattern matches only one record, the rest will be deleted
+    * Ask pattern `D` to delete
+        * If in the duplicate group G[i] delete pattern matches not all records the matches will be deleted
+    * Otherwise ask for confirmation in both cases
+
+3.
