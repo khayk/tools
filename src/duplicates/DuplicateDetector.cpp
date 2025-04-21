@@ -1,8 +1,30 @@
 #include <duplicates/DuplicateDetector.h>
 #include <duplicates/Utils.h>
-
+#include <spdlog/spdlog.h>
+#include <system_error>
 
 namespace tools::dups {
+namespace {
+
+bool tryGetSha256(const Node* node, std::string& sha256)
+{
+    try {
+        sha256 = node->sha256();
+        return true;
+    }
+    catch (const std::system_error& se)
+    {
+        spdlog::error("std::system_error: {}", se.what());
+    }
+    catch (const std::exception& e)
+    {
+        spdlog::error("std::exception: {}", e.what());
+    }
+
+    return false;
+}
+
+}
 
 DuplicateDetector::DuplicateDetector()
 {
@@ -102,19 +124,24 @@ void DuplicateDetector::detect(const Options& opts, ProgressCallback cb)
     // Here we have files with the same size
     util::eraseIf(dups_, [i = 0U, &cb, totalFiles, &processedSize, outstandingSize](auto& vt) mutable {
         std::map<std::string, Nodes> hashes;
+        std::string sha256;
 
         Nodes& nodes = vt.second;
-
         for (const auto* node : nodes)
         {
-            auto it = hashes.find(node->sha256());
+            if (!tryGetSha256(node, sha256))
+            {
+                continue;
+            }
+
+            auto it = hashes.find(sha256);
             processedSize += node->size();
             const auto percent = processedSize * 100 / outstandingSize;
             cb(Stage::Calculate, node, percent);
 
             if (it == hashes.end())
             {
-                hashes.emplace(node->sha256(), Nodes {node});
+                hashes.emplace(sha256, Nodes {node});
             }
             else
             {
