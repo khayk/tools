@@ -8,11 +8,14 @@
 #include <core/utils/Number.h>
 #include <core/utils/Sys.h>
 #include <core/utils/FmtExt.h>
+#include <core/utils/Log.h>
+#include <core/utils/Dirs.h>
+#include <core/utils/Tracer.h>
+#include <toml++/toml.hpp>
+#include <fmt/format.h>
 
 #include <chrono>
 #include <system_error>
-#include <toml++/toml.hpp>
-#include <fmt/format.h>
 #include <iostream>
 #include <fstream>
 #include <regex>
@@ -22,9 +25,8 @@ using tools::dups::DuplicateDetector;
 using tools::dups::Node;
 using tools::dups::Progress;
 using tools::dups::stage2str;
-using namespace std::literals;
 using std::chrono::milliseconds;
-
+using namespace std::literals;
 namespace util = tools::dups::util;
 
 namespace {
@@ -45,7 +47,6 @@ void experimenting(const fs::path& file)
     DuplicateDetector detector;
     StopWatch sw;
 
-    // "/home/khayk/Code/repo/github/khayk/tools/home.txt"
     file::readLines(file, [&detector](const std::string& line) {
         std::string_view sv = line;
         if (line.size() >= 2)
@@ -76,11 +77,11 @@ void dumpContent(const fs::path& allFiles, const DuplicateDetector& detector)
     if (allFiles.empty())
     {
         // File to dump paths of all scanned files
-        std::cout << "Skip dumping paths of all scanned files\n";
+        spdlog::warn("Skip dumping paths of all scanned files");
         return;
     }
 
-    std::cout << "Printing the content of the directory...\n";
+    spdlog::trace("Dumping paths of all scanned files to: {}", allFiles);
     std::ofstream outf(allFiles, std::ios::out | std::ios::binary);
 
     if (!outf)
@@ -92,7 +93,7 @@ void dumpContent(const fs::path& allFiles, const DuplicateDetector& detector)
     }
 
     util::treeDump(detector.root(), outf);
-    std::cout << "Printing completed.\n";
+    spdlog::info("Dumped {} files", detector.numFiles());
 }
 
 
@@ -150,7 +151,7 @@ void scanDirectories(const Config& cfg,
     for (const auto& scanDir : cfg.scanDirs)
     {
         const auto srcDir = fs::path(scanDir).lexically_normal();
-        std::cout << "Scanning directory: " << srcDir << '\n';
+        spdlog::info("Scanning directory: {}", srcDir);
 
         file::enumFilesRecursive(
             srcDir,
@@ -159,7 +160,7 @@ void scanDirectories(const Config& cfg,
                                                  const std::error_code& ec) mutable {
                 if (ec)
                 {
-                    std::cerr << "Error while processing path: " << p << std::endl;
+                    spdlog::error("Error: '{}' while processing path '{}'", ec.message(), p);
                     return;
                 }
 
@@ -174,10 +175,10 @@ void scanDirectories(const Config& cfg,
             });
     }
 
-    std::cout << std::string(80, ' ') << '\r';
-    std::cout << "Discovered files: " << detector.numFiles() << std::endl;
-    std::cout << "Elapsed: " << sw.elapsedMs() << " ms" << std::endl;
-    std::cout << "Nodes: " << detector.root()->nodesCount() << std::endl;
+    // std::cout << std::string(80, ' ') << '\r';
+    spdlog::info("Discovered files: {}", detector.numFiles());
+    spdlog::trace("Elapsed: {} ms", sw.elapsedMs());
+    spdlog::trace("Nodes: {}", detector.root()->nodesCount());
 
     // Dump content
     dumpContent(cfg.allFilesPath, detector);
@@ -190,7 +191,7 @@ void detectDuplicates(const Config& cfg,
 {
     if (cfg.skipDetection)
     {
-        std::cout << "Skipping duplicate detection\n";
+        spdlog::warn("Skip duplicate detection");
         return;
     }
 
@@ -198,8 +199,7 @@ void detectDuplicates(const Config& cfg,
     const DuplicateDetector::Options opts {.minSizeBytes = cfg.minFileSizeBytes,
                                            .maxSizeBytes = cfg.maxFileSizeBytes};
 
-    std::cout << "Detecting duplicates...\n";
-
+    spdlog::trace("Detecting duplicates...");
     detector.detect(opts,
                     [&progress](const DuplicateDetector::Stage stage,
                                 const Node*,
@@ -210,7 +210,7 @@ void detectDuplicates(const Config& cfg,
                         });
                     });
 
-    std::cout << "Detection took: " << sw.elapsedMs() << " ms" << std::endl;
+    spdlog::trace("Detection took: {} ms", sw.elapsedMs());
 }
 
 
@@ -252,10 +252,9 @@ void reportDuplicates(const Config& cfg, const DuplicateDetector& detector)
         out << '\n';
     });
 
-    std::cout << "Detected: " << detector.numGroups() << " duplicates groups\n";
-    std::cout << "All groups combined have: " << totalFiles << " files\n";
-    std::cout << "That means: " << totalFiles - detector.numGroups()
-              << " duplicate files\n";
+    spdlog::info("Detected {} duplicates groups", detector.numGroups());
+    spdlog::info("All groups combined have: {} files", totalFiles);
+    spdlog::info("In other words: {} duplicate files", totalFiles - detector.numGroups());
 }
 
 
@@ -274,6 +273,8 @@ int main(int argc, const char* argv[])
         return 2;
     }
 
+    std::optional<ScopedTrace> trace;
+
     try
     {
         const fs::path cfgFile(argv[1]);
@@ -285,6 +286,13 @@ int main(int argc, const char* argv[])
         }
 
         const Config cfg = loadConfig(cfgFile);
+        const fs::path logsDir = dirs::config() / "duplicates";
+        const fs::path logFilename = "duplicates.log";
+        utl::configureLogger(logsDir, logFilename);
+        trace.emplace("",
+            fmt::format("{:-^80s}", "> START <"),
+            fmt::format("{:-^80s}\n", "> END <"));
+
         DuplicateDetector detector;
         Progress progress(cfg.updateFrequency);
 
@@ -297,11 +305,11 @@ int main(int argc, const char* argv[])
     }
     catch (const std::system_error& se)
     {
-        std::cerr << "std::system_error: " << se.what() << std::endl;
+        spdlog::error("std::system_error: {}", se.what());
     }
     catch (const std::exception& e)
     {
-        std::cerr << "std::exception: " << e.what() << std::endl;
+        spdlog::error("std::exception: {}", e.what());
     }
 
     return 1;
