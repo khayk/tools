@@ -3,7 +3,6 @@
 #include <kidmon/config/Config.h>
 #include <kidmon/common/Console.h>
 #include <kidmon/common/Service.h>
-#include <kidmon/common/Tracer.h>
 #include <kidmon/common/Utils.h>
 #include <BuildInfo.h>
 
@@ -11,6 +10,7 @@
 #include <core/utils/Sys.h>
 #include <core/utils/Log.h>
 #include <core/utils/SingleInstanceChecker.h>
+#include <core/utils/Tracer.h>
 
 #include <cxxopts.hpp>
 

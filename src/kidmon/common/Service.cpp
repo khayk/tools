@@ -1,5 +1,6 @@
 #include <kidmon/common/Service.h>
-#include <kidmon/common/Tracer.h>
+#include <core/utils/Tracer.h>
+
 
 // @todo:khayk - refactor this file, to get rid of ifdef _WIN32 ...
 #ifdef _WIN32

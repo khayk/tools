@@ -3,15 +3,15 @@
 #include "transform/Transforms.h"
 #include "condition/Conditions.h"
 
+#include <kidmon/common/Utils.h>
+#include <kidmon/config/Config.h>
+#include <kidmon/repo/FileSystemRepository.h>
+
 #include <core/utils/Log.h>
 #include <core/utils/Str.h>
 #include <core/utils/File.h>
 #include <core/utils/StopWatch.h>
-
-#include <kidmon/common/Tracer.h>
-#include <kidmon/common/Utils.h>
-#include <kidmon/config/Config.h>
-#include <kidmon/repo/FileSystemRepository.h>
+#include <core/utils/Tracer.h>
 
 #include <cxxopts.hpp>
 #include <iostream>
