@@ -42,7 +42,7 @@ public:
     };
 
     using FileCallback = std::function<void(const fs::path&)>;
-    using DupGroupCallback = std::function<void(const DupGroup&)>;
+    using DupGroupCallback = std::function<bool(const DupGroup&)>;
     using ProgressCallback =
         std::function<void(const Stage stage, const Node* node, size_t percent)>;
     DuplicateDetector();

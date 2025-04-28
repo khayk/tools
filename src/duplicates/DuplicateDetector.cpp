@@ -248,7 +248,11 @@ void DuplicateDetector::enumDuplicates(const DupGroupCallback& cb) const
                 e.sha256 = i->sha256();
             }
 
-            cb(group);
+            // Stop enumeration if the callback returns false
+            if (!cb(group))
+            {
+                return;
+            }
         }
     }
 }

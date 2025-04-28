@@ -94,6 +94,7 @@ TEST(DuplicateDetectorTest, BasicUsage)
     EXPECT_CALL(dupCb, Call(_)).Times(0);
     dd.enumDuplicates([&dupCb](const DupGroup& grp) {
         dupCb.Call(grp);
+        return true;
     });
 
 
@@ -104,6 +105,7 @@ TEST(DuplicateDetectorTest, BasicUsage)
     dd.detect(opts);
     dd.enumDuplicates([&dupCb](const DupGroup& grp) {
         dupCb.Call(grp);
+        return true;
     });
 }
 
