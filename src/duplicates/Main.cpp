@@ -100,6 +100,7 @@ void dumpContent(const fs::path& allFiles, const DuplicateDetector& detector)
 struct Config
 {
     std::vector<std::string> scanDirs;
+    std::vector<std::string> safeToDeleteDirs;
     std::vector<std::regex> exclusionPatterns;
     fs::path cacheDir;
     fs::path allFilesPath;
@@ -129,6 +130,13 @@ Config loadConfig(const fs::path& cfgFile)
         if constexpr (toml::is_string<decltype(value)>)
         {
             cfg.scanDirs.emplace_back(value.value_or(""sv));
+        }
+    });
+
+    config["safe_to_delete_paths"].as_array()->for_each([&cfg](const auto& value) {
+        if constexpr (toml::is_string<decltype(value)>)
+        {
+            cfg.safeToDeleteDirs.emplace_back(value.value_or(""sv));
         }
     });
 
@@ -224,6 +232,7 @@ void reportDuplicates(const Config& cfg, const DuplicateDetector& detector)
     detector.enumDuplicates([&largestFileSize, &totalFiles](const DupGroup& group) {
         totalFiles += group.entires.size();
         largestFileSize = std::max(largestFileSize, group.entires.front().size);
+        return true;
     });
 
     const auto separator = '|';
@@ -250,6 +259,7 @@ void reportDuplicates(const Config& cfg, const DuplicateDetector& detector)
         }
 
         out << '\n';
+        return true;
     });
 
     spdlog::info("Detected {} duplicates groups", detector.numGroups());
@@ -258,9 +268,109 @@ void reportDuplicates(const Config& cfg, const DuplicateDetector& detector)
 }
 
 
-void deleteDuplicateInteractive(const DuplicateDetector& detector)
+void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
 {
-    std::ignore = detector;
+    auto isSafeToDelete = [&delDirs = cfg.safeToDeleteDirs](const fs::path& path) {
+        const auto pathStr = path.string();
+        for (const auto& deleteDir: delDirs)
+        {
+            if (pathStr.find(deleteDir, 0) != std::string::npos)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    };
+
+    auto deleteFiles = [&](const std::vector<fs::path>& files) {
+        for (const auto& file : files)
+        {
+            try
+            {
+                //fs::remove(file);
+                spdlog::info("Deleted: {}", file);
+            }
+            catch (const std::exception& e)
+            {
+                spdlog::error("Error deleting file: {} - {}", e.what(), file);
+            }
+        }
+    };
+
+    bool resumeEnumeration = true;
+    auto deleteInteractively = [&](std::vector<fs::path>& files) {
+        // Display files to be deleted
+        size_t i = 0;
+        for (const auto& file : files)
+        {
+            const auto width = static_cast<int>(num::digits(files.size()));
+            std::cout << std::setw(width + 1) << ++i << ": " << file << '\n';
+        }
+
+        std::string input;
+        std::cout << "Input index of the file to keep: ";
+        std::cin >> input;
+
+        if (!input.empty() && tolower(input[0]) == 'q')
+        {
+            spdlog::info("User requested to stop deletion...");
+            resumeEnumeration = false;
+            return;
+        }
+
+        const auto choice = num::s2num<size_t>(input);
+        if (choice > 0 && choice <= files.size()) {
+            std::swap(files[choice - 1], files.back());
+            files.pop_back();
+            deleteFiles(files);
+        }
+        else {
+            std::cout << "Invalid choice, no files deleted.\n";
+        }
+    };
+
+    std::vector<fs::path> deleteWithoutAsking;
+    std::vector<fs::path> deleteSelectively;
+
+    detector.enumDuplicates([&](const DupGroup& group) {
+        deleteWithoutAsking.clear();
+        deleteSelectively.clear();
+
+        // Categorize files into 2 groups
+        for (const auto& e : group.entires)
+        {
+            if (isSafeToDelete(e.dir))
+            {
+                deleteWithoutAsking.emplace_back(e.dir / e.filename);
+            }
+            else
+            {
+                deleteSelectively.emplace_back(e.dir / e.filename);
+            }
+        }
+
+        // Not all files fall under the safe to delete category
+        if (!deleteSelectively.empty()) {
+            // So after deleting the files below, we know that at least one
+            // file will be left in the system
+            deleteFiles(deleteWithoutAsking);
+        }
+        else {
+            deleteSelectively.insert(
+                deleteSelectively.end(),
+                std::make_move_iterator(deleteWithoutAsking.begin()),
+                std::make_move_iterator(deleteWithoutAsking.end())
+              );
+        }
+
+        if (deleteSelectively.size() > 1) {
+            deleteInteractively(deleteSelectively);
+        }
+
+        // We left with one file, which is now unique in the system
+        return resumeEnumeration;
+    });
 }
 
 } // namespace
@@ -292,6 +402,8 @@ int main(int argc, const char* argv[])
         trace.emplace("",
             fmt::format("{:-^80s}", "> START <"),
             fmt::format("{:-^80s}\n", "> END <"));
+        spdlog::trace("Configuration file: {}", cfgFile);
+        spdlog::trace("Log file: {}", logsDir / logFilename);
 
         DuplicateDetector detector;
         Progress progress(cfg.updateFrequency);
@@ -299,18 +411,18 @@ int main(int argc, const char* argv[])
         scanDirectories(cfg, detector, progress);
         detectDuplicates(cfg, detector, progress);
         reportDuplicates(cfg, detector);
-        deleteDuplicateInteractive(detector);
-
-        return 0;
+        deleteDuplicates(cfg, detector);
     }
     catch (const std::system_error& se)
     {
         spdlog::error("std::system_error: {}", se.what());
+        return 1;
     }
     catch (const std::exception& e)
     {
         spdlog::error("std::exception: {}", e.what());
+        return 1;
     }
 
-    return 1;
+    return 0;
 }
