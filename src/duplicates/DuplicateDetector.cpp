@@ -8,7 +8,8 @@ namespace {
 
 bool tryGetSha256(const Node* node, std::string& sha256)
 {
-    try {
+    try
+    {
         sha256 = node->sha256();
         return true;
     }
@@ -24,7 +25,7 @@ bool tryGetSha256(const Node* node, std::string& sha256)
     return false;
 }
 
-}
+} // namespace
 
 DuplicateDetector::DuplicateDetector()
 {
@@ -122,56 +123,58 @@ void DuplicateDetector::detect(const Options& opts, ProgressCallback cb)
     size_t processedSize = 0;
 
     // Here we have files with the same size
-    util::eraseIf(dups_, [i = 0U, &cb, totalFiles, &processedSize, outstandingSize](auto& vt) mutable {
-        std::map<std::string, Nodes> hashes;
-        std::string sha256;
+    util::eraseIf(
+        dups_,
+        [i = 0U, &cb, totalFiles, &processedSize, outstandingSize](auto& vt) mutable {
+            std::map<std::string, Nodes> hashes;
+            std::string sha256;
 
-        Nodes& nodes = vt.second;
-        for (const auto* node : nodes)
-        {
-            if (!tryGetSha256(node, sha256))
+            Nodes& nodes = vt.second;
+            for (const auto* node : nodes)
             {
-                continue;
+                if (!tryGetSha256(node, sha256))
+                {
+                    continue;
+                }
+
+                auto it = hashes.find(sha256);
+                processedSize += node->size();
+                const auto percent = processedSize * 100 / outstandingSize;
+                cb(Stage::Calculate, node, percent);
+
+                if (it == hashes.end())
+                {
+                    hashes.emplace(sha256, Nodes {node});
+                }
+                else
+                {
+                    it->second.push_back(node);
+                }
             }
 
-            auto it = hashes.find(sha256);
-            processedSize += node->size();
-            const auto percent = processedSize * 100 / outstandingSize;
-            cb(Stage::Calculate, node, percent);
+            // Remove all unique items
+            util::eraseIf(hashes, [](const auto& vt) {
+                return vt.second.size() < 2;
+            });
 
-            if (it == hashes.end())
+            if (hashes.empty())
             {
-                hashes.emplace(sha256, Nodes {node});
+                // Instruct to remove the current Node object
+                return true;
             }
-            else
-            {
-                it->second.push_back(node);
-            }
-        }
 
-        // Remove all unique items
-        util::eraseIf(hashes, [](const auto& vt) {
-            return vt.second.size() < 2;
+            // Remove files with unique hashes
+            auto it =
+                std::remove_if(std::begin(nodes),
+                               std::end(nodes),
+                               [&hashes](const Node* const node) {
+                                   return hashes.find(node->sha256()) == hashes.end();
+                               });
+
+            nodes.erase(it, nodes.end());
+
+            return false;
         });
-
-        if (hashes.empty())
-        {
-            // Instruct to remove the current Node object
-            return true;
-        }
-
-        // Remove files with unique hashes
-        auto it =
-            std::remove_if(std::begin(nodes),
-                           std::end(nodes),
-                           [&hashes](const Node* const node) {
-                               return hashes.find(node->sha256()) == hashes.end();
-                           });
-
-        nodes.erase(it, nodes.end());
-
-        return false;
-    });
 
     for (const auto& [sz, nodes] : dups_)
     {

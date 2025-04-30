@@ -264,7 +264,8 @@ std::string humanizeBytes(size_t bytes)
     int i = 0;
     double size = static_cast<double>(bytes);
 
-    while (size >= 1024 && i < 5) {
+    while (size >= 1024 && i < 5)
+    {
         size /= 1024;
         i++;
     }

@@ -97,8 +97,8 @@ std::string asciiLower(const std::string& str);
  *
  * @param str An input string to be converted to lowercase
  * @param buf Input wstring, reusing same buffer can result to improved performance.
- *            When provided, the underlying implementation will use it to convert string
- *            to wide string before doing lowercase transformation
+ *            When provided, the underlying implementation will use it to convert
+ * string to wide string before doing lowercase transformation
  *
  * @return  A new string object, in lowercase
  */

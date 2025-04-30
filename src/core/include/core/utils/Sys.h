@@ -46,6 +46,6 @@ size_t processMemoryUsage(uint32_t pid);
  *
  * @return Allocated memory in bytes
  */
- size_t currentProcessMemoryUsage();
+size_t currentProcessMemoryUsage();
 
 } // namespace sys

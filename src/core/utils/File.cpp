@@ -15,7 +15,10 @@
 
 namespace file {
 
-bool open(const fs::path& file, const std::ios_base::openmode mode, std::ifstream& ifs, std::error_code& ec)
+bool open(const fs::path& file,
+          const std::ios_base::openmode mode,
+          std::ifstream& ifs,
+          std::error_code& ec)
 {
     ec.clear();
     if (!fs::exists(file, ec))
@@ -109,8 +112,7 @@ bool read(const fs::path& file, std::string& data, std::error_code& ec)
 void readLines(const fs::path& file, const LineCb& cb)
 {
     std::string line;
-    boost::iostreams::mapped_file mmap(file,
-                                       boost::iostreams::mapped_file::readonly);
+    boost::iostreams::mapped_file mmap(file, boost::iostreams::mapped_file::readonly);
     const auto* f = mmap.const_data();
     const auto* e = f + mmap.size();
 
@@ -262,7 +264,8 @@ void enumFilesRecursive(const fs::path& dir,
         {
             const auto& currentPath = entry.path();
 
-            if (shouldExclude(currentPath, exclusionPatterns) || is_symlink(currentPath))
+            if (shouldExclude(currentPath, exclusionPatterns) ||
+                is_symlink(currentPath))
             {
                 continue; // Skip to the next entry
             }

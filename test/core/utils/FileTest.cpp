@@ -55,10 +55,10 @@ TEST_F(UtilsFileTests, ReadLines)
         return true;
     }));
 
-    ASSERT_EQ(4,      lines.size());
-    EXPECT_EQ("one",  lines[0]);
-    EXPECT_EQ("two",  lines[1]);
-    EXPECT_EQ("",     lines[2]);
+    ASSERT_EQ(4, lines.size());
+    EXPECT_EQ("one", lines[0]);
+    EXPECT_EQ("two", lines[1]);
+    EXPECT_EQ("", lines[2]);
     EXPECT_EQ("four", lines[3]);
 
     lines.clear();
@@ -67,7 +67,7 @@ TEST_F(UtilsFileTests, ReadLines)
         return false;
     }));
     // We have instructed to stop enumeration after the first entry
-    EXPECT_EQ(1,      lines.size());
+    EXPECT_EQ(1, lines.size());
 }
 
 TEST_F(UtilsFileTests, ReadLinesFails)
@@ -77,7 +77,10 @@ TEST_F(UtilsFileTests, ReadLinesFails)
     MockFunction<void(const std::string&)> mock;
     EXPECT_CALL(mock, Call(_)).Times(0);
 
-    auto lambda = [&mock](const std::string& line) { mock.Call(line); return true; };
+    auto lambda = [&mock](const std::string& line) {
+        mock.Call(line);
+        return true;
+    };
     EXPECT_THROW(readLines(file, lambda), std::exception);
 }
 

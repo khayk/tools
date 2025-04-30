@@ -20,12 +20,12 @@
 #include <fstream>
 #include <regex>
 
+using std::chrono::milliseconds;
 using tools::dups::DupGroup;
 using tools::dups::DuplicateDetector;
 using tools::dups::Node;
 using tools::dups::Progress;
 using tools::dups::stage2str;
-using std::chrono::milliseconds;
 using namespace std::literals;
 namespace util = tools::dups::util;
 
@@ -121,8 +121,7 @@ Config loadConfig(const fs::path& cfgFile)
         {
             cfg.exclusionPatterns.emplace_back(
                 std::regex(std::string(value.value_or(""sv)),
-                           std::regex_constants::ECMAScript)
-            );
+                           std::regex_constants::ECMAScript));
         }
     });
 
@@ -168,7 +167,9 @@ void scanDirectories(const Config& cfg,
                                                  const std::error_code& ec) mutable {
                 if (ec)
                 {
-                    spdlog::error("Error: '{}' while processing path '{}'", ec.message(), p);
+                    spdlog::error("Error: '{}' while processing path '{}'",
+                                  ec.message(),
+                                  p);
                     return;
                 }
 
@@ -246,9 +247,8 @@ void reportDuplicates(const Config& cfg, const DuplicateDetector& detector)
         {
             oss.str("");
             oss << group.groupId << separator
-                << std::string_view(e.sha256).substr(0, 16) << separator
-                << e.size << separator
-                << e.dir / e.filename;
+                << std::string_view(e.sha256).substr(0, 16) << separator << e.size
+                << separator << e.dir / e.filename;
             sortedLines.emplace_back(oss.str());
         }
 
@@ -264,7 +264,8 @@ void reportDuplicates(const Config& cfg, const DuplicateDetector& detector)
 
     spdlog::info("Detected {} duplicates groups", detector.numGroups());
     spdlog::info("All groups combined have: {} files", totalFiles);
-    spdlog::info("In other words: {} duplicate files", totalFiles - detector.numGroups());
+    spdlog::info("In other words: {} duplicate files",
+                 totalFiles - detector.numGroups());
 }
 
 
@@ -272,7 +273,7 @@ void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
 {
     auto isSafeToDelete = [&delDirs = cfg.safeToDeleteDirs](const fs::path& path) {
         const auto pathStr = path.string();
-        for (const auto& deleteDir: delDirs)
+        for (const auto& deleteDir : delDirs)
         {
             if (pathStr.find(deleteDir, 0) != std::string::npos)
             {
@@ -288,7 +289,7 @@ void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
         {
             try
             {
-                //fs::remove(file);
+                // fs::remove(file);
                 spdlog::info("Deleted: {}", file);
             }
             catch (const std::exception& e)
@@ -320,12 +321,14 @@ void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
         }
 
         const auto choice = num::s2num<size_t>(input);
-        if (choice > 0 && choice <= files.size()) {
+        if (choice > 0 && choice <= files.size())
+        {
             std::swap(files[choice - 1], files.back());
             files.pop_back();
             deleteFiles(files);
         }
-        else {
+        else
+        {
             std::cout << "Invalid choice, no files deleted.\n";
         }
     };
@@ -351,20 +354,22 @@ void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
         }
 
         // Not all files fall under the safe to delete category
-        if (!deleteSelectively.empty()) {
+        if (!deleteSelectively.empty())
+        {
             // So after deleting the files below, we know that at least one
             // file will be left in the system
             deleteFiles(deleteWithoutAsking);
         }
-        else {
+        else
+        {
             deleteSelectively.insert(
                 deleteSelectively.end(),
                 std::make_move_iterator(deleteWithoutAsking.begin()),
-                std::make_move_iterator(deleteWithoutAsking.end())
-              );
+                std::make_move_iterator(deleteWithoutAsking.end()));
         }
 
-        if (deleteSelectively.size() > 1) {
+        if (deleteSelectively.size() > 1)
+        {
             deleteInteractively(deleteSelectively);
         }
 
@@ -400,8 +405,8 @@ int main(int argc, const char* argv[])
         const fs::path logFilename = "duplicates.log";
         utl::configureLogger(logsDir, logFilename);
         trace.emplace("",
-            fmt::format("{:-^80s}", "> START <"),
-            fmt::format("{:-^80s}\n", "> END <"));
+                      fmt::format("{:-^80s}", "> START <"),
+                      fmt::format("{:-^80s}\n", "> END <"));
         spdlog::trace("Configuration file: {}", cfgFile);
         spdlog::trace("Log file: {}", logsDir / logFilename);
 
