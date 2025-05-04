@@ -1,30 +1,18 @@
 # Directories to scan
 scan_directories = [
-    "dir1",
-    "dir2",
-    # ...
-    "dirN",
 ]
 
 # File and directories matching the patterns below will be excluded
 exclusion_patterns = [
-    "\\.(hpp|txt|log|cmake|json)$", # extensions defined with a single expression
-    "\\.cache",
-    "\\.cargo",
-    "\\.config",
-    "\\.dups_cache",
-    "\\.git",
-    "\\.local",
-    "\\.vscode",
-    "build",
-    "snap"
+    "\\.(hpp|txt|log|cmake|json)$" # extensions defined with a single expression
+    # this section might contain multiple patterns
 ]
 
 # Directories to be marked as safe candidates for deletion
 # If all paths of the given duplicate group contains the directory specified in the list
 # the application will behave interactively. i.e. it will ask the user to confirm the deletion
 safe_to_delete_paths = [
-    "/pattern/of/the/path/considered/safe/for/deletion"
+    # "/pattern/of/the/path/considered/safe/for/deletion"
 ]
 
 # Ignore files smaller then this
@@ -42,8 +30,10 @@ update_freq_ms = 100
 cache_directory = ".dups_cache"
 
 # File to dump paths of all scanned files
-all_files = "files.txt"
+all_files = "all.txt"
 
 # File to dump the duplicates
-dup_files = "dups.txt"
+dup_files = "duplicates.txt"
 
+# Files to maintain ignored files across multiple runs of the duplicates application
+ign_files = "ignored.txt"
