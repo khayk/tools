@@ -310,13 +310,21 @@ void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
         }
 
         std::string input;
-        std::cout << "Input index of the file to keep: ";
-        std::cin >> input;
+        while (input.empty())
+        {
+            std::cout << "Enter number te be KEEP (q - quit, i - ignore): ";
+            std::cin >> input;
+        }
 
-        if (!input.empty() && tolower(input[0]) == 'q')
+        if (tolower(input[0]) == 'q')
         {
             spdlog::info("User requested to stop deletion...");
             resumeEnumeration = false;
+            return;
+        }
+        else if (tolower(input[0]) == 'i')
+        {
+            spdlog::info("User requested to ignore this group...");
             return;
         }
 
@@ -329,7 +337,7 @@ void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
         }
         else
         {
-            std::cout << "Invalid choice, no files deleted.\n";
+            std::cout << "Invalid choice, no file is deleted.\n";
         }
     };
 
@@ -370,6 +378,8 @@ void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
 
         if (deleteSelectively.size() > 1)
         {
+            std::cout << "file size: " << group.entires.front().size
+                      << ", sha256: " << group.entires.front().sha256 << '\n';
             deleteInteractively(deleteSelectively);
         }
 
