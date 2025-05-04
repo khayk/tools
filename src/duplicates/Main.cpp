@@ -132,14 +132,15 @@ struct Config
 
 void dumpConfig(const fs::path& cfgFile, const Config& cfg)
 {
-    spdlog::trace("{:<27} {}", "Configuration file", cfgFile);
-    spdlog::trace("{:<27} {}", "Log file:", cfg.logDir / cfg.logFilename);
-    spdlog::trace("{:<27} {}", "All files path:", cfg.allFilesPath);
-    spdlog::trace("{:<27} {}", "Duplicate files path:", cfg.dupFilesPath);
-    spdlog::trace("{:<27} {}", "Ignored files path:", cfg.ignFilesPath);
-    spdlog::trace("{:<27} {}", "Scan directories:", concat(cfg.scanDirs, ", "));
-    spdlog::trace("{:<27} {}", "Safe to delete directories:", concat(cfg.safeToDeleteDirs, ", "));
-    spdlog::trace("{:<27} {}", "Cache directory:", cfg.cacheDir);
+    constexpr std::string_view pattern = "{:<27} {}";
+    spdlog::trace(pattern, "Configuration file", cfgFile);
+    spdlog::trace(pattern, "Log file:", cfg.logDir / cfg.logFilename);
+    spdlog::trace(pattern, "All files path:", cfg.allFilesPath);
+    spdlog::trace(pattern, "Duplicate files path:", cfg.dupFilesPath);
+    spdlog::trace(pattern, "Ignored files path:", cfg.ignFilesPath);
+    spdlog::trace(pattern, "Scan directories:", concat(cfg.scanDirs, ", "));
+    spdlog::trace(pattern, "Safe to delete directories:", concat(cfg.safeToDeleteDirs, ", "));
+    spdlog::trace(pattern, "Cache directory:", cfg.cacheDir);
     // spdlog::trace("Exclusion patterns: {}", concat(cfg.exclusionPatterns, ", "));
 }
 
