@@ -52,3 +52,5 @@ out/
 LastCoverageResults.log
 .reports/
 kidmon.excalidraw
+CMakeUserPresets.json
+dups.user.toml
