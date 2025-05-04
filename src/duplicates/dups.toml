@@ -20,11 +20,10 @@ exclusion_patterns = [
     "snap"
 ]
 
-# Patterns of the paths considered safe for deletion.
-# If a file is in the path, it will be considered safe for deletion.
-# The application will produce a warning when the all files in the duplicate group are
-# located in one of these paths
-safe_for_deletion_paths = [
+# Directories to be marked as safe candidates for deletion
+# If all paths of the given duplicate group contains the directory specified in the list
+# the application will behave interactively. i.e. it will ask the user to confirm the deletion
+safe_to_delete_paths = [
     "/pattern/of/the/path/considered/safe/for/deletion"
 ]
 
