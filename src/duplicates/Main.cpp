@@ -96,6 +96,22 @@ void dumpContent(const fs::path& allFiles, const DuplicateDetector& detector)
     spdlog::info("Dumped {} files", detector.numFiles());
 }
 
+std::string concat(const std::vector<std::string>& vec, const std::string& sep)
+{
+    std::ostringstream oss;
+    for (const auto& item : vec)
+    {
+        oss << item << sep;
+    }
+
+    auto res = oss.str();
+    if (!res.empty() && !sep.empty())
+    {
+        res.erase(res.size() - sep.size());
+    }
+
+    return res;
+}
 
 struct Config
 {
@@ -105,11 +121,27 @@ struct Config
     fs::path cacheDir;
     fs::path allFilesPath;
     fs::path dupFilesPath;
+    fs::path ignFilesPath;
+    fs::path logDir;
+    fs::path logFilename;
     size_t minFileSizeBytes {};
     size_t maxFileSizeBytes {};
     std::chrono::milliseconds updateFrequency {};
     bool skipDetection {false};
 };
+
+void dumpConfig(const fs::path& cfgFile, const Config& cfg)
+{
+    spdlog::trace("{:<27} {}", "Configuration file", cfgFile);
+    spdlog::trace("{:<27} {}", "Log file:", cfg.logDir / cfg.logFilename);
+    spdlog::trace("{:<27} {}", "All files path:", cfg.allFilesPath);
+    spdlog::trace("{:<27} {}", "Duplicate files path:", cfg.dupFilesPath);
+    spdlog::trace("{:<27} {}", "Ignored files path:", cfg.ignFilesPath);
+    spdlog::trace("{:<27} {}", "Scan directories:", concat(cfg.scanDirs, ", "));
+    spdlog::trace("{:<27} {}", "Safe to delete directories:", concat(cfg.safeToDeleteDirs, ", "));
+    spdlog::trace("{:<27} {}", "Cache directory:", cfg.cacheDir);
+    // spdlog::trace("Exclusion patterns: {}", concat(cfg.exclusionPatterns, ", "));
+}
 
 Config loadConfig(const fs::path& cfgFile)
 {
@@ -139,12 +171,29 @@ Config loadConfig(const fs::path& cfgFile)
         }
     });
 
+    const fs::path dataDir = dirs::config() / "duplicates";
+
     cfg.minFileSizeBytes = config["min_file_size_bytes"].value_or(0ULL);
     cfg.maxFileSizeBytes = config["max_file_size_bytes"].value_or(0ULL);
     cfg.updateFrequency = milliseconds(config["update_freq_ms"].value_or(0));
+    cfg.cacheDir = config["cache_directory"].value_or("");
     cfg.allFilesPath = config["all_files"].value_or("");
     cfg.dupFilesPath = config["dup_files"].value_or("");
-    cfg.cacheDir = config["cache_directory"].value_or("");
+    cfg.ignFilesPath = config["ign_files"].value_or("");
+    cfg.logDir = dataDir / "logs";
+    cfg.logFilename = "duplicates.log";
+
+    const auto adjustPath = [&](fs::path& path) {
+        if (!path.empty())
+        {
+            path = dataDir / path;
+        }
+    };
+
+    // Ensure that auxilary files are located under the application data directory
+    adjustPath(cfg.allFilesPath);
+    adjustPath(cfg.dupFilesPath);
+    adjustPath(cfg.ignFilesPath);
 
     return cfg;
 }
@@ -299,6 +348,16 @@ void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
         }
     };
 
+    std::unordered_set<fs::path> ignoredFiles;
+    if (fs::exists(cfg.ignFilesPath))
+    {
+        spdlog::info("Loading ignored files from: {}", cfg.ignFilesPath);
+        file::readLines(cfg.ignFilesPath, [&](const std::string& line) {
+            ignoredFiles.emplace(line);
+            return true;
+        });
+    }
+
     bool resumeEnumeration = true;
     auto deleteInteractively = [&](std::vector<fs::path>& files) {
         // Display files to be deleted
@@ -325,6 +384,8 @@ void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
         else if (tolower(input[0]) == 'i')
         {
             spdlog::info("User requested to ignore this group...");
+            std::copy(files.begin(), files.end(),
+                      std::inserter(ignoredFiles, ignoredFiles.end()));
             return;
         }
 
@@ -411,14 +472,11 @@ int main(int argc, const char* argv[])
         }
 
         const Config cfg = loadConfig(cfgFile);
-        const fs::path logsDir = dirs::config() / "duplicates";
-        const fs::path logFilename = "duplicates.log";
-        utl::configureLogger(logsDir, logFilename);
+        utl::configureLogger(cfg.logDir, cfg.logFilename);
         trace.emplace("",
                       fmt::format("{:-^80s}", "> START <"),
                       fmt::format("{:-^80s}\n", "> END <"));
-        spdlog::trace("Configuration file: {}", cfgFile);
-        spdlog::trace("Log file: {}", logsDir / logFilename);
+        dumpConfig(cfgFile, cfg);
 
         DuplicateDetector detector;
         Progress progress(cfg.updateFrequency);
