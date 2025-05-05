@@ -11,8 +11,10 @@
 #include <core/utils/Log.h>
 #include <core/utils/Dirs.h>
 #include <core/utils/Tracer.h>
+
 #include <toml++/toml.hpp>
 #include <fmt/format.h>
+#include <spdlog/spdlog.h>
 
 #include <chrono>
 #include <system_error>
@@ -321,6 +323,9 @@ void reportDuplicates(const Config& cfg, const DuplicateDetector& detector)
 
 void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
 {
+    using PathsVec = std::vector<fs::path>;
+    using PathsSet = std::unordered_set<fs::path>;
+
     auto isSafeToDelete = [&delDirs = cfg.safeToDeleteDirs](const fs::path& path) {
         const auto pathStr = path.string();
         for (const auto& deleteDir : delDirs)
@@ -334,7 +339,7 @@ void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
         return false;
     };
 
-    auto deleteFiles = [&](const std::vector<fs::path>& files) {
+    auto deleteFiles = [&](const PathsVec& files) {
         for (const auto& file : files)
         {
             try
@@ -349,7 +354,7 @@ void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
         }
     };
 
-    auto saveIgnoredFiles = [&](const std::unordered_set<fs::path>& files) {
+    auto saveIgnoredFiles = [&](const PathsSet& files) {
         if (files.empty())
         {
             return;
@@ -362,7 +367,7 @@ void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
         }
     };
 
-    std::unordered_set<fs::path> ignoredFiles;
+    PathsSet ignoredFiles;
     if (fs::exists(cfg.ignFilesPath))
     {
         spdlog::info("Loading ignored files from: {}", cfg.ignFilesPath);
@@ -373,7 +378,7 @@ void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
     }
 
     bool resumeEnumeration = true;
-    auto deleteInteractively = [&](std::vector<fs::path>& files) {
+    auto deleteInteractively = [&](PathsVec& files) {
         // Display files to be deleted
         size_t i = 0;
         for (const auto& file : files)
@@ -416,8 +421,8 @@ void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
         }
     };
 
-    std::vector<fs::path> deleteWithoutAsking;
-    std::vector<fs::path> deleteSelectively;
+    PathsVec deleteWithoutAsking;
+    PathsVec deleteSelectively;
 
     detector.enumDuplicates([&](const DupGroup& group) {
         deleteWithoutAsking.clear();
@@ -426,13 +431,21 @@ void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
         // Categorize files into 2 groups
         for (const auto& e : group.entires)
         {
+            const auto file = e.dir / e.filename;
+
+            if (ignoredFiles.contains(file))
+            {
+                spdlog::warn("File is ignored: {}", file);
+                return true;
+            }
+
             if (isSafeToDelete(e.dir))
             {
-                deleteWithoutAsking.emplace_back(e.dir / e.filename);
+                deleteWithoutAsking.emplace_back(file);
             }
             else
             {
-                deleteSelectively.emplace_back(e.dir / e.filename);
+                deleteSelectively.emplace_back(file);
             }
         }
 
