@@ -349,6 +349,19 @@ void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
         }
     };
 
+    auto saveIgnoredFiles = [&](const std::unordered_set<fs::path>& files) {
+        if (files.empty())
+        {
+            return;
+        }
+
+        std::ofstream out(cfg.ignFilesPath, std::ios::out | std::ios::binary);
+        for (const auto& file : files)
+        {
+            out << file << '\n';
+        }
+    };
+
     std::unordered_set<fs::path> ignoredFiles;
     if (fs::exists(cfg.ignFilesPath))
     {
@@ -448,6 +461,8 @@ void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
         // We left with one file, which is now unique in the system
         return resumeEnumeration;
     });
+
+    saveIgnoredFiles(ignoredFiles);
 }
 
 } // namespace
