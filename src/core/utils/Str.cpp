@@ -46,7 +46,7 @@ void s2ws(std::string_view utf8, std::wstring& wstr)
 #else
     len = 1 + std::mbsrtowcs(nullptr, &mbstr, 0, &state);
     wstr.resize(len > 0 ? len - 1 : 0);
-    std::mbsrtowcs(&wstr[0], &mbstr, wstr.size(), &state);
+    std::mbsrtowcs(wstr.data(), &mbstr, wstr.size(), &state);
 #endif
 }
 
@@ -73,7 +73,7 @@ void ws2s(std::wstring_view utf16, std::string& utf8)
 #else
     len = std::wcsrtombs(nullptr, &wstr, 0, &state);
     utf8.resize(len);
-    std::wcsrtombs(&utf8[0], &wstr, utf8.size(), &state);
+    std::wcsrtombs(utf8.data(), &wstr, utf8.size(), &state);
 #endif
 }
 
@@ -207,15 +207,14 @@ std::string utf8Lower(const std::string& str, std::wstring* buf)
 
 std::string humanizeDuration(std::chrono::milliseconds ms, int units)
 {
-    using namespace std::chrono;
-    auto secs = duration_cast<seconds>(ms);
-    ms -= duration_cast<milliseconds>(secs);
-    auto mins = duration_cast<minutes>(secs);
-    secs -= duration_cast<seconds>(mins);
-    auto hour = duration_cast<hours>(mins);
-    mins -= duration_cast<minutes>(hour);
-    auto day = duration_cast<days>(hour);
-    hour -= duration_cast<hours>(day);
+    auto secs = duration_cast<std::chrono::seconds>(ms);
+    ms -= duration_cast<std::chrono::milliseconds>(secs);
+    auto mins = duration_cast<std::chrono::minutes>(secs);
+    secs -= duration_cast<std::chrono::seconds>(mins);
+    auto hour = duration_cast<std::chrono::hours>(mins);
+    mins -= duration_cast<std::chrono::minutes>(hour);
+    auto day = duration_cast<std::chrono::days>(hour);
+    hour -= duration_cast<std::chrono::hours>(day);
 
     std::ostringstream oss;
 
@@ -260,17 +259,17 @@ std::string humanizeDuration(std::chrono::milliseconds ms, int units)
 
 std::string humanizeBytes(size_t bytes)
 {
-    const char* const units[] = {"B", "Kb", "Mb", "Gb", "Tb", "Pb"};
-    int i = 0;
-    double size = static_cast<double>(bytes);
+    constexpr std::array units = {"B", "Kb", "Mb", "Gb", "Tb", "Pb"};
+    size_t i = 0;
+    auto size = static_cast<double>(bytes);
 
-    while (size >= 1024 && i < 5)
+    while (size >= 1024.0 && i + 1 < units.size())
     {
-        size /= 1024;
-        i++;
+        size /= 1024.0;
+        ++i;
     }
 
-    return fmt::format("{:.2f} {}", size, units[i]);
+    return fmt::format("{:.2f} {}", size, units.at(i));
 }
 
 

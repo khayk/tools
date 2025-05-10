@@ -181,7 +181,7 @@ fs::path currentProcessPath()
     struct stat statbuf = {};
     if (stat(buff, &statbuf) == 0)
     {
-        return fs::path(buff);
+        return fs::path{buff};
     }
 #endif // _WIN32
 
@@ -206,7 +206,7 @@ size_t processMemoryUsage(uint32_t pid)
     size_t memory = 0;
     while (getline(file, line))
     {
-        if (line.find("VmRSS:") == 0)
+        if (line.starts_with("VmRSS:"))
         {
             std::istringstream iss(line);
             std::string label;

@@ -240,15 +240,9 @@ bool shouldExclude(const fs::path& path, const std::vector<std::regex>& rules)
 {
     const std::string pathStr = path.string();
 
-    for (const auto& rule : rules)
-    {
-        if (std::regex_search(pathStr, rule))
-        {
-            return true; // Exclude the path if it matches any rule
-        }
-    }
-
-    return false;
+    return std::ranges::any_of(rules, [&pathStr](const auto& rule) {
+        return std::regex_search(pathStr, rule);
+    });
 }
 
 

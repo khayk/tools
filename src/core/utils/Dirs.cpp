@@ -53,7 +53,7 @@ fs::path home(std::error_code& ec)
         return {};
     }
 
-    return fs::path(homeDir);
+    return fs::path{homeDir};
 #endif
 }
 

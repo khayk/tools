@@ -26,7 +26,6 @@ SingleInstanceChecker::SingleInstanceChecker(std::wstring_view name)
 #else
     std::ignore = name;
     spdlog::error("Single instance checker is not implemented");
-    processAlreadyRunning_ = false;
 #endif
 }
 
