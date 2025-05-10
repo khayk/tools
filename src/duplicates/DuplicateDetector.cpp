@@ -32,8 +32,6 @@ DuplicateDetector::DuplicateDetector()
     reset();
 }
 
-DuplicateDetector::~DuplicateDetector() {}
-
 void DuplicateDetector::addFile(const fs::path& path)
 {
     Node* node = root_.get();
@@ -125,10 +123,11 @@ void DuplicateDetector::detect(const Options& opts, ProgressCallback cb)
     // Here we have files with the same size
     util::eraseIf(
         dups_,
-        [i = 0U, &cb, totalFiles, &processedSize, outstandingSize](auto& vt) mutable {
+        [&cb, totalFiles, &processedSize, outstandingSize](auto& vt) mutable {
             std::map<std::string, Nodes> hashes;
             std::string sha256;
 
+            std::ignore = totalFiles;
             Nodes& nodes = vt.second;
             for (const auto* node : nodes)
             {

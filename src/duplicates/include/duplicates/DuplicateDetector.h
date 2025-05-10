@@ -46,7 +46,7 @@ public:
     using ProgressCallback =
         std::function<void(const Stage stage, const Node* node, size_t percent)>;
     DuplicateDetector();
-    ~DuplicateDetector();
+    ~DuplicateDetector() = default;
 
     void addFile(const fs::path& path);
 

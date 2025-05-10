@@ -155,8 +155,8 @@ Config loadConfig(const fs::path& cfgFile)
         if constexpr (toml::is_string<decltype(value)>)
         {
             cfg.exclusionPatterns.emplace_back(
-                std::regex(std::string(value.value_or(""sv)),
-                           std::regex_constants::ECMAScript));
+                std::string(value.value_or(""sv)),
+                std::regex_constants::ECMAScript);
         }
     });
 
