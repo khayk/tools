@@ -18,6 +18,7 @@
 
 #include <chrono>
 #include <system_error>
+#include <algorithm>
 #include <iostream>
 #include <fstream>
 #include <regex>
@@ -100,16 +101,15 @@ void dumpContent(const fs::path& allFiles, const DuplicateDetector& detector)
 
 std::string concat(const std::vector<std::string>& vec, const std::string& sep)
 {
-    std::ostringstream oss;
+    std::string res;
+
     for (const auto& item : vec)
     {
-        oss << item << sep;
-    }
-
-    auto res = oss.str();
-    if (!res.empty() && !sep.empty())
-    {
-        res.erase(res.size() - sep.size());
+        if (!res.empty())
+        {
+            res.append(sep);
+        }
+        res.append(item);
     }
 
     return res;
@@ -320,54 +320,101 @@ void reportDuplicates(const Config& cfg, const DuplicateDetector& detector)
                  totalFiles - detector.numGroups());
 }
 
+using PathsVec = std::vector<fs::path>;
+using PathsSet = std::unordered_set<fs::path>;
+
+bool isSafeToDelete(const std::vector<std::string>& delDirs, const fs::path& path)
+{
+    const auto pathStr = path.string();
+
+    return std::ranges::any_of(delDirs, [&pathStr](const auto& deleteDir) {
+        return pathStr.find(deleteDir, 0) != std::string::npos;
+    });
+};
+
+void deleteFiles(const PathsVec& files)
+{
+    for (const auto& file : files)
+    {
+        try
+        {
+            // fs::remove(file);
+            spdlog::info("Deleted: {}", file);
+        }
+        catch (const std::exception& e)
+        {
+            spdlog::error("Error deleting file: {} - {}", e.what(), file);
+        }
+    }
+};
+
+void saveIgnoredFiles(const fs::path& filePath, const PathsSet& files)
+{
+    if (files.empty())
+    {
+        return;
+    }
+
+    std::ofstream out(filePath, std::ios::out | std::ios::binary);
+    for (const auto& file : files)
+    {
+        out << file << '\n';
+    }
+};
+
+bool deleteInteractively(PathsVec& files, PathsSet& ignoredFiles)
+{
+    // Display files to be deleted
+    size_t i = 0;
+    for (const auto& file : files)
+    {
+        const auto width = static_cast<int>(num::digits(files.size()));
+        std::cout << std::setw(width + 1) << ++i << ": " << file << '\n';
+    }
+
+    std::string input;
+    while (input.empty())
+    {
+        std::cout << "Enter number te be KEEP (q - quit, i - ignore): ";
+        std::cin >> input;
+    }
+
+    if (tolower(input[0]) == 'q')
+    {
+        spdlog::info("User requested to stop deletion...");
+        return false;
+    }
+
+    if (tolower(input[0]) == 'i')
+    {
+        spdlog::info("User requested to ignore this group...");
+        std::copy(files.begin(), files.end(),
+                    std::inserter(ignoredFiles, ignoredFiles.end()));
+        return true;
+    }
+
+    const auto choice = num::s2num<size_t>(input);
+    if (choice > 0 && choice <= files.size())
+    {
+        std::swap(files[choice - 1], files.back());
+        files.pop_back();
+        deleteFiles(files);
+    }
+    else
+    {
+        std::cout << "Invalid choice, no file is deleted.\n";
+    }
+
+    return true;
+};
 
 void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
 {
-    using PathsVec = std::vector<fs::path>;
-    using PathsSet = std::unordered_set<fs::path>;
-
-    auto isSafeToDelete = [&delDirs = cfg.safeToDeleteDirs](const fs::path& path) {
-        const auto pathStr = path.string();
-        for (const auto& deleteDir : delDirs)
-        {
-            if (pathStr.find(deleteDir, 0) != std::string::npos)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    };
-
-    auto deleteFiles = [&](const PathsVec& files) {
-        for (const auto& file : files)
-        {
-            try
-            {
-                // fs::remove(file);
-                spdlog::info("Deleted: {}", file);
-            }
-            catch (const std::exception& e)
-            {
-                spdlog::error("Error deleting file: {} - {}", e.what(), file);
-            }
-        }
-    };
-
-    auto saveIgnoredFiles = [&](const PathsSet& files) {
-        if (files.empty())
-        {
-            return;
-        }
-
-        std::ofstream out(cfg.ignFilesPath, std::ios::out | std::ios::binary);
-        for (const auto& file : files)
-        {
-            out << file << '\n';
-        }
-    };
-
     PathsSet ignoredFiles;
+    PathsVec deleteWithoutAsking;
+    PathsVec deleteSelectively;
+    bool resumeEnumeration = true;
+
     if (fs::exists(cfg.ignFilesPath))
     {
         spdlog::info("Loading ignored files from: {}", cfg.ignFilesPath);
@@ -376,53 +423,6 @@ void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
             return true;
         });
     }
-
-    bool resumeEnumeration = true;
-    auto deleteInteractively = [&](PathsVec& files) {
-        // Display files to be deleted
-        size_t i = 0;
-        for (const auto& file : files)
-        {
-            const auto width = static_cast<int>(num::digits(files.size()));
-            std::cout << std::setw(width + 1) << ++i << ": " << file << '\n';
-        }
-
-        std::string input;
-        while (input.empty())
-        {
-            std::cout << "Enter number te be KEEP (q - quit, i - ignore): ";
-            std::cin >> input;
-        }
-
-        if (tolower(input[0]) == 'q')
-        {
-            spdlog::info("User requested to stop deletion...");
-            resumeEnumeration = false;
-            return;
-        }
-        else if (tolower(input[0]) == 'i')
-        {
-            spdlog::info("User requested to ignore this group...");
-            std::copy(files.begin(), files.end(),
-                      std::inserter(ignoredFiles, ignoredFiles.end()));
-            return;
-        }
-
-        const auto choice = num::s2num<size_t>(input);
-        if (choice > 0 && choice <= files.size())
-        {
-            std::swap(files[choice - 1], files.back());
-            files.pop_back();
-            deleteFiles(files);
-        }
-        else
-        {
-            std::cout << "Invalid choice, no file is deleted.\n";
-        }
-    };
-
-    PathsVec deleteWithoutAsking;
-    PathsVec deleteSelectively;
 
     detector.enumDuplicates([&](const DupGroup& group) {
         deleteWithoutAsking.clear();
@@ -439,7 +439,7 @@ void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
                 return true;
             }
 
-            if (isSafeToDelete(e.dir))
+            if (isSafeToDelete(cfg.safeToDeleteDirs, e.dir))
             {
                 deleteWithoutAsking.emplace_back(file);
             }
@@ -468,14 +468,14 @@ void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
         {
             std::cout << "file size: " << group.entires.front().size
                       << ", sha256: " << group.entires.front().sha256 << '\n';
-            deleteInteractively(deleteSelectively);
+            resumeEnumeration = deleteInteractively(deleteSelectively, ignoredFiles);
         }
 
         // We left with one file, which is now unique in the system
         return resumeEnumeration;
     });
 
-    saveIgnoredFiles(ignoredFiles);
+    saveIgnoredFiles(cfg.ignFilesPath, ignoredFiles);
 }
 
 } // namespace
