@@ -346,7 +346,7 @@ public:
         : cfg_(std::move(cfg))
         , timer_(ioc_)
         , workGuard_(ioc_.get_executor())
-        , timeout_(cfg.activityCheckInterval)
+        , timeout_(cfg_.activityCheckInterval)
         , tcpClient_(ioc_)
         , api_(ApiFactory::create())
     {
