@@ -83,12 +83,12 @@ void dumpContent(const fs::path& allFiles, const DuplicateDetector& detector)
         return;
     }
 
-    spdlog::trace("Dumping paths of all scanned files to: {}", allFiles);
+    spdlog::trace("Dumping paths of all scanned files to: '{}'", allFiles);
     std::ofstream outf(allFiles, std::ios::out | std::ios::binary);
 
     if (!outf)
     {
-        const auto s = fmt::format("Unable to open file: {}", allFiles);
+        const auto s = fmt::format("Unable to open file: '{}'", allFiles);
         throw std::system_error(
             std::make_error_code(std::errc::no_such_file_or_directory),
             s);
@@ -134,16 +134,16 @@ struct Config
 
 void dumpConfig(const fs::path& cfgFile, const Config& cfg)
 {
-    constexpr std::string_view pattern = "{:<27} {}";
+    constexpr std::string_view pattern = "{:<27}: '{}'";
     spdlog::trace(pattern, "Configuration file", cfgFile);
-    spdlog::trace(pattern, "Log file:", cfg.logDir / cfg.logFilename);
-    spdlog::trace(pattern, "All files path:", cfg.allFilesPath);
-    spdlog::trace(pattern, "Duplicate files path:", cfg.dupFilesPath);
-    spdlog::trace(pattern, "Ignored files path:", cfg.ignFilesPath);
-    spdlog::trace(pattern, "Scan directories:", concat(cfg.scanDirs, ", "));
-    spdlog::trace(pattern, "Safe to delete directories:", concat(cfg.safeToDeleteDirs, ", "));
-    spdlog::trace(pattern, "Cache directory:", cfg.cacheDir);
-    // spdlog::trace("Exclusion patterns: {}", concat(cfg.exclusionPatterns, ", "));
+    spdlog::trace(pattern, "Log file", cfg.logDir / cfg.logFilename);
+    spdlog::trace(pattern, "All files path", cfg.allFilesPath);
+    spdlog::trace(pattern, "Duplicate files path", cfg.dupFilesPath);
+    spdlog::trace(pattern, "Ignored files path", cfg.ignFilesPath);
+    spdlog::trace(pattern, "Scan directories", concat(cfg.scanDirs, ", "));
+    spdlog::trace(pattern, "Safe to delete directories", concat(cfg.safeToDeleteDirs, ", "));
+    spdlog::trace(pattern, "Cache directory", cfg.cacheDir);
+    // spdlog::trace(pattern, "Exclusion patterns", concat(cfg.exclusionPatterns, ", "));
 }
 
 Config loadConfig(const fs::path& cfgFile)
@@ -210,7 +210,7 @@ void scanDirectories(const Config& cfg,
     for (const auto& scanDir : cfg.scanDirs)
     {
         const auto srcDir = fs::path(scanDir).lexically_normal();
-        spdlog::info("Scanning directory: {}", srcDir);
+        spdlog::info("Scanning directory: '{}'", srcDir);
 
         file::enumFilesRecursive(
             srcDir,
@@ -219,7 +219,7 @@ void scanDirectories(const Config& cfg,
                                                  const std::error_code& ec) mutable {
                 if (ec)
                 {
-                    spdlog::error("Error: '{}' while processing path '{}'",
+                    spdlog::error("Error: '{}' while processing path: '{}'",
                                   ec.message(),
                                   p);
                     return;
