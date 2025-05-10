@@ -44,7 +44,7 @@ int yearFromTimePoint(const TimePoint tp, bool throwIfInvalid)
 
 class Dirs
 {
-    mutable std::unordered_map<std::string, ReportDirs> dirs_;
+    mutable std::unordered_map<std::string, ReportDirs> dirs_{};
     fs::path reportsDir_;
 
 public:

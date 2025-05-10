@@ -91,6 +91,7 @@ public:
                           GetLastError());
         }
 #else
+        std::ignore = name_;
         throw std::runtime_error(fmt::format("Not implemented: {}", __func__));
 #endif
     }

@@ -35,7 +35,7 @@ void constructAttribs(const bool agent, std::wstring& uniqueName, fs::path& logF
         logFile.concat("-server");
     }
 
-    std::time_t t = std::time(0); // get time now
+    std::time_t t = std::time(nullptr); // get time now
     std::tm now = utl::timet2tm(t);
     const auto date = fmt::format("-{}-{:02}-{:02}",
                                   now.tm_year + 1900,
