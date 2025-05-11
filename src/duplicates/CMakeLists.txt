@@ -24,3 +24,6 @@ target_link_libraries(${PROJECT_LIB} PUBLIC core PkgConfig::tomlplusplus)
 add_executable(${PROJECT_APP} Main.cpp)
 target_link_libraries (${PROJECT_APP} ${PROJECT_LIB})
 
+AddClangTidy(${PROJECT_LIB})
+AddClangTidy(${PROJECT_APP})
+
