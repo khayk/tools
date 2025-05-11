@@ -18,6 +18,7 @@
 #include <filesystem>
 #include <sstream>
 #include <chrono>
+#include <array>
 
 namespace net = boost::asio;
 namespace fs = std::filesystem;
@@ -243,7 +244,8 @@ class KidmonAgent::Impl
             ioc_.stop();
         });
 
-        tcp::Client::Options opts {"127.0.0.1", cfg_.serverPort};
+        tcp::Client::Options opts {.host = "127.0.0.1",
+                                   .port = cfg_.serverPort};
         spdlog::info("Connection attempt to: {}:{}", opts.host, opts.port);
 
         tcpClient_.connect(opts);
@@ -313,11 +315,11 @@ class KidmonAgent::Impl
                 {
                     std::time_t t = std::time(nullptr);
                     const std::tm tm = utl::timet2tm(t);
-                    char mbstr[16];
+                    std::array<char, 16> mbstr{};
                     auto bytesWritten =
-                        std::strftime(mbstr, sizeof(mbstr), "%m%d-%H%M%S", &tm);
+                        std::strftime(mbstr.data(), mbstr.size(), "%m%d-%H%M%S", &tm);
                     auto fileName = fmt::format("img-{}.{}",
-                                                std::string_view(mbstr, bytesWritten),
+                                                std::string_view(mbstr.data(), bytesWritten),
                                                 toString(format));
 
                     entry.windowInfo.image.name = fileName;

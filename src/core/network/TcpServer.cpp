@@ -77,7 +77,12 @@ void Server::close()
     if (acceptor_.is_open())
     {
         ErrorCode ec {};
-        acceptor_.close(ec);
+        ec = acceptor_.close(ec);
+
+        if (ec)
+        {
+            errorCb_(ec);
+        }
     }
 }
 

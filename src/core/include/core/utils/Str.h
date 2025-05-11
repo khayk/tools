@@ -69,7 +69,7 @@ std::string& asciiLowerInplace(std::string& str);
  *
  * @return  Reference the to input string, in lowercase
  */
-std::string& utf8LowerInplace(std::string& str, std::wstring* buf = 0);
+std::string& utf8LowerInplace(std::string& str, std::wstring* buf = nullptr);
 
 
 /**
@@ -102,7 +102,7 @@ std::string asciiLower(const std::string& str);
  *
  * @return  A new string object, in lowercase
  */
-std::string utf8Lower(const std::string& str, std::wstring* buf = 0);
+std::string utf8Lower(const std::string& str, std::wstring* buf = nullptr);
 
 /**
  * @brief  Converts the value into human friendly text

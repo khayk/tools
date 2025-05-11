@@ -86,8 +86,21 @@ void Connection::close()
     if (socket_.is_open())
     {
         ErrorCode ec;
-        socket_.shutdown(Socket::shutdown_both, ec);
-        socket_.close(ec);
+        ec = socket_.shutdown(Socket::shutdown_both, ec);
+
+        if (ec)
+        {
+            errorCb_(ec);
+            ec = {};
+        }
+
+        ec = socket_.close(ec);
+
+        if (ec)
+        {
+            errorCb_(ec);
+        }
+
         timer_.cancel();
     }
 }

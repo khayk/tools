@@ -12,7 +12,7 @@ class KidmonServer : public Runnable
 public:
     struct Config
     {
-        Config(fs::path appDataDir);
+        Config(const fs::path& appDataDir);
 
         fs::path reportsDir;
         std::string authToken;

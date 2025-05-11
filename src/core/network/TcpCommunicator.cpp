@@ -70,7 +70,7 @@ private:
     bool started_ {false};
     bool sending_ {false};
 
-    const std::string& sendBuf() const
+    [[nodiscard]] const std::string& sendBuf() const
     {
         return wq_.front().first;
     }

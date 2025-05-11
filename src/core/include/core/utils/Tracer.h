@@ -17,15 +17,15 @@ class ScopedTrace
     std::string leave_;
     bool isPrefix_;
 
+public:
+    explicit ScopedTrace(const std::string& message,
+        std::string enter = Enter,
+        std::string leave = Leave,
+        bool isPrefix = true);
+    ~ScopedTrace() noexcept;
+
     ScopedTrace(const ScopedTrace&) = delete;
     ScopedTrace(ScopedTrace&&) = delete;
     ScopedTrace& operator=(const ScopedTrace&) = delete;
     ScopedTrace& operator=(ScopedTrace&&) = delete;
-
-public:
-    explicit ScopedTrace(const std::string& message,
-                         std::string enter = Enter,
-                         std::string leave = Leave,
-                         bool isPrefix = true);
-    ~ScopedTrace() noexcept;
 };
