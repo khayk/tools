@@ -62,17 +62,17 @@ void experimenting(const fs::path& file)
     });
 
     std::cout << "Memory: " << str::humanizeBytes(sys::currentProcessMemoryUsage())
-              << std::endl;
-    std::cout << "sizeof(path): " << sizeof(fs::path) << std::endl;
-    std::cout << "Files: " << detector.numFiles() << std::endl;
-    std::cout << "Nodes: " << detector.root()->nodesCount() << std::endl;
-    // std::cout << "MapSize: " << detector1.mapSize() << std::endl;
-    std::cout << "Elapsed: " << sw.elapsedMs() << " ms" << std::endl;
-    std::cout << sizeof(Node) << std::endl;
-    std::cout << "node: " << sizeof(Node) << std::endl;
-    std::cout << "wstring_view: " << sizeof(std::wstring_view) << std::endl;
-    std::cout << "string: " << sizeof(std::string) << std::endl;
-    std::cout << "parent_: " << sizeof(Node*) << std::endl;
+              << '\n';
+    std::cout << "sizeof(path): " << sizeof(fs::path) << '\n';
+    std::cout << "Files: " << detector.numFiles() << '\n';
+    std::cout << "Nodes: " << detector.root()->nodesCount() << '\n';
+    // std::cout << "MapSize: " << detector1.mapSize() << '\n';
+    std::cout << "Elapsed: " << sw.elapsedMs() << " ms" << '\n';
+    std::cout << sizeof(Node) << '\n';
+    std::cout << "node: " << sizeof(Node) << '\n';
+    std::cout << "wstring_view: " << sizeof(std::wstring_view) << '\n';
+    std::cout << "string: " << sizeof(std::string) << '\n';
+    std::cout << "parent_: " << sizeof(Node*) << '\n';
 }
 
 void dumpContent(const fs::path& allFiles, const DuplicateDetector& detector)
