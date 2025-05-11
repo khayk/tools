@@ -44,8 +44,8 @@ int yearFromTimePoint(const TimePoint tp, bool throwIfInvalid)
 
 class Dirs
 {
-    mutable std::unordered_map<std::string, ReportDirs> dirs_{};
-    fs::path reportsDir_;
+    mutable std::unordered_map<std::string, ReportDirs> dirs_;
+    const fs::path reportsDir_;
 
 public:
     explicit Dirs(fs::path reportsDir)
@@ -129,6 +129,115 @@ std::string buildRawFilename(const TimePoint tp)
     return fmt::format("raw-{:03}-{:02}{:02}.dat", day, tm.tm_mon + 1, tm.tm_mday);
 }
 
+template <typename T>
+T getAs(const glz::json_t& js)
+{
+    const auto value = js.get<double>();
+    return static_cast<T>(value);
+}
+
+void readEntries(const std::string& username,
+                 const fs::path& file,
+                 const EntryCb& cb)
+{
+    Entry entry;
+    glz::json_t json {};
+
+    entry.username = username;
+
+    file::readLines(file, [&cb, &entry, &json](const std::string& line) {
+        const auto sv = str::trim(line);
+        if (glz::read_json(json, sv))
+        {
+            return true;
+        }
+
+        try
+        {
+            auto& proc = json["proc"];
+            entry.processInfo.processPath = proc["path"].get<std::string>();
+            entry.processInfo.sha256 = proc["sha256"].get<std::string>();
+
+            auto& wnd = json["wnd"];
+            entry.windowInfo.title = wnd["title"].get<std::string>();
+
+            const Point leftTop(getAs<int>(wnd["lt"][0]),
+                                getAs<int>(wnd["lt"][1]));
+            const Dimensions dimensions(getAs<uint32_t>(wnd["wh"][0]),
+                                        getAs<uint32_t>(wnd["wh"][1]));
+            entry.windowInfo.placement = Rect(leftTop, dimensions);
+
+            auto& img = wnd["img"];
+            entry.windowInfo.image.name = img["name"].get<std::string>();
+            entry.windowInfo.image.bytes = img["bytes"].get<std::string>();
+            entry.windowInfo.image.encoded = img["encoded"].get<bool>();
+
+            const auto& ts = json["ts"];
+            entry.timestamp.capture =
+                TimePoint(std::chrono::milliseconds(getAs<long long>(ts["when"])));
+            entry.timestamp.duration =
+                std::chrono::milliseconds(getAs<long long>(ts["dur"]));
+        }
+        catch (const std::exception&)
+        {
+            entry = Entry();
+        }
+
+        return cb(entry);
+    });
+}
+
+bool queryRawDataDir(const Filter& filter,
+                     const EntryCb& cb,
+                     const Dirs& dirs_,
+                     const int year)
+{
+    const int yearFrom = yearFromTimePoint(filter.from(), false);
+    const int yearTo = yearFromTimePoint(filter.to(), false);
+
+    if ((yearTo != 0 && yearTo < year) || (yearFrom != 0 && year < yearFrom))
+    {
+        return true;
+    }
+
+    bool keepGoing = true;
+    const auto fnFrom = buildRawFilename(filter.from());
+    const auto fnTo = buildRawFilename(filter.to());
+    const auto& dataDirs = dirs_.dataDirs(filter.username(), year);
+    const fs::path& rawDir = dataDirs.rawDir;
+
+    for (const auto& it : fs::directory_iterator(rawDir))
+    {
+        const auto fn = it.path().filename();
+
+        if ((yearFrom == year && fn < fnFrom) || (yearTo == year && fn > fnTo))
+        {
+            continue;
+        }
+
+        if ((yearFrom == yearTo) &&
+            ((!fnFrom.empty() && fn < fnFrom) || (!fnTo.empty() && fn > fnTo) ||
+                !keepGoing || !it.is_regular_file()))
+        {
+            continue;
+        }
+
+        readEntries(filter.username(),
+                    it.path(),
+                    [&keepGoing, &cb, &filter](Entry& entry) {
+                        if (entry.timestamp.capture >= filter.from() &&
+                            entry.timestamp.capture <= filter.to())
+                        {
+                            keepGoing = cb(entry);
+                        }
+
+                        return keepGoing;
+                    });
+    }
+
+    return keepGoing;
+}
+
 } // namespace
 
 class FileSystemRepository::Impl
@@ -201,118 +310,11 @@ public:
 
             const int year = std::stoi(it.path().filename().string());
 
-            if (!queryRawDataDir(filter, cb, year))
+            if (!queryRawDataDir(filter, cb, dirs_, year))
             {
                 return;
             }
         }
-    }
-
-private:
-    template <typename T>
-    T getAs(const glz::json_t& js) const
-    {
-        const auto value = js.get<double>();
-        return static_cast<T>(value);
-    }
-
-    bool queryRawDataDir(const Filter& filter, const EntryCb& cb, const int year) const
-    {
-        const int yearFrom = yearFromTimePoint(filter.from(), false);
-        const int yearTo = yearFromTimePoint(filter.to(), false);
-
-        if ((yearTo != 0 && yearTo < year) || (yearFrom != 0 && year < yearFrom))
-        {
-            return true;
-        }
-
-        bool keepGoing = true;
-        const auto fnFrom = buildRawFilename(filter.from());
-        const auto fnTo = buildRawFilename(filter.to());
-        const auto& dataDirs = dirs_.dataDirs(filter.username(), year);
-        const fs::path& rawDir = dataDirs.rawDir;
-
-        for (const auto& it : fs::directory_iterator(rawDir))
-        {
-            const auto fn = it.path().filename();
-
-            if ((yearFrom == year && fn < fnFrom) || (yearTo == year && fn > fnTo))
-            {
-                continue;
-            }
-
-            if ((yearFrom == yearTo) &&
-                ((!fnFrom.empty() && fn < fnFrom) || (!fnTo.empty() && fn > fnTo) ||
-                 !keepGoing || !it.is_regular_file()))
-            {
-                continue;
-            }
-
-            readEntries(filter.username(),
-                        it.path(),
-                        [&keepGoing, &cb, &filter](Entry& entry) {
-                            if (entry.timestamp.capture >= filter.from() &&
-                                entry.timestamp.capture <= filter.to())
-                            {
-                                keepGoing = cb(entry);
-                            }
-
-                            return keepGoing;
-                        });
-        }
-
-        return keepGoing;
-    }
-
-    void readEntries(const std::string& username,
-                     const fs::path& file,
-                     const EntryCb& cb) const
-    {
-        Entry entry;
-        glz::json_t json {};
-
-        entry.username = username;
-
-        file::readLines(file, [&cb, &entry, &json, this](const std::string& line) {
-            const auto sv = str::trim(line);
-            if (glz::read_json(json, sv))
-            {
-                return true;
-            }
-
-            try
-            {
-                auto& proc = json["proc"];
-                entry.processInfo.processPath = proc["path"].get<std::string>();
-                entry.processInfo.sha256 = proc["sha256"].get<std::string>();
-
-                auto& wnd = json["wnd"];
-                entry.windowInfo.title = wnd["title"].get<std::string>();
-
-                const Point leftTop(getAs<int>(wnd["lt"][0]),
-                                    getAs<int>(wnd["lt"][1]));
-                const Dimensions dimensions(getAs<uint32_t>(wnd["wh"][0]),
-                                            getAs<uint32_t>(wnd["wh"][1]));
-                entry.windowInfo.placement = Rect(leftTop, dimensions);
-
-                auto& img = wnd["img"];
-                entry.windowInfo.image.name = img["name"].get<std::string>();
-                entry.windowInfo.image.bytes = img["bytes"].get<std::string>();
-                entry.windowInfo.image.encoded = img["encoded"].get<bool>();
-
-                const auto& ts = json["ts"];
-                entry.timestamp.capture =
-                    TimePoint(std::chrono::milliseconds(getAs<long long>(ts["when"])));
-                entry.timestamp.duration =
-                    std::chrono::milliseconds(getAs<long long>(ts["dur"]));
-            }
-            catch (const std::exception&)
-            {
-                entry = Entry();
-            }
-
-            return cb(entry);
-        });
     }
 };
 

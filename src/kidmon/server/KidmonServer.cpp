@@ -108,7 +108,7 @@ public:
     }
 };
 
-KidmonServer::Config::Config(fs::path appDataDir)
+KidmonServer::Config::Config(const fs::path& appDataDir)
 {
     reportsDir = appDataDir / "reports";
 }
