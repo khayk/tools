@@ -25,7 +25,7 @@ message("Object dir            : ${OBJECT_DIR}")
 message("CMake build type      : ${CMAKE_BUILD_TYPE}")
 message("Config types          : ${CMAKE_CONFIGURATION_TYPES}")
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -49,7 +49,7 @@ elseif(UNIX)
         -Wconversion
         -Werror
         -Wfatal-errors
-        -Wno-error=maybe-uninitialized # producing false positives
+        -Wno-error=uninitialized # producing false positives
     )
 
     # Be aware, this increases memory usage by order of magnitude
