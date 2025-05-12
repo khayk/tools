@@ -304,7 +304,7 @@ void reportDuplicates(const Config& cfg, const DuplicateDetector& detector)
             sortedLines.emplace_back(oss.str());
         }
 
-        std::sort(sortedLines.begin(), sortedLines.end());
+        std::ranges::sort(sortedLines);
         for (const auto& line : sortedLines)
         {
             out << line << '\n';
@@ -388,8 +388,7 @@ bool deleteInteractively(PathsVec& files, PathsSet& ignoredFiles)
     if (tolower(input[0]) == 'i')
     {
         spdlog::info("User requested to ignore this group...");
-        std::copy(files.begin(), files.end(),
-                    std::inserter(ignoredFiles, ignoredFiles.end()));
+        std::ranges::copy(files, std::inserter(ignoredFiles, ignoredFiles.end()));
         return true;
     }
 
