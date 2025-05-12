@@ -27,7 +27,7 @@ void treeDump(const Node* root, std::ostream& os)
             return;
         }
 
-        os << std::string(1 * (node->depth() - 1), ' ');
+        os << std::string(1UL * (node->depth() - 1), ' ');
         os << str::ws2s(node->name()) << (node->leaf() ? "" : "/") << '\n';
     });
 }

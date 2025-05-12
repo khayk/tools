@@ -9,26 +9,33 @@
 #include <fstream>
 #include <cassert>
 #include <array>
+#include <span>
+#include <format>
+
 
 namespace crypto {
 namespace {
-void hexadecimal(unsigned char* const hash, size_t size, std::string& out)
+void hexadecimal(std::span<unsigned char> hash, std::string& out)
 {
-    out.resize(2 * size);
+    out.clear();
+    out.reserve(hash.size() * 2);
 
-    for (size_t i = 0; i < size; ++i)
+    try
     {
-        int written = 0;
-#ifdef _WIN32
-        written = sprintf_s(out.data() + 2 * i, 3, "%02x", hash[i]);
-#else
-        written = snprintf(out.data() + 2 * i, 3, "%02x", hash[i]);
-#endif
-        assert(written >= 0);
-        if (written < 0)
+        for (const auto& val : hash)
         {
-            throw std::runtime_error("Failed to write in hexadecimal format");
+            // Format each byte as two lowercase hexadecimal digits, zero-padded.
+            // Cast std::byte to unsigned char for formatting as an integer value.
+            std::format_to(
+                std::back_inserter(out),
+                "{:02x}",
+                static_cast<unsigned char>(val)
+            );
         }
+    }
+    catch (const std::format_error& e)
+    {
+        throw std::runtime_error(std::string("Hex formatting error: ") + e.what());
     }
 }
 } // namespace
@@ -38,7 +45,7 @@ void sha256(const std::string_view data, std::string& out)
     std::array<unsigned char, SHA256_DIGEST_LENGTH> hash {};
     const auto* in = reinterpret_cast<const unsigned char*>(data.data());
     SHA256(in, data.size(), hash.data());
-    hexadecimal(hash.data(), hash.size(), out);
+    hexadecimal(std::span(hash), out);
 }
 
 std::string sha256(const std::string_view data)
@@ -63,8 +70,8 @@ std::string fileSha256(const fs::path& file)
 
     constexpr const std::size_t bufferSize {static_cast<unsigned long long>(1UL)
                                             << 12};
-    char buffer[bufferSize];
-    unsigned char hash[EVP_MAX_MD_SIZE] = {0};
+    std::array<char, bufferSize> buffer{};
+    std::array<unsigned char, EVP_MAX_MD_SIZE> hash{};
 
     std::unique_ptr<EVP_MD_CTX, void (*)(EVP_MD_CTX* ctx)> ctx(EVP_MD_CTX_new(),
                                                                EVP_MD_CTX_free);
@@ -74,19 +81,19 @@ std::string fileSha256(const fs::path& file)
 
     while (in)
     {
-        in.read(buffer, bufferSize);
-        if (!EVP_DigestUpdate(ctx.get(), buffer, static_cast<size_t>(in.gcount())))
+        in.read(buffer.data(), bufferSize);
+        if (!EVP_DigestUpdate(ctx.get(), buffer.data(), static_cast<size_t>(in.gcount())))
         {
             throw std::runtime_error("Digest update failed");
         }
     }
 
     uint32_t mdLen = 0;
-    EVP_DigestFinal_ex(ctx.get(), hash, &mdLen);
+    EVP_DigestFinal_ex(ctx.get(), hash.data(), &mdLen);
     in.close();
 
     std::string out;
-    hexadecimal(hash, mdLen, out);
+    hexadecimal(std::span(hash.data(), mdLen), out);
 
     return out;
 }

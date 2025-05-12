@@ -12,7 +12,7 @@ class Packer
 public:
     Packer(ISource& source);
 
-    size_t get(std::string& buf, size_t maxSize = 64 * 1024);
+    size_t get(std::string& buf, size_t maxSize = 64UL * 1024UL);
 };
 
 } // namespace data

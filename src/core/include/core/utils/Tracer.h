@@ -22,7 +22,7 @@ public:
         std::string enter = Enter,
         std::string leave = Leave,
         bool isPrefix = true);
-    ~ScopedTrace() noexcept;
+    ~ScopedTrace();
 
     ScopedTrace(const ScopedTrace&) = delete;
     ScopedTrace(ScopedTrace&&) = delete;

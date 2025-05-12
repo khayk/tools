@@ -175,13 +175,13 @@ fs::path currentProcessPath()
 #else
     auto pid = getpid();
 
-    char buff[PATH_MAX];
-    sprintf(buff, "/proc/%d/exe", pid);
+    std::array<char, PATH_MAX> buff {};
+    std::snprintf(buff.data(), buff.size(), "/proc/%d/exe", pid);
 
     struct stat statbuf = {};
-    if (stat(buff, &statbuf) == 0)
+    if (stat(buff.data(), &statbuf) == 0)
     {
-        return fs::path{buff};
+        return fs::path{buff.data()};
     }
 #endif // _WIN32
 

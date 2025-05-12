@@ -1,8 +1,5 @@
 #include <kidmon/common/Enums.h>
 
-#define EnumStringify(x) #x
-#define EnumDef(x) x
-
 std::string_view toString(const ImageFormat format)
 {
     switch (format)

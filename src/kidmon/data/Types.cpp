@@ -4,23 +4,23 @@
 #include <nlohmann/json.hpp>
 
 namespace constants {
-    constexpr char PROC_INFO[] = "proc";
-    constexpr char PROC_PATH[] = "path";
-    constexpr char PROC_SHA[] = "sha256";
+    constexpr std::string_view PROC_INFO = "proc";
+    constexpr std::string_view PROC_PATH = "path";
+    constexpr std::string_view PROC_SHA = "sha256";
 
-    constexpr char WND_INFO[] = "wnd";
-    constexpr char WND_TITLE[] = "title";
-    constexpr char WND_LEFT_TOP[] = "lt";
-    constexpr char WND_DIMENSIONS[] = "wh";
-    constexpr char WND_IMG[] = "img";
+    constexpr std::string_view WND_INFO = "wnd";
+    constexpr std::string_view WND_TITLE = "title";
+    constexpr std::string_view WND_LEFT_TOP = "lt";
+    constexpr std::string_view WND_DIMENSIONS = "wh";
+    constexpr std::string_view WND_IMG = "img";
 
-    constexpr char WND_IMG_NAME[] = "name";
-    constexpr char WND_IMG_BYTES[] = "bytes";
-    constexpr char WND_IMG_ENCODED[] = "encoded";
+    constexpr std::string_view WND_IMG_NAME = "name";
+    constexpr std::string_view WND_IMG_BYTES = "bytes";
+    constexpr std::string_view WND_IMG_ENCODED = "encoded";
 
-    constexpr char TIMESTAMP[] = "ts";
-    constexpr char TIMESTAMP_WHEN[] = "when";
-    constexpr char TIMESTAMP_DUR[] = "dur";
+    constexpr std::string_view TIMESTAMP = "ts";
+    constexpr std::string_view TIMESTAMP_WHEN = "when";
+    constexpr std::string_view TIMESTAMP_DUR = "dur";
 } // namespace constants
 
 void toJson(const ProcessInfo& pi, nlohmann::ordered_json& js)

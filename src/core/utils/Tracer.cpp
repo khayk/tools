@@ -1,5 +1,6 @@
 #include <core/utils/Tracer.h>
 #include <spdlog/spdlog.h>
+#include <iostream>
 
 std::string extractFunction(const std::string& fullyQualifiedName)
 {
@@ -41,7 +42,7 @@ ScopedTrace::ScopedTrace(const std::string& message,
     }
 }
 
-ScopedTrace::~ScopedTrace() noexcept
+ScopedTrace::~ScopedTrace()
 {
     try
     {
@@ -59,5 +60,6 @@ ScopedTrace::~ScopedTrace() noexcept
     }
     catch (...)
     {
+        std::cerr << "Failed to log trace message" << std::endl;
     }
 }
