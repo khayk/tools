@@ -60,6 +60,6 @@ ScopedTrace::~ScopedTrace()
     }
     catch (...)
     {
-        std::cerr << "Failed to log trace message" << std::endl;
+        std::cerr << "Failed to log trace message" << '\n';
     }
 }

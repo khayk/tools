@@ -79,8 +79,8 @@ void DuplicateDetector::detect(const Options& opts, ProgressCallback cb)
         return;
     }
 
-    root_->update([i = 0U, totalFiles, &cb](const Node* node) mutable {
-        cb(Stage::Prepare, node, ++i * 100U / totalFiles);
+    root_->update([i = 0UL, totalFiles, &cb](const Node* node) mutable {
+        cb(Stage::Prepare, node, ++i * 100 / totalFiles);
     });
 
     std::wstring ws;

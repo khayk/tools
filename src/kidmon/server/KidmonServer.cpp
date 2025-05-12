@@ -86,7 +86,14 @@ public:
     void healthCheck()
     {
         timer_.expires_after(timeout_);
-        timer_.async_wait(std::bind(&Impl::healthCheck, this));
+        timer_.async_wait([this](const boost::system::error_code& ec) {
+            if (ec)
+            {
+                return; // Don't run healthCheck if timer failed/was cancelled
+            }
+
+            this->healthCheck();
+        });
 
         try
         {
@@ -109,8 +116,8 @@ public:
 };
 
 KidmonServer::Config::Config(const fs::path& appDataDir)
+    : reportsDir{appDataDir / "reports"}
 {
-    reportsDir = appDataDir / "reports";
 }
 
 KidmonServer::KidmonServer(const Config& cfg)

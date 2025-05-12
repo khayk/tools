@@ -161,6 +161,36 @@ uint32_t currentProcessId() noexcept
 #endif // _WIN32
 }
 
+
+std::string getExecutablePathReadlink(int pid)
+{
+    // PATH_MAX is the POSIX defined maximum path length.
+    // While not guaranteed to be sufficient in all edge cases,
+    // it's typically large enough for /proc/self/exe.
+    std::vector<char> buffer(PATH_MAX);
+
+    // Read the symbolic link.
+    const auto fileLink = fmt::format("/proc/{}/exe", pid);
+
+    ssize_t count = readlink(fileLink.c_str(), buffer.data(), buffer.size());
+
+    if (count == -1)
+    {
+        throw std::runtime_error(fmt::format("Failed to read {}: {}", fileLink, strerror(errno)));
+    }
+
+    // Check if the buffer might have been too small.
+    // readlink doesn't null-terminate if the buffer is filled completely.
+    if (static_cast<size_t>(count) >= buffer.size())
+    {
+         // This is less likely with PATH_MAX but technically possible.
+         // A more robust solution might involve dynamically resizing the buffer and retrying.
+        throw std::runtime_error("Executable path may have been truncated (PATH_MAX too small?)");
+    }
+
+    return std::string{buffer.data(), static_cast<size_t>(count)};
+}
+
 fs::path currentProcessPath()
 {
 #ifdef _WIN32
@@ -175,14 +205,8 @@ fs::path currentProcessPath()
 #else
     auto pid = getpid();
 
-    std::array<char, PATH_MAX> buff {};
-    std::snprintf(buff.data(), buff.size(), "/proc/%d/exe", pid);
+    return getExecutablePathReadlink(pid);
 
-    struct stat statbuf = {};
-    if (stat(buff.data(), &statbuf) == 0)
-    {
-        return fs::path{buff.data()};
-    }
 #endif // _WIN32
 
     return {};

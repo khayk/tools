@@ -29,7 +29,7 @@ public:
     }
 };
 
-const LocaleInitializer localeInitializer;
+const LocaleInitializer LOCALE_INITIALIZER;
 
 } // namespace
 
