@@ -111,6 +111,13 @@ bool read(const fs::path& file, std::string& data, std::error_code& ec)
 
 void readLines(const fs::path& file, const LineCb& cb)
 {
+    // boost::iostreams::mapped_file throws an exception when attempting to open an empty
+    // file in read-only mode
+    if (fs::exists(file) && fs::is_empty(file))
+    {
+        return;
+    }
+
     std::string line;
     boost::iostreams::mapped_file mmap(file.string(),
                                        boost::iostreams::mapped_file::readonly);
