@@ -238,7 +238,7 @@ void scanDirectories(const Config& cfg,
 
     // std::cout << std::string(80, ' ') << '\r';
     spdlog::info("Discovered files: {}", detector.numFiles());
-    spdlog::trace("Elapsed: {} ms", sw.elapsedMs());
+    spdlog::trace("Scanning took: {} ms", sw.elapsedMs());
     spdlog::trace("Nodes: {}", detector.root()->nodesCount());
 
     // Dump content
@@ -372,11 +372,23 @@ bool deleteInteractively(PathsVec& files, PathsSet& ignoredFiles)
         std::cout << std::setw(width + 1) << ++i << ": " << file << '\n';
     }
 
+    static std::string lastInput;
     std::string input;
+
     while (input.empty())
     {
-        std::cout << "Enter number te be KEEP (q - quit, i - ignore): ";
-        std::cin >> input;
+        std::cout << "Enter number to KEEP (q - quit, i - ignore) > ";
+        std::getline(std::cin, input);
+
+        if (input.empty())
+        {
+            input = lastInput;
+        }
+    }
+
+    if (!input.empty())
+    {
+        lastInput = input;
     }
 
     if (tolower(input[0]) == 'q')
