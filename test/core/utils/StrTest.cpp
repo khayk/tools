@@ -187,9 +187,9 @@ TEST(UtilsStrTests, HumanizeBytes)
     EXPECT_EQ("1.50 Mb", humanizeBytes(3 * 1024 * 1024 / 2));
     EXPECT_EQ("768.00 Mb", humanizeBytes(3UL * 1024 * 1024 * 1024 / 4));
     EXPECT_EQ("1.00 Gb", humanizeBytes(1UL * 1024 * 1024 * 1024));
-    EXPECT_EQ("3.00 Tb", humanizeBytes(6UL * 1024 * 1024 * 1024 * 1024 / 2));
-    EXPECT_EQ("2.67 Pb", humanizeBytes(8UL * 1024 * 1024 * 1024 * 1024 * 1024 / 3));
-    EXPECT_EQ("1024.00 Pb", humanizeBytes(1024UL * 1024 * 1024 * 1024 * 1024 * 1024));
+    EXPECT_EQ("3.00 Tb", humanizeBytes(6ULL * 1024 * 1024 * 1024 * 1024 / 2));
+    EXPECT_EQ("2.67 Pb", humanizeBytes(8ULL * 1024 * 1024 * 1024 * 1024 * 1024 / 3));
+    EXPECT_EQ("1024.00 Pb", humanizeBytes(1024ULL * 1024 * 1024 * 1024 * 1024 * 1024));
 }
 
 } // namespace
