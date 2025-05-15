@@ -2,6 +2,7 @@
 #include <core/utils/Str.h>
 
 #include <spdlog/spdlog.h>
+#include <algorithm>
 #include <ctime>
 
 namespace fs = std::filesystem;

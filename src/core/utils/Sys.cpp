@@ -161,6 +161,9 @@ uint32_t currentProcessId() noexcept
 #endif // _WIN32
 }
 
+#ifdef _WIN32
+
+#else
 
 std::string getExecutablePathReadlink(int pid)
 {
@@ -190,6 +193,8 @@ std::string getExecutablePathReadlink(int pid)
 
     return std::string{buffer.data(), static_cast<size_t>(count)};
 }
+
+#endif // _WIN32
 
 fs::path currentProcessPath()
 {

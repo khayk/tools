@@ -112,7 +112,8 @@ bool read(const fs::path& file, std::string& data, std::error_code& ec)
 void readLines(const fs::path& file, const LineCb& cb)
 {
     std::string line;
-    boost::iostreams::mapped_file mmap(file, boost::iostreams::mapped_file::readonly);
+    boost::iostreams::mapped_file mmap(file.string(),
+                                       boost::iostreams::mapped_file::readonly);
     const auto* f = mmap.const_data();
     const auto* e = f + mmap.size();
 
