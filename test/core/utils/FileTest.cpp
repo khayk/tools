@@ -70,6 +70,21 @@ TEST_F(UtilsFileTests, ReadLines)
     EXPECT_EQ(1, lines.size());
 }
 
+TEST_F(UtilsFileTests, ReadLinesEmptyFile)
+{
+    const fs::path file = testDir_ / "data.txt";
+    write(file, "");
+
+    std::vector<std::string> lines;
+
+    EXPECT_NO_THROW(readLines(file, [&lines](const std::string& line) {
+        lines.push_back(line);
+        return true;
+    }));
+
+    ASSERT_EQ(0, lines.size());
+}
+
 TEST_F(UtilsFileTests, ReadLinesFails)
 {
     const fs::path file = testDir_ / "data.txt";
