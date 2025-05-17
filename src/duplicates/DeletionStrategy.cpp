@@ -8,8 +8,7 @@
 
 #include <filesystem>
 
-namespace tools::dups
-{
+namespace tools::dups {
 
 void DeletePermanently::apply(const fs::path& file)
 {
@@ -29,10 +28,9 @@ BackupAndDelete::BackupAndDelete(fs::path backupDir)
     const auto now = std::chrono::system_clock::now();
     const auto timeT = std::chrono::system_clock::to_time_t(now);
     const auto tm = *std::localtime(&timeT);
-    const auto date = fmt::format("{:04}{:02}{:02}", tm.tm_year + 1900,
-                                    tm.tm_mon + 1, tm.tm_mday);
-    const auto time = fmt::format("{:02}{:02}{:02}", tm.tm_hour, tm.tm_min,
-                                    tm.tm_sec);
+    const auto date =
+        fmt::format("{:04}{:02}{:02}", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday);
+    const auto time = fmt::format("{:02}{:02}{:02}", tm.tm_hour, tm.tm_min, tm.tm_sec);
     const auto fileName = fmt::format("deleted_files_{}_{}.log", date, time);
     journalFilePath_ = backupDir_ / fileName;
 

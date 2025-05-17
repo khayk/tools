@@ -27,11 +27,9 @@ void hexadecimal(std::span<unsigned char> hash, std::string& out)
         {
             // Format each byte as two lowercase hexadecimal digits, zero-padded.
             // Cast std::byte to unsigned char for formatting as an integer value.
-            std::format_to(
-                std::back_inserter(out),
-                "{:02x}",
-                static_cast<unsigned char>(val)
-            );
+            std::format_to(std::back_inserter(out),
+                           "{:02x}",
+                           static_cast<unsigned char>(val));
         }
     }
     catch (const std::format_error& e)
@@ -68,16 +66,14 @@ void md5(std::string_view data, std::string& out)
         throw std::runtime_error("Failed to initialize MD5 digest");
     }
 
-    auto sslFailed = [](int ret) -> bool
-    {
+    auto sslFailed = [](int ret) -> bool {
         return ret != 1;
     };
 
-    // std::unique_ptr<EVP_MD_CTX, void (*)(EVP_MD_CTX*)> ctx(EVP_MD_CTX_new(), &EVP_MD_CTX_free);
     std::unique_ptr<EVP_MD_CTX, void (*)(EVP_MD_CTX*)> ctx(EVP_MD_CTX_new(),
-                                                          &EVP_MD_CTX_free);
+                                                           &EVP_MD_CTX_free);
 
-    if (!ctx.get())
+    if (!ctx)
     {
         throw std::runtime_error("Failed to allocate digest context");
     }
@@ -122,8 +118,8 @@ std::string fileSha256(const fs::path& file)
 
     constexpr const std::size_t bufferSize {static_cast<unsigned long long>(1UL)
                                             << 12};
-    std::array<char, bufferSize> buffer{};
-    std::array<unsigned char, EVP_MAX_MD_SIZE> hash{};
+    std::array<char, bufferSize> buffer {};
+    std::array<unsigned char, EVP_MAX_MD_SIZE> hash {};
 
     std::unique_ptr<EVP_MD_CTX, void (*)(EVP_MD_CTX* ctx)> ctx(EVP_MD_CTX_new(),
                                                                EVP_MD_CTX_free);
@@ -134,7 +130,9 @@ std::string fileSha256(const fs::path& file)
     while (in)
     {
         in.read(buffer.data(), bufferSize);
-        if (!EVP_DigestUpdate(ctx.get(), buffer.data(), static_cast<size_t>(in.gcount())))
+        if (!EVP_DigestUpdate(ctx.get(),
+                              buffer.data(),
+                              static_cast<size_t>(in.gcount())))
         {
             throw std::runtime_error("Digest update failed");
         }

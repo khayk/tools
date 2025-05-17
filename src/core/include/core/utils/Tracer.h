@@ -19,9 +19,9 @@ class ScopedTrace
 
 public:
     explicit ScopedTrace(const std::string& message,
-        std::string enter = Enter,
-        std::string leave = Leave,
-        bool isPrefix = true);
+                         std::string enter = Enter,
+                         std::string leave = Leave,
+                         bool isPrefix = true);
     ~ScopedTrace();
 
     ScopedTrace(const ScopedTrace&) = delete;

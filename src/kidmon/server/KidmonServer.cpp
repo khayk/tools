@@ -116,7 +116,7 @@ public:
 };
 
 KidmonServer::Config::Config(const fs::path& appDataDir)
-    : reportsDir{appDataDir / "reports"}
+    : reportsDir {appDataDir / "reports"}
 {
 }
 

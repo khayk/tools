@@ -12,7 +12,8 @@ namespace {
 
 class SilenceLogger
 {
-    spdlog::level::level_enum prevLevel_{spdlog::get_level()};
+    spdlog::level::level_enum prevLevel_ {spdlog::get_level()};
+
 public:
     SilenceLogger()
     {
@@ -73,14 +74,16 @@ TEST(DeletionStrategyTest, BackupAndDelete)
     }
 
     EXPECT_TRUE(journalFile.filename().string().starts_with("deleted_files_"));
-    strategy.reset();   // This will force the journal file to be closed
+    strategy.reset(); // This will force the journal file to be closed
 
-    file::readLines(journalFile, [it = files.begin()](const std::string& line) mutable {
-        EXPECT_FALSE(line.empty());
-        EXPECT_TRUE(line.contains(file::path2s(it->filename()).c_str()));
-        ++it;
-        return true;
-    });
+    file::readLines(
+        journalFile,
+        [it = files.begin()](const std::string& line) mutable {
+            EXPECT_FALSE(line.empty());
+            EXPECT_TRUE(line.contains(file::path2s(it->filename()).c_str()));
+            ++it;
+            return true;
+        });
 }
 
 } // namespace tools::dups

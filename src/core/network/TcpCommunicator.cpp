@@ -55,7 +55,8 @@ public:
         data::Packer packer(src);
 
         wq_.emplace("", std::move(sentCb));
-        while (packer.get(wq_.back().first) > 0) {
+        while (packer.get(wq_.back().first) > 0)
+        {
             // Keep packing until the buffer is full
         }
 

@@ -16,7 +16,8 @@ TEST(UtilsCryptoTests, DataSha256)
     std::unordered_map<std::string, std::string> hashes {
         {"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", ""},
         {"2e1cfa82b035c26cbbbdae632cea070514eb8b773f616aaeaf668e2f0be8f10d", "empty"},
-        {"9033b8324ab907bcbb0d2f2bf1c49f57c2d59809364b1940d1e4fac10281841b", "/some/file/path"},
+        {"9033b8324ab907bcbb0d2f2bf1c49f57c2d59809364b1940d1e4fac10281841b",
+         "/some/file/path"},
         {"6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b", "1"},
         {"36a9e7f1c95b82ffb99743e0c5c4ce95d83c9a430aac59f84ef3cbfab6145068", " "}};
 

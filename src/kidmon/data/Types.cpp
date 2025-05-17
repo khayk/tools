@@ -4,23 +4,23 @@
 #include <nlohmann/json.hpp>
 
 namespace constants {
-    constexpr std::string_view PROC_INFO = "proc";
-    constexpr std::string_view PROC_PATH = "path";
-    constexpr std::string_view PROC_SHA = "sha256";
+constexpr std::string_view PROC_INFO = "proc";
+constexpr std::string_view PROC_PATH = "path";
+constexpr std::string_view PROC_SHA = "sha256";
 
-    constexpr std::string_view WND_INFO = "wnd";
-    constexpr std::string_view WND_TITLE = "title";
-    constexpr std::string_view WND_LEFT_TOP = "lt";
-    constexpr std::string_view WND_DIMENSIONS = "wh";
-    constexpr std::string_view WND_IMG = "img";
+constexpr std::string_view WND_INFO = "wnd";
+constexpr std::string_view WND_TITLE = "title";
+constexpr std::string_view WND_LEFT_TOP = "lt";
+constexpr std::string_view WND_DIMENSIONS = "wh";
+constexpr std::string_view WND_IMG = "img";
 
-    constexpr std::string_view WND_IMG_NAME = "name";
-    constexpr std::string_view WND_IMG_BYTES = "bytes";
-    constexpr std::string_view WND_IMG_ENCODED = "encoded";
+constexpr std::string_view WND_IMG_NAME = "name";
+constexpr std::string_view WND_IMG_BYTES = "bytes";
+constexpr std::string_view WND_IMG_ENCODED = "encoded";
 
-    constexpr std::string_view TIMESTAMP = "ts";
-    constexpr std::string_view TIMESTAMP_WHEN = "when";
-    constexpr std::string_view TIMESTAMP_DUR = "dur";
+constexpr std::string_view TIMESTAMP = "ts";
+constexpr std::string_view TIMESTAMP_WHEN = "when";
+constexpr std::string_view TIMESTAMP_DUR = "dur";
 } // namespace constants
 
 void toJson(const ProcessInfo& pi, nlohmann::ordered_json& js)
@@ -41,7 +41,8 @@ void toJson(const Image& image, nlohmann::ordered_json& js)
 void toJson(const WindowInfo& wi, nlohmann::ordered_json& js)
 {
     js[constants::WND_TITLE] = wi.title;
-    js[constants::WND_LEFT_TOP] = {wi.placement.leftTop().x(), wi.placement.leftTop().y()};
+    js[constants::WND_LEFT_TOP] = {wi.placement.leftTop().x(),
+                                   wi.placement.leftTop().y()};
     js[constants::WND_DIMENSIONS] = {wi.placement.width(), wi.placement.height()};
 
     toJson(wi.image, js[constants::WND_IMG]);

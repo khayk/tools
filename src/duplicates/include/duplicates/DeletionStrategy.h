@@ -5,8 +5,7 @@
 
 namespace fs = std::filesystem;
 
-namespace tools::dups
-{
+namespace tools::dups {
 
 class DeletionStrategy
 {

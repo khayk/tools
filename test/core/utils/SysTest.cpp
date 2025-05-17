@@ -12,4 +12,4 @@ TEST(UtilsSysTests, CurrentProcessPath)
     // @todo: add more checks
 }
 
-}
+} // namespace

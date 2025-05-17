@@ -25,10 +25,10 @@
 #include <regex>
 
 using std::chrono::milliseconds;
+using tools::dups::BackupAndDelete;
+using tools::dups::DeletionStrategy;
 using tools::dups::DupGroup;
 using tools::dups::DuplicateDetector;
-using tools::dups::DeletionStrategy;
-using tools::dups::BackupAndDelete;
 using tools::dups::Node;
 using tools::dups::Progress;
 using tools::dups::stage2str;
@@ -144,9 +144,12 @@ void dumpConfig(const fs::path& cfgFile, const Config& cfg)
     spdlog::trace(pattern, "Duplicate files path", cfg.dupFilesPath);
     spdlog::trace(pattern, "Ignored files path", cfg.ignFilesPath);
     spdlog::trace(pattern, "Scan directories", concat(cfg.scanDirs, ", "));
-    spdlog::trace(pattern, "Safe to delete directories", concat(cfg.safeToDeleteDirs, ", "));
+    spdlog::trace(pattern,
+                  "Safe to delete directories",
+                  concat(cfg.safeToDeleteDirs, ", "));
     spdlog::trace(pattern, "Cache directory", cfg.cacheDir);
-    // spdlog::trace(pattern, "Exclusion patterns", concat(cfg.exclusionPatterns, ", "));
+    // spdlog::trace(pattern, "Exclusion patterns", concat(cfg.exclusionPatterns, ",
+    // "));
 }
 
 Config loadConfig(const fs::path& cfgFile)
@@ -157,9 +160,8 @@ Config loadConfig(const fs::path& cfgFile)
     config["exclusion_patterns"].as_array()->for_each([&cfg](const auto& value) {
         if constexpr (toml::is_string<decltype(value)>)
         {
-            cfg.exclusionPatterns.emplace_back(
-                std::string(value.value_or(""sv)),
-                std::regex_constants::ECMAScript);
+            cfg.exclusionPatterns.emplace_back(std::string(value.value_or(""sv)),
+                                               std::regex_constants::ECMAScript);
         }
     });
 
@@ -364,7 +366,9 @@ void saveIgnoredFiles(const fs::path& filePath, const PathsSet& files)
     }
 };
 
-bool deleteInteractively(DeletionStrategy& strategy, PathsVec& files, PathsSet& ignoredFiles)
+bool deleteInteractively(DeletionStrategy& strategy,
+                         PathsVec& files,
+                         PathsSet& ignoredFiles)
 {
     // Display files to be deleted
     size_t i = 0;
@@ -493,7 +497,8 @@ void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
         {
             std::cout << "file size: " << group.entires.front().size
                       << ", sha256: " << group.entires.front().sha256 << '\n';
-            resumeEnumeration = deleteInteractively(strategy, deleteSelectively, ignoredFiles);
+            resumeEnumeration =
+                deleteInteractively(strategy, deleteSelectively, ignoredFiles);
         }
 
         // We left with one file, which is now unique in the system

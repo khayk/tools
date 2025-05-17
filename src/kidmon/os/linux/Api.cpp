@@ -12,7 +12,7 @@ ApiPtr ApiFactory::create()
 WindowPtr ApiImpl::foregroundWindow()
 {
     throw std::logic_error(fmt::format("Not implemented: {}", __func__));
-    return WindowPtr{};
+    return WindowPtr {};
 }
 
 ProcessLauncherPtr ApiImpl::createProcessLauncher()

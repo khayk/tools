@@ -136,9 +136,7 @@ T getAs(const glz::json_t& js)
     return static_cast<T>(value);
 }
 
-void readEntries(const std::string& username,
-                 const fs::path& file,
-                 const EntryCb& cb)
+void readEntries(const std::string& username, const fs::path& file, const EntryCb& cb)
 {
     Entry entry;
     glz::json_t json {};
@@ -161,8 +159,7 @@ void readEntries(const std::string& username,
             auto& wnd = json["wnd"];
             entry.windowInfo.title = wnd["title"].get<std::string>();
 
-            const Point leftTop(getAs<int>(wnd["lt"][0]),
-                                getAs<int>(wnd["lt"][1]));
+            const Point leftTop(getAs<int>(wnd["lt"][0]), getAs<int>(wnd["lt"][1]));
             const Dimensions dimensions(getAs<uint32_t>(wnd["wh"][0]),
                                         getAs<uint32_t>(wnd["wh"][1]));
             entry.windowInfo.placement = Rect(leftTop, dimensions);
@@ -217,7 +214,7 @@ bool queryRawDataDir(const Filter& filter,
 
         if ((yearFrom == yearTo) &&
             ((!fnFrom.empty() && fn < fnFrom) || (!fnTo.empty() && fn > fnTo) ||
-                !keepGoing || !it.is_regular_file()))
+             !keepGoing || !it.is_regular_file()))
         {
             continue;
         }

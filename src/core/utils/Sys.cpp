@@ -179,19 +179,22 @@ std::string getExecutablePathReadlink(int pid)
 
     if (count == -1)
     {
-        throw std::runtime_error(fmt::format("Failed to read {}: {}", fileLink, strerror(errno)));
+        throw std::runtime_error(
+            fmt::format("Failed to read {}: {}", fileLink, strerror(errno)));
     }
 
     // Check if the buffer might have been too small.
     // readlink doesn't null-terminate if the buffer is filled completely.
     if (static_cast<size_t>(count) >= buffer.size())
     {
-         // This is less likely with PATH_MAX but technically possible.
-         // A more robust solution might involve dynamically resizing the buffer and retrying.
-        throw std::runtime_error("Executable path may have been truncated (PATH_MAX too small?)");
+        // This is less likely with PATH_MAX but technically possible.
+        // A more robust solution might involve dynamically resizing the buffer and
+        // retrying.
+        throw std::runtime_error(
+            "Executable path may have been truncated (PATH_MAX too small?)");
     }
 
-    return std::string{buffer.data(), static_cast<size_t>(count)};
+    return std::string {buffer.data(), static_cast<size_t>(count)};
 }
 
 #endif // _WIN32
