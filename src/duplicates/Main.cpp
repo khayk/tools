@@ -2,6 +2,7 @@
 #include <duplicates/Utils.h>
 #include <duplicates/Node.h>
 #include <duplicates/Progress.h>
+#include <duplicates/DeletionStrategy.h>
 #include <core/utils/StopWatch.h>
 #include <core/utils/Str.h>
 #include <core/utils/File.h>
@@ -12,9 +13,9 @@
 #include <core/utils/Dirs.h>
 #include <core/utils/Tracer.h>
 
+#include <filesystem>
 #include <toml++/toml.hpp>
 #include <fmt/format.h>
-#include <spdlog/spdlog.h>
 
 #include <chrono>
 #include <system_error>
@@ -26,6 +27,8 @@
 using std::chrono::milliseconds;
 using tools::dups::DupGroup;
 using tools::dups::DuplicateDetector;
+using tools::dups::DeletionStrategy;
+using tools::dups::BackupAndDelete;
 using tools::dups::Node;
 using tools::dups::Progress;
 using tools::dups::stage2str;
@@ -179,11 +182,11 @@ Config loadConfig(const fs::path& cfgFile)
     cfg.minFileSizeBytes = config["min_file_size_bytes"].value_or(0ULL);
     cfg.maxFileSizeBytes = config["max_file_size_bytes"].value_or(0ULL);
     cfg.updateFrequency = milliseconds(config["update_freq_ms"].value_or(0));
-    cfg.cacheDir = config["cache_directory"].value_or("");
     cfg.allFilesPath = config["all_files"].value_or("");
     cfg.dupFilesPath = config["dup_files"].value_or("");
     cfg.ignFilesPath = config["ign_files"].value_or("");
     cfg.logDir = dataDir / "logs";
+    cfg.cacheDir = dataDir / "cache";
     cfg.logFilename = "duplicates.log";
 
     const auto adjustPath = [&](fs::path& path) {
@@ -332,14 +335,13 @@ bool isSafeToDelete(const std::vector<std::string>& delDirs, const fs::path& pat
     });
 };
 
-void deleteFiles(const PathsVec& files)
+void deleteFiles(DeletionStrategy& strategy, const PathsVec& files)
 {
     for (const auto& file : files)
     {
         try
         {
-            // fs::remove(file);
-            spdlog::info("Deleted: {}", file);
+            strategy.apply(file);
         }
         catch (const std::exception& e)
         {
@@ -362,7 +364,7 @@ void saveIgnoredFiles(const fs::path& filePath, const PathsSet& files)
     }
 };
 
-bool deleteInteractively(PathsVec& files, PathsSet& ignoredFiles)
+bool deleteInteractively(DeletionStrategy& strategy, PathsVec& files, PathsSet& ignoredFiles)
 {
     // Display files to be deleted
     size_t i = 0;
@@ -409,7 +411,7 @@ bool deleteInteractively(PathsVec& files, PathsSet& ignoredFiles)
     {
         std::swap(files[choice - 1], files.back());
         files.pop_back();
-        deleteFiles(files);
+        deleteFiles(strategy, files);
     }
     else
     {
@@ -419,11 +421,23 @@ bool deleteInteractively(PathsVec& files, PathsSet& ignoredFiles)
     return true;
 };
 
+class EmulateDelete : public DeletionStrategy
+{
+public:
+    void apply(const fs::path& file) override
+    {
+        spdlog::info("Would delete: {}", file);
+    }
+};
+
 void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
 {
     PathsSet ignoredFiles;
     PathsVec deleteWithoutAsking;
     PathsVec deleteSelectively;
+    // BackupAndDelete strategy(cfg.cacheDir);
+    EmulateDelete strategy;
+
     bool resumeEnumeration = true;
 
     if (fs::exists(cfg.ignFilesPath))
@@ -465,7 +479,7 @@ void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
         {
             // So after deleting the files below, we know that at least one
             // file will be left in the system
-            deleteFiles(deleteWithoutAsking);
+            deleteFiles(strategy, deleteWithoutAsking);
         }
         else
         {
@@ -479,7 +493,7 @@ void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
         {
             std::cout << "file size: " << group.entires.front().size
                       << ", sha256: " << group.entires.front().sha256 << '\n';
-            resumeEnumeration = deleteInteractively(deleteSelectively, ignoredFiles);
+            resumeEnumeration = deleteInteractively(strategy, deleteSelectively, ignoredFiles);
         }
 
         // We left with one file, which is now unique in the system
