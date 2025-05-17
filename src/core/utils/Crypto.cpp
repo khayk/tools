@@ -3,6 +3,7 @@
 
 #include <openssl/evp.h>
 #include <openssl/sha.h>
+#include <openssl/md5.h>
 
 #include <fmt/format.h>
 
@@ -52,6 +53,57 @@ std::string sha256(const std::string_view data)
 {
     std::string out;
     sha256(data, out);
+
+    return out;
+}
+
+void md5(std::string_view data, std::string& out)
+{
+    uint32_t mdLen = 0;
+    std::array<unsigned char, MD5_DIGEST_LENGTH> hash {};
+    const EVP_MD* md = EVP_get_digestbyname("MD5");
+
+    if (!md)
+    {
+        throw std::runtime_error("Failed to initialize MD5 digest");
+    }
+
+    auto sslFailed = [](int ret) -> bool
+    {
+        return ret != 1;
+    };
+
+    // std::unique_ptr<EVP_MD_CTX, void (*)(EVP_MD_CTX*)> ctx(EVP_MD_CTX_new(), &EVP_MD_CTX_free);
+    std::unique_ptr<EVP_MD_CTX, void (*)(EVP_MD_CTX*)> ctx(EVP_MD_CTX_new(),
+                                                          &EVP_MD_CTX_free);
+
+    if (!ctx.get())
+    {
+        throw std::runtime_error("Failed to allocate digest context");
+    }
+
+    if (sslFailed(EVP_DigestInit_ex(ctx.get(), md, nullptr)))
+    {
+        throw std::runtime_error("EVP_DigestInit_ex failed");
+    }
+
+    if (sslFailed(EVP_DigestUpdate(ctx.get(), data.data(), data.length())))
+    {
+        throw std::runtime_error("EVP_DigestUpdate failed");
+    }
+
+    if (sslFailed(EVP_DigestFinal_ex(ctx.get(), hash.data(), &mdLen)))
+    {
+        throw std::runtime_error("EVP_DigestFinal_ex failed");
+    }
+
+    hexadecimal(std::span(hash), out);
+}
+
+std::string md5(std::string_view data)
+{
+    std::string out;
+    md5(data, out);
 
     return out;
 }

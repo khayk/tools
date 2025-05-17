@@ -16,10 +16,27 @@ namespace crypto {
  */
 void sha256(std::string_view data, std::string& out);
 
+
 /**
  * @brief Convenience function, see sha256 with 2 arguments
  */
 std::string sha256(std::string_view data);
+
+
+/**
+ * @brief Calculate MD5 on the given data.
+ *
+ * @param data The data to calculate MD5 on it.
+ *
+ * @return MD5 of the data
+ */
+void md5(std::string_view data, std::string& out);
+
+
+/**
+ * @brief Convenience function, see MD5 with 2 arguments
+ */
+std::string md5(std::string_view data);
 
 
 /**

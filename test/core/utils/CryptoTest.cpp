@@ -13,18 +13,33 @@ namespace {
 
 TEST(UtilsCryptoTests, DataSha256)
 {
-    EXPECT_EQ(sha256(""),
-              "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
-    EXPECT_EQ(sha256("1"),
-              "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b");
-    EXPECT_EQ(sha256("ab"),
-              "fb8e20fc2e4c3f248c60c39bd652f3c1347298bb977b8b4d5903b85055620603");
-    EXPECT_EQ(sha256("_045u7"),
-              "c9627deaca269fd9b5de61a1093c9f7e7a429f6a2233adf2b3a4fa79129cca4d");
-    EXPECT_EQ(sha256("password"),
-              "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8");
+    std::unordered_map<std::string, std::string> hashes {
+        {"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", ""},
+        {"2e1cfa82b035c26cbbbdae632cea070514eb8b773f616aaeaf668e2f0be8f10d", "empty"},
+        {"9033b8324ab907bcbb0d2f2bf1c49f57c2d59809364b1940d1e4fac10281841b", "/some/file/path"},
+        {"6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b", "1"},
+        {"36a9e7f1c95b82ffb99743e0c5c4ce95d83c9a430aac59f84ef3cbfab6145068", " "}};
+
+    for (auto& pair : hashes)
+    {
+        EXPECT_EQ(pair.first, sha256(pair.second));
+    }
 }
 
+TEST(UtilsCryptoTests, DataMd5)
+{
+    std::unordered_map<std::string, std::string> hashes {
+        {"d41d8cd98f00b204e9800998ecf8427e", ""},
+        {"a2e4822a98337283e39f7b60acf85ec9", "empty"},
+        {"4d436e8c3d135e4bbec1c55c23a27d7f", "/some/file/path"},
+        {"c4ca4238a0b923820dcc509a6f75849b", "1"},
+        {"7215ee9c7d9dc229d2921a40e899ec5f", " "}};
+
+    for (auto& pair : hashes)
+    {
+        EXPECT_EQ(pair.first, md5(pair.second));
+    }
+}
 
 TEST(UtilsCryptoTests, FileSha256)
 {
