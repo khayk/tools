@@ -29,6 +29,7 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(ENABLE_SANITIZERS OFF)
 
 # add_compile_definitions(BOOST_BIND_NO_PLACEHOLDERS)
 # add_compile_definitions(BOOST_ASIO_NO_DEPRECATED)
@@ -55,6 +56,8 @@ elseif(UNIX)
     # Be aware, this increases memory usage by order of magnitude
     # (6x-7x times)
     if(ENABLE_SANITIZERS)
+        message("Enabling sanitizers   : ON")
+
         add_compile_options(
             -fsanitize=address,undefined
             -fno-sanitize=signed-integer-overflow
