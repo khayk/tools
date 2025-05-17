@@ -224,10 +224,10 @@ ScopedDir::ScopedDir(fs::path dirPath)
 
 ScopedDir::~ScopedDir()
 {
-    if (owner_ && !path_.empty())
+    if (isOwner() && !path().empty())
     {
         std::error_code ec;
-        fs::remove_all(path_, ec);
+        fs::remove_all(path(), ec);
     }
 }
 

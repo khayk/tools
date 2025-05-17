@@ -12,11 +12,11 @@ namespace file {
 
 void write(const fs::path& file, std::string_view data);
 
-void write(const fs::path& file, const char* const data, size_t size);
+void write(const fs::path& file, const char* data, size_t size);
 
 void append(const fs::path& file, std::string_view data);
 
-void append(const fs::path& file, const char* const data, size_t size);
+void append(const fs::path& file, const char* data, size_t size);
 
 /**
  * @brief Read the content of the file into 'data' string
@@ -77,20 +77,24 @@ fs::path constructTempPath(std::string_view namePrefix = "",
 
 class Path
 {
-protected:
-    Path(const Path&) = delete;
-    Path(Path&&) noexcept = default;
-    Path& operator=(const Path&) = delete;
-    Path& operator=(Path&&) noexcept = default;
-
+private:
     fs::path path_;
     bool owner_ {true};
 
+protected:
     Path() noexcept;
     explicit Path(fs::path p) noexcept;
 
 public:
     [[nodiscard]] const fs::path& path() const noexcept;
+
+    /**
+     * @brief Check if the path is owned by this object
+     */
+    [[nodiscard]] bool isOwner() const noexcept
+    {
+        return owner_;
+    }
 
     /**
      * @brief Drop ownership of the path
@@ -103,6 +107,12 @@ public:
      * @param newPath  The new path
      */
     void takeOwnership(const fs::path& newPath);
+
+
+    Path(const Path&) = delete;
+    Path(Path&&) noexcept = default;
+    Path& operator=(const Path&) = delete;
+    Path& operator=(Path&&) noexcept = default;
 };
 
 
