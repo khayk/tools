@@ -50,7 +50,8 @@ TEST(DeletionStrategyTest, BackupAndDelete)
     auto strategy = std::make_unique<BackupAndDelete>(backupDir);
     const auto journalFile = strategy->journalFile();
 
-    EXPECT_TRUE(fs::exists(backupDir / journalFile.filename()));
+    // create journal file when there is something to write to it
+    EXPECT_FALSE(fs::exists(backupDir / journalFile.filename()));
 
     const std::array files = {
         data.path() / "test1.txt",
@@ -69,7 +70,7 @@ TEST(DeletionStrategyTest, BackupAndDelete)
         const auto parentPath = files.front().parent_path();
         const auto hash = crypto::md5(parentPath.string());
 
-
+        EXPECT_TRUE(fs::exists(backupDir / journalFile.filename()));
         EXPECT_TRUE(fs::exists(backupDir / hash / file.filename()));
     }
 

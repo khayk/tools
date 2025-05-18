@@ -33,17 +33,24 @@ BackupAndDelete::BackupAndDelete(fs::path backupDir)
     const auto time = fmt::format("{:02}{:02}{:02}", tm.tm_hour, tm.tm_min, tm.tm_sec);
     const auto fileName = fmt::format("deleted_files_{}_{}.log", date, time);
     journalFilePath_ = backupDir_ / fileName;
-
-    journalFile_.open(journalFilePath_, std::ios::ate);
-
-    if (!journalFile_)
-    {
-        throw std::system_error(
-            std::make_error_code(std::errc::no_such_file_or_directory),
-            fmt::format("Unable to open file: {}", journalFilePath_));
-    }
 }
 
+std::ofstream& BackupAndDelete::journal()
+{
+    if (!journalFile_.is_open())
+    {
+        journalFile_.open(journalFilePath_, std::ios::ate);
+
+        if (!journalFile_)
+        {
+            throw std::system_error(
+                std::make_error_code(std::errc::no_such_file_or_directory),
+                fmt::format("Unable to open file: {}", journalFilePath_));
+        }
+    }
+
+    return journalFile_;
+}
 
 const fs::path& BackupAndDelete::journalFile() const
 {
@@ -63,7 +70,7 @@ void BackupAndDelete::apply(const fs::path& file)
     const auto backupFilePath = backupDir_ / hash / absFile.filename();
 
     fs::create_directory(backupDir_ / hash);
-    journalFile_ << absFile << "|" << backupFilePath << '\n';
+    journal() << absFile << "|" << backupFilePath << '\n';
 
     fs::rename(absFile, backupFilePath);
     spdlog::info("Moved: {} to {}", absFile, backupFilePath);

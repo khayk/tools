@@ -439,8 +439,8 @@ void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
     PathsSet ignoredFiles;
     PathsVec deleteWithoutAsking;
     PathsVec deleteSelectively;
-    // BackupAndDelete strategy(cfg.cacheDir);
-    EmulateDelete strategy;
+    BackupAndDelete strategy(cfg.cacheDir);
+    // EmulateDelete strategy;
 
     bool resumeEnumeration = true;
 
