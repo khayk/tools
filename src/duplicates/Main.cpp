@@ -362,7 +362,7 @@ void saveIgnoredFiles(const fs::path& filePath, const PathsSet& files)
     std::ofstream out(filePath, std::ios::out | std::ios::binary);
     for (const auto& file : files)
     {
-        out << file << '\n';
+        out << file::path2s(file) << '\n';
     }
 };
 
