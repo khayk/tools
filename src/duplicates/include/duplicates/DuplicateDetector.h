@@ -14,8 +14,7 @@ namespace tools::dups {
 
 struct DupEntry
 {
-    fs::path dir;
-    fs::path filename;
+    fs::path file;
     size_t size {};
     std::string sha256;
 };
@@ -65,10 +64,10 @@ public:
 
 private:
     using Nodes = std::vector<const Node*>;
-    using MapBySize = std::map<size_t, Nodes, std::greater<size_t>>;
+    using MapBySize = std::map<size_t, Nodes, std::greater<>>;
     using MapByHash = std::map<std::string_view, Nodes>;
 
-    std::unordered_set<std::wstring> names_;
+    std::unordered_set<fs::path> names_;
     std::unique_ptr<Node> root_;
     MapBySize dups_;
     MapByHash grps_;

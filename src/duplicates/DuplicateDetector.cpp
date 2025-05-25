@@ -35,25 +35,11 @@ DuplicateDetector::DuplicateDetector()
 void DuplicateDetector::addFile(const fs::path& path)
 {
     Node* node = root_.get();
-    auto separator = fs::path::preferred_separator;
-    std::wstring wpath = path.lexically_normal().wstring();
-    std::wstring_view wsv = wpath;
-    std::wstring name;
 
-    while (!wsv.empty())
+    for (const auto& p: path)
     {
-        auto p = wsv.find_first_of(separator);
-        name = wsv.substr(0, p);
-        auto [it, ok] = names_.insert(name);
-
+        auto [it, _] = names_.insert(p);
         node = node->addChild(*it);
-
-        if (p == std::wstring_view::npos)
-        {
-            break;
-        }
-
-        wsv.remove_prefix(p + 1);
     }
 }
 
@@ -83,14 +69,12 @@ void DuplicateDetector::detect(const Options& opts, ProgressCallback cb)
         cb(Stage::Prepare, node, ++i * 100 / totalFiles);
     });
 
-    std::wstring ws;
-    root_->enumLeafs([&opts, &ws, this](Node* node) {
+    root_->enumLeafs([&opts, this](Node* node) {
         if (node->size() < opts.minSizeBytes || node->size() > opts.maxSizeBytes)
         {
             return;
         }
 
-        node->fullPath(ws);
         auto it = dups_.find(node->size());
 
         if (it == dups_.end())
@@ -188,27 +172,24 @@ void DuplicateDetector::reset()
 {
     grps_.clear();
     dups_.clear();
-    root_.reset();
     names_.clear();
-    names_.emplace(L"");
-
-    root_ = std::make_unique<Node>(*names_.begin());
+    names_.emplace();
+    root_ = std::make_unique<Node>(&(*names_.begin()));
 }
 
 void DuplicateDetector::enumFiles(const FileCallback& cb) const
 {
-    std::wstring ws;
+    fs::path p;
 
-    root_->enumLeafs([&ws, cb](const Node* const node) {
-        node->fullPath(ws);
-        cb(ws);
+    root_->enumLeafs([&p, cb](const Node* const node) {
+        node->fullPath(p);
+        cb(p);
     });
 }
 
 void DuplicateDetector::enumDuplicates(const DupGroupCallback& cb) const
 {
     DupGroup group;
-    std::wstring ws;
     size_t duplicates = 0;
     std::unordered_set<std::string_view> visit;
 
@@ -237,15 +218,7 @@ void DuplicateDetector::enumDuplicates(const DupGroupCallback& cb) const
                 group.entires.emplace_back();
                 DupEntry& e = group.entires.back();
 
-                i->fullPath(ws);
-                auto sv = ws;
-                auto separator = fs::path::preferred_separator;
-                auto p = sv.find_last_of(separator);
-                auto filename = sv.substr(p + 1);
-                auto folder = sv.substr(0, p);
-
-                e.dir = folder;
-                e.filename = filename;
+                i->fullPath(e.file);
                 e.size = i->size();
                 e.sha256 = i->sha256();
             }

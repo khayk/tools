@@ -48,6 +48,8 @@ Usage:
 )";
 }
 
+void dumpContent(const fs::path& allFiles, const DuplicateDetector& detector);
+
 void experimenting(const fs::path& file)
 {
     DuplicateDetector detector;
@@ -63,6 +65,8 @@ void experimenting(const fs::path& file)
         }
         return true;
     });
+
+    dumpContent("tmp.txt", detector);
 
     std::cout << "Memory: " << str::humanizeBytes(sys::currentProcessMemoryUsage())
               << '\n';
@@ -179,7 +183,9 @@ Config loadConfig(const fs::path& cfgFile)
         }
     });
 
-    const fs::path dataDir = dirs::config() / "duplicates";
+    constexpr std::string_view appName = "duplicates";
+    const fs::path dataDir = dirs::config() / appName;
+    const fs::path cacheDir = dirs::cache() / appName;
 
     cfg.minFileSizeBytes = config["min_file_size_bytes"].value_or(0ULL);
     cfg.maxFileSizeBytes = config["max_file_size_bytes"].value_or(0ULL);
@@ -188,13 +194,13 @@ Config loadConfig(const fs::path& cfgFile)
     cfg.dupFilesPath = config["dup_files"].value_or("");
     cfg.ignFilesPath = config["ign_files"].value_or("");
     cfg.logDir = dataDir / "logs";
-    cfg.cacheDir = dataDir / "cache";
-    cfg.logFilename = "duplicates.log";
+    cfg.cacheDir = cacheDir;
+    cfg.logFilename = fmt::format("{}.log", appName);
 
-    const auto adjustPath = [&](fs::path& path) {
+    const auto adjustPath = [&dataDir](fs::path& path) {
         if (!path.empty())
         {
-            path = dataDir / path;
+            path = dataDir / path.filename();
         }
     };
 
@@ -305,7 +311,7 @@ void reportDuplicates(const Config& cfg, const DuplicateDetector& detector)
             oss.str("");
             oss << group.groupId << separator
                 << std::string_view(e.sha256).substr(0, 16) << separator << e.size
-                << separator << e.dir / e.filename;
+                << separator << file::path2s(e.file);
             sortedLines.emplace_back(oss.str());
         }
 
@@ -448,7 +454,10 @@ void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
     {
         spdlog::info("Loading ignored files from: {}", cfg.ignFilesPath);
         file::readLines(cfg.ignFilesPath, [&](const std::string& line) {
-            ignoredFiles.emplace(line);
+            if (!line.empty())
+            {
+                ignoredFiles.emplace(line);
+            }
             return true;
         });
     }
@@ -460,21 +469,19 @@ void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
         // Categorize files into 2 groups
         for (const auto& e : group.entires)
         {
-            const auto file = e.dir / e.filename;
-
-            if (ignoredFiles.contains(file))
+            if (ignoredFiles.contains(e.file))
             {
-                spdlog::warn("File is ignored: {}", file);
+                spdlog::warn("File is ignored: {}", e.file);
                 return true;
             }
 
-            if (isSafeToDelete(cfg.safeToDeleteDirs, e.dir))
+            if (isSafeToDelete(cfg.safeToDeleteDirs, e.file.parent_path()))
             {
-                deleteWithoutAsking.emplace_back(file);
+                deleteWithoutAsking.emplace_back(e.file);
             }
             else
             {
-                deleteSelectively.emplace_back(file);
+                deleteSelectively.emplace_back(e.file);
             }
         }
 

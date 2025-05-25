@@ -5,8 +5,11 @@
 #include <cstdint>
 #include <unordered_map>
 #include <memory>
+#include <filesystem>
 
 namespace tools::dups {
+
+namespace fs = std::filesystem;
 
 class Node
 {
@@ -14,22 +17,22 @@ public:
     using UpdateCallback = std::function<void(const Node*)>;
     using ConstNodeCallback = std::function<void(const Node*)>;
     using MutableNodeCallback = std::function<void(Node*)>;
-    using Children = std::unordered_map<std::wstring_view, std::unique_ptr<Node>>;
+    using Children = std::unordered_map<const fs::path*, std::unique_ptr<Node>>;
 
-    explicit Node(std::wstring_view name, Node* parent = nullptr);
+    explicit Node(const fs::path* name, Node* parent = nullptr);
 
-    std::wstring_view name() const noexcept;
-    Node* parent() const noexcept;
+    const fs::path& name() const noexcept;
     bool leaf() const noexcept;
     size_t size() const noexcept;
     uint16_t depth() const noexcept;
     const std::string& sha256() const;
 
-    std::wstring fullPath() const;
-    void fullPath(std::wstring& ws) const;
+    fs::path fullPath() const;
+    void fullPath(fs::path& path) const;
 
-    bool hasChild(std::wstring_view name) const;
-    Node* addChild(std::wstring_view name);
+    bool hasChild(const fs::path& name) const;
+    Node* addChild(const fs::path& name);
+    Node* parent() const noexcept;
 
     void enumLeafs(const ConstNodeCallback& cb) const;
     void enumLeafs(const MutableNodeCallback& cb);
@@ -48,12 +51,12 @@ public:
 private:
     Children children_;
     mutable std::string sha256_;
-    std::wstring_view name_;
+    const fs::path* name_ {nullptr};
     Node* parent_ {nullptr};
     size_t size_ {0};
     uint16_t depth_ {0};
 
-    void updateHelper(const UpdateCallback& cb, Node* node, std::wstring& ws);
+    void updateHelper(const UpdateCallback& cb, Node* node, fs::path& p);
 };
 
 } // namespace tools::dups
