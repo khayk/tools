@@ -34,15 +34,13 @@ TEST(DuplicateDetectorTest, AddFiles)
 
     EXPECT_EQ(0, dd.numFiles());
 
-    for (const auto& [path, ignore] : files)
+    for (const auto& [path, _] : files)
     {
-        std::ignore = ignore;
         const auto numFiles = dd.numFiles();
         dd.addFile(path);
         EXPECT_EQ(numFiles + 1, dd.numFiles());
 
-        // An extra call is to show that adding an existing path has no
-        // side effect at all
+        // An extra call with an existing path has no side effect
         dd.addFile(path);
         EXPECT_EQ(numFiles + 1, dd.numFiles());
     }
