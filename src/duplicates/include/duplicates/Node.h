@@ -11,13 +11,15 @@ namespace tools::dups {
 
 namespace fs = std::filesystem;
 
+using NodePtr = std::unique_ptr<class Node>;
+
 class Node
 {
 public:
     using UpdateCallback = std::function<void(const Node*)>;
     using ConstNodeCallback = std::function<void(const Node*)>;
     using MutableNodeCallback = std::function<void(Node*)>;
-    using Children = std::unordered_map<const fs::path*, std::unique_ptr<Node>>;
+    using Children = std::unordered_map<const fs::path*, NodePtr>;
 
     explicit Node(const fs::path* name, Node* parent = nullptr);
 
