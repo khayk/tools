@@ -6,10 +6,7 @@ namespace {
 TEST(UtilsSysTests, CurrentProcessPath)
 {
     const auto path = sys::currentProcessPath();
-    std::cout << "Current process path: " << path << '\n';
-    EXPECT_FALSE(path.empty());
-
-    // @todo: add more checks
+    EXPECT_EQ(path.filename().stem().string(), "core-test");
 }
 
 } // namespace
