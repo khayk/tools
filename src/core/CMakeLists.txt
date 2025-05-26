@@ -51,4 +51,8 @@ target_link_libraries(${PROJECT_LIB} PUBLIC
     Boost::iostreams
 )
 
+# For code coverage
+InstrumentForCoverage(${PROJECT_LIB})
+CleanCoverage(${PROJECT_LIB})
+
 AddClangTidy(${PROJECT_LIB})

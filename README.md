@@ -80,7 +80,16 @@ Own implementation of different tools.
 
     * TBD - the command line above is for reference only, later create a script to produce coverage
 * Linux
-    * TBD
+    * Generate
+        * `cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug`
+    * Build and run
+        * `cmake --build build -t coverage-<target-name> -j 8`
+    * Example
+        * `cmake --build build -t coverage-core-test -j 8`
+        * `cmake --build build -t coverage-duplicates-test -j 8`
+        * `cmake --build build -t coverage-kidmon-test -j 8`
+    * Coverage report will be available under the `build` directory, in the `coverage-<build_target>` folder
+
 * Read about [codecov](https://docs.codecov.com/docs/quick-start) CI
 
 ## Formatting

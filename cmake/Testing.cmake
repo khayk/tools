@@ -1,6 +1,6 @@
 
 # include(GoogleTest)
-# include(Coverage)
+include(Coverage)
 # include(Memcheck)
 
 find_package(GTest REQUIRED)
@@ -11,6 +11,6 @@ macro(AddTests target)
    target_link_libraries(${target} PRIVATE GTest::gmock_main)
    gtest_discover_tests(${target})
 
-   #  AddCoverage(${target})
+   AddCoverage(${target})
    #  AddMemcheck(${target})
 endmacro()

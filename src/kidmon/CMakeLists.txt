@@ -84,6 +84,10 @@ target_link_libraries (${PROJECT_APP} PRIVATE ${PROJECT_LIB} cxxopts::cxxopts)
 # target_link_libraries(${PROJECT_APP} sqlite_orm::sqlite_orm)
 # target_link_libraries(${PROJECT_APP} PRIVATE ${SQLite3_LIBRARY})
 
+# For code coverage
+InstrumentForCoverage(${PROJECT_LIB})
+CleanCoverage(${PROJECT_LIB})
+
 AddClangTidy(${PROJECT_LIB})
 AddClangTidy(${PROJECT_APP})
 

@@ -20,6 +20,10 @@ add_library(${PROJECT_LIB} ${LIB_SRCS})
 target_include_directories(${PROJECT_LIB} PUBLIC include)
 target_link_libraries(${PROJECT_LIB} PUBLIC core PkgConfig::tomlplusplus)
 
+# For code coverage
+InstrumentForCoverage(${PROJECT_LIB})
+CleanCoverage(${PROJECT_LIB})
+
 # Adding executable project
 add_executable(${PROJECT_APP} Main.cpp)
 target_link_libraries (${PROJECT_APP} ${PROJECT_LIB})
