@@ -30,4 +30,3 @@ target_link_libraries (${PROJECT_APP} ${PROJECT_LIB})
 
 AddClangTidy(${PROJECT_LIB})
 AddClangTidy(${PROJECT_APP})
-
