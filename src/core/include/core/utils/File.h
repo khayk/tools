@@ -91,10 +91,7 @@ public:
     /**
      * @brief Check if the path is owned by this object
      */
-    [[nodiscard]] bool isOwner() const noexcept
-    {
-        return owner_;
-    }
+    [[nodiscard]] bool isOwner() const noexcept;
 
     /**
      * @brief Drop ownership of the path

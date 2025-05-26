@@ -204,6 +204,12 @@ const fs::path& Path::path() const noexcept
 }
 
 
+bool Path::isOwner() const noexcept
+{
+    return owner_;
+}
+
+
 void Path::dropOwnership() noexcept
 {
     owner_ = false;
