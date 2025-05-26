@@ -13,13 +13,55 @@ using testing::Return;
 namespace tools::dups {
 namespace {
 
-void createFiles(const std::unordered_map<fs::path, std::string>& files,
-                 const fs::path& dir)
+using FileDataMap = std::unordered_map<fs::path, std::string>;
+
+FileDataMap getTestFiles(const fs::path& dir)
+{
+    /** Example file structure:
+     *
+     * u/
+     *    m/
+     *       l/
+     *          f1
+     *          ф2
+     *          ֆ3
+     *    f1-dup1
+     *    f1-dup2
+     *    f2-dup1
+     * f1-dup3
+     * f2-dup2
+     * f3-dup1
+     * f4-uniq
+     */
+
+    return {
+        {dir / "u/m/l/f1",    "1"},
+        {dir / u8"u/m/l/ф2",  "22"},  // <- unicode filename
+        {dir / u8"u/m/l/ֆ3",  "333"}, // <- unicode filename
+        {dir / "u/m/f1-dup1", "1"},
+        {dir / "u/m/f1-dup2", "1"},
+        {dir / "u/m/f2-dup1", "22"},
+        {dir / "u/f1-dup3",   "1"},
+        {dir / "u/f2-dup2",   "22"},
+        {dir / "u/f3-dup1",   "333"},
+        {dir / "u/f4-uniq",   "4444"}
+    };
+}
+
+void createFiles(const FileDataMap& files)
 {
     for (const auto& [file, content] : files)
     {
-        fs::create_directories(dir / file.parent_path());
-        file::write(dir / file, content);
+        fs::create_directories(file.parent_path());
+        file::write(file, content);
+    }
+}
+
+void addFiles(const FileDataMap& files, DuplicateDetector& dd)
+{
+    for (const auto& [file, _] : files)
+    {
+        dd.addFile(file);
     }
 }
 
@@ -28,6 +70,8 @@ void createFiles(const std::unordered_map<fs::path, std::string>& files,
 TEST(DuplicateDetectorTest, AddFiles)
 {
     DuplicateDetector dd;
+
+    // These paths doesn't have to be existing files
     std::unordered_map<fs::path, bool> files {{"/a/b/c.txt", false},
                                               {"/a/d", false},
                                               {"/e/.f", false}};
@@ -64,39 +108,29 @@ TEST(DuplicateDetectorTest, AddFiles)
     });
 }
 
-TEST(DuplicateDetectorTest, BasicUsage)
+
+TEST(DuplicateDetectorTest, DetectDuplicates)
 {
     file::TempDir data("dups");
-
-    const std::unordered_map<fs::path, std::string> files {
-        {"a/d.txt", "1"},
-        {"b/e.jpg", "1"},
-        {"c/f.dat", "2"},
-        {"c/g.pdf", "1"},
-        {"h", "2"},
-    };
-
-    createFiles(files, data.path());
-
     DuplicateDetector dd;
     DuplicateDetector::Options opts;
 
-    for (const auto& [file, content] : files)
-    {
-        dd.addFile(data.path() / file);
-    }
+    const auto files = getTestFiles(data.path());
+    createFiles(files);
+    addFiles(files, dd);
 
     EXPECT_EQ(files.size(), dd.numFiles());
     MockFunction<void(const DupGroup&)> dupCb;
 
+    // Expect no duplicates before detection
     EXPECT_CALL(dupCb, Call(_)).Times(0);
     dd.enumDuplicates([&dupCb](const DupGroup& grp) {
         dupCb.Call(grp);
         return true;
     });
 
-
-    EXPECT_CALL(dupCb, Call(_)).Times(2).WillRepeatedly([](const DupGroup& grp) {
+    // Expect 3 duplicate group after detection, each with at least 2 entries
+    EXPECT_CALL(dupCb, Call(_)).Times(3).WillRepeatedly([](const DupGroup& grp) {
         EXPECT_GE(grp.entires.size(), 2);
     });
 
@@ -107,7 +141,18 @@ TEST(DuplicateDetectorTest, BasicUsage)
     });
 }
 
+// TEST(DuplicateDetectorTest, DeleteDuplicates)
+// {
+//     file::TempDir data("dups");
+//     DuplicateDetector dd;
+//     DuplicateDetector::Options opts;
 
-TEST(DuplicateDetectorTest, AdvancedUsage) {}
+//     const auto files = getTestFiles(data.path());
+//     createFiles(files);
+//     addFiles(files, dd);
+//     dd.detect(opts);
+
+//     // Expect 3 duplicate groups
+// }
 
 } // namespace tools::dups
