@@ -1,37 +1,42 @@
 function(AddCoverage target)
-   find_program(LCOV_PATH lcov REQUIRED)
-   find_program(GENHTML_PATH genhtml REQUIRED)
+	if(TOOLS_COVERAGE)
+      find_program(LCOV_PATH lcov REQUIRED)
+      find_program(GENHTML_PATH genhtml REQUIRED)
 
-   add_custom_target(coverage-${target}
-      COMMENT "Running coverage for ${target}..."
-      COMMAND ${LCOV_PATH} -d . --zerocounters
-      COMMAND $<TARGET_FILE:${target}>
-      COMMAND ${LCOV_PATH} -d .
-                           --ignore-errors mismatch
-                           --capture -o coverage.info
-      COMMAND ${LCOV_PATH} -r coverage.info '/usr/include/*'
-                           -r coverage.info '/build/*'
-                           -o filtered.info
-      COMMAND ${GENHTML_PATH} -o coverage-${target} filtered.info --legend
-      COMMAND rm -rf coverage.info filtered.info
-      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-   )
+      add_custom_target(coverage-${target}
+         COMMENT "Running coverage for ${target}..."
+         COMMAND ${LCOV_PATH} -d . --zerocounters
+         COMMAND $<TARGET_FILE:${target}>
+         COMMAND ${LCOV_PATH} -d .
+                              --ignore-errors mismatch
+                              --capture -o coverage.info
+         COMMAND ${LCOV_PATH} -r coverage.info '/usr/include/*'
+                              -r coverage.info '/build/*'
+                              -o filtered.info
+         COMMAND ${GENHTML_PATH} -o coverage-${target} filtered.info --legend
+         COMMAND rm -rf coverage.info filtered.info
+         WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+	endif()
 endfunction()
 
 function(CleanCoverage target)
-   add_custom_command(TARGET ${target} PRE_BUILD COMMAND
-                     find ${CMAKE_BINARY_DIR} -type f
-                     -name '*.gcda' -exec cmake -E rm {} +)
+	if(TOOLS_COVERAGE)
+      add_custom_command(TARGET ${target} PRE_BUILD COMMAND
+                        find ${CMAKE_BINARY_DIR} -type f
+                        -name '*.gcda' -exec cmake -E rm {} +)
+	endif()
 endfunction()
 
 function(InstrumentForCoverage target)
-   if (CMAKE_BUILD_TYPE STREQUAL Debug)
-      target_compile_options(
-         ${target}
-         PRIVATE --coverage -fno-inline
-                 -fno-inline-small-functions
-                 -fno-default-inline
-      )
-      target_link_options(${target} PUBLIC --coverage)
+	if(TOOLS_COVERAGE)
+      if (CMAKE_BUILD_TYPE STREQUAL Debug)
+         target_compile_options(
+            ${target}
+            PRIVATE --coverage -fno-inline
+                  -fno-inline-small-functions
+                  -fno-default-inline
+         )
+         target_link_options(${target} PUBLIC --coverage)
+      endif()
    endif()
 endfunction()

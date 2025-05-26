@@ -13,8 +13,14 @@ endif()
 
 project(tools VERSION 0.1.0 LANGUAGES CXX)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+
+option(TOOLS_COVERAGE "Produce code coverage" ON)
+option(TOOLS_TIDY "Use clang-tidy" OFF)
+option(BUILD_TESTS "Tests enabled by default" ON)
+
 include(NoInSourceBuilds)
 include(BuildInfo)
+include(ClangTidy)
 include(Coverage)
 
 message("CMake tool chain file : ${CMAKE_TOOLCHAIN_FILE}")
@@ -69,11 +75,6 @@ elseif(UNIX)
         )
     endif()
 endif()
-
-option(TOOLS_TIDY "Use clang-tidy" OFF)
-include(ClangTidy)
-
-option(BUILD_TESTS "Tests enabled by default" ON)
 
 add_subdirectory(src bin)
 
