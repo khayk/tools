@@ -2,50 +2,52 @@
 #include <core/utils/Crypto.h>
 
 #include <filesystem>
+#include <cassert>
 
 namespace fs = std::filesystem;
 
 namespace tools::dups {
 namespace detail {
 
-void fullPathHelper(const Node* node, size_t size, std::wstring& dest)
+void fullPathHelper(const Node* node, fs::path& dest)
 {
-    if (node == nullptr)
+    if (node != nullptr)
     {
-        dest.reserve(size);
-        return;
+        fullPathHelper(node->parent(), dest);
+
+        if (node->parent() != nullptr)
+        {
+            dest /= node->name();
+        }
+
+        // if (!dest.empty() || (!node->name().empty() &&
+        //                       (node->name().native().size() != 2 || node->name().native()[1] != ':')))
+        // {
+        //     dest.push_back(fs::path::preferred_separator);
+        // }
     }
-
-    fullPathHelper(node->parent(), size + node->name().size() + 1, dest);
-
-    if (!dest.empty() || (!node->name().empty() &&
-                          (node->name().size() != 2 || node->name()[1] != ':')))
-    {
-        dest.push_back(fs::path::preferred_separator);
-    }
-
-    dest.append(node->name());
 }
 
-bool tryGetFileSize(const std::wstring& ws, size_t& size)
+bool tryGetFileSize(const fs::path& p, size_t& size)
 {
     std::error_code ec {};
-    size = fs::file_size(fs::path(ws), ec);
+    size = fs::file_size(p, ec);
     return !ec;
 }
 
 } // namespace detail
 
-Node::Node(std::wstring_view name, Node* parent)
+Node::Node(const fs::path* name, Node* parent)
     : name_(name)
     , parent_(parent)
     , depth_(parent ? parent->depth() + 1 : 0)
 {
+    assert(name_ != nullptr);
 }
 
-std::wstring_view Node::name() const noexcept
+const fs::path& Node::name() const noexcept
 {
-    return name_;
+    return *name_;
 }
 
 Node* Node::parent() const noexcept
@@ -78,30 +80,30 @@ const std::string& Node::sha256() const
     return sha256_;
 }
 
-void Node::fullPath(std::wstring& ws) const
+void Node::fullPath(fs::path& path) const
 {
-    ws.clear();
-    detail::fullPathHelper(this, 0, ws);
+    path.clear();
+    detail::fullPathHelper(this, path);
 }
 
-std::wstring Node::fullPath() const
+fs::path Node::fullPath() const
 {
-    std::wstring ws;
-    fullPath(ws);
+    fs::path p;
+    fullPath(p);
 
-    return ws;
+    return p;
 }
 
-bool Node::hasChild(std::wstring_view name) const
+bool Node::hasChild(const fs::path& name) const
 {
-    auto it = children_.find(name);
+    auto it = children_.find(&name);
 
     return it != children_.end();
 }
 
-Node* Node::addChild(std::wstring_view name)
+Node* Node::addChild(const fs::path& name)
 {
-    auto [it, ok] = children_.emplace(name, nullptr);
+    auto [it, ok] = children_.emplace(&name, nullptr);
 
     if (ok)
     {
@@ -200,11 +202,11 @@ size_t Node::leafsCount() const noexcept
 
 void Node::update(const UpdateCallback& cb)
 {
-    std::wstring ws;
-    updateHelper(cb, this, ws);
+    fs::path p;
+    updateHelper(cb, this, p);
 }
 
-void Node::updateHelper(const UpdateCallback& cb, Node* node, std::wstring& ws)
+void Node::updateHelper(const UpdateCallback& cb, Node* node, fs::path& p)
 {
     if (node == nullptr)
     {
@@ -213,9 +215,9 @@ void Node::updateHelper(const UpdateCallback& cb, Node* node, std::wstring& ws)
 
     if (node->children_.empty())
     {
-        ws.clear();
-        node->fullPath(ws);
-        detail::tryGetFileSize(ws, node->size_);
+        p.clear();
+        node->fullPath(p);
+        detail::tryGetFileSize(p, node->size_);
         cb(node);
         return;
     }
@@ -227,7 +229,7 @@ void Node::updateHelper(const UpdateCallback& cb, Node* node, std::wstring& ws)
     {
         Node* child = it.second.get();
 
-        updateHelper(cb, child, ws);
+        updateHelper(cb, child, p);
         node->size_ += child->size();
     }
 }

@@ -137,6 +137,35 @@ fs::path data()
     return path;
 }
 
+fs::path cache(std::error_code& ec)
+{
+#ifdef _WIN32
+    return getKnownFolderPath(FOLDERID_LocalAppData, ec);
+#else
+    fs::path dir = home(ec);
+
+    if (!ec)
+    {
+        dir.append(".cache");
+    }
+
+    return dir;
+#endif
+}
+
+fs::path cache()
+{
+    std::error_code ec;
+    auto path = cache(ec);
+
+    if (ec)
+    {
+        throw std::system_error(ec, "Failed to retrieve cache directory");
+    }
+
+    return path;
+}
+
 fs::path config(std::error_code& ec)
 {
 #ifdef _WIN32

@@ -1,6 +1,7 @@
 #include <duplicates/Utils.h>
 #include <duplicates/Node.h>
 #include <core/utils/Str.h>
+#include <core/utils/File.h>
 
 #include <ostream>
 
@@ -28,7 +29,7 @@ void treeDump(const Node* root, std::ostream& os)
         }
 
         os << std::string(1UL * (node->depth() - 1), ' ');
-        os << str::ws2s(node->name()) << (node->leaf() ? "" : "/") << '\n';
+        os << file::path2s(node->name()) << (node->leaf() || node->depth() == 1 ? "" : "/") << '\n';
     });
 }
 
