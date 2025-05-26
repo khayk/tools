@@ -6,7 +6,9 @@ function(AddCoverage target)
       COMMENT "Running coverage for ${target}..."
       COMMAND ${LCOV_PATH} -d . --zerocounters
       COMMAND $<TARGET_FILE:${target}>
-      COMMAND ${LCOV_PATH} -d . --capture -o coverage.info
+      COMMAND ${LCOV_PATH} -d .
+                           --ignore-errors mismatch
+                           --capture -o coverage.info
       COMMAND ${LCOV_PATH} -r coverage.info '/usr/include/*'
                            -r coverage.info '/build/*'
                            -o filtered.info
@@ -24,8 +26,12 @@ endfunction()
 
 function(InstrumentForCoverage target)
    if (CMAKE_BUILD_TYPE STREQUAL Debug)
-      target_compile_options(${target}
-                           PRIVATE --coverage -fno-inline)
+      target_compile_options(
+         ${target}
+         PRIVATE --coverage -fno-inline
+                 -fno-inline-small-functions
+                 -fno-default-inline
+      )
       target_link_options(${target} PUBLIC --coverage)
    endif()
 endfunction()
