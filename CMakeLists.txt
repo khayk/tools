@@ -15,6 +15,7 @@ project(tools VERSION 0.1.0 LANGUAGES CXX)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 include(NoInSourceBuilds)
 include(BuildInfo)
+include(Coverage)
 
 message("CMake tool chain file : ${CMAKE_TOOLCHAIN_FILE}")
 message("CMake binary dir      : ${CMAKE_BINARY_DIR}")
