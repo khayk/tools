@@ -40,7 +40,7 @@ set(ENABLE_SANITIZERS OFF)
 
 add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
 
-if(MSVC)
+if(WIN32)
     set_property(GLOBAL PROPERTY USE_FOLDERS ON)
     add_compile_options(/W4 /WX)
     add_compile_options("/MP${BUILD_JOBS}")

@@ -91,14 +91,14 @@ CleanCoverage(${PROJECT_LIB})
 AddClangTidy(${PROJECT_LIB})
 AddClangTidy(${PROJECT_APP})
 
-if(MSVC)
+if(WIN32)
    ADD_CUSTOM_COMMAND(
       TARGET ${PROJECT_APP}
  		POST_BUILD
  		COMMAND "mt.exe" -manifest \"${CMAKE_CURRENT_SOURCE_DIR}\\os\\win\\manifest\\app.manifest\" -inputresource:\"$<TARGET_FILE:${PROJECT_APP}>\"\;\#1 -outputresource:\"$<TARGET_FILE:${PROJECT_APP}>\"\;\#1
  		COMMENT "Adding display aware manifest..."
    )
-endif(MSVC)
+endif(WIN32)
 
 install(
     TARGETS ${PROJECT_APP}

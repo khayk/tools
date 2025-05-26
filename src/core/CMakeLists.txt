@@ -2,7 +2,7 @@ project(core VERSION 0.0.1)
 
 set(PROJECT_LIB  ${PROJECT_NAME})
 
-if(MSVC)
+if(WIN32)
     add_compile_definitions(PSAPI_VERSION=1)
 endif()
 
