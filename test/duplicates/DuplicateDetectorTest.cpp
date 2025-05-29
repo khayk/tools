@@ -6,7 +6,6 @@
 
 #include <unordered_map>
 
-using testing::_;
 using testing::MockFunction;
 using testing::Return;
 
@@ -78,7 +77,7 @@ TEST(DuplicateDetectorTest, AddFiles)
 
     EXPECT_EQ(0, dd.numFiles());
 
-    for (const auto& [path, _] : files)
+    for (const auto& [path, seen] : files)
     {
         const auto numFiles = dd.numFiles();
         dd.addFile(path);
@@ -87,20 +86,23 @@ TEST(DuplicateDetectorTest, AddFiles)
         // An extra call with an existing path has no side effect
         dd.addFile(path);
         EXPECT_EQ(numFiles + 1, dd.numFiles());
+        
+        EXPECT_FALSE(seen);
     }
 
     EXPECT_EQ(files.size(), dd.numFiles());
     MockFunction<void(const fs::path&)> fileCb;
 
-    EXPECT_CALL(fileCb, Call(_))
+    EXPECT_CALL(fileCb, Call(testing::_))
         .Times(static_cast<int>(files.size()))
         .WillRepeatedly([&files](const fs::path& p) {
             auto it = files.find(p);
-
             ASSERT_TRUE(it != files.end());
-            EXPECT_EQ(it->first, p);
-            EXPECT_EQ(it->second, false);
-            it->second = true;
+
+            auto& [file, seen] = *files.find(p);
+            EXPECT_EQ(file, p);
+            EXPECT_FALSE(seen);
+            seen = true;
         });
 
     dd.enumFiles([&fileCb](const fs::path& p) {
@@ -123,14 +125,16 @@ TEST(DuplicateDetectorTest, DetectDuplicates)
     MockFunction<void(const DupGroup&)> dupCb;
 
     // Expect no duplicates before detection
-    EXPECT_CALL(dupCb, Call(_)).Times(0);
+    EXPECT_CALL(dupCb, Call(testing::_)).Times(0);
     dd.enumDuplicates([&dupCb](const DupGroup& grp) {
         dupCb.Call(grp);
         return true;
     });
 
     // Expect 3 duplicate group after detection, each with at least 2 entries
-    EXPECT_CALL(dupCb, Call(_)).Times(3).WillRepeatedly([](const DupGroup& grp) {
+    EXPECT_CALL(dupCb, Call(testing::_))
+        .Times(3)
+        .WillRepeatedly([](const DupGroup& grp) {
         EXPECT_GE(grp.entires.size(), 2);
     });
 

@@ -14,7 +14,7 @@ endif()
 project(tools VERSION 0.1.0 LANGUAGES CXX)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
-option(TOOLS_COVERAGE "Produce code coverage" ON)
+option(TOOLS_COVERAGE "Produce code coverage" OFF)
 option(TOOLS_TIDY "Use clang-tidy" OFF)
 option(BUILD_TESTS "Tests enabled by default" ON)
 

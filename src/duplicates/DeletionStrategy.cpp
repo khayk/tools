@@ -27,7 +27,12 @@ BackupAndDelete::BackupAndDelete(fs::path backupDir)
 
     const auto now = std::chrono::system_clock::now();
     const auto timeT = std::chrono::system_clock::to_time_t(now);
+#ifdef _WIN32
+    tm tm;
+    localtime_s(&tm, &timeT);
+#else
     const auto tm = *std::localtime(&timeT);
+#endif
     const auto date =
         fmt::format("{:04}{:02}{:02}", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday);
     const auto time = fmt::format("{:02}{:02}{:02}", tm.tm_hour, tm.tm_min, tm.tm_sec);

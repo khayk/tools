@@ -6,6 +6,7 @@
 #include <core/utils/Crypto.h>
 #include <spdlog/spdlog.h>
 #include <memory>
+#include <array>
 
 namespace tools::dups {
 namespace {
@@ -53,7 +54,7 @@ TEST(DeletionStrategyTest, BackupAndDelete)
     // create journal file when there is something to write to it
     EXPECT_FALSE(fs::exists(backupDir / journalFile.filename()));
 
-    const std::array files = {
+    const std::array files {
         data.path() / "test1.txt",
         data.path() / "test2.txt",
         data.path() / "test3.txt",
