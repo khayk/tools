@@ -39,4 +39,11 @@ public:
 };
 
 
+class DryRunDelete : public DeletionStrategy
+{
+public:
+    void apply(const fs::path& file) override;
+};
+
+
 } // namespace tools::dups

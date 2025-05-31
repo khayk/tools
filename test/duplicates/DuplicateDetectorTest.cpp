@@ -2,7 +2,11 @@
 #include <gtest/gtest.h>
 
 #include <duplicates/DuplicateDetector.h>
+#include <duplicates/Utils.h>
 #include <core/utils/File.h>
+#include <core/utils/StopWatch.h>
+#include <core/utils/Str.h>
+#include <core/utils/Sys.h>
 
 #include <unordered_map>
 
@@ -86,7 +90,7 @@ TEST(DuplicateDetectorTest, AddFiles)
         // An extra call with an existing path has no side effect
         dd.addFile(path);
         EXPECT_EQ(numFiles + 1, dd.numFiles());
-        
+
         EXPECT_FALSE(seen);
     }
 
@@ -158,5 +162,40 @@ TEST(DuplicateDetectorTest, DetectDuplicates)
 
 //     // Expect 3 duplicate groups
 // }
+
+TEST(DuplicateDetectorTest, MetricsThresholds)
+{
+    // @todo:hayk - generate a set of files and feed them to the DuplicateDetector
+
+    const fs::path file("");
+    DuplicateDetector detector;
+    StopWatch sw;
+
+    file::readLines(file, [&detector](const std::string& line) {
+        std::string_view sv = line;
+        if (line.size() >= 2)
+        {
+            sv.remove_prefix(1);
+            sv.remove_suffix(1);
+            detector.addFile(sv);
+        }
+        return true;
+    });
+
+    // dumpContent("tmp.txt", detector);
+
+    std::cout << "Memory: " << str::humanizeBytes(sys::currentProcessMemoryUsage())
+              << '\n';
+    std::cout << "sizeof(path): " << sizeof(fs::path) << '\n';
+    std::cout << "Files: " << detector.numFiles() << '\n';
+    std::cout << "Nodes: " << detector.root()->nodesCount() << '\n';
+    // std::cout << "MapSize: " << detector1.mapSize() << '\n';
+    std::cout << "Elapsed: " << sw.elapsedMs() << " ms" << '\n';
+    std::cout << sizeof(Node) << '\n';
+    std::cout << "node: " << sizeof(Node) << '\n';
+    std::cout << "wstring_view: " << sizeof(std::wstring_view) << '\n';
+    std::cout << "string: " << sizeof(std::string) << '\n';
+    std::cout << "parent_: " << sizeof(Node*) << '\n';
+}
 
 } // namespace tools::dups

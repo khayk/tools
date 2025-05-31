@@ -81,4 +81,9 @@ void BackupAndDelete::apply(const fs::path& file)
     spdlog::info("Moved: {} to {}", absFile, backupFilePath);
 }
 
+void DryRunDelete::apply(const fs::path& file)
+{
+    spdlog::info("Would delete: {}", file);
+}
+
 } // namespace tools::dups
