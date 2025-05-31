@@ -1,8 +1,9 @@
 #include <duplicates/DuplicateDetector.h>
+#include <duplicates/DeletionStrategy.h>
 #include <duplicates/Utils.h>
 #include <duplicates/Node.h>
-#include <duplicates/Progress.h>
-#include <duplicates/DeletionStrategy.h>
+#include <duplicates/Config.h>
+
 #include <core/utils/StopWatch.h>
 #include <core/utils/Str.h>
 #include <core/utils/File.h>
@@ -10,11 +11,9 @@
 #include <core/utils/Sys.h>
 #include <core/utils/FmtExt.h>
 #include <core/utils/Log.h>
-#include <core/utils/Dirs.h>
 #include <core/utils/Tracer.h>
 
 #include <filesystem>
-#include <toml++/toml.hpp>
 #include <fmt/format.h>
 
 #include <chrono>
@@ -22,9 +21,7 @@
 #include <algorithm>
 #include <iostream>
 #include <fstream>
-#include <regex>
 
-using std::chrono::milliseconds;
 using tools::dups::BackupAndDelete;
 using tools::dups::DeletionStrategy;
 using tools::dups::DupGroup;
@@ -32,7 +29,9 @@ using tools::dups::DuplicateDetector;
 using tools::dups::Node;
 using tools::dups::Progress;
 using tools::dups::stage2str;
-using namespace std::literals;
+using tools::dups::loadConfig;
+using tools::dups::logConfig;
+
 namespace util = tools::dups::util;
 
 namespace {
@@ -47,8 +46,6 @@ Usage:
     duplicates <dir>   - Search duplicate items in the given directory.
 )";
 }
-
-void dumpContent(const fs::path& allFiles, const DuplicateDetector& detector);
 
 void experimenting(const fs::path& file)
 {
@@ -66,7 +63,7 @@ void experimenting(const fs::path& file)
         return true;
     });
 
-    dumpContent("tmp.txt", detector);
+    util::dumpContent("tmp.txt", detector);
 
     std::cout << "Memory: " << str::humanizeBytes(sys::currentProcessMemoryUsage())
               << '\n';
@@ -82,180 +79,7 @@ void experimenting(const fs::path& file)
     std::cout << "parent_: " << sizeof(Node*) << '\n';
 }
 
-void dumpContent(const fs::path& allFiles, const DuplicateDetector& detector)
-{
-    if (allFiles.empty())
-    {
-        // File to dump paths of all scanned files
-        spdlog::warn("Skip dumping paths of all scanned files");
-        return;
-    }
-
-    spdlog::trace("Dumping paths of all scanned files to: '{}'", allFiles);
-    std::ofstream outf(allFiles, std::ios::out | std::ios::binary);
-
-    if (!outf)
-    {
-        const auto s = fmt::format("Unable to open file: '{}'", allFiles);
-        throw std::system_error(
-            std::make_error_code(std::errc::no_such_file_or_directory),
-            s);
-    }
-
-    util::treeDump(detector.root(), outf);
-    spdlog::info("Dumped {} files", detector.numFiles());
-}
-
-std::string concat(const std::vector<std::string>& vec, const std::string& sep)
-{
-    std::string res;
-
-    for (const auto& item : vec)
-    {
-        if (!res.empty())
-        {
-            res.append(sep);
-        }
-        res.append(item);
-    }
-
-    return res;
-}
-
-struct Config
-{
-    std::vector<std::string> scanDirs;
-    std::vector<std::string> safeToDeleteDirs;
-    std::vector<std::regex> exclusionPatterns;
-    fs::path cacheDir;
-    fs::path allFilesPath;
-    fs::path dupFilesPath;
-    fs::path ignFilesPath;
-    fs::path logDir;
-    fs::path logFilename;
-    size_t minFileSizeBytes {};
-    size_t maxFileSizeBytes {};
-    std::chrono::milliseconds updateFrequency {};
-    bool skipDetection {false};
-};
-
-void dumpConfig(const fs::path& cfgFile, const Config& cfg)
-{
-    constexpr std::string_view pattern = "{:<27}: '{}'";
-    spdlog::trace(pattern, "Configuration file", cfgFile);
-    spdlog::trace(pattern, "Log file", cfg.logDir / cfg.logFilename);
-    spdlog::trace(pattern, "All files path", cfg.allFilesPath);
-    spdlog::trace(pattern, "Duplicate files path", cfg.dupFilesPath);
-    spdlog::trace(pattern, "Ignored files path", cfg.ignFilesPath);
-    spdlog::trace(pattern, "Scan directories", concat(cfg.scanDirs, ", "));
-    spdlog::trace(pattern,
-                  "Safe to delete directories",
-                  concat(cfg.safeToDeleteDirs, ", "));
-    spdlog::trace(pattern, "Cache directory", cfg.cacheDir);
-    // spdlog::trace(pattern, "Exclusion patterns", concat(cfg.exclusionPatterns, ",
-    // "));
-}
-
-Config loadConfig(const fs::path& cfgFile)
-{
-    Config cfg;
-    auto config = toml::parse_file(cfgFile.string());
-
-    config["exclusion_patterns"].as_array()->for_each([&cfg](const auto& value) {
-        if constexpr (toml::is_string<decltype(value)>)
-        {
-            cfg.exclusionPatterns.emplace_back(std::string(value.value_or(""sv)),
-                                               std::regex_constants::ECMAScript);
-        }
-    });
-
-    config["scan_directories"].as_array()->for_each([&cfg](const auto& value) {
-        if constexpr (toml::is_string<decltype(value)>)
-        {
-            cfg.scanDirs.emplace_back(value.value_or(""sv));
-        }
-    });
-
-    config["safe_to_delete_paths"].as_array()->for_each([&cfg](const auto& value) {
-        if constexpr (toml::is_string<decltype(value)>)
-        {
-            cfg.safeToDeleteDirs.emplace_back(value.value_or(""sv));
-        }
-    });
-
-    constexpr std::string_view appName = "duplicates";
-    const fs::path dataDir = dirs::config() / appName;
-    const fs::path cacheDir = dirs::cache() / appName;
-
-    cfg.minFileSizeBytes = config["min_file_size_bytes"].value_or(0ULL);
-    cfg.maxFileSizeBytes = config["max_file_size_bytes"].value_or(0ULL);
-    cfg.updateFrequency = milliseconds(config["update_freq_ms"].value_or(0));
-    cfg.allFilesPath = config["all_files"].value_or("");
-    cfg.dupFilesPath = config["dup_files"].value_or("");
-    cfg.ignFilesPath = config["ign_files"].value_or("");
-    cfg.logDir = dataDir / "logs";
-    cfg.cacheDir = cacheDir;
-    cfg.logFilename = fmt::format("{}.log", appName);
-
-    const auto adjustPath = [&dataDir](fs::path& path) {
-        if (!path.empty())
-        {
-            path = dataDir / path.filename();
-        }
-    };
-
-    // Ensure that auxilary files are located under the application data directory
-    adjustPath(cfg.allFilesPath);
-    adjustPath(cfg.dupFilesPath);
-    adjustPath(cfg.ignFilesPath);
-
-    return cfg;
-}
-
-void scanDirectories(const Config& cfg,
-                     DuplicateDetector& detector,
-                     Progress& progress)
-{
-    StopWatch sw;
-
-    for (const auto& scanDir : cfg.scanDirs)
-    {
-        const auto srcDir = fs::path(scanDir).lexically_normal();
-        spdlog::info("Scanning directory: '{}'", srcDir);
-
-        file::enumFilesRecursive(
-            srcDir,
-            cfg.exclusionPatterns,
-            [numFiles = 0, &detector, &progress](const auto& p,
-                                                 const std::error_code& ec) mutable {
-                if (ec)
-                {
-                    spdlog::error("Error: '{}' while processing path: '{}'",
-                                  ec.message(),
-                                  p);
-                    return;
-                }
-
-                if (fs::is_regular_file(p))
-                {
-                    detector.addFile(p);
-                    ++numFiles;
-                    progress.update([&numFiles](std::ostream& os) {
-                        os << "Scanned files: " << numFiles;
-                    });
-                }
-            });
-    }
-
-    // std::cout << std::string(80, ' ') << '\r';
-    spdlog::info("Discovered files: {}", detector.numFiles());
-    spdlog::trace("Scanning took: {} ms", sw.elapsedMs());
-    spdlog::trace("Nodes: {}", detector.root()->nodesCount());
-
-    // Dump content
-    dumpContent(cfg.allFilesPath, detector);
-}
-
+using tools::dups::Config;
 
 void detectDuplicates(const Config& cfg,
                       DuplicateDetector& detector,
@@ -431,7 +255,7 @@ bool deleteInteractively(DeletionStrategy& strategy,
     return true;
 };
 
-class EmulateDelete : public DeletionStrategy
+class DryRunDelete : public DeletionStrategy
 {
 public:
     void apply(const fs::path& file) override
@@ -446,7 +270,7 @@ void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
     PathsVec deleteWithoutAsking;
     PathsVec deleteSelectively;
     BackupAndDelete strategy(cfg.cacheDir);
-    // EmulateDelete strategy;
+    // DryRunDelete strategy;
 
     bool resumeEnumeration = true;
 
@@ -542,12 +366,14 @@ int main(int argc, const char* argv[])
         trace.emplace("",
                       fmt::format("{:-^80s}", "> START <"),
                       fmt::format("{:-^80s}\n", "> END <"));
-        dumpConfig(cfgFile, cfg);
+        logConfig(cfgFile, cfg);
 
         DuplicateDetector detector;
         Progress progress(cfg.updateFrequency);
 
-        scanDirectories(cfg, detector, progress);
+        util::scanDirectories(cfg, detector, progress);
+        util::dumpContent(cfg.allFilesPath, detector);
+
         detectDuplicates(cfg, detector, progress);
         reportDuplicates(cfg, detector);
         deleteDuplicates(cfg, detector);

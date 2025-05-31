@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Node.h"
+#include <duplicates/Node.h>
 
 #include <limits>
 #include <unordered_set>
