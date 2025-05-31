@@ -2,10 +2,13 @@
 #include <duplicates/DuplicateDeletion.h>
 #include <duplicates/DuplicateOperation.h>
 #include <duplicates/Config.h>
+#include <duplicates/Node.h>
 
 #include <core/utils/Log.h>
+#include <core/utils/File.h>
 #include <core/utils/Tracer.h>
-
+#include <core/utils/Sys.h>
+#include <core/utils/Str.h>
 #include <filesystem>
 #include <fmt/format.h>
 
@@ -13,6 +16,7 @@
 
 using tools::dups::DuplicateDetector;
 using tools::dups::Config;
+using tools::dups::Node;
 using tools::dups::Progress;
 using tools::dups::loadConfig;
 using tools::dups::logConfig;
@@ -26,8 +30,37 @@ Usage:
     @ todo: revise this
     duplicates <cfg_file> - Scan directories and detect duplicates based on the
                             configuration file.
-    duplicates <dir>   - Search duplicate items in the given directory.
 )");
+}
+
+void reviewMetrics(const fs::path& file)
+{
+    DuplicateDetector detector;
+    StopWatch sw;
+
+    file::readLines(file, [&detector](const std::string& line) {
+        std::string_view sv = line;
+
+        while (line.size() >= 2 && sv.front() == '"')
+        {
+            sv.remove_prefix(1);
+        }
+        while (line.size() >= 2 && sv.back() == '"')
+        {
+            sv.remove_suffix(1);
+        }
+
+        detector.addFile(sv);
+        return true;
+    });
+
+    spdlog::info("Memory: {}", str::humanizeBytes(sys::currentProcessMemoryUsage()));
+    spdlog::info("Files: {}", detector.numFiles());
+    spdlog::info("Nodes: {}", detector.root()->nodesCount());
+    spdlog::info("Elapsed: {} ms", sw.elapsedMs());
+    spdlog::info("sizeof(path): {}", sizeof(fs::path));
+    spdlog::info("sizeof(node): {}", sizeof(Node));
+    spdlog::info("sizeof(string): {}", sizeof(std::string));
 }
 
 } // namespace
@@ -45,6 +78,14 @@ int main(int argc, const char* argv[])
     try
     {
         const fs::path cfgFile(argv[1]);
+
+        if (cfgFile.extension() != ".toml")
+        {
+            spdlog::info("Measuring resource usage: '{}'", file::path2s(cfgFile));
+            reviewMetrics(cfgFile);
+            return 0;
+        }
+
         const Config cfg = loadConfig(cfgFile);
         utl::configureLogger(cfg.logDir, cfg.logFilename);
         trace.emplace("",
@@ -56,7 +97,7 @@ int main(int argc, const char* argv[])
         Progress progress(cfg.updateFrequency);
 
         scanDirectories(cfg, detector, progress);
-        dumpContent(cfg.allFilesPath, detector);
+        outputFiles(cfg.allFilesPath, detector);
 
         detectDuplicates(cfg, detector, progress);
         reportDuplicates(cfg.dupFilesPath, detector);

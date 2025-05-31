@@ -9,58 +9,6 @@
 
 namespace tools::dups {
 
-void detectDuplicates(const Config& cfg,
-                      DuplicateDetector& detector,
-                      Progress& progress)
-{
-    if (cfg.skipDetection)
-    {
-        spdlog::warn("Skip duplicate detection");
-        return;
-    }
-
-    StopWatch sw;
-    const DuplicateDetector::Options opts {.minSizeBytes = cfg.minFileSizeBytes,
-                                           .maxSizeBytes = cfg.maxFileSizeBytes};
-
-    spdlog::trace("Detecting duplicates...");
-    detector.detect(opts,
-                    [&progress](const DuplicateDetector::Stage stage,
-                                const Node*,
-                                size_t percent) mutable {
-                        progress.update([&](std::ostream& os) {
-                            os << "Stage: " << stage2str(stage) << " - " << percent
-                               << "%";
-                        });
-                    });
-
-    spdlog::trace("Detection took: {} ms", sw.elapsedMs());
-}
-
-void dumpContent(const fs::path& allFiles, const DuplicateDetector& detector)
-{
-    if (allFiles.empty())
-    {
-        // File to dump paths of all scanned files
-        spdlog::warn("Skip dumping paths of all scanned files");
-        return;
-    }
-
-    spdlog::trace("Dumping paths of all scanned files to: '{}'", allFiles);
-    std::ofstream outf(allFiles, std::ios::out | std::ios::binary);
-
-    if (!outf)
-    {
-        const auto s = fmt::format("Unable to open file: '{}'", allFiles);
-        throw std::system_error(
-            std::make_error_code(std::errc::no_such_file_or_directory),
-            s);
-    }
-
-    util::treeDump(detector.root(), outf);
-    spdlog::info("Dumped {} files", detector.numFiles());
-}
-
 // @todo: make scandirs in the config as vector of paths
 void scanDirectories(const Config& cfg,
                      DuplicateDetector& detector,
@@ -100,6 +48,59 @@ void scanDirectories(const Config& cfg,
     spdlog::info("Discovered files: {}", detector.numFiles());
     spdlog::trace("Scanning took: {} ms", sw.elapsedMs());
     spdlog::trace("Nodes: {}", detector.root()->nodesCount());
+}
+
+
+void detectDuplicates(const Config& cfg,
+                      DuplicateDetector& detector,
+                      Progress& progress)
+{
+    if (cfg.skipDetection)
+    {
+        spdlog::warn("Skip duplicate detection");
+        return;
+    }
+
+    StopWatch sw;
+    const DuplicateDetector::Options opts {.minSizeBytes = cfg.minFileSizeBytes,
+                                           .maxSizeBytes = cfg.maxFileSizeBytes};
+
+    spdlog::trace("Detecting duplicates...");
+    detector.detect(opts,
+                    [&progress](const DuplicateDetector::Stage stage,
+                                const Node*,
+                                size_t percent) mutable {
+                        progress.update([&](std::ostream& os) {
+                            os << "Stage: " << stage2str(stage) << " - " << percent
+                               << "%";
+                        });
+                    });
+
+    spdlog::trace("Detection took: {} ms", sw.elapsedMs());
+}
+
+void outputFiles(const fs::path& allFiles, const DuplicateDetector& detector)
+{
+    if (allFiles.empty())
+    {
+        // File to dump paths of all scanned files
+        spdlog::warn("Skip dumping paths of all scanned files");
+        return;
+    }
+
+    spdlog::trace("Dumping paths of all scanned files to: '{}'", allFiles);
+    std::ofstream outf(allFiles, std::ios::out | std::ios::binary);
+
+    if (!outf)
+    {
+        const auto s = fmt::format("Unable to open file: '{}'", allFiles);
+        throw std::system_error(
+            std::make_error_code(std::errc::no_such_file_or_directory),
+            s);
+    }
+
+    util::outputTree(detector.root(), outf);
+    spdlog::info("Dumped {} files", detector.numFiles());
 }
 
 void reportDuplicates(const fs::path& reportPath, const DuplicateDetector& detector)

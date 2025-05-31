@@ -17,7 +17,7 @@ uint16_t digits(size_t n)
     return d;
 }
 
-void treeDump(const Node* root, std::ostream& os)
+void outputTree(const Node* root, std::ostream& os)
 {
     root->enumNodes([&os](const Node* node) {
         if (node->depth() == 0)

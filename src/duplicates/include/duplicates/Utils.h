@@ -34,7 +34,7 @@ void eraseIf(std::map<Key, T, Compare, Alloc>& c, Pred pred)
  *
  * @param os The output stream
  */
-void treeDump(const Node* root, std::ostream& os);
+void outputTree(const Node* root, std::ostream& os);
 
 } // namespace util
 } // namespace tools::dups

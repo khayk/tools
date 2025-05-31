@@ -8,7 +8,10 @@
 #include <core/utils/Str.h>
 #include <core/utils/Sys.h>
 
+#include <cstddef>
+#include <queue>
 #include <unordered_map>
+#include <fmt/format.h>
 
 using testing::MockFunction;
 using testing::Return;
@@ -16,11 +19,48 @@ using testing::Return;
 namespace tools::dups {
 namespace {
 
+using GenFileCb = std::function<void(const fs::path&)>;
+void generateFiles(size_t numFiles, size_t filesPerLevel, size_t dirsPerLevel,
+                   const GenFileCb& cb)
+{
+    std::queue<fs::path> dirs;
+    dirs.emplace("top");
+
+    while (true)
+    {
+        if (dirs.empty())
+        {
+            break;
+        }
+
+        const fs::path& dir = dirs.front();
+
+        for (size_t i = 0; i < dirsPerLevel; ++i)
+        {
+            fs::path subdir = dir / fmt::format("subdir-{}", i);
+            dirs.emplace(subdir);
+        }
+
+        for (size_t i = 0; i < filesPerLevel; ++i)
+        {
+            fs::path file = dir / fmt::format("file-{}.txt", i);
+            cb(file);
+
+            if (--numFiles == 0)
+            {
+                return;
+            }
+        }
+
+        dirs.pop();
+    }
+}
+
 using FileDataMap = std::unordered_map<fs::path, std::string>;
 
 FileDataMap getTestFiles(const fs::path& dir)
 {
-    /** Example file structure:
+    /** File structure defined below:
      *
      * u/
      *    m/
@@ -97,6 +137,7 @@ TEST(DuplicateDetectorTest, AddFiles)
     EXPECT_EQ(files.size(), dd.numFiles());
     MockFunction<void(const fs::path&)> fileCb;
 
+    // Expect that each file is enumarated exactly once
     EXPECT_CALL(fileCb, Call(testing::_))
         .Times(static_cast<int>(files.size()))
         .WillRepeatedly([&files](const fs::path& p) {
@@ -149,53 +190,24 @@ TEST(DuplicateDetectorTest, DetectDuplicates)
     });
 }
 
-// TEST(DuplicateDetectorTest, DeleteDuplicates)
-// {
-//     file::TempDir data("dups");
-//     DuplicateDetector dd;
-//     DuplicateDetector::Options opts;
-
-//     const auto files = getTestFiles(data.path());
-//     createFiles(files);
-//     addFiles(files, dd);
-//     dd.detect(opts);
-
-//     // Expect 3 duplicate groups
-// }
 
 TEST(DuplicateDetectorTest, MetricsThresholds)
 {
-    // @todo:hayk - generate a set of files and feed them to the DuplicateDetector
+    constexpr size_t numFiles = 50000;
+    constexpr size_t filesPerLevel = 10;
+    constexpr size_t dirsPerLevel = 2;
 
-    const fs::path file("");
-    DuplicateDetector detector;
     StopWatch sw;
-
-    file::readLines(file, [&detector](const std::string& line) {
-        std::string_view sv = line;
-        if (line.size() >= 2)
-        {
-            sv.remove_prefix(1);
-            sv.remove_suffix(1);
-            detector.addFile(sv);
-        }
-        return true;
+    DuplicateDetector detector;
+    generateFiles(numFiles, filesPerLevel, dirsPerLevel, [&detector](const fs::path& file) {
+        detector.addFile(file);
     });
 
-    // dumpContent("tmp.txt", detector);
+    EXPECT_EQ(detector.numFiles(), numFiles);
+    EXPECT_LE(sizeof(Node), 120);
+    EXPECT_LE(sys::currentProcessMemoryUsage(), 25 * 1024 * 1024);
 
-    std::cout << "Memory: " << str::humanizeBytes(sys::currentProcessMemoryUsage())
-              << '\n';
-    std::cout << "sizeof(path): " << sizeof(fs::path) << '\n';
-    std::cout << "Files: " << detector.numFiles() << '\n';
-    std::cout << "Nodes: " << detector.root()->nodesCount() << '\n';
-    // std::cout << "MapSize: " << detector1.mapSize() << '\n';
-    std::cout << "Elapsed: " << sw.elapsedMs() << " ms" << '\n';
-    std::cout << sizeof(Node) << '\n';
-    std::cout << "node: " << sizeof(Node) << '\n';
-    std::cout << "wstring_view: " << sizeof(std::wstring_view) << '\n';
-    std::cout << "string: " << sizeof(std::string) << '\n';
-    std::cout << "parent_: " << sizeof(Node*) << '\n';
+
 }
 
 } // namespace tools::dups
