@@ -21,7 +21,8 @@ void fullPathHelper(const Node* node, fs::path& dest)
         }
 
         // if (!dest.empty() || (!node->name().empty() &&
-        //                       (node->name().native().size() != 2 || node->name().native()[1] != ':')))
+        //                       (node->name().native().size() != 2 ||
+        //                       node->name().native()[1] != ':')))
         // {
         //     dest.push_back(fs::path::preferred_separator);
         // }

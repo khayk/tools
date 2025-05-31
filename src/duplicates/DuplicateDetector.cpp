@@ -36,7 +36,7 @@ void DuplicateDetector::addFile(const fs::path& path)
 {
     Node* node = root_.get();
 
-    for (const auto& p: path)
+    for (const auto& p : path)
     {
         auto [it, _] = names_.insert(p);
         node = node->addChild(*it);

@@ -14,12 +14,12 @@
 
 #include <system_error>
 
-using tools::dups::DuplicateDetector;
 using tools::dups::Config;
-using tools::dups::Node;
-using tools::dups::Progress;
+using tools::dups::DuplicateDetector;
 using tools::dups::loadConfig;
 using tools::dups::logConfig;
+using tools::dups::Node;
+using tools::dups::Progress;
 
 namespace {
 

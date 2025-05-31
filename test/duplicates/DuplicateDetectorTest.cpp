@@ -20,7 +20,9 @@ namespace tools::dups {
 namespace {
 
 using GenFileCb = std::function<void(const fs::path&)>;
-void generateFiles(size_t numFiles, size_t filesPerLevel, size_t dirsPerLevel,
+void generateFiles(size_t numFiles,
+                   size_t filesPerLevel,
+                   size_t dirsPerLevel,
                    const GenFileCb& cb)
 {
     std::queue<fs::path> dirs;
@@ -77,18 +79,16 @@ FileDataMap getTestFiles(const fs::path& dir)
      * f4-uniq
      */
 
-    return {
-        {dir / "u/m/l/f1",    "1"},
-        {dir / u8"u/m/l/ф2",  "22"},  // <- unicode filename
-        {dir / u8"u/m/l/ֆ3",  "333"}, // <- unicode filename
-        {dir / "u/m/f1-dup1", "1"},
-        {dir / "u/m/f1-dup2", "1"},
-        {dir / "u/m/f2-dup1", "22"},
-        {dir / "u/f1-dup3",   "1"},
-        {dir / "u/f2-dup2",   "22"},
-        {dir / "u/f3-dup1",   "333"},
-        {dir / "u/f4-uniq",   "4444"}
-    };
+    return {{dir / "u/m/l/f1", "1"},
+            {dir / u8"u/m/l/ф2", "22"},  // <- unicode filename
+            {dir / u8"u/m/l/ֆ3", "333"}, // <- unicode filename
+            {dir / "u/m/f1-dup1", "1"},
+            {dir / "u/m/f1-dup2", "1"},
+            {dir / "u/m/f2-dup1", "22"},
+            {dir / "u/f1-dup3", "1"},
+            {dir / "u/f2-dup2", "22"},
+            {dir / "u/f3-dup1", "333"},
+            {dir / "u/f4-uniq", "4444"}};
 }
 
 void createFiles(const FileDataMap& files)
@@ -180,8 +180,8 @@ TEST(DuplicateDetectorTest, DetectDuplicates)
     EXPECT_CALL(dupCb, Call(testing::_))
         .Times(3)
         .WillRepeatedly([](const DupGroup& grp) {
-        EXPECT_GE(grp.entires.size(), 2);
-    });
+            EXPECT_GE(grp.entires.size(), 2);
+        });
 
     dd.detect(opts);
     dd.enumDuplicates([&dupCb](const DupGroup& grp) {
@@ -193,21 +193,22 @@ TEST(DuplicateDetectorTest, DetectDuplicates)
 
 TEST(DuplicateDetectorTest, MetricsThresholds)
 {
-    constexpr size_t numFiles = 50000;
+    constexpr size_t numFiles = 50'000;
     constexpr size_t filesPerLevel = 10;
     constexpr size_t dirsPerLevel = 2;
 
     StopWatch sw;
     DuplicateDetector detector;
-    generateFiles(numFiles, filesPerLevel, dirsPerLevel, [&detector](const fs::path& file) {
-        detector.addFile(file);
-    });
+    generateFiles(numFiles,
+                  filesPerLevel,
+                  dirsPerLevel,
+                  [&detector](const fs::path& file) {
+                      detector.addFile(file);
+                  });
 
     EXPECT_EQ(detector.numFiles(), numFiles);
     EXPECT_LE(sizeof(Node), 120);
     EXPECT_LE(sys::currentProcessMemoryUsage(), 25 * 1024 * 1024);
-
-
 }
 
 } // namespace tools::dups

@@ -30,6 +30,7 @@ class BackupAndDelete : public DeletionStrategy
     std::ofstream journalFile_;
 
     std::ofstream& journal();
+
 public:
     BackupAndDelete(fs::path backupDir);
 
