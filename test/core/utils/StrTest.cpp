@@ -124,9 +124,33 @@ TEST(UtilsStrTests, Trim)
     trim(s);
     EXPECT_EQ(s, "");
 
-    s = "  \t \n  \r \0";
+    s = "  \t \n  \r ";
     trim(s);
     EXPECT_EQ(s, "");
+}
+
+TEST(UtilsStrTests, TrimSV)
+{
+    using namespace std::literals;
+    std::string s = "  123 a$ ";
+    std::string_view sv = s;
+    sv = trim(sv);
+    EXPECT_EQ(sv, "123 a$"sv);
+
+    s = "a";
+    sv = s;
+    sv = trim(sv);
+    EXPECT_EQ(sv, "a"sv);
+
+    s = "";
+    sv = s;
+    sv = trim(sv);
+    EXPECT_EQ(sv, ""sv);
+
+    s = "  \t \n  \r ";
+    sv = s;
+    sv = trim(sv);
+    EXPECT_EQ(sv, ""sv);
 }
 
 TEST(UtilsStrTests, AsciiLowerInplace)
