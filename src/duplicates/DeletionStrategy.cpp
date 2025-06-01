@@ -10,7 +10,7 @@
 
 namespace tools::dups {
 
-void DeletePermanently::apply(const fs::path& file)
+void PermanentDelete::apply(const fs::path& file)
 {
     fs::remove(file);
     spdlog::info("Deleted: {}", file);

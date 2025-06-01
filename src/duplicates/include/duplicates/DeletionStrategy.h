@@ -7,23 +7,23 @@ namespace fs = std::filesystem;
 
 namespace tools::dups {
 
-class DeletionStrategy
+class IDeletionStrategy
 {
 public:
-    virtual ~DeletionStrategy() = default;
+    virtual ~IDeletionStrategy() = default;
 
     virtual void apply(const fs::path& file) = 0;
 };
 
 
-class DeletePermanently : public DeletionStrategy
+class PermanentDelete : public IDeletionStrategy
 {
 public:
     void apply(const fs::path& file) override;
 };
 
 
-class BackupAndDelete : public DeletionStrategy
+class BackupAndDelete : public IDeletionStrategy
 {
     fs::path backupDir_;
     fs::path journalFilePath_;
@@ -40,7 +40,7 @@ public:
 };
 
 
-class DryRunDelete : public DeletionStrategy
+class DryRunDelete : public IDeletionStrategy
 {
 public:
     void apply(const fs::path& file) override;

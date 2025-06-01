@@ -12,19 +12,26 @@ class Progress
 public:
     using DisplayCb = std::function<void(std::ostream&)>;
 
-    explicit Progress(std::chrono::milliseconds freq = std::chrono::milliseconds(100))
+    explicit Progress(std::chrono::milliseconds freq = std::chrono::milliseconds(100),
+                      std::ostream* os = &std::cout)
         : sw_(true)
         , freq_ {freq}
+        , os_(os)
     {
+    }
+
+    void setFrequency(std::chrono::milliseconds freq)
+    {
+        freq_ = freq;
     }
 
     void update(const DisplayCb& cb)
     {
-        if (sw_.elapsed() > freq_)
+        if (sw_.elapsed() >= freq_)
         {
-            cb(std::cout);
-            std::cout << '\r';
-            std::cout.flush();
+            cb(*os_);
+            *os_ << '\r';
+            os_->flush();
             sw_.restart();
         }
     }
@@ -32,6 +39,7 @@ public:
 private:
     StopWatch sw_;
     std::chrono::milliseconds freq_ {};
+    std::ostream* os_ {&std::cout};
 };
 
 } // namespace tools::dups

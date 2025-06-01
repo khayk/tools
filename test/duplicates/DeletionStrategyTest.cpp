@@ -29,11 +29,11 @@ public:
 
 } // namespace
 
-TEST(DeletionStrategyTest, DeletePermanently)
+TEST(DeletionStrategyTest, PermanentDelete)
 {
     SilenceLogger silenceLogger;
     file::TempDir data("dups");
-    DeletePermanently strategy;
+    PermanentDelete strategy;
 
     const fs::path file = data.path() / "test.txt";
     file::write(file, "test content");

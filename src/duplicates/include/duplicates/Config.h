@@ -25,6 +25,7 @@ struct Config
     size_t maxFileSizeBytes {};
     std::chrono::milliseconds updateFrequency {};
     bool skipDetection {false};
+    bool dryRun {true};
 };
 
 
