@@ -11,6 +11,7 @@
 #include <cstddef>
 #include <queue>
 #include <unordered_map>
+#include "duplicates/Progress.h"
 #include <fmt/format.h>
 
 using testing::MockFunction;
@@ -209,6 +210,35 @@ TEST(DuplicateDetectorTest, MetricsThresholds)
     EXPECT_EQ(detector.numFiles(), numFiles);
     EXPECT_LE(sizeof(Node), 120);
     EXPECT_LE(sys::currentProcessMemoryUsage(), 25 * 1024 * 1024);
+}
+
+TEST(DuplicateDetectorTest, Progress)
+{
+    std::ostringstream oss;
+    Progress progress(std::chrono::milliseconds(0), &oss);
+    size_t totalCalls = 0;
+
+    for (int i = 1; i <= 3; ++i)
+    {
+        progress.update([i, &totalCalls](std::ostream& os) {
+            os << "Test progress " << i;
+            ++totalCalls;
+        });
+    }
+
+    EXPECT_EQ(totalCalls, 3);
+    EXPECT_EQ(oss.str(), "Test progress 1\rTest progress 2\rTest progress 3\r");
+
+    progress.setFrequency(std::chrono::milliseconds(100));
+    oss.str("");
+
+    progress.update([&totalCalls](std::ostream& os) {
+        os << "This should not be called";
+        ++totalCalls;
+    });
+
+    EXPECT_EQ(totalCalls, 3);
+    EXPECT_EQ(oss.str(), "");
 }
 
 } // namespace tools::dups
