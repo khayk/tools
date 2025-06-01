@@ -12,12 +12,15 @@ namespace tools::dups {
 using PathsVec = std::vector<fs::path>;
 using PathsSet = std::unordered_set<fs::path>;
 
-void deleteFiles(DeletionStrategy& strategy, const PathsVec& files);
+void deleteFiles(IDeletionStrategy& strategy, PathsVec& files);
 
-bool deleteInteractively(DeletionStrategy& strategy,
+bool deleteInteractively(IDeletionStrategy& strategy,
                          PathsVec& files,
-                         PathsSet& ignoredFiles);
+                         PathsSet& ignoredFiles,
+                         std::ostream& out,
+                         std::istream& in);
 
-void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector);
+void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector,
+                      std::ostream& out, std::istream& in);
 
 } // namespace tools::dups

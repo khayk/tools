@@ -101,7 +101,7 @@ int main(int argc, const char* argv[])
 
         detectDuplicates(cfg, detector, progress);
         reportDuplicates(cfg.dupFilesPath, detector);
-        deleteDuplicates(cfg, detector);
+        deleteDuplicates(cfg, detector, std::cout, std::cin);
     }
     catch (const std::system_error& se)
     {

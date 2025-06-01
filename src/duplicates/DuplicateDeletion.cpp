@@ -1,4 +1,5 @@
 #include <duplicates/DuplicateDeletion.h>
+#include <duplicates/DeletionStrategy.h>
 #include <core/utils/FmtExt.h>
 #include <core/utils/Number.h>
 
@@ -35,7 +36,7 @@ void saveIgnoredFiles(const fs::path& filePath, const PathsSet& files)
 
 } // namespace
 
-void deleteFiles(DeletionStrategy& strategy, const PathsVec& files)
+void deleteFiles(IDeletionStrategy& strategy, PathsVec& files)
 {
     for (const auto& file : files)
     {
@@ -48,18 +49,22 @@ void deleteFiles(DeletionStrategy& strategy, const PathsVec& files)
             spdlog::error("Error '{}' while deleting file '{}'", e.what(), file);
         }
     }
+
+    files.clear();
 };
 
-bool deleteInteractively(DeletionStrategy& strategy,
+bool deleteInteractively(IDeletionStrategy& strategy,
                          PathsVec& files,
-                         PathsSet& ignoredFiles)
+                         PathsSet& ignoredFiles,
+                         std::ostream& out,
+                         std::istream& in)
 {
     // Display files to be deleted
     size_t i = 0;
     for (const auto& file : files)
     {
         const auto width = static_cast<int>(num::digits(files.size()));
-        std::cout << std::setw(width + 1) << ++i << ": " << file << '\n';
+        out << std::setw(width + 1) << ++i << ": " << file << '\n';
     }
 
     static std::string lastInput;
@@ -67,8 +72,8 @@ bool deleteInteractively(DeletionStrategy& strategy,
 
     while (input.empty())
     {
-        std::cout << "Enter number to KEEP (q - quit, i - ignore) > ";
-        std::getline(std::cin, input);
+        out << "Enter number to KEEP (q - quit, i - ignore) > ";
+        std::getline(in, input);
 
         if (input.empty())
         {
@@ -103,20 +108,31 @@ bool deleteInteractively(DeletionStrategy& strategy,
     }
     else
     {
-        std::cout << "Invalid choice, no file is deleted.\n";
+        out << "Invalid choice, no file is deleted.\n";
     }
 
     return true;
 };
 
 
-void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
+void deleteDuplicates(const Config& cfg,
+                      const DuplicateDetector& detector,
+                      std::ostream& out,
+                      std::istream& in)
 {
     PathsSet ignoredFiles;
     PathsVec deleteWithoutAsking;
     PathsVec deleteSelectively;
-    BackupAndDelete strategy(cfg.cacheDir);
-    // DryRunDelete strategy;
+
+    std::unique_ptr<IDeletionStrategy> strategy;
+    if (cfg.dryRun)
+    {
+        strategy = std::make_unique<DryRunDelete>();
+    }
+    else
+    {
+        strategy = std::make_unique<BackupAndDelete>(cfg.cacheDir);
+    }
 
     bool resumeEnumeration = true;
 
@@ -160,7 +176,7 @@ void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
         {
             // So after deleting the files below, we know that at least one
             // file will be left in the system
-            deleteFiles(strategy, deleteWithoutAsking);
+            deleteFiles(*strategy, deleteWithoutAsking);
         }
         else
         {
@@ -172,10 +188,13 @@ void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector)
 
         if (deleteSelectively.size() > 1)
         {
-            std::cout << "file size: " << group.entires.front().size
-                      << ", sha256: " << group.entires.front().sha256 << '\n';
-            resumeEnumeration =
-                deleteInteractively(strategy, deleteSelectively, ignoredFiles);
+            out << "file size: " << group.entires.front().size
+                << ", sha256: " << group.entires.front().sha256 << '\n';
+            resumeEnumeration = deleteInteractively(*strategy,
+                                                    deleteSelectively,
+                                                    ignoredFiles,
+                                                    out,
+                                                    in);
         }
 
         // We left with one file, which is now unique in the system
