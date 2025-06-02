@@ -7,8 +7,8 @@
  */
 class ScopedTrace
 {
-    inline static const std::string Enter = "--> ";
-    inline static const std::string Leave = "<-- ";
+    inline static const std::string ENTER = "--> ";
+    inline static const std::string LEAVE = "<-- ";
 
     [[nodiscard]] bool shouldTrace() const noexcept;
 
@@ -19,8 +19,8 @@ class ScopedTrace
 
 public:
     explicit ScopedTrace(const std::string& message,
-                         std::string enter = Enter,
-                         std::string leave = Leave,
+                         std::string enter = ENTER,
+                         std::string leave = LEAVE,
                          bool isPrefix = true);
     ~ScopedTrace();
 

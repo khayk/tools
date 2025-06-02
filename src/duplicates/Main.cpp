@@ -20,6 +20,7 @@ using tools::dups::loadConfig;
 using tools::dups::logConfig;
 using tools::dups::Node;
 using tools::dups::Progress;
+using tools::utl::configureLogger;
 
 namespace {
 
@@ -87,7 +88,7 @@ int main(int argc, const char* argv[])
         }
 
         const Config cfg = loadConfig(cfgFile);
-        utl::configureLogger(cfg.logDir, cfg.logFilename);
+        configureLogger(cfg.logDir, cfg.logFilename);
         trace.emplace("",
                       fmt::format("{:-^80s}", "> START <"),
                       fmt::format("{:-^80s}\n", "> END <"));

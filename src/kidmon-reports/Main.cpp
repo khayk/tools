@@ -435,7 +435,7 @@ int main(int argc, char* argv[])
 
         AppConfig conf;
         conf.logFilename = "kidmon-reports.log";
-        utl::configureLogger(conf.logsDir, conf.logFilename);
+        tools::utl::configureLogger(conf.logsDir, conf.logFilename);
 
         trace.emplace("",
                       fmt::format("{:-^80s}", "> START <"),

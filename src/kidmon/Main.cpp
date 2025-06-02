@@ -89,7 +89,7 @@ int main(int argc, char* argv[])
         appConf.logFilename = logFile;
 
         // Configure logger as soon as possible
-        utl::configureLogger(appConf.logsDir, appConf.logFilename);
+        tools::utl::configureLogger(appConf.logsDir, appConf.logFilename);
 
         trace.emplace("",
                       fmt::format("{:-^80s}", "> START <"),
