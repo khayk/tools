@@ -8,6 +8,12 @@
 
 namespace tools::utl {
 
+// @todo:hayk - The LogInterceptor has space for improvement, such as:
+// - Keep track of log levels
+// - Consider optimizing work with messages
+//
+// Improvements will be done as I see the need for them in the codebase.
+
 template <typename Mutex>
 class LogSink : public spdlog::sinks::base_sink<Mutex> {
 public:
