@@ -2,12 +2,17 @@
 #include <gtest/gtest.h>
 
 #include <duplicates/DuplicateDeletion.h>
-#include "duplicates/DeletionStrategy.h"
+#include <duplicates/DeletionStrategy.h>
+#include <core/utils/Log.h>
+#include <core/utils/LogInterceptor.h>
 
 using testing::MockFunction;
 using testing::Return;
 
 namespace tools::dups {
+
+using utl::SilenceLogger;
+using utl::TestStLogInterceptor;
 
 namespace {
 
@@ -36,13 +41,34 @@ TEST(DuplicateDeletionTest, DeleteFiles)
             deleted.push_back(p);
         });
 
-    deleteFiles(strategy, files);
+    EXPECT_NO_THROW(deleteFiles(strategy, files));
     EXPECT_TRUE(files.empty());
     EXPECT_EQ(deleted.size(), 3);
     EXPECT_EQ(deleted[0], "file1.txt");
     EXPECT_EQ(deleted[1], "file2.txt");
     EXPECT_EQ(deleted[2], "file3.txt");
 }
+
+TEST(DuplicateDeletionTest, DeleteFilesException)
+{
+    TestStLogInterceptor logInterceptor;
+
+    PathsVec files {
+        "file1.txt",
+        "file2.txt",
+        "file3.txt"
+    };
+    MockDelete strategy;
+    EXPECT_CALL(strategy, apply(testing::_))
+        .Times(static_cast<int>(files.size()))
+        .WillOnce(testing::Throw(std::runtime_error("Deletion error")))
+        .WillRepeatedly(testing::Return());
+
+    EXPECT_NO_THROW(deleteFiles(strategy, files));
+    EXPECT_TRUE(logInterceptor.count() > 0);
+    EXPECT_TRUE(logInterceptor.contains("Error 'Deletion error' while deleting file 'file1.txt'"));
+}
+
 
 TEST(DuplicateDeletionTest, DeleteFilesInteractively_KeepSecond)
 {
@@ -101,6 +127,7 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_ConsecutiveCalls)
 
 TEST(DuplicateDeletionTest, DeleteFilesInteractively_IgnoreGroup)
 {
+    SilenceLogger silenceLogger;
     PathsVec files {
         "file1.txt",
         "file2.txt",
