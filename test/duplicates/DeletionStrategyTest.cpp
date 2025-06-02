@@ -4,30 +4,13 @@
 #include <duplicates/DeletionStrategy.h>
 #include <core/utils/File.h>
 #include <core/utils/Crypto.h>
-#include <spdlog/spdlog.h>
+#include <core/utils/Log.h>
 #include <memory>
 #include <array>
 
 namespace tools::dups {
-namespace {
 
-class SilenceLogger
-{
-    spdlog::level::level_enum prevLevel_ {spdlog::get_level()};
-
-public:
-    SilenceLogger()
-    {
-        spdlog::set_level(spdlog::level::level_enum::off);
-    }
-
-    ~SilenceLogger()
-    {
-        spdlog::set_level(prevLevel_);
-    }
-};
-
-} // namespace
+using utl::SilenceLogger;
 
 TEST(DeletionStrategyTest, PermanentDelete)
 {
