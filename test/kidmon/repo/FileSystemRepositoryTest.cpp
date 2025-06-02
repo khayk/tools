@@ -8,8 +8,8 @@
 #include <unordered_set>
 
 using namespace std::chrono_literals;
-using ::testing::_;
-using ::testing::Return;
+using testing::_;
+using testing::Return;
 
 namespace {
 
@@ -56,7 +56,7 @@ class MockRepo : public FileSystemRepository
 {
 public:
     MockRepo(fs::path reportsDir)
-        : FileSystemRepository(reportsDir)
+        : FileSystemRepository(std::move(reportsDir))
     {
     }
 
@@ -197,7 +197,7 @@ TEST(FileSystemRepositoryTest, QueryEntriesMultipleUsers)
     }
 
     repo.queryUsers([&names, &usersEnumerated](const std::string& username) mutable {
-        EXPECT_TRUE(names.count(username) > 0);
+        EXPECT_TRUE(names.contains(username));
         names.erase(username);
         ++usersEnumerated;
         return true;
@@ -236,7 +236,7 @@ TEST(FileSystemRepositoryTest, QueryLogic)
     FileSystemRepository repo(reportsDir.path());
 
     const auto now = SystemClock::now();
-    const auto username = "user-x";
+    const auto* username = "user-x";
     const auto numEntries = 10;
 
     for (size_t i = 0; i < numEntries; ++i)
