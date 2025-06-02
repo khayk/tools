@@ -5,7 +5,7 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
-namespace utl {
+namespace tools::utl {
 
 void configureLogger(const fs::path& logsDir, const fs::path& logFilename)
 {
@@ -29,4 +29,14 @@ void configureLogger(const fs::path& logsDir, const fs::path& logFilename)
     spdlog::flush_every(std::chrono::seconds(10));
 }
 
-} // namespace utl
+SilenceLogger::SilenceLogger()
+{
+    spdlog::set_level(spdlog::level::level_enum::off);
+}
+
+SilenceLogger::~SilenceLogger()
+{
+    spdlog::set_level(prevLevel_);
+}
+
+} // namespace tools::utl

@@ -9,7 +9,7 @@ template <>
 class fmt::formatter<fs::path>
 {
 public:
-    constexpr auto parse(format_parse_context& ctx)
+    static constexpr auto parse(format_parse_context& ctx)
     {
         return ctx.begin();
     }

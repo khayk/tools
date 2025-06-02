@@ -6,8 +6,17 @@
 
 namespace fs = std::filesystem;
 
-namespace utl {
+namespace tools::utl {
 
 void configureLogger(const fs::path& logsDir, const fs::path& logFilename);
 
-} // namespace utl
+class SilenceLogger
+{
+    spdlog::level::level_enum prevLevel_ {spdlog::get_level()};
+
+public:
+    SilenceLogger();
+    ~SilenceLogger();
+};
+
+} // namespace tools::utl
