@@ -3,6 +3,10 @@ function(AddCoverage target)
       find_program(LCOV_PATH lcov REQUIRED)
       find_program(GENHTML_PATH genhtml REQUIRED)
 
+      string(FIND "${target}" "-test" pos)
+      string(SUBSTRING "${target}" 0 ${pos} substr)
+      message(STATUS "Coverage filter    : /src/${substr}/*")
+
       add_custom_target(coverage-${target}
          COMMENT "Running coverage for ${target}..."
          COMMAND ${LCOV_PATH} -d . --zerocounters
@@ -10,8 +14,10 @@ function(AddCoverage target)
          COMMAND ${LCOV_PATH} -d .
                               --ignore-errors mismatch
                               --capture -o coverage.info
-         COMMAND ${LCOV_PATH} -r coverage.info '/usr/include/*'
-                              -r coverage.info '/build/*'
+         COMMAND ${LCOV_PATH} -e coverage.info '/src/${substr}/*'
+                              # -r coverage.info '/usr/include/*'
+                              # -r coverage.info '/build/*'
+
                               -o filtered.info
          COMMAND ${GENHTML_PATH} -o coverage-${target} filtered.info --legend
          COMMAND rm -rf coverage.info filtered.info
