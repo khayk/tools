@@ -1,6 +1,7 @@
 #include <duplicates/DuplicateDetector.h>
 #include <duplicates/DuplicateDeletion.h>
 #include <duplicates/DuplicateOperation.h>
+#include <duplicates/DeletionStrategy.h>
 #include <duplicates/Config.h>
 #include <duplicates/Node.h>
 
@@ -12,16 +13,12 @@
 #include <filesystem>
 #include <fmt/format.h>
 
+#include <memory>
 #include <system_error>
 
-using tools::dups::Config;
-using tools::dups::DuplicateDetector;
-using tools::dups::loadConfig;
-using tools::dups::logConfig;
-using tools::dups::Node;
-using tools::dups::Progress;
 using tools::utl::configureLogger;
 
+namespace tools::dups {
 namespace {
 
 void printUsage()
@@ -32,6 +29,16 @@ Usage:
     duplicates <cfg_file> - Scan directories and detect duplicates based on the
                             configuration file.
 )");
+}
+
+std::unique_ptr<IDeletionStrategy> getDeletionStrategy(const Config& cfg)
+{
+    if (cfg.dryRun)
+    {
+        return std::make_unique<DryRunDelete>();
+    }
+
+    return std::make_unique<BackupAndDelete>(cfg.cacheDir);
 }
 
 void reviewMetrics(const fs::path& file)
@@ -65,9 +72,12 @@ void reviewMetrics(const fs::path& file)
 }
 
 } // namespace
+} // namespace tools::dups
 
 int main(int argc, const char* argv[])
 {
+    using namespace tools::dups;
+
     if (argc < 2)
     {
         printUsage();
@@ -96,13 +106,17 @@ int main(int argc, const char* argv[])
 
         DuplicateDetector detector;
         Progress progress(cfg.updateFrequency);
+        IgnoredFiles ignored(cfg.ignFilesPath);
 
         scanDirectories(cfg, detector, progress);
         outputFiles(cfg.allFilesPath, detector);
 
         detectDuplicates(cfg, detector, progress);
         reportDuplicates(cfg.dupFilesPath, detector);
-        deleteDuplicates(cfg, detector, std::cout, std::cin);
+
+        auto strategy = getDeletionStrategy(cfg);
+
+        deleteDuplicates(*strategy, ignored, cfg, detector, std::cout, std::cin);
     }
     catch (const std::system_error& se)
     {

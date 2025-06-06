@@ -11,16 +11,80 @@ namespace tools::dups {
 
 using PathsVec = std::vector<fs::path>;
 using PathsSet = std::unordered_set<fs::path>;
+namespace fs = std::filesystem;
 
+class IgnoredFiles
+{
+public:
+    IgnoredFiles() = default;
+    IgnoredFiles(const fs::path& file, bool saveWhenDone = true);
+    ~IgnoredFiles();
+
+    const PathsSet& files() const;
+
+    bool contains(const fs::path& file) const;
+
+    bool empty() const noexcept;
+
+    size_t size() const noexcept;
+
+    void add(const fs::path& file);
+
+    void add(const PathsVec& files);
+
+private:
+    /**
+     * @brief Saves the ignored files to the specified file.
+     *
+     * @param files The set of file paths to save.
+     */
+    void save() const;
+
+    /**
+     * @brief Loads ignored files from the specified file.
+     *
+     * @param out Output stream for messages.
+     * @return A set of ignored file paths.
+     */
+    void load();
+
+    fs::path filePath_;
+    PathsSet files_;
+    bool saveWhenDone_{false};
+};
+
+/**
+ * @brief Deletes files using the provided deletion strategy.
+ *
+ * @param strategy The deletion strategy to use.
+ * @param files The vector of file paths to delete.
+ */
 void deleteFiles(IDeletionStrategy& strategy, PathsVec& files);
 
+
+/**
+ * @brief Deletes files interactively, allowing the user to choose which files to delete.
+ *
+ * @param strategy The deletion strategy to use.
+ * @param files The vector of file paths to delete.
+ * @param ignoredFiles Object to track ignored files.
+ * @param out Output stream for messages.
+ * @param in Input stream for user interaction.
+ *
+ * @return true if the operation was successful, false otherwise.
+ */
 bool deleteInteractively(IDeletionStrategy& strategy,
                          PathsVec& files,
-                         PathsSet& ignoredFiles,
+                         IgnoredFiles& ignoredFiles,
                          std::ostream& out,
                          std::istream& in);
 
-void deleteDuplicates(const Config& cfg, const DuplicateDetector& detector,
-                      std::ostream& out, std::istream& in);
+
+void deleteDuplicates(IDeletionStrategy& strategy,
+                      IgnoredFiles& ignoredFiles,
+                      const Config& cfg,
+                      const DuplicateDetector& detector,
+                      std::ostream& out,
+                      std::istream& in);
 
 } // namespace tools::dups

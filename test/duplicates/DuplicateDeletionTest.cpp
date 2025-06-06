@@ -78,7 +78,7 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_KeepSecond)
         "file3.txt"
     };
     PathsVec deleted;
-    PathsSet ignoredFiles;
+    IgnoredFiles ignoredFiles;
     MockDelete strategy;
 
     EXPECT_CALL(strategy, apply(testing::_))
@@ -106,7 +106,7 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_ConsecutiveCalls)
         "file3.txt"
     };
     PathsVec filesCopy = files;
-    PathsSet ignoredFiles;
+    IgnoredFiles ignoredFiles;
     MockDelete strategy;
 
     // 2 calls per deleteInteractively call
@@ -133,7 +133,7 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_IgnoreGroup)
         "file2.txt",
         "file3.txt"
     };
-    PathsSet ignoredFiles;
+    IgnoredFiles ignoredFiles;
     MockDelete strategy;
 
     EXPECT_CALL(strategy, apply(testing::_)).Times(0);
@@ -152,7 +152,7 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_IgnoreGroup)
 TEST(DuplicateDeletionTest, DeleteFilesInteractively_InvalidChoice)
 {
     PathsVec files {"file1.txt"};
-    PathsSet ignoredFiles;
+    IgnoredFiles ignoredFiles;
     MockDelete strategy;
 
     EXPECT_CALL(strategy, apply(testing::_)).Times(0);

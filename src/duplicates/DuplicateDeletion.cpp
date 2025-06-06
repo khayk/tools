@@ -20,21 +20,89 @@ bool isSafeToDelete(const std::vector<std::string>& delDirs, const fs::path& pat
     });
 };
 
-void saveIgnoredFiles(const fs::path& filePath, const PathsSet& files)
+} // namespace
+
+IgnoredFiles::IgnoredFiles(const fs::path& file, bool saveWhenDone)
+    : filePath_(file)
+    , saveWhenDone_(saveWhenDone)
 {
-    if (files.empty())
+    if (fs::exists(filePath_))
+    {
+        load();
+    }
+}
+
+IgnoredFiles::~IgnoredFiles()
+{
+    try
+    {
+        if (saveWhenDone_ || fs::exists(filePath_))
+        {
+            save();
+        }
+    }
+    catch (const std::exception& ex)
+    {
+        spdlog::error("Failed to save ignored files to: {}, exception: ", filePath_, ex.what());
+    }
+}
+
+bool IgnoredFiles::contains(const fs::path& file) const
+{
+    return files_.contains(file);
+}
+
+bool IgnoredFiles::empty() const noexcept
+{
+    return files_.empty();
+}
+
+
+size_t IgnoredFiles::size() const noexcept
+{
+    return files_.size();
+}
+
+const PathsSet& IgnoredFiles::files() const
+{
+    return files_;
+}
+
+void IgnoredFiles::add(const fs::path& file)
+{
+    files_.insert(file);
+}
+
+void IgnoredFiles::add(const PathsVec& files)
+{
+    std::ranges::copy(files, std::inserter(files_, files_.end()));
+}
+
+void IgnoredFiles::load()
+{
+    spdlog::info("Loading ignored files from: {}", filePath_);
+    file::readLines(filePath_, [&](const std::string& line) {
+        if (!line.empty())
+        {
+            files_.emplace(line);
+        }
+        return true;
+    });
+}
+
+void IgnoredFiles::save() const
+{
+    if (files_.empty())
     {
         return;
     }
 
-    std::ofstream out(filePath, std::ios::out | std::ios::binary);
-    for (const auto& file : files)
+    std::ofstream out(filePath_, std::ios::out | std::ios::binary);
+    for (const auto& file : files_)
     {
         out << file::path2s(file) << '\n';
     }
-};
-
-} // namespace
+}
 
 void deleteFiles(IDeletionStrategy& strategy, PathsVec& files)
 {
@@ -55,7 +123,7 @@ void deleteFiles(IDeletionStrategy& strategy, PathsVec& files)
 
 bool deleteInteractively(IDeletionStrategy& strategy,
                          PathsVec& files,
-                         PathsSet& ignoredFiles,
+                         IgnoredFiles& ignoredFiles,
                          std::ostream& out,
                          std::istream& in)
 {
@@ -95,7 +163,7 @@ bool deleteInteractively(IDeletionStrategy& strategy,
     if (tolower(input[0]) == 'i')
     {
         spdlog::info("User requested to ignore this group...");
-        std::ranges::copy(files, std::inserter(ignoredFiles, ignoredFiles.end()));
+        ignoredFiles.add(files);
         return true;
     }
 
@@ -115,38 +183,16 @@ bool deleteInteractively(IDeletionStrategy& strategy,
 };
 
 
-void deleteDuplicates(const Config& cfg,
+void deleteDuplicates(IDeletionStrategy& strategy,
+                      IgnoredFiles& ignoredFiles,
+                      const Config& cfg,
                       const DuplicateDetector& detector,
                       std::ostream& out,
                       std::istream& in)
 {
-    PathsSet ignoredFiles;
     PathsVec deleteWithoutAsking;
     PathsVec deleteSelectively;
-
-    std::unique_ptr<IDeletionStrategy> strategy;
-    if (cfg.dryRun)
-    {
-        strategy = std::make_unique<DryRunDelete>();
-    }
-    else
-    {
-        strategy = std::make_unique<BackupAndDelete>(cfg.cacheDir);
-    }
-
     bool resumeEnumeration = true;
-
-    if (fs::exists(cfg.ignFilesPath))
-    {
-        spdlog::info("Loading ignored files from: {}", cfg.ignFilesPath);
-        file::readLines(cfg.ignFilesPath, [&](const std::string& line) {
-            if (!line.empty())
-            {
-                ignoredFiles.emplace(line);
-            }
-            return true;
-        });
-    }
 
     detector.enumDuplicates([&](const DupGroup& group) {
         deleteWithoutAsking.clear();
@@ -176,7 +222,7 @@ void deleteDuplicates(const Config& cfg,
         {
             // So after deleting the files below, we know that at least one
             // file will be left in the system
-            deleteFiles(*strategy, deleteWithoutAsking);
+            deleteFiles(strategy, deleteWithoutAsking);
         }
         else
         {
@@ -190,7 +236,7 @@ void deleteDuplicates(const Config& cfg,
         {
             out << "file size: " << group.entires.front().size
                 << ", sha256: " << group.entires.front().sha256 << '\n';
-            resumeEnumeration = deleteInteractively(*strategy,
+            resumeEnumeration = deleteInteractively(strategy,
                                                     deleteSelectively,
                                                     ignoredFiles,
                                                     out,
@@ -200,8 +246,6 @@ void deleteDuplicates(const Config& cfg,
         // We left with one file, which is now unique in the system
         return resumeEnumeration;
     });
-
-    saveIgnoredFiles(cfg.ignFilesPath, ignoredFiles);
 }
 
 } // namespace tools::dups
