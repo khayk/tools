@@ -1,10 +1,13 @@
 #include <duplicates/Config.h>
 #include <core/utils/FmtExt.h>
 #include <core/utils/Dirs.h>
+#include <core/utils/File.h>
 
 #include <spdlog/spdlog.h>
 #include <toml++/toml.h>
 #include <regex>
+#include <algorithm>
+#include <ranges>
 
 using namespace std::literals;
 using std::chrono::milliseconds;
@@ -26,6 +29,16 @@ std::string concat(const std::vector<std::string>& vec, const std::string& sep)
     }
 
     return res;
+}
+
+std::string concat(const std::vector<fs::path>& vec, const std::string& sep)
+{
+    std::vector<std::string> strVec;
+    strVec.reserve(vec.size());
+    std::ranges::transform(vec, std::back_inserter(strVec), [](const fs::path& p) {
+        return file::path2s(p);
+    });
+    return concat(strVec, sep);
 }
 
 } // namespace

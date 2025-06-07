@@ -17,7 +17,7 @@ class IgnoredFiles
 {
 public:
     IgnoredFiles() = default;
-    IgnoredFiles(const fs::path& file, bool saveWhenDone = true);
+    IgnoredFiles(fs::path file, bool saveWhenDone = true);
     ~IgnoredFiles();
 
     const PathsSet& files() const;
@@ -59,7 +59,7 @@ private:
  * @param strategy The deletion strategy to use.
  * @param files The vector of file paths to delete.
  */
-void deleteFiles(IDeletionStrategy& strategy, PathsVec& files);
+void deleteFiles(const IDeletionStrategy& strategy, PathsVec& files);
 
 
 /**
@@ -73,17 +73,26 @@ void deleteFiles(IDeletionStrategy& strategy, PathsVec& files);
  *
  * @return true if the operation was successful, false otherwise.
  */
-bool deleteInteractively(IDeletionStrategy& strategy,
+bool deleteInteractively(const IDeletionStrategy& strategy,
                          PathsVec& files,
                          IgnoredFiles& ignoredFiles,
                          std::ostream& out,
                          std::istream& in);
 
-
-void deleteDuplicates(IDeletionStrategy& strategy,
-                      IgnoredFiles& ignoredFiles,
-                      const Config& cfg,
+/**
+    * @brief Deletes duplicate files based on the provided detector and deletion strategy.
+    *
+    * @param strategy The deletion strategy to use.
+    * @param detector The duplicate detector containing the groups of duplicates.
+    * @param safeToDeleteDirs Directories where files can be safely deleted.
+    * @param ignoredFiles Object to track ignored files.
+    * @param out Output stream for messages.
+    * @param in Input stream for user interaction.
+ */
+void deleteDuplicates(const IDeletionStrategy& strategy,
                       const DuplicateDetector& detector,
+                      const PathsVec& safeToDeleteDirs,
+                      IgnoredFiles& ignoredFiles,
                       std::ostream& out,
                       std::istream& in);
 

@@ -11,19 +11,19 @@ namespace tools::dups {
 
 namespace {
 
-bool isSafeToDelete(const std::vector<std::string>& delDirs, const fs::path& path)
+bool isSafeToDelete(const PathsVec& delDirs, const fs::path& path)
 {
-    const auto pathStr = path.string();
+    const auto& pathStr = path.native();
 
     return std::ranges::any_of(delDirs, [&pathStr](const auto& deleteDir) {
-        return pathStr.find(deleteDir, 0) != std::string::npos;
+        return pathStr.find(deleteDir.native(), 0) != std::string::npos;
     });
 };
 
 } // namespace
 
-IgnoredFiles::IgnoredFiles(const fs::path& file, bool saveWhenDone)
-    : filePath_(file)
+IgnoredFiles::IgnoredFiles(fs::path file, bool saveWhenDone)
+    : filePath_(std::move(file))
     , saveWhenDone_(saveWhenDone)
 {
     if (fs::exists(filePath_))
@@ -104,7 +104,7 @@ void IgnoredFiles::save() const
     }
 }
 
-void deleteFiles(IDeletionStrategy& strategy, PathsVec& files)
+void deleteFiles(const IDeletionStrategy& strategy, PathsVec& files)
 {
     for (const auto& file : files)
     {
@@ -121,7 +121,7 @@ void deleteFiles(IDeletionStrategy& strategy, PathsVec& files)
     files.clear();
 };
 
-bool deleteInteractively(IDeletionStrategy& strategy,
+bool deleteInteractively(const IDeletionStrategy& strategy,
                          PathsVec& files,
                          IgnoredFiles& ignoredFiles,
                          std::ostream& out,
@@ -183,10 +183,10 @@ bool deleteInteractively(IDeletionStrategy& strategy,
 };
 
 
-void deleteDuplicates(IDeletionStrategy& strategy,
-                      IgnoredFiles& ignoredFiles,
-                      const Config& cfg,
+void deleteDuplicates(const IDeletionStrategy& strategy,
                       const DuplicateDetector& detector,
+                      const PathsVec& safeToDeleteDirs,
+                      IgnoredFiles& ignoredFiles,
                       std::ostream& out,
                       std::istream& in)
 {
@@ -207,7 +207,7 @@ void deleteDuplicates(IDeletionStrategy& strategy,
                 return true;
             }
 
-            if (isSafeToDelete(cfg.safeToDeleteDirs, e.file.parent_path()))
+            if (isSafeToDelete(safeToDeleteDirs, e.file.parent_path()))
             {
                 deleteWithoutAsking.emplace_back(e.file);
             }

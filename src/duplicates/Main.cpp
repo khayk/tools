@@ -116,7 +116,12 @@ int main(int argc, const char* argv[])
 
         auto strategy = getDeletionStrategy(cfg);
 
-        deleteDuplicates(*strategy, ignored, cfg, detector, std::cout, std::cin);
+        deleteDuplicates(*strategy,
+                         detector,
+                         cfg.safeToDeleteDirs,
+                         ignored,
+                         std::cout,
+                         std::cin);
     }
     catch (const std::system_error& se)
     {

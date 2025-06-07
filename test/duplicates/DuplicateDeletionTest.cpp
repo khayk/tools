@@ -19,7 +19,7 @@ namespace {
 class MockDelete : public IDeletionStrategy
 {
 public:
-    MOCK_METHOD(void, apply, (const fs::path& file), (override));
+    MOCK_METHOD(void, apply, (const fs::path& file), (const, override));
 };
 
 } // namespace

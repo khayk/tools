@@ -13,7 +13,7 @@ namespace tools::dups {
 struct Config
 {
     std::vector<std::string> scanDirs;
-    std::vector<std::string> safeToDeleteDirs;
+    std::vector<fs::path> safeToDeleteDirs;
     std::vector<std::regex> exclusionPatterns;
     fs::path cacheDir;
     fs::path allFilesPath;

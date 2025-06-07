@@ -10,7 +10,7 @@
 
 namespace tools::dups {
 
-void PermanentDelete::apply(const fs::path& file)
+void PermanentDelete::apply(const fs::path& file) const
 {
     fs::remove(file);
     spdlog::info("Deleted: {}", file);
@@ -40,7 +40,7 @@ BackupAndDelete::BackupAndDelete(fs::path backupDir)
     journalFilePath_ = backupDir_ / fileName;
 }
 
-std::ofstream& BackupAndDelete::journal()
+std::ofstream& BackupAndDelete::journal() const
 {
     if (!journalFile_.is_open())
     {
@@ -62,7 +62,7 @@ const fs::path& BackupAndDelete::journalFile() const
     return journalFilePath_;
 }
 
-void BackupAndDelete::apply(const fs::path& file)
+void BackupAndDelete::apply(const fs::path& file) const
 {
     if (!fs::exists(file))
     {
@@ -81,7 +81,7 @@ void BackupAndDelete::apply(const fs::path& file)
     spdlog::info("Moved: {} to {}", absFile, backupFilePath);
 }
 
-void DryRunDelete::apply(const fs::path& file)
+void DryRunDelete::apply(const fs::path& file) const
 {
     spdlog::info("Would delete: {}", file);
 }
