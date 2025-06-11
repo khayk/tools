@@ -35,6 +35,25 @@ public:
     MOCK_METHOD((void), enumGroups, (const DupGroupCallback&), (const, override));
 };
 
+void emulateDupGroups(const std::vector<PathsVec>& groupVec, const DupGroupCallback& cb)
+{
+    DupGroup group;
+    std::vector<DupEntry> entries;
+
+    for (const auto& grp: groupVec)
+    {
+        entries.clear();
+        for (const auto& p: grp)
+        {
+            entries.emplace_back(p, 0, "n/a");
+        }
+
+        group.groupId = 0; // doesn't matter while emulating
+        group.entires = entries;
+
+        cb(group);
+    }
+}
 
 } // namespace
 
@@ -163,6 +182,26 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_IgnoreGroup)
     EXPECT_TRUE(ignoredFiles.contains(files[2]));
 }
 
+TEST(DuplicateDeletionTest, DeleteFilesInteractively_QuitDeletion)
+{
+    SilenceLogger silenceLogger;
+    PathsVec files {
+        "file1.txt",
+        "file2.txt"
+    };
+    IgnoredFiles ignoredFiles;
+    MockDelete strategy;
+
+    EXPECT_CALL(strategy, apply(testing::_)).Times(0);
+
+    std::ostringstream out;
+    std::istringstream in("q"); // Simulate user input to keep the second file
+
+    EXPECT_FALSE(deleteInteractively(strategy, files, ignoredFiles, out, in));
+    ASSERT_EQ(files.size(), 2);
+    ASSERT_EQ(ignoredFiles.size(), 0);
+}
+
 TEST(DuplicateDeletionTest, DeleteFilesInteractively_InvalidChoice)
 {
     PathsVec files {"file1.txt"};
@@ -197,31 +236,8 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_BadStream)
     ASSERT_TRUE(ignoredFiles.empty());
 }
 
-void emulateDupGroups(const std::vector<PathsVec>& groupVec, const DupGroupCallback& cb)
-{
-    size_t groupId = 0;
-    size_t size = 0;
-    DupGroup group;
-    std::vector<DupEntry> entries;
 
-    for (const auto& grp: groupVec)
-    {
-        ++groupId;
-        size += 10;
-        entries.clear();
-        for (const auto& p: grp)
-        {
-            entries.emplace_back(p, size, "n/a");
-        }
-
-        group.groupId = groupId;
-        group.entires = entries;
-
-        cb(group);
-    }
-}
-
-TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFiles)
+TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesInSafeDirs)
 {
     MockDeletionStrategy strategy;
     MockDuplicateGroups groups;
@@ -246,6 +262,35 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFiles)
 
     std::ostringstream out;
     std::istringstream in;
+
+    deleteDuplicates(strategy, groups, safeToDeleteDirs, ignored, out, in);
+}
+
+TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesSelectively)
+{
+    MockDeletionStrategy strategy;
+    MockDuplicateGroups groups;
+    IgnoredFiles ignored;
+    PathsVec safeToDeleteDirs;
+
+    // Two groups, each with two files in safeDir
+    std::vector<PathsVec> groupVec
+    {
+        {fs::path("origDir/file1.txt"), fs::path("dupDir/file2.txt")},
+        {fs::path("origDir/file3.txt"), fs::path("dupDir/file4.txt")}
+    };
+
+    EXPECT_CALL(groups, enumGroups(testing::_))
+        .WillOnce([&groupVec](const DupGroupCallback& cb) {
+            emulateDupGroups(groupVec, cb);
+        });
+
+    // Only the second file in each group should be deleted
+    EXPECT_CALL(strategy, apply(fs::path("dupDir/file2.txt"))).Times(1);
+    EXPECT_CALL(strategy, apply(fs::path("dupDir/file4.txt"))).Times(1);
+
+    std::ostringstream out;
+    std::istringstream in("1\n1\n"); // keep first file in the group
 
     deleteDuplicates(strategy, groups, safeToDeleteDirs, ignored, out, in);
 }
