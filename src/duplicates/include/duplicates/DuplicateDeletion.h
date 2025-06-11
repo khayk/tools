@@ -90,7 +90,7 @@ bool deleteInteractively(const IDeletionStrategy& strategy,
     * @param in Input stream for user interaction.
  */
 void deleteDuplicates(const IDeletionStrategy& strategy,
-                      const DuplicateDetector& detector,
+                      const IDuplicateGroups& duplicates,
                       const PathsVec& safeToDeleteDirs,
                       IgnoredFiles& ignoredFiles,
                       std::ostream& out,

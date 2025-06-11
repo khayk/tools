@@ -187,7 +187,7 @@ void DuplicateDetector::enumFiles(const FileCallback& cb) const
     });
 }
 
-void DuplicateDetector::enumDuplicates(const DupGroupCallback& cb) const
+void DuplicateDetector::enumGroups(const DupGroupCallback& cb) const
 {
     DupGroup group;
     size_t duplicates = 0;

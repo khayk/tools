@@ -62,12 +62,12 @@ void detectDuplicates(const Config& cfg,
     }
 
     StopWatch sw;
-    const DuplicateDetector::Options opts {.minSizeBytes = cfg.minFileSizeBytes,
+    const Options opts {.minSizeBytes = cfg.minFileSizeBytes,
                                            .maxSizeBytes = cfg.maxFileSizeBytes};
 
     spdlog::trace("Detecting duplicates...");
     detector.detect(opts,
-                    [&progress](const DuplicateDetector::Stage stage,
+                    [&progress](const Stage stage,
                                 const Node*,
                                 size_t percent) mutable {
                         progress.update([&](std::ostream& os) {
@@ -110,7 +110,7 @@ void reportDuplicates(const fs::path& reportPath, const DuplicateDetector& detec
     size_t largestFileSize = 0;
 
     // Precalculations to produce nice output
-    detector.enumDuplicates([&largestFileSize, &totalFiles](const DupGroup& group) {
+    detector.enumGroups([&largestFileSize, &totalFiles](const DupGroup& group) {
         totalFiles += group.entires.size();
         largestFileSize = std::max(largestFileSize, group.entires.front().size);
         return true;
@@ -120,7 +120,7 @@ void reportDuplicates(const fs::path& reportPath, const DuplicateDetector& detec
     std::ostringstream oss;
     std::vector<std::string> sortedLines;
 
-    detector.enumDuplicates([&out, &oss, &sortedLines](const DupGroup& group) {
+    detector.enumGroups([&out, &oss, &sortedLines](const DupGroup& group) {
         sortedLines.clear();
 
         for (const auto& e : group.entires)

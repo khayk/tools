@@ -184,7 +184,7 @@ bool deleteInteractively(const IDeletionStrategy& strategy,
 
 
 void deleteDuplicates(const IDeletionStrategy& strategy,
-                      const DuplicateDetector& detector,
+                      const IDuplicateGroups& duplicates,
                       const PathsVec& safeToDeleteDirs,
                       IgnoredFiles& ignoredFiles,
                       std::ostream& out,
@@ -194,7 +194,7 @@ void deleteDuplicates(const IDeletionStrategy& strategy,
     PathsVec deleteSelectively;
     bool resumeEnumeration = true;
 
-    detector.enumDuplicates([&](const DupGroup& group) {
+    duplicates.enumGroups([&](const DupGroup& group) {
         deleteWithoutAsking.clear();
         deleteSelectively.clear();
 

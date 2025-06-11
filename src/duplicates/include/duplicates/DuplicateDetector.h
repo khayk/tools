@@ -1,71 +1,34 @@
 #pragma once
 
+#include <duplicates/IDuplicates.h>
 #include <duplicates/Node.h>
 
-#include <limits>
 #include <unordered_set>
-#include <filesystem>
-#include <vector>
 #include <map>
-
-namespace fs = std::filesystem;
 
 namespace tools::dups {
 
-struct DupEntry
-{
-    fs::path file;
-    size_t size {};
-    std::string sha256;
-};
-
-struct DupGroup
-{
-    size_t groupId {};
-    std::vector<DupEntry> entires;
-};
-
 class DuplicateDetector
+    : public IDuplicateDetector
+    , public IDuplicateFiles
+    , public IDuplicateGroups
 {
 public:
-    struct Options
-    {
-        size_t minSizeBytes {};
-        size_t maxSizeBytes {std::numeric_limits<size_t>::max()};
-    };
-
-    enum class Stage
-    {
-        Prepare,
-        Calculate
-    };
-
-    using FileCallback     = std::function<void(const fs::path&)>;
-    using DupGroupCallback = std::function<bool(const DupGroup&)>;
-    using ProgressCallback = std::function<void(const Stage stage,
-                                                const Node* node,
-                                                size_t percent)>;
-
-    static ProgressCallback defaultProgressCallback()
-    {
-        return [](const Stage, const Node*, size_t) {};
-    }
-
     DuplicateDetector();
     ~DuplicateDetector() = default;
 
-    void addFile(const fs::path& path);
+    void addFile(const fs::path& path) override;
 
-    size_t numFiles() const noexcept;
-    size_t numGroups() const noexcept;
+    size_t numFiles() const noexcept override;
+    size_t numGroups() const noexcept override;
 
-    void detect(const Options& opts, ProgressCallback cb = defaultProgressCallback());
-    void reset();
+    void detect(const Options& opts, ProgressCallback cb) override;
 
-    void enumFiles(const FileCallback& cb) const;
-    void enumDuplicates(const DupGroupCallback& cb) const;
+    void enumFiles(const FileCallback& cb) const override;
+    void enumGroups(const DupGroupCallback& cb) const override;
 
     const Node* root() const;
+    void reset();
 
 private:
     using Nodes = std::vector<const Node*>;
@@ -79,13 +42,13 @@ private:
     MapByHash grps_;
 };
 
-constexpr std::string_view stage2str(DuplicateDetector::Stage stage)
+constexpr std::string_view stage2str(Stage stage)
 {
     switch (stage)
     {
-        case DuplicateDetector::Stage::Prepare:
+        case Stage::Prepare:
             return "Prepare";
-        case DuplicateDetector::Stage::Calculate:
+        case Stage::Calculate:
             return "Calculate";
     }
     return "Unknown";

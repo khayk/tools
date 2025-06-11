@@ -11,6 +11,7 @@
 #include <cstddef>
 #include <queue>
 #include <unordered_map>
+#include "duplicates/IDuplicates.h"
 #include "duplicates/Progress.h"
 #include <fmt/format.h>
 
@@ -161,7 +162,8 @@ TEST(DuplicateDetectorTest, DetectDuplicates)
 {
     file::TempDir data("dups");
     DuplicateDetector dd;
-    DuplicateDetector::Options opts;
+    IDuplicateDetector& idd = dd;
+    Options opts;
 
     const auto files = getTestFiles(data.path());
     createFiles(files);
@@ -172,7 +174,7 @@ TEST(DuplicateDetectorTest, DetectDuplicates)
 
     // Expect no duplicates before detection
     EXPECT_CALL(dupCb, Call(testing::_)).Times(0);
-    dd.enumDuplicates([&dupCb](const DupGroup& grp) {
+    dd.enumGroups([&dupCb](const DupGroup& grp) {
         dupCb.Call(grp);
         return true;
     });
@@ -184,8 +186,8 @@ TEST(DuplicateDetectorTest, DetectDuplicates)
             EXPECT_GE(grp.entires.size(), 2);
         });
 
-    dd.detect(opts);
-    dd.enumDuplicates([&dupCb](const DupGroup& grp) {
+    idd.detect(opts);
+    dd.enumGroups([&dupCb](const DupGroup& grp) {
         dupCb.Call(grp);
         return true;
     });

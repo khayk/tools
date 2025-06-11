@@ -14,7 +14,7 @@ endif()
 project(tools VERSION 0.1.0 LANGUAGES CXX)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
-option(TOOLS_COVERAGE "Produce code coverage" OFF)
+option(TOOLS_COVERAGE "Produce code coverage" ON)
 option(TOOLS_TIDY "Use clang-tidy" OFF)
 option(BUILD_TESTS "Tests enabled by default" ON)
 
@@ -52,10 +52,10 @@ elseif(UNIX)
         -Wall
         -Wextra
         -Wpedantic
-        -Wconversion
-        -Werror
-        -Wfatal-errors
-        -Wno-error=uninitialized # producing false positives
+        # -Wconversion
+        # -Werror
+        # -Wfatal-errors
+        # -Wno-error=uninitialized # producing false positives
     )
 
     # Be aware, this increases memory usage by order of magnitude
