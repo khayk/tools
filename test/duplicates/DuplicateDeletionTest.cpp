@@ -250,5 +250,32 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFiles)
     deleteDuplicates(strategy, groups, safeToDeleteDirs, ignored, out, in);
 }
 
+TEST(DuplicateDeletionTest, DeleteDuplicates_SkipsIgnoredFiles)
+{
+    SilenceLogger silenceLogger;
+    MockDeletionStrategy strategy;
+    MockDuplicateGroups groups;
+    IgnoredFiles ignored;
+    PathsVec safeToDeleteDirs = {"safeDir"};
+
+    // Mark file2.txt as ignored
+    ignored.add(fs::path("safeDir/file2.txt"));
+
+    std::vector<PathsVec> groupVec = {
+        {fs::path("OrigDir/file1.txt"), fs::path("safeDir/file2.txt")}
+    };
+
+    EXPECT_CALL(groups, enumGroups(testing::_))
+        .WillOnce([&groupVec](const DupGroupCallback& cb) {
+            emulateDupGroups(groupVec, cb);
+        });
+    // Only file2.txt would be deleted, but it's ignored, so apply should not be called
+    EXPECT_CALL(strategy, apply(testing::_)).Times(0);
+
+    std::ostringstream out;
+    std::istringstream in;
+
+    deleteDuplicates(strategy, groups, safeToDeleteDirs, ignored, out, in);
+}
 
 } // namespace tools::dups

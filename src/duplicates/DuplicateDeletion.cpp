@@ -36,14 +36,16 @@ IgnoredFiles::~IgnoredFiles()
 {
     try
     {
-        if (saveWhenDone_ || fs::exists(filePath_))
+        if (saveWhenDone_ && !filePath_.empty())
         {
             save();
         }
     }
     catch (const std::exception& ex)
     {
-        spdlog::error("Failed to save ignored files to: {}, exception: ", filePath_, ex.what());
+        spdlog::error("Failed to save ignored files to: {}, exception: {}",
+                      filePath_,
+                      ex.what());
     }
 }
 
