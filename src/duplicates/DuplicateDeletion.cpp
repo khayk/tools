@@ -138,7 +138,7 @@ bool deleteInteractively(const IDeletionStrategy& strategy,
     static std::string lastInput;
     std::string input;
 
-    while (input.empty())
+    while (in && input.empty())
     {
         out << "Enter number to KEEP (q - quit, i - ignore) > ";
         std::getline(in, input);
@@ -153,10 +153,17 @@ bool deleteInteractively(const IDeletionStrategy& strategy,
     {
         lastInput = input;
     }
+    else
+    {
+        // input was corrupted, treat this as a quit signal
+        spdlog::error("Input stream is in bad state, quitting.");
+        return false;
+    }
 
     if (tolower(input[0]) == 'q')
     {
         spdlog::info("User requested to stop deletion...");
+        lastInput.clear();
         return false;
     }
 
@@ -177,6 +184,7 @@ bool deleteInteractively(const IDeletionStrategy& strategy,
     else
     {
         out << "Invalid choice, no file is deleted.\n";
+        lastInput.clear();
     }
 
     return true;
