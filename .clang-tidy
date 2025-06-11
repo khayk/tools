@@ -20,6 +20,7 @@ Checks: >
   -readability-implicit-bool-conversion,
   -readability-math-missing-parentheses,
   -readability-identifier-length,
+  -modernize-use-nodiscard,
   # -modernize-avoid-c-arrays,
   # -cppcoreguidelines-avoid-c-arrays,
   -readability-magic-numbers
