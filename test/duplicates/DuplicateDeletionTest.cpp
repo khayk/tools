@@ -3,8 +3,10 @@
 
 #include <duplicates/DuplicateDeletion.h>
 #include <duplicates/DeletionStrategy.h>
+#include <core/utils/File.h>
 #include <core/utils/Log.h>
 #include <core/utils/LogInterceptor.h>
+#include <filesystem>
 
 using testing::MockFunction;
 using testing::Return;
@@ -56,6 +58,39 @@ void emulateDupGroups(const std::vector<PathsVec>& groupVec, const DupGroupCallb
 }
 
 } // namespace
+
+TEST(DuplicateDeletionTest, IgnoreFilesModule)
+{
+    file::TempDir tmp("ignored");
+    const auto filePath(tmp.path() / "ignored.txt");
+
+    {
+        // Tests that nothing is created if there is no file
+        IgnoredFiles ignoredFiles(filePath, true);
+        EXPECT_EQ(0, ignoredFiles.files().size());
+    }
+    EXPECT_FALSE(fs::exists(filePath));
+
+    {
+        IgnoredFiles ignoredFiles(filePath, true);
+        EXPECT_EQ(0, ignoredFiles.files().size());
+        ignoredFiles.add("file.dat");
+        EXPECT_EQ(1, ignoredFiles.files().size());
+    }
+
+    {
+        // Should load previously saved file
+        IgnoredFiles ignoredFiles(filePath, true);
+        EXPECT_EQ(1, ignoredFiles.files().size());
+        EXPECT_EQ("file.dat", *ignoredFiles.files().begin());
+    }
+
+    {
+        // Provide invalid file path
+        IgnoredFiles ignoredFiles(tmp.path() / "file_.txt/", true);
+        ignoredFiles.add("file.dat");
+    }
+}
 
 TEST(DuplicateDeletionTest, DeleteFiles)
 {
@@ -262,6 +297,37 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesInSafeDirs)
 
     std::ostringstream out;
     std::istringstream in;
+
+    deleteDuplicates(strategy, groups, safeToDeleteDirs, ignored, out, in);
+}
+
+TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesAllInSafeDirs)
+{
+    MockDeletionStrategy strategy;
+    MockDuplicateGroups groups;
+    IgnoredFiles ignored;
+    PathsVec safeToDeleteDirs = {"safeDir"};
+
+    // Two groups, each with two files in safeDir
+    std::vector<PathsVec> groupVec
+    {
+        {fs::path("safeDir/file1.txt"), fs::path("safeDir/file2.txt")},
+        {fs::path("safeDir/file3.txt"), fs::path("safeDir/file4.txt")}
+    };
+
+    EXPECT_CALL(groups, enumGroups(testing::_))
+        .WillOnce([&groupVec](const DupGroupCallback& cb) {
+            emulateDupGroups(groupVec, cb);
+        });
+
+    // Only the second file in each group should be deleted
+    EXPECT_CALL(strategy, apply(fs::path("safeDir/file2.txt"))).Times(1);
+    EXPECT_CALL(strategy, apply(fs::path("safeDir/file4.txt"))).Times(1);
+
+    std::ostringstream out;
+    // Need to perform selection, as both candidates are from the safe to
+    // delete group
+    std::istringstream in("1\n1\n");
 
     deleteDuplicates(strategy, groups, safeToDeleteDirs, ignored, out, in);
 }
