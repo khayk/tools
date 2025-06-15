@@ -7,7 +7,6 @@
 #include <toml++/toml.h>
 #include <regex>
 #include <algorithm>
-#include <ranges>
 
 using namespace std::literals;
 using std::chrono::milliseconds;
@@ -56,6 +55,7 @@ void logConfig(const fs::path& cfgFile, const Config& cfg)
                   "Safe to delete directories",
                   concat(cfg.safeToDeleteDirs, ", "));
     spdlog::trace(pattern, "Cache directory", cfg.cacheDir);
+    spdlog::trace(pattern, "Dry run", cfg.dryRun);
     // spdlog::trace(pattern, "Exclusion patterns", concat(cfg.exclusionPatterns, ",
     // "));
 }
@@ -101,6 +101,7 @@ Config loadConfig(const fs::path& cfgFile)
     cfg.logDir = dataDir / "logs";
     cfg.cacheDir = cacheDir;
     cfg.logFilename = fmt::format("{}.log", appName);
+    cfg.dryRun = config["dry_run"].value_or(false);
 
     const auto adjustPath = [&dataDir](fs::path& path) {
         if (!path.empty())

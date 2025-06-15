@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include <stdexcept>
 #include <spdlog/spdlog.h>
 
 namespace tools::dups {
@@ -100,6 +101,12 @@ void IgnoredFiles::save() const
     }
 
     std::ofstream out(filePath_, std::ios::out | std::ios::binary);
+
+    if (!out)
+    {
+        throw std::runtime_error(fmt::format("Unable to open file: '{}'", filePath_));
+    }
+
     for (const auto& file : files_)
     {
         out << file::path2s(file) << '\n';

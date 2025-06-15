@@ -7,6 +7,7 @@
 
 #include <core/utils/Log.h>
 #include <core/utils/File.h>
+#include <core/utils/FmtExt.h>
 #include <core/utils/Tracer.h>
 #include <core/utils/Sys.h>
 #include <core/utils/Str.h>
@@ -92,7 +93,7 @@ int main(int argc, const char* argv[])
 
         if (cfgFile.extension() != ".toml")
         {
-            spdlog::info("Measuring resource usage: '{}'", file::path2s(cfgFile));
+            spdlog::info("Measuring resource usage: '{}'", cfgFile);
             reviewMetrics(cfgFile);
             return 0;
         }
