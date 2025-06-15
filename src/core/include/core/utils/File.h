@@ -158,4 +158,19 @@ void enumFilesRecursive(const fs::path& dir,
                         const std::vector<std::regex>& exclusionPatterns,
                         const PathCallback& cb);
 
+/**
+ * @brief Open the directory with the default file navigator. If the input is a regular
+ *        file the parent directory will be navigated.
+ *
+ * @param path The input path
+ */
+void openDirectory(const fs::path& path);
+
+/**
+ * @brief Opens the directory containing the specified file and select the file
+ *
+ * @param file The input file
+ */
+void navigateFile(const fs::path& file);
+
 } // namespace file

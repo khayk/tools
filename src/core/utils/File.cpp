@@ -12,6 +12,7 @@
 #include <fstream>
 #include <atomic>
 #include <regex>
+#include <stdexcept>
 
 namespace file {
 
@@ -297,6 +298,59 @@ void enumFilesRecursive(const fs::path& dir,
     {
         cb(dir, std::make_error_code(std::errc::no_such_file_or_directory));
     }
+}
+
+void openDirectory(const fs::path& path)
+{
+    std::string spath;
+    if (fs::is_regular_file(path))
+    {
+        spath = path2s(path.parent_path());
+    }
+    else if (fs::is_directory(path))
+    {
+        spath = path2s(path);
+    }
+    else
+    {
+        throw std::runtime_error(fmt::format("Unable to navigate directory: {}", path2s(path)));
+    }
+
+#ifdef _WIN32
+    const std::string command = "explorer \"" + spath + "\"";
+#elif __APPLE__
+    const std::string command = "open \"" + spath + "\"";
+#elif __linux__
+    const std::string command = "xdg-open \"" + spath + "\"";
+#else
+    #error "Unsupported OS"
+#endif
+
+    std::ignore = std::system(command.c_str());
+}
+
+void navigateFile(const fs::path& file)
+{
+    const std::string path = path2s(file);
+
+#ifdef _WIN32
+    const std::string command = "explorer /select,\"" + path + "\"";
+#elif __APPLE__
+    const std::string command = "open -R \"" + path + "\"";
+#elif __linux__
+    constexpr auto pattern = R"( dbus-send --session --dest=org.freedesktop.FileManager1 \
+        --type=method_call --print-reply \
+        /org/freedesktop/FileManager1 \
+        org.freedesktop.FileManager1.ShowItems \
+        array:string:"file://{}" \
+        string:""
+    )";
+    const std::string command = fmt::format(pattern, path);
+#else
+    #error "Unsupported OS"
+#endif
+
+    std::ignore = std::system(command.c_str());
 }
 
 } // namespace file
