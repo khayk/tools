@@ -33,3 +33,6 @@ dup_files = "duplicates.txt"
 
 # Files to maintain ignored files across multiple runs of the duplicates application
 ign_files = "ignored.txt"
+
+# If true emulate file deletion instead of actual deletion (i.e. log what would be deleted)
+dry_run = false
