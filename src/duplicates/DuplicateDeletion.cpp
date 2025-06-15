@@ -6,6 +6,7 @@
 #include <iostream>
 #include <algorithm>
 #include <stdexcept>
+#include "core/utils/File.h"
 #include <spdlog/spdlog.h>
 
 namespace tools::dups {
@@ -20,6 +21,56 @@ bool isSafeToDelete(const PathsVec& delDirs, const fs::path& path)
         return pathStr.find(deleteDir.native(), 0) != std::string::npos;
     });
 };
+
+std::string& lastInput()
+{
+    static std::string s_lastInput;
+    return s_lastInput;
+}
+
+std::string promptUser(std::ostream& out, std::istream& in)
+{
+    std::string input;
+
+    while (in && input.empty())
+    {
+        out << "Enter a number to KEEP (q - quit, i - ignore, o - open dirs) > ";
+        std::getline(in, input);
+
+        if (input.empty())
+        {
+            input = lastInput();
+        }
+    }
+
+    if (!input.empty())
+    {
+        lastInput() = input;
+    }
+    else
+    {
+        // The input is corrupted, treating it as a quit signal
+        spdlog::error("Input stream is in bad state, quitting.");
+        return "";
+    }
+
+    return input;
+}
+
+void openDirectories(const PathsVec& files)
+{
+    std::unordered_set<fs::path> uniqueDirs;
+
+    for (const auto& file: files)
+    {
+        uniqueDirs.insert(file.parent_path());
+    }
+
+    for (const auto& dir: uniqueDirs)
+    {
+        file::openDirectory(dir);
+    }
+}
 
 } // namespace
 
@@ -144,35 +195,23 @@ bool deleteInteractively(const IDeletionStrategy& strategy,
         out << std::setw(width + 1) << ++i << ": " << file << '\n';
     }
 
-    static std::string lastInput;
-    std::string input;
+    auto input = promptUser(out, in);
 
-    while (in && input.empty())
+    while (!input.empty() && tolower(input[0]) == 'o')
     {
-        out << "Enter number to KEEP (q - quit, i - ignore) > ";
-        std::getline(in, input);
-
-        if (input.empty())
-        {
-            input = lastInput;
-        }
+        openDirectories(files);
+        input = promptUser(out, in);
     }
 
-    if (!input.empty())
+    if (input.empty())
     {
-        lastInput = input;
-    }
-    else
-    {
-        // input was corrupted, treat this as a quit signal
-        spdlog::error("Input stream is in bad state, quitting.");
         return false;
     }
 
     if (tolower(input[0]) == 'q')
     {
         spdlog::info("User requested to stop deletion...");
-        lastInput.clear();
+        lastInput().clear();
         return false;
     }
 
@@ -193,7 +232,7 @@ bool deleteInteractively(const IDeletionStrategy& strategy,
     else
     {
         out << "Invalid choice, no file is deleted.\n";
-        lastInput.clear();
+        lastInput().clear();
     }
 
     return true;
