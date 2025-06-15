@@ -15,14 +15,16 @@ Own implementation of different tools.
         * gcc-{11, 12, 13}
 
 2. Install `vcpkg`
-    * Checkout tag 2024.12.16 - `git checkout tags/2024.12.16 -b tag-2024.12.16`
-    * For the first time setup [see](https://learn.microsoft.com/en-us/vcpkg/get_started/get-started)
-    * Consider using `-disableMetrics` options while bootstraping vcpkg
-
-3. Install libraries
-    * `./vcpkg install gtest spdlog openssl boost-asio boost-iostreams nlohmann-json cxxopts glaze --triplet=<platform>`
-        * Windows `<platform>` can be `x64-windows`
-        * Linux   `<platform>` can be `x64-linux`
+    * Clone the latest version of `vcpkg` in the directory of your choice
+    * Consider using `-disableMetrics` option while bootstraping vcpkg
+    * Set `VCPKG_ROOT` environment variable to point vcpkg root directory.
+    * Deprecated manual instructions
+        * Checkout tag 2025.04.16 - `git checkout tags/2025.04.16 -b tag-2025.04.16`
+        * For the first time setup [see](https://learn.microsoft.com/en-us/vcpkg/get_started/get-started)
+        * Install libraries
+            * `./vcpkg install gtest spdlog openssl boost-asio boost-iostreams nlohmann-json cxxopts glaze --triplet=<platform>`
+                * Windows `<platform>` can be `x64-windows`
+                * Linux   `<platform>` can be `x64-linux`
 
 ### Instructions
 
@@ -88,7 +90,7 @@ Own implementation of different tools.
         * `cmake --build build -t coverage-core-test -j 8`
         * `cmake --build build -t coverage-duplicates-test -j 8`
         * `cmake --build build -t coverage-kidmon-test -j 8`
-    * Coverage report will be available under the `build` directory, in the `coverage-<build_target>` folder
+    * Coverage report will be available under the `build` directory, inside `coverage-<build_target>` directory
 
 * Read about [codecov](https://docs.codecov.com/docs/quick-start) CI
 
