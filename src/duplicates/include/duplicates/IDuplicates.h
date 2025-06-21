@@ -42,10 +42,7 @@ using FileCallback = std::function<void(const fs::path&)>;
 using DupGroupCallback = std::function<bool(const DupGroup&)>;
 using ProgressCallback = std::function<void(const Stage, const Node*, size_t)>;
 
-static ProgressCallback defaultProgressCallback()
-{
-    return [](const Stage, const Node*, size_t) {};
-}
+extern const ProgressCallback& defaultProgressCallback;
 
 class IDuplicateDetector
 {
@@ -53,7 +50,7 @@ public:
     virtual ~IDuplicateDetector() = default;
 
     virtual void detect(const Options& opts,
-                        ProgressCallback cb = defaultProgressCallback()) = 0;
+                        const ProgressCallback& cb = defaultProgressCallback) = 0;
 };
 
 

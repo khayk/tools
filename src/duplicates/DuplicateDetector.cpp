@@ -24,8 +24,9 @@ bool tryGetSha256(const Node* node, std::string& sha256)
 
     return false;
 }
-
 } // namespace
+
+const ProgressCallback& defaultProgressCallback = [](const Stage, const Node*, size_t) {};
 
 DuplicateDetector::DuplicateDetector()
 {
@@ -53,7 +54,7 @@ size_t DuplicateDetector::numGroups() const noexcept
     return grps_.size();
 }
 
-void DuplicateDetector::detect(const Options& opts, ProgressCallback cb)
+void DuplicateDetector::detect(const Options& opts, const ProgressCallback& cb)
 {
     dups_.clear();
     grps_.clear();

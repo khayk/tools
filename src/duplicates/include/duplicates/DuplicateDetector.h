@@ -22,7 +22,7 @@ public:
     size_t numFiles() const noexcept override;
     size_t numGroups() const noexcept override;
 
-    void detect(const Options& opts, ProgressCallback cb) override;
+    void detect(const Options& opts, const ProgressCallback& cb) override;
 
     void enumFiles(const FileCallback& cb) const override;
     void enumGroups(const DupGroupCallback& cb) const override;
