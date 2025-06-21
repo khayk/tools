@@ -61,6 +61,7 @@ void emulateDupGroups(const std::vector<PathsVec>& groupVec, const DupGroupCallb
 
 TEST(DuplicateDeletionTest, IgnoreFilesModule)
 {
+    SilenceLogger silenceLogger;
     file::TempDir tmp("ignored");
     const auto filePath(tmp.path() / "ignored.txt");
 
