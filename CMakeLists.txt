@@ -14,7 +14,7 @@ endif()
 project(tools VERSION 0.1.0 LANGUAGES CXX)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
-option(TOOLS_COVERAGE "Produce code coverage" ON)
+option(TOOLS_COVERAGE "Produce code coverage" OFF)
 option(TOOLS_TIDY "Use clang-tidy" OFF)
 option(BUILD_TESTS "Tests enabled by default" ON)
 
@@ -38,6 +38,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(ENABLE_SANITIZERS OFF)
 
+# set(CMAKE_C_COMPILER clang-19 CACHE STRING "" FORCE)
+# set(CMAKE_CXX_COMPILER clang++-19 CACHE STRING "" FORCE)
+
 add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
 
 if(WIN32)
@@ -51,6 +54,7 @@ elseif(UNIX)
     add_compile_options(
         -Wall
         -Wextra
+        -Werror
         -Wpedantic
         # -Wconversion
         # -Werror
@@ -75,6 +79,8 @@ elseif(UNIX)
         )
     endif()
 endif()
+
+# add_compile_options(-ftime-trace)
 
 add_subdirectory(src bin)
 

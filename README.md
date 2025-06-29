@@ -102,6 +102,17 @@ Own implementation of different tools.
     * Run `find . -type f \( -name "*.cpp" -o -name "*.h" \) -not -path "./build/*" | xargs clang-format -i`, to format all `{h,cpp}` files in place
     * Alternatively checkout this approach `clang-format -i {src,tests}/*.{h,cpp}`
 
+## Clang Build Analyzer
+
+* In order to inspect build times and identify expensive headers do the following
+    * Download build analyzer for the target platform [from](https://github.com/aras-p/ClangBuildAnalyzer/releases)
+    * Ensure the clang compiler is selected
+    * Add `-ftime-trace` compile option to the root `CMakeLists.txt` file `add_compile_options(-ftime-trace)`
+    * Run `<clang_build_analyzer> --start build/`
+    * Rebuild the project(s)
+    * Run `<clang_build_analyzer> --stop build/ <capture_file>`
+    * Run `<clang_build_analyzer> --analyze <capture_file>` to get report
+
 ## How-to
 
 * Debug and Run
