@@ -3,6 +3,7 @@
 [Bb]uild/
 [Bb]uild-*/
 [Bb]uild_*/
+[Bb]uilds/
 lnx-build/
 .cache/
 ubuild/

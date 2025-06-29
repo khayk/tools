@@ -9,7 +9,7 @@ exclusion_patterns = [
 ]
 
 # Directories to be marked as safe candidates for deletion
-# If all paths of the given duplicate group contains the directory specified in the list
+# If all paths of the given duplicate group are inside the directory specified in the list
 # the application will behave interactively. i.e. it will ask the user to confirm the deletion
 safe_to_delete_paths = [
     # "/pattern/of/the/path/considered/safe/for/deletion"
