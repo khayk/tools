@@ -7,6 +7,7 @@
 #include <spdlog/spdlog.h>
 
 #include <filesystem>
+#include <system_error>
 
 namespace tools::dups {
 
@@ -77,7 +78,17 @@ void BackupAndDelete::apply(const fs::path& file) const
     fs::create_directory(backupDir_ / hash);
     journal() << absFile << "|" << backupFilePath << '\n';
 
-    fs::rename(absFile, backupFilePath);
+    std::error_code ec;
+    fs::rename(absFile, backupFilePath, ec);
+
+    if (ec)
+    {
+        // Move fails, it can be for exapmle because of cross device operation,
+        // no need to log error, try copying and deleting
+        fs::copy_file(absFile, backupFilePath, fs::copy_options::overwrite_existing);
+        fs::remove(absFile);
+    }
+
     spdlog::info("Moved: {} to {}", absFile, backupFilePath);
 }
 
