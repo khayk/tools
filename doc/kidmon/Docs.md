@@ -344,3 +344,34 @@ void treeLoad(std::istream& is, FileCb cb)
     * Otherwise ask for confirmation in both cases
 
 3.
+
+
+class Cache {
+public:
+    struct Entry {
+        fs::path file;
+        std::string sha256;
+        fs::file_time_type lastModified;
+        size_t size;
+    };
+
+    Cache(fs::path cacheDir);
+
+    void load(const fs::path& directory);
+
+};
+
+void user()  {
+    Cache cache("cacheDir");
+    cache.flash();
+
+    const fs::path filePath("file");
+    cache.contains(filePath);
+
+    cache.update(entry);
+
+    // Entry& entry = cache.tryGet(filePath, entry);
+}
+
+cache/
+    file

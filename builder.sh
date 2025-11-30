@@ -9,7 +9,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-cmake --build "$build_dir" --parallel 6 --config $build_type
+cmake --build "$build_dir" --parallel 12 --config $build_type
 if [ $? -ne 0 ]; then
     echo "Build failed."
     exit 1

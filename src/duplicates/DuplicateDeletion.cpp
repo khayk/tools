@@ -249,6 +249,7 @@ void deleteDuplicates(const IDeletionStrategy& strategy,
     PathsVec deleteWithoutAsking;
     PathsVec deleteSelectively;
     bool resumeEnumeration = true;
+    bool sensitiveToExternalEvents = false;
 
     duplicates.enumGroups([&](const DupGroup& group) {
         deleteWithoutAsking.clear();
@@ -257,6 +258,13 @@ void deleteDuplicates(const IDeletionStrategy& strategy,
         // Categorize files into 2 groups
         for (const auto& e : group.entires)
         {
+            // In case if the file is deleted manually by the user while the
+            // interactive file deletion was running
+            if (sensitiveToExternalEvents && !fs::exists(e.file))
+            {
+                continue;
+            }
+
             if (ignoredFiles.contains(e.file))
             {
                 spdlog::warn("File is ignored: {}", e.file);
