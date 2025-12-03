@@ -18,6 +18,7 @@ Own implementation of different tools.
     * Clone the latest version of `vcpkg` in the directory of your choice
     * Consider using `-disableMetrics` option while bootstraping vcpkg
     * Set `VCPKG_ROOT` environment variable to point vcpkg root directory.
+    * Install `ninja` and `pkg-config`
     * Deprecated manual instructions
         * Checkout tag 2025.04.16 - `git checkout tags/2025.04.16 -b tag-2025.04.16`
         * For the first time setup [see](https://learn.microsoft.com/en-us/vcpkg/get_started/get-started)

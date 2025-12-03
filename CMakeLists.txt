@@ -49,7 +49,7 @@ if(WIN32)
     add_compile_options("/MP${BUILD_JOBS}")
     add_compile_definitions(_WIN32_WINNT=_WIN32_WINNT_WIN10)
     add_compile_definitions(NOMINMAX)
-elseif(UNIX)
+elseif(UNIX OR APPLE)
     # Use options below to enable build with sanitization
     add_compile_options(
         -Wall
