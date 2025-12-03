@@ -81,7 +81,12 @@ void Connection::write(std::string_view sv)
 
 void Connection::close()
 {
+    if (closing_) {
+        return;
+    }
+
     std::unique_lock guard(mutex_);
+    closing_ = true;
 
     if (socket_.is_open())
     {
@@ -103,6 +108,8 @@ void Connection::close()
 
         timer_.cancel();
     }
+
+    closing_ = false;
 }
 
 void Connection::handleRead(const ErrorCode& ec, std::size_t size)

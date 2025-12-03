@@ -20,6 +20,8 @@ class Console::Impl
 
 #ifdef _WIN32
     _crt_signal_t prevSignal_ {nullptr};
+#elif __APPLE__
+    sig_t prevSignal_ {nullptr};
 #else
     sighandler_t prevSignal_ {nullptr};
 #endif

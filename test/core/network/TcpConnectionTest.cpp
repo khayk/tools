@@ -76,7 +76,7 @@ TEST(TcpConnectionTest, DataTransfer)
 
     IoContext ioc;
     Server svr(ioc);
-    Server::Options sopts {1234};
+    Server::Options sopts {.port=1234};
 
     uint16_t listeningPort = 0;
     svr.onListening([&listeningPort](uint16_t port) {

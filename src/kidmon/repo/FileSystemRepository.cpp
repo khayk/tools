@@ -130,7 +130,7 @@ std::string buildRawFilename(const TimePoint tp)
 }
 
 template <typename T>
-T getAs(const glz::json_t& js)
+T getAs(const glz::generic& js)
 {
     const auto value = js.get<double>();
     return static_cast<T>(value);
@@ -139,7 +139,7 @@ T getAs(const glz::json_t& js)
 void readEntries(const std::string& username, const fs::path& file, const EntryCb& cb)
 {
     Entry entry;
-    glz::json_t json {};
+    glz::generic json {};
 
     entry.username = username;
 

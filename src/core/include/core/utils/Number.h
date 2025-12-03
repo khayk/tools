@@ -3,8 +3,14 @@
 #include <array>
 #include <string>
 #include <charconv>
+#include <cstdlib>
 
 namespace num {
+
+template <typename T>
+constexpr bool from_chars_available = requires(const char* str, T& value) {
+    std::from_chars(str, str + 1, value);
+};
 
 /**
  * @brief Convert str to number. If an error occurred, the value specified in def
@@ -17,11 +23,22 @@ template <typename T>
     requires std::integral<T> || std::floating_point<T>
 T s2num(std::string_view str, T def = T())
 {
-    T value {};
-    if (auto [p, ec] = std::from_chars(str.data(), str.data() + str.size(), value);
-        ec == std::errc())
-    {
-        return value;
+    if constexpr (from_chars_available<T>) {
+        T value {};
+        if (auto [p, ec] = std::from_chars(str.data(), str.data() + str.size(), value);
+            ec == std::errc())
+        {
+            return value;
+        }
+    }
+    else {
+        // fallback for macOS, because from_chars(float) is deleted
+        char* end{};
+        T value = std::strtod(std::string(str).c_str(), &end);
+        if (end != str.data()) {
+            return value;
+        }
+        return def;
     }
 
     return def;

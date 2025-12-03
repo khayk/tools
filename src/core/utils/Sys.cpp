@@ -5,6 +5,10 @@
     #include <array>
 
     #pragma comment(lib, "Wtsapi32.lib")
+#elif __APPLE__
+    #include <unistd.h>
+    #include <libproc.h>
+    #include <fstream>
 #else
     #include <sys/types.h>
     #include <sys/stat.h>
@@ -156,6 +160,8 @@ uint32_t currentProcessId() noexcept
 {
 #ifdef _WIN32
     return GetCurrentProcessId();
+#elif __APPLE__
+    return static_cast<uint32_t>(getpid());
 #else
     return static_cast<uint32_t>(getpid());
 #endif // _WIN32
@@ -210,6 +216,15 @@ fs::path currentProcessPath()
     {
         return fs::path(buf.data(), buf.data() + sz).lexically_normal();
     }
+#elif __APPLE__
+    pid_t pid = getpid();
+    std::array<char, PROC_PIDPATHINFO_MAXSIZE> buf{};
+
+    int ret = proc_pidpath(pid, buf.data(), buf.size());
+    if (ret <= 0) {
+        return {};  // failed
+    }
+    return fs::path{std::string(buf.data())};
 #else
     auto pid = getpid();
 

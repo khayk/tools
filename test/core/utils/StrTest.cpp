@@ -27,7 +27,7 @@ TEST(UtilsStrTests, WS2S)
 
 TEST(UtilsStrTests, U8S2WS)
 {
-    const auto s = u8"Բարև.";
+    const auto* const s = u8"Բարև.";
     const auto ws = s2ws(u8tos(s));
 
     ASSERT_GE(ws.size(), 5);

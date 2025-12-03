@@ -33,7 +33,14 @@ if(WIN32)
       "os/win/*.cpp"
    )
    list(APPEND LIB_SRCS ${OS_WIN})
-elseif(UNIX AND NOT APPLE)
+elseif (APPLE)
+    # macOS
+    file(GLOB OS_MAC
+        "os/mac/*.h"
+        "os/mac/*.cpp"
+    )
+    list(APPEND LIB_SRCS ${OS_MAC})
+elseif(UNIX)
    # Linux, BSD, Solaris, Minix
    file(GLOB OS_LINUX
       "os/linux/*.h"

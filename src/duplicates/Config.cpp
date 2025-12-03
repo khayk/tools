@@ -64,7 +64,7 @@ void logConfig(const fs::path& cfgFile, const Config& cfg)
 Config loadConfig(const fs::path& cfgFile)
 {
     Config cfg;
-    auto config = toml::parse_file(cfgFile.u8string());
+    auto config = toml::parse_file(cfgFile.string());
 
     config["exclusion_patterns"].as_array()->for_each([&cfg](const auto& value) {
         if constexpr (toml::is_string<decltype(value)>)

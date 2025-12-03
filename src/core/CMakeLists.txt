@@ -44,10 +44,13 @@ add_library(${PROJECT_LIB} STATIC ${LIB_SRCS})
 target_include_directories(${PROJECT_LIB} PUBLIC include)
 
 target_link_libraries(${PROJECT_LIB} PUBLIC
-    fmt::fmt
     OpenSSL::Crypto
     spdlog::spdlog
     Boost::iostreams
+)
+
+target_link_libraries(${PROJECT_LIB} PRIVATE
+    fmt::fmt
 )
 
 # For code coverage

@@ -58,12 +58,12 @@ TEST(UtilsNumberTests, String2Number)
 
     EXPECT_EQ(s2num<int>("1234567890"), 1'234'567'890);
 
-    EXPECT_EQ(s2num<double>("123.456789"), 123.456789);
-    EXPECT_EQ(s2num<float>("987.654321"), 987.654321F);
+    EXPECT_DOUBLE_EQ(s2num<double>("123.456789"), 123.456789);
+    EXPECT_FLOAT_EQ(s2num<float>("987.654321"), 987.654321F);
 
-    EXPECT_EQ(s2num<double>("-789.012"), -789.012);
-    EXPECT_EQ(s2num<double>("0.0"), 0.0);
-    EXPECT_EQ(s2num<float>("0.0"), 0.0F);
+    EXPECT_DOUBLE_EQ(s2num<double>("-789.012"), -789.012);
+    EXPECT_DOUBLE_EQ(s2num<double>("0.0"), 0.0);
+    EXPECT_FLOAT_EQ(s2num<float>("0.0"), 0.0F);
 }
 
 
