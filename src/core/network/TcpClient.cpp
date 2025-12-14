@@ -3,8 +3,7 @@
 namespace tcp {
 
 Client::Client(IoContext& ioc) noexcept
-    : ioc_ {ioc}
-    , socket_ {ioc_}
+    : socket_ {ioc}
 {
 }
 

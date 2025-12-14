@@ -27,7 +27,6 @@ public:
     void connect(const Options& opts);
 
 private:
-    IoContext& ioc_;
     Socket socket_;
     ConnectCbs connectCb_;
     ErrorCbs errorCb_;
