@@ -55,3 +55,4 @@ LastCoverageResults.log
 kidmon.excalidraw
 CMakeUserPresets.json
 dups.user.toml
+.DS_Store
