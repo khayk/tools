@@ -16,7 +16,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 option(TOOLS_COVERAGE "Produce code coverage" OFF)
 option(TOOLS_TIDY "Use clang-tidy" OFF)
-option(BUILD_TESTS "Tests enabled by default" ON)
+option(BUILD_TESTING "Tests enabled by default" ON)
 
 include(NoInSourceBuilds)
 include(BuildInfo)
@@ -36,7 +36,7 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(ENABLE_SANITIZERS OFF)
+set(ENABLE_SANITIZERS ON)
 
 # set(CMAKE_C_COMPILER clang-19 CACHE STRING "" FORCE)
 # set(CMAKE_CXX_COMPILER clang++-19 CACHE STRING "" FORCE)
@@ -56,10 +56,11 @@ elseif(UNIX OR APPLE)
         -Wextra
         -Werror
         -Wpedantic
-        # -Wconversion
-        # -Werror
-        # -Wfatal-errors
-        # -Wno-error=uninitialized # producing false positives
+        -Wconversion
+        -Wsign-conversion
+        -Werror
+        -Wfatal-errors
+        -Wno-error=uninitialized # producing false positives
     )
 
     # Be aware, this increases memory usage by order of magnitude
@@ -75,7 +76,6 @@ elseif(UNIX OR APPLE)
         )
         add_link_options(
             -fsanitize=address,undefined
-            -fuse-ld=gold
         )
     endif()
 endif()
@@ -84,7 +84,7 @@ endif()
 
 add_subdirectory(src bin)
 
-if(BUILD_TESTS)
+if(BUILD_TESTING)
     enable_testing()
     add_subdirectory(test)
 endif()
