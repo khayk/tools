@@ -85,8 +85,8 @@ class ScopedObserve
 {
     using ObservableType = Observable<Observer>;
 
-    ObservableType& observable_ {nullptr};
-    Observer& observer_ {nullptr};
+    ObservableType* observable_ {nullptr};
+    Observer* observer_ {nullptr};
 
 public:
     /**
@@ -94,15 +94,15 @@ public:
      *        and removes observer on destruction
      */
     ScopedObserve(ObservableType& observable, Observer& observer)
-        : observable_(observable)
-        , observer_(observer)
+        : observable_(&observable)
+        , observer_(&observer)
     {
-        observable_.add(observer_);
+        observable_->add(*observer_);
     }
 
     ~ScopedObserve()
     {
-        observable_.remove(observer_);
+        observable_->remove(*observer_);
     }
 };
 
