@@ -1,0 +1,26 @@
+0. make the application smart to first load dups.toml and apply any user.dups.toml settings
+0. introduce command line parameters which will have the highest priority
+0. create new log file for each run
+1. show progress during a deletion, how many processed so far (M out of N)
+2. during a selection, one a folder selected as keep, it should be respected all the time (without asking)
+3. always show paths in a sorted way during deletion
+4. anything with (number) as a suffix, can be considered a secondary (if they are reside in the same folder)
+
+    ```
+    1: "/Source/Photos from 2017/_DSC5128(1).JPG"
+    2: "/Source/Photos from 2017/_DSC5128.JPG"
+    ```
+
+5. After selecting a folder to keep, ask if you want to respect that choice in the future
+6. Write functionality to restore all deletions from the given run
+7. When moving files into cache, consider possible external drives
+    - Can we move somewhere inside that drive
+8. Improve progress update
+9. Where there are too many options to select which one to keep, consider limiting number of options
+
+    ```
+    1. a
+    2. b
+    ...
+    12345. i
+    ```

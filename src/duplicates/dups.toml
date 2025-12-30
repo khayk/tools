@@ -4,7 +4,7 @@ scan_directories = [
 
 # File and directories matching the patterns below will be excluded
 exclusion_patterns = [
-    "\\.(hpp|txt|log|cmake|json)$" # extensions defined with a single expression
+    "\\.(hpp|txt|log|cmake|json|zip)$" # extensions defined with a single expression
     # this section might contain multiple patterns
 ]
 
