@@ -8,17 +8,18 @@ file(GLOB LIB_SRCS
    "*.cpp"
 )
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(tomlplusplus REQUIRED IMPORTED_TARGET tomlplusplus)
+# find_package(PkgConfig REQUIRED)
+# pkg_check_modules(tomlplusplus REQUIRED IMPORTED_TARGET tomlplusplus)
 
 find_package(nlohmann_json CONFIG REQUIRED)
+find_package(tomlplusplus CONFIG REQUIRED)
 
 list(FILTER LIB_SRCS EXCLUDE REGEX ".*Main.cpp")
 
 # Adding a library project
 add_library(${PROJECT_LIB} ${LIB_SRCS})
 target_include_directories(${PROJECT_LIB} PUBLIC include)
-target_link_libraries(${PROJECT_LIB} PUBLIC core PkgConfig::tomlplusplus)
+target_link_libraries(${PROJECT_LIB} PUBLIC core tomlplusplus::tomlplusplus)
 
 # For code coverage
 InstrumentForCoverage(${PROJECT_LIB})

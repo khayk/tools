@@ -49,10 +49,6 @@ target_link_libraries(${PROJECT_LIB} PUBLIC
     Boost::iostreams
 )
 
-target_link_libraries(${PROJECT_LIB} PRIVATE
-    fmt::fmt
-)
-
 # For code coverage
 InstrumentForCoverage(${PROJECT_LIB})
 CleanCoverage(${PROJECT_LIB})

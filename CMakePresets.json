@@ -6,9 +6,6 @@
             "displayName": "ninja-debug",
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build",
-	    "environment": {
-                "VCPKG_ROOT": "/home/khayk/dev/external/vcpkg"
-            },
             "cacheVariables": {
                 "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
                 "CMAKE_BUILD_TYPE": "Debug"
@@ -22,6 +19,18 @@
             "cacheVariables": {
                 "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
                 "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "vcpkg-gcc15-debug",
+            "displayName": "ninja-debug (gcc-15)",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/gcc15-debug",
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_C_COMPILER": "gcc-15",
+                "CMAKE_CXX_COMPILER": "g++-15"
             }
         }
     ]

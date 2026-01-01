@@ -79,7 +79,7 @@ size_t digits(T number)
     {
         if (number < 0)
         {
-            number = -number;
+            number = static_cast<T>(-number);
             digits = 1; // remove this line if '-' counts as a digit
         }
     }
