@@ -18,7 +18,7 @@ class IAggregate
 public:
     virtual ~IAggregate() = default;
     virtual void update(const Entry& entry) = 0;
-    virtual void enumarate(size_t topN,
+    virtual void enumerate(size_t topN,
                            uint32_t depth,
                            const DataCb& dataCb) const = 0;
 
@@ -44,7 +44,7 @@ public:
         return os;
     }
 
-    void enumarate(size_t topN, uint32_t depth, const DataCb& dataCb) const override
+    void enumerate(size_t topN, uint32_t depth, const DataCb& dataCb) const override
     {
         std::ignore = topN;
         dataCb("", "", depth, *this);
@@ -78,10 +78,10 @@ public:
         second.update(entry);
     }
 
-    void enumarate(size_t topN, uint32_t depth, const DataCb& dataCb) const override
+    void enumerate(size_t topN, uint32_t depth, const DataCb& dataCb) const override
     {
-        first.enumarate(topN, depth, dataCb);
-        second.enumarate(topN, depth, dataCb);
+        first.enumerate(topN, depth, dataCb);
+        second.enumerate(topN, depth, dataCb);
     }
 
     std::ostream& write(std::ostream& os, uint32_t prefix) const
@@ -148,7 +148,7 @@ public:
         data_[key].update(entry);
     }
 
-    void enumarate(size_t topN, uint32_t depth, const DataCb& dataCb) const override
+    void enumerate(size_t topN, uint32_t depth, const DataCb& dataCb) const override
     {
         const auto reorder = orderedVec(topN);
         const auto field = fieldBuilder_.field();
@@ -160,7 +160,7 @@ public:
             const auto& key = it->first;
             const auto& type = it->second;
             dataCb(field, key, depth, type);
-            type.enumarate(topN, depth, dataCb);
+            type.enumerate(topN, depth, dataCb);
         }
     }
 

@@ -139,7 +139,7 @@ TEST(DuplicateDetectorTest, AddFiles)
     EXPECT_EQ(files.size(), dd.numFiles());
     MockFunction<void(const fs::path&)> fileCb;
 
-    // Expect that each file is enumarated exactly once
+    // Expect that each file is enumerated exactly once
     EXPECT_CALL(fileCb, Call(testing::_))
         .Times(static_cast<int>(files.size()))
         .WillRepeatedly([&files](const fs::path& p) {
