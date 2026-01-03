@@ -4,6 +4,7 @@
 #include <duplicates/DeletionStrategy.h>
 #include <duplicates/Config.h>
 #include <duplicates/Node.h>
+#include <duplicates/CmdLine.h>
 
 #include <core/utils/Log.h>
 #include <core/utils/File.h>
@@ -11,8 +12,10 @@
 #include <core/utils/Tracer.h>
 #include <core/utils/Sys.h>
 #include <core/utils/Str.h>
-#include <filesystem>
+#include <core/utils/Dirs.h>
+
 #include <fmt/format.h>
+#include <cxxopts.hpp>
 
 #include <memory>
 #include <system_error>
@@ -22,55 +25,16 @@ using tools::utl::configureLogger;
 namespace tools::dups {
 namespace {
 
-void printUsage()
-{
-    puts(R"(
-Usage:
-    @ todo: revise this
-    duplicates <cfg_file> - Scan directories and detect duplicates based on the
-                            configuration file.
-)");
-}
-
 std::unique_ptr<IDeletionStrategy> getDeletionStrategy(const Config& cfg)
 {
-    if (cfg.dryRun)
+    if (cfg.dryRun())
     {
         return std::make_unique<DryRunDelete>();
     }
 
-    return std::make_unique<BackupAndDelete>(cfg.cacheDir);
+    return std::make_unique<BackupAndDelete>(cfg.cacheDir());
 }
 
-void reviewMetrics(const fs::path& file)
-{
-    DuplicateDetector detector;
-    StopWatch sw;
-
-    file::readLines(file, [&detector](const std::string& line) {
-        std::string_view sv = line;
-
-        while (line.size() >= 2 && sv.front() == '"')
-        {
-            sv.remove_prefix(1);
-        }
-        while (line.size() >= 2 && sv.back() == '"')
-        {
-            sv.remove_suffix(1);
-        }
-
-        detector.addFile(sv);
-        return true;
-    });
-
-    spdlog::info("Memory: {}", str::humanizeBytes(sys::currentProcessMemoryUsage()));
-    spdlog::info("Files: {}", detector.numFiles());
-    spdlog::info("Nodes: {}", detector.root()->nodesCount());
-    spdlog::info("Elapsed: {} ms", sw.elapsedMs());
-    spdlog::info("sizeof(path): {}", sizeof(fs::path));
-    spdlog::info("sizeof(node): {}", sizeof(Node));
-    spdlog::info("sizeof(string): {}", sizeof(std::string));
-}
 
 } // namespace
 } // namespace tools::dups
@@ -78,48 +42,43 @@ void reviewMetrics(const fs::path& file)
 int main(int argc, const char* argv[])
 {
     using namespace tools::dups;
-
-    if (argc < 2)
-    {
-        printUsage();
-        return 2;
-    }
-
     std::optional<ScopedTrace> trace;
 
     try
     {
-        const fs::path cfgFile(argv[1]);
+        cxxopts::Options opts("duplicates", "Duplicate file detection tool");
+        defineOptions(opts);
+        auto result = opts.parse(argc, argv);
 
-        if (cfgFile.extension() != ".toml")
+        if (result.contains("help"))
         {
-            spdlog::info("Measuring resource usage: '{}'", cfgFile);
-            reviewMetrics(cfgFile);
+            std::cout << opts.help() << '\n';
             return 0;
         }
 
-        const Config cfg = loadConfig(cfgFile);
-        configureLogger(cfg.logDir, cfg.logFilename);
+        Config cfg(dirs::config(), dirs::cache());
+        configureLogger(cfg.logDir(), cfg.logFilename());
         trace.emplace("",
                       fmt::format("{:-^80s}", "> START <"),
                       fmt::format("{:-^80s}\n", "> END <"));
-        logConfig(cfgFile, cfg);
+        populateConfig(result, cfg);
+        logConfig(cfg);
 
         DuplicateDetector detector;
-        Progress progress(cfg.updateFrequency);
-        IgnoredFiles ignored(cfg.ignFilesPath);
+        Progress progress(cfg.updateFrequency());
+        IgnoredFiles ignored(cfg.ignFilesPath());
 
         scanDirectories(cfg, detector, progress);
-        outputFiles(cfg.allFilesPath, detector);
+        outputFiles(cfg.allFilesPath(), detector);
 
         detectDuplicates(cfg, detector, progress);
-        reportDuplicates(cfg.dupFilesPath, detector);
+        reportDuplicates(cfg.dupFilesPath(), detector);
 
         auto strategy = getDeletionStrategy(cfg);
 
         deleteDuplicates(*strategy,
                          detector,
-                         cfg.safeToDeleteDirs,
+                         cfg.preferredDeletionDirs(),
                          ignored,
                          std::cout,
                          std::cin);

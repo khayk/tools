@@ -11,7 +11,7 @@ exclusion_patterns = [
 # Directories to be marked as safe candidates for deletion
 # If all paths of the given duplicate group are inside the directory specified in the list
 # the application will behave interactively. i.e. it will ask the user to confirm the deletion
-safe_to_delete_paths = [
+preferred_deletion_dirs = [
     # "/pattern/of/the/path/considered/safe/for/deletion"
 ]
 
@@ -31,7 +31,7 @@ all_files = "all.txt"
 # File to dump the duplicates
 dup_files = "duplicates.txt"
 
-# Files to maintain ignored files across multiple runs of the duplicates application
+# File to maintain ignored files across multiple runs of the duplicates application
 ign_files = "ignored.txt"
 
 # If true emulate file deletion instead of actual deletion (i.e. log what would be deleted)

@@ -16,14 +16,14 @@ void scanDirectories(const Config& cfg,
 {
     StopWatch sw;
 
-    for (const auto& scanDir : cfg.scanDirs)
+    for (const auto& scanDir : cfg.scanDirs())
     {
         const auto srcDir = fs::path(scanDir).lexically_normal();
         spdlog::info("Scanning directory: '{}'", srcDir);
 
         file::enumFilesRecursive(
             srcDir,
-            cfg.exclusionPatterns,
+            cfg.exclusionPatterns(),
             [numFiles = 0, &detector, &progress](const auto& p,
                                                  const std::error_code& ec) mutable {
                 if (ec)
@@ -55,15 +55,15 @@ void detectDuplicates(const Config& cfg,
                       DuplicateDetector& detector,
                       Progress& progress)
 {
-    if (cfg.skipDetection)
+    if (cfg.skipDetection())
     {
         spdlog::warn("Skip duplicate detection");
         return;
     }
 
     StopWatch sw;
-    const Options opts {.minSizeBytes = cfg.minFileSizeBytes,
-                                           .maxSizeBytes = cfg.maxFileSizeBytes};
+    const Options opts {.minSizeBytes = cfg.minFileSizeBytes(),
+                        .maxSizeBytes = cfg.maxFileSizeBytes()};
 
     spdlog::trace("Detecting duplicates...");
     detector.detect(opts,
