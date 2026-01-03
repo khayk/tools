@@ -13,12 +13,14 @@
 #include <core/utils/StopWatch.h>
 #include <core/utils/Tracer.h>
 
+#include <cstddef>
 #include <cxxopts.hpp>
 #include <iostream>
+#include <tuple>
 
 namespace {
 
-const std::string_view g_reportsDir =
+const std::string_view G_REPORTS_DIR =
 #ifdef _WIN32
     "C:"
 #else
@@ -66,8 +68,9 @@ public:
         pathByNameAggr_ = std::make_unique<ProcNameAggr>();
     }
 
-    void update(const Entry&)
+    void update(const Entry& entry)
     {
+        std::ignore = entry;
         ++numEntries_;
 
         if (sw_.elapsedMs() - prevUpdate_ > 100)
@@ -93,7 +96,7 @@ public:
         // pathByNameAggr_->write(std::cout, conf_.topN_, 0);
         // pathByNameAggr_->write(std::cout, 0);
 
-        pathByNameAggr_->enumarate(
+        pathByNameAggr_->enumerate(
             conf_.topN_,
             0,
             [](std::string_view field,
@@ -105,7 +108,7 @@ public:
                     return;
                 }
 
-                std::cout << std::string(4 * depth, ' ') << field;
+                std::cout << std::string(4UL * depth, ' ') << field;
 
                 if (!value.empty())
                 {
@@ -129,7 +132,7 @@ private:
 template <typename T>
 void maybeGet(const std::string& name, const cxxopts::ParseResult& res, T& dest)
 {
-    if (res.count(name) > 0)
+    if (res.contains(name))
     {
         dest = res[name].as<T>();
     }
@@ -261,6 +264,7 @@ template <typename CondType>
 std::vector<ConditionPtr> createConditions(const std::vector<std::string>& values)
 {
     std::vector<ConditionPtr> conds;
+    conds.reserve(values.size());
 
     for (const auto& value : values)
     {
@@ -363,7 +367,7 @@ bool validateArguments(const cxxopts::ParseResult& result)
 
 void handleListUsers()
 {
-    FileSystemRepository repo(g_reportsDir);
+    FileSystemRepository repo(G_REPORTS_DIR);
     spdlog::trace("Listing users...");
 
     std::ostringstream ss;
@@ -443,7 +447,7 @@ int main(int argc, char* argv[])
 
         const auto result = opts.parse(argc, argv);
 
-        if (result.count("help") || !validateArguments(result))
+        if (result.contains("help") || !validateArguments(result))
         {
             std::cout << opts.help() << '\n';
             return 2;
@@ -452,7 +456,7 @@ int main(int argc, char* argv[])
         StopWatch sw;
         sw.start();
 
-        if (result.count("list"))
+        if (result.contains("list"))
         {
             handleListUsers();
         }
@@ -463,7 +467,7 @@ int main(int argc, char* argv[])
             initReportsConf(result, reportsConf);
             applyCaseTransform(reportsConf);
 
-            FileSystemRepository repo(g_reportsDir);
+            FileSystemRepository repo(G_REPORTS_DIR);
             QueryVisualizer queryVisualizer = buildVisualizer(reportsConf);
 
             handleQueryUser(repo, reportsConf, queryVisualizer);
