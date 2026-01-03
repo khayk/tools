@@ -2,8 +2,8 @@
 #include <core/utils/FmtExt.h>
 #include <core/utils/Dirs.h>
 #include <core/utils/File.h>
+#include <core/utils/Log.h>
 
-#include <spdlog/spdlog.h>
 #include <toml++/toml.h>
 #include <chrono>
 #include <filesystem>
@@ -62,7 +62,7 @@ Config::Config(fs::path dataDir, fs::path cacheDir)
     dataDir_     = dirs::config() / appName;
     cacheDir_    = dirs::cache() / appName;
     logDir_      = dataDir_ / "logs";
-    logFilename_ = fmt::format("{}.log", appName);
+    logFilename_ = tools::utl::makeLogFilename(appName);
 }
 
 const std::vector<fs::path>& Config::scanDirs() const noexcept {
