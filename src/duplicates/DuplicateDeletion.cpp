@@ -192,10 +192,18 @@ bool deleteInteractively(const IDeletionStrategy& strategy,
 {
     // Display files to be deleted
     size_t i = 0;
+    size_t maxDisplayGroupSize = 10;
+    const auto width = static_cast<int>(num::digits(files.size()));
+
     for (const auto& file : files)
     {
-        const auto width = static_cast<int>(num::digits(files.size()));
-        out << std::setw(width + 1) << ++i << ": " << file << '\n';
+        ++i;
+        if (i < maxDisplayGroupSize || i == files.size()) {
+            out << std::setw(width + 1) << i << ": " << file << '\n';
+        }
+        else if (i == maxDisplayGroupSize) {
+            out << std::setw(width + 1) << ' ' << ": ..." << '\n';
+        }
     }
 
     auto input = promptUser(out, in);
@@ -311,6 +319,7 @@ void deleteDuplicates(const IDeletionStrategy& strategy,
         {
             out << "file size: " << group.entires.front().size
                 << ", sha256: " << group.entires.front().sha256 << '\n';
+            std::ranges::sort(deleteSelectively);
             resumeEnumeration = deleteInteractively(strategy,
                                                     deleteSelectively,
                                                     ignoredFiles,
