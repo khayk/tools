@@ -2,7 +2,9 @@
 
 #include <duplicates/DeletionStrategy.h>
 #include <duplicates/DuplicateDetector.h>
+#include <duplicates/Progress.h>
 #include <duplicates/Config.h>
+
 #include <vector>
 #include <unordered_set>
 #include <filesystem>
@@ -86,6 +88,7 @@ bool deleteInteractively(const IDeletionStrategy& strategy,
     * @param detector The duplicate detector containing the groups of duplicates.
     * @param safeToDeleteDirs Directories where files can be safely deleted.
     * @param ignoredFiles Object to track ignored files.
+    * @param progress Object for updating progress
     * @param out Output stream for messages.
     * @param in Input stream for user interaction.
  */
@@ -93,6 +96,7 @@ void deleteDuplicates(const IDeletionStrategy& strategy,
                       const IDuplicateGroups& duplicates,
                       const PathsVec& safeToDeleteDirs,
                       IgnoredFiles& ignoredFiles,
+                      Progress& progress,
                       std::ostream& out,
                       std::istream& in);
 
