@@ -80,6 +80,7 @@ int main(int argc, const char* argv[])
                          detector,
                          cfg.preferredDeletionDirs(),
                          ignored,
+                         progress,
                          std::cout,
                          std::cin);
     }

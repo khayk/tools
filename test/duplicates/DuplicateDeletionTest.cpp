@@ -3,9 +3,11 @@
 
 #include <duplicates/DuplicateDeletion.h>
 #include <duplicates/DeletionStrategy.h>
+#include <duplicates/Progress.h>
 #include <core/utils/File.h>
 #include <core/utils/Log.h>
 #include <core/utils/LogInterceptor.h>
+
 #include <filesystem>
 
 using testing::MockFunction;
@@ -279,6 +281,7 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesInSafeDirs)
     MockDuplicateGroups groups;
     IgnoredFiles ignored;
     PathsVec safeToDeleteDirs = {"safeDir"};
+    Progress progress;
 
     // Two groups, each with two files in safeDir
     std::vector<PathsVec> groupVec
@@ -287,6 +290,7 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesInSafeDirs)
         {fs::path("origDir/file3.txt"), fs::path("safeDir/file4.txt")}
     };
 
+    EXPECT_CALL(groups, numGroups()).Times(1);
     EXPECT_CALL(groups, enumGroups(testing::_))
         .WillOnce([&groupVec](const DupGroupCallback& cb) {
             emulateDupGroups(groupVec, cb);
@@ -299,7 +303,7 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesInSafeDirs)
     std::ostringstream out;
     std::istringstream in;
 
-    deleteDuplicates(strategy, groups, safeToDeleteDirs, ignored, out, in);
+    deleteDuplicates(strategy, groups, safeToDeleteDirs, ignored, progress, out, in);
 }
 
 TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesAllInSafeDirs)
@@ -308,6 +312,7 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesAllInSafeDirs)
     MockDuplicateGroups groups;
     IgnoredFiles ignored;
     PathsVec safeToDeleteDirs = {"safeDir"};
+    Progress progress;
 
     // Two groups, each with two files in safeDir
     std::vector<PathsVec> groupVec
@@ -316,6 +321,7 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesAllInSafeDirs)
         {fs::path("safeDir/file3.txt"), fs::path("safeDir/file4.txt")}
     };
 
+    EXPECT_CALL(groups, numGroups()).Times(1);
     EXPECT_CALL(groups, enumGroups(testing::_))
         .WillOnce([&groupVec](const DupGroupCallback& cb) {
             emulateDupGroups(groupVec, cb);
@@ -330,7 +336,7 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesAllInSafeDirs)
     // delete group
     std::istringstream in("1\n1\n");
 
-    deleteDuplicates(strategy, groups, safeToDeleteDirs, ignored, out, in);
+    deleteDuplicates(strategy, groups, safeToDeleteDirs, ignored, progress, out, in);
 }
 
 TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesSelectively)
@@ -339,6 +345,7 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesSelectively)
     MockDuplicateGroups groups;
     IgnoredFiles ignored;
     PathsVec safeToDeleteDirs;
+    Progress progress;
 
     // Two groups, each with two files in safeDir
     std::vector<PathsVec> groupVec
@@ -347,6 +354,7 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesSelectively)
         {fs::path("origDir/file3.txt"), fs::path("dupDir/file4.txt")}
     };
 
+    EXPECT_CALL(groups, numGroups()).Times(1);
     EXPECT_CALL(groups, enumGroups(testing::_))
         .WillOnce([&groupVec](const DupGroupCallback& cb) {
             emulateDupGroups(groupVec, cb);
@@ -359,7 +367,7 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesSelectively)
     std::ostringstream out;
     std::istringstream in("1\n1\n"); // keep first file in the group
 
-    deleteDuplicates(strategy, groups, safeToDeleteDirs, ignored, out, in);
+    deleteDuplicates(strategy, groups, safeToDeleteDirs, ignored, progress, out, in);
 }
 
 TEST(DuplicateDeletionTest, DeleteDuplicates_SkipsIgnoredFiles)
@@ -369,6 +377,7 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_SkipsIgnoredFiles)
     MockDuplicateGroups groups;
     IgnoredFiles ignored;
     PathsVec safeToDeleteDirs = {"safeDir"};
+    Progress progress;
 
     // Mark file2.txt as ignored
     ignored.add(fs::path("safeDir/file2.txt"));
@@ -377,6 +386,7 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_SkipsIgnoredFiles)
         {fs::path("OrigDir/file1.txt"), fs::path("safeDir/file2.txt")}
     };
 
+    EXPECT_CALL(groups, numGroups()).Times(1);
     EXPECT_CALL(groups, enumGroups(testing::_))
         .WillOnce([&groupVec](const DupGroupCallback& cb) {
             emulateDupGroups(groupVec, cb);
@@ -387,7 +397,7 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_SkipsIgnoredFiles)
     std::ostringstream out;
     std::istringstream in;
 
-    deleteDuplicates(strategy, groups, safeToDeleteDirs, ignored, out, in);
+    deleteDuplicates(strategy, groups, safeToDeleteDirs, ignored, progress, out, in);
 }
 
 } // namespace tools::dups

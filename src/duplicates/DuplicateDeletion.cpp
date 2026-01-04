@@ -1,8 +1,10 @@
 #include <duplicates/DuplicateDeletion.h>
 #include <duplicates/DeletionStrategy.h>
+#include <duplicates/Progress.h>
 #include <core/utils/FmtExt.h>
 #include <core/utils/Number.h>
 
+#include <chrono>
 #include <iostream>
 #include <algorithm>
 #include <stdexcept>
@@ -244,17 +246,25 @@ void deleteDuplicates(const IDeletionStrategy& strategy,
                       const IDuplicateGroups& duplicates,
                       const PathsVec& safeToDeleteDirs,
                       IgnoredFiles& ignoredFiles,
+                      Progress& progress,
                       std::ostream& out,
                       std::istream& in)
 {
     PathsVec deleteWithoutAsking;
     PathsVec deleteSelectively;
+
+    size_t numDuplicates = duplicates.numGroups();
     bool resumeEnumeration = true;
     bool sensitiveToExternalEvents = false;
 
-    duplicates.enumGroups([&](const DupGroup& group) {
+    duplicates.enumGroups([&, numDuplicates, numGroup = 0](const DupGroup& group) mutable {
+        ++numGroup;
         deleteWithoutAsking.clear();
         deleteSelectively.clear();
+
+        progress.update([&numGroup, &numDuplicates](std::ostream& os) {
+            os << "Deleting duplicate group " << numGroup << " out of " << numDuplicates << '\n';
+        });
 
         // Categorize files into 2 groups
         for (const auto& e : group.entires)
