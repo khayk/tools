@@ -365,7 +365,11 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesSelectively)
     EXPECT_CALL(strategy, apply(fs::path("dupDir/file4.txt"))).Times(1);
 
     std::ostringstream out;
-    std::istringstream in("1\n1\n"); // keep first file in the group
+
+    // keep the second file
+    // paths are listed in a sorted order, thus dupDir* comes before origDir*
+    // in other words we keep second file (i.e. orig file), that's why we specify 2,2
+    std::istringstream in("2\n2\n");
 
     deleteDuplicates(strategy, groups, safeToDeleteDirs, ignored, progress, out, in);
 }
