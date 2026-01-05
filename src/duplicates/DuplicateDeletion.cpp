@@ -64,12 +64,12 @@ void openDirectories(const PathsVec& files)
 {
     std::unordered_set<fs::path> uniqueDirs;
 
-    for (const auto& file: files)
+    for (const auto& file : files)
     {
         uniqueDirs.insert(file.parent_path());
     }
 
-    for (const auto& dir: uniqueDirs)
+    for (const auto& dir : uniqueDirs)
     {
         file::openDirectory(dir);
     }
@@ -198,10 +198,12 @@ bool deleteInteractively(const IDeletionStrategy& strategy,
     for (const auto& file : files)
     {
         ++i;
-        if (i < maxDisplayGroupSize || i == files.size()) {
+        if (i < maxDisplayGroupSize || i == files.size())
+        {
             out << std::setw(width + 1) << i << ": " << file << '\n';
         }
-        else if (i == maxDisplayGroupSize) {
+        else if (i == maxDisplayGroupSize)
+        {
             out << std::setw(width + 1) << ' ' << ": ..." << '\n';
         }
     }
@@ -265,71 +267,73 @@ void deleteDuplicates(const IDeletionStrategy& strategy,
     bool resumeEnumeration = true;
     bool sensitiveToExternalEvents = false;
 
-    duplicates.enumGroups([&, numDuplicates, numGroup = 0](const DupGroup& group) mutable {
-        ++numGroup;
-        deleteWithoutAsking.clear();
-        deleteSelectively.clear();
+    duplicates.enumGroups(
+        [&, numDuplicates, numGroup = 0](const DupGroup& group) mutable {
+            ++numGroup;
+            deleteWithoutAsking.clear();
+            deleteSelectively.clear();
 
-        progress.update([&numGroup, &numDuplicates](std::ostream& os) {
-            os << "Deleting duplicate group " << numGroup << " out of " << numDuplicates << '\n';
-        });
+            progress.update([&numGroup, &numDuplicates](std::ostream& os) {
+                os << "Deleting duplicate group " << numGroup << " out of "
+                   << numDuplicates << '\n';
+            });
 
-        // Categorize files into 2 groups
-        for (const auto& e : group.entires)
-        {
-            // In case if the file is deleted manually by the user while the
-            // interactive file deletion was running
-            if (sensitiveToExternalEvents && !fs::exists(e.file))
+            // Categorize files into 2 groups
+            for (const auto& e : group.entires)
             {
-                continue;
+                // In case if the file is deleted manually by the user while the
+                // interactive file deletion was running
+                if (sensitiveToExternalEvents && !fs::exists(e.file))
+                {
+                    continue;
+                }
+
+                if (ignoredFiles.contains(e.file))
+                {
+                    spdlog::warn("File is ignored: {}", e.file);
+                    return true;
+                }
+
+                if (isSafeToDelete(safeToDeleteDirs, e.file.parent_path()))
+                {
+                    deleteWithoutAsking.emplace_back(e.file);
+                }
+                else
+                {
+                    deleteSelectively.emplace_back(e.file);
+                }
             }
 
-            if (ignoredFiles.contains(e.file))
+            // Not all files fall under the safe to delete category
+            if (!deleteSelectively.empty())
             {
-                spdlog::warn("File is ignored: {}", e.file);
-                return true;
-            }
-
-            if (isSafeToDelete(safeToDeleteDirs, e.file.parent_path()))
-            {
-                deleteWithoutAsking.emplace_back(e.file);
+                // So after deleting the files below, we know that at least one
+                // file will be left in the system
+                deleteFiles(strategy, deleteWithoutAsking);
             }
             else
             {
-                deleteSelectively.emplace_back(e.file);
+                deleteSelectively.insert(
+                    deleteSelectively.end(),
+                    std::make_move_iterator(deleteWithoutAsking.begin()),
+                    std::make_move_iterator(deleteWithoutAsking.end()));
             }
-        }
 
-        // Not all files fall under the safe to delete category
-        if (!deleteSelectively.empty())
-        {
-            // So after deleting the files below, we know that at least one
-            // file will be left in the system
-            deleteFiles(strategy, deleteWithoutAsking);
-        }
-        else
-        {
-            deleteSelectively.insert(
-                deleteSelectively.end(),
-                std::make_move_iterator(deleteWithoutAsking.begin()),
-                std::make_move_iterator(deleteWithoutAsking.end()));
-        }
+            if (deleteSelectively.size() > 1)
+            {
+                out << "file size: " << group.entires.front().size
+                    << ", sha256: " << group.entires.front().sha256 << '\n';
+                std::ranges::sort(deleteSelectively);
+                resumeEnumeration = deleteInteractively(strategy,
+                                                        deleteSelectively,
+                                                        ignoredFiles,
+                                                        out,
+                                                        in);
+            }
 
-        if (deleteSelectively.size() > 1)
-        {
-            out << "file size: " << group.entires.front().size
-                << ", sha256: " << group.entires.front().sha256 << '\n';
-            std::ranges::sort(deleteSelectively);
-            resumeEnumeration = deleteInteractively(strategy,
-                                                    deleteSelectively,
-                                                    ignoredFiles,
-                                                    out,
-                                                    in);
-        }
-
-        // We left with one file, which is now unique in the system
-        return resumeEnumeration;
-    });
+            // We left with one file, which is now unique in the system
+            return resumeEnumeration;
+        });
 }
 
 } // namespace tools::dups

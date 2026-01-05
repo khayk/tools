@@ -218,13 +218,14 @@ fs::path currentProcessPath()
     }
 #elif __APPLE__
     pid_t pid = getpid();
-    std::array<char, PROC_PIDPATHINFO_MAXSIZE> buf{};
+    std::array<char, PROC_PIDPATHINFO_MAXSIZE> buf {};
 
     int ret = proc_pidpath(pid, buf.data(), buf.size());
-    if (ret <= 0) {
-        return {};  // failed
+    if (ret <= 0)
+    {
+        return {}; // failed
     }
-    return fs::path{std::string(buf.data())};
+    return fs::path {std::string(buf.data())};
 #else
     auto pid = getpid();
 

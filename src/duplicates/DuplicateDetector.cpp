@@ -26,7 +26,8 @@ bool tryGetSha256(const Node* node, std::string& sha256)
 }
 } // namespace
 
-const ProgressCallback& defaultProgressCallback = [](const Stage, const Node*, size_t) {};
+const ProgressCallback& defaultProgressCallback =
+    [](const Stage, const Node*, size_t) {};
 
 DuplicateDetector::DuplicateDetector()
 {
@@ -93,12 +94,13 @@ void DuplicateDetector::detect(const Options& opts, const ProgressCallback& cb)
     size_t outstandingSize = 0;
 
     util::eraseIf(dups_, [&numUniqueFiles, &outstandingSize](const auto& vt) {
-        if (vt.second.size() < 2)
+        const Nodes& nodes = vt.second;
+        if (nodes.size() < 2)
         {
             ++numUniqueFiles;
             return true;
         }
-        outstandingSize += vt.second.size() * vt.second[0]->size();
+        outstandingSize += nodes.size() * nodes[0]->size();
         return false;
     });
 

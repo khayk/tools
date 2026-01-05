@@ -52,7 +52,7 @@ private:
 
     fs::path filePath_;
     PathsSet files_;
-    bool saveWhenDone_{false};
+    bool saveWhenDone_ {false};
 };
 
 /**
@@ -65,7 +65,8 @@ void deleteFiles(const IDeletionStrategy& strategy, PathsVec& files);
 
 
 /**
- * @brief Deletes files interactively, allowing the user to choose which files to delete.
+ * @brief Deletes files interactively, allowing the user to choose which files to
+ * delete.
  *
  * @param strategy The deletion strategy to use.
  * @param files The vector of file paths to delete.
@@ -82,15 +83,15 @@ bool deleteInteractively(const IDeletionStrategy& strategy,
                          std::istream& in);
 
 /**
-    * @brief Deletes duplicate files based on the provided detector and deletion strategy.
-    *
-    * @param strategy The deletion strategy to use.
-    * @param detector The duplicate detector containing the groups of duplicates.
-    * @param safeToDeleteDirs Directories where files can be safely deleted.
-    * @param ignoredFiles Object to track ignored files.
-    * @param progress Object for updating progress
-    * @param out Output stream for messages.
-    * @param in Input stream for user interaction.
+ * @brief Deletes duplicate files based on the provided detector and deletion strategy.
+ *
+ * @param strategy The deletion strategy to use.
+ * @param detector The duplicate detector containing the groups of duplicates.
+ * @param safeToDeleteDirs Directories where files can be safely deleted.
+ * @param ignoredFiles Object to track ignored files.
+ * @param progress Object for updating progress
+ * @param out Output stream for messages.
+ * @param in Input stream for user interaction.
  */
 void deleteDuplicates(const IDeletionStrategy& strategy,
                       const IDuplicateGroups& duplicates,

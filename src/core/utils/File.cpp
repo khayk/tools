@@ -313,7 +313,8 @@ void openDirectory(const fs::path& path)
     }
     else
     {
-        throw std::runtime_error(fmt::format("Unable to navigate directory: {}", path2s(path)));
+        throw std::runtime_error(
+            fmt::format("Unable to navigate directory: {}", path2s(path)));
     }
 
 #ifdef _WIN32
@@ -338,7 +339,8 @@ void navigateFile(const fs::path& file)
 #elif __APPLE__
     const std::string command = "open -R \"" + path + "\"";
 #elif __linux__
-    constexpr auto pattern = R"( dbus-send --session --dest=org.freedesktop.FileManager1 \
+    constexpr auto pattern =
+        R"( dbus-send --session --dest=org.freedesktop.FileManager1 \
         --type=method_call --print-reply \
         /org/freedesktop/FileManager1 \
         org.freedesktop.FileManager1.ShowItems \

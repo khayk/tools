@@ -5,17 +5,23 @@
 
 namespace tools::strm {
 
-class NullBuffer : public std::streambuf {
+class NullBuffer : public std::streambuf
+{
 protected:
-    int overflow(int c) override {
+    int overflow(int c) override
+    {
         return c; // Discard character
     }
 };
 
 // Can be used to suppress output to the console or any other stream
-class NullOStream : public std::ostream {
+class NullOStream : public std::ostream
+{
 public:
-    NullOStream() : std::ostream(&nullBuffer_) {}
+    NullOStream()
+        : std::ostream(&nullBuffer_)
+    {
+    }
 
 private:
     NullBuffer nullBuffer_;

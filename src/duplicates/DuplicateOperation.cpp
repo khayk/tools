@@ -66,15 +66,13 @@ void detectDuplicates(const Config& cfg,
                         .maxSizeBytes = cfg.maxFileSizeBytes()};
 
     spdlog::trace("Detecting duplicates...");
-    detector.detect(opts,
-                    [&progress](const Stage stage,
-                                const Node*,
-                                size_t percent) mutable {
-                        progress.update([&](std::ostream& os) {
-                            os << "Stage: " << stage2str(stage) << " - " << percent
-                               << "%";
-                        });
-                    });
+    detector.detect(
+        opts,
+        [&progress](const Stage stage, const Node*, size_t percent) mutable {
+            progress.update([&](std::ostream& os) {
+                os << "Stage: " << stage2str(stage) << " - " << percent << "%";
+            });
+        });
 
     spdlog::trace("Detection took: {} ms", sw.elapsedMs());
 }

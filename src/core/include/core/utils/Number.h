@@ -8,9 +8,8 @@
 namespace num {
 
 template <typename T>
-constexpr bool from_chars_available = requires(const char* str, T& value) {
-    std::from_chars(str, str + 1, value);
-};
+constexpr bool FROM_CHARS_AVAILABLE =
+    requires(const char* str, T& value) { std::from_chars(str, str + 1, value); };
 
 /**
  * @brief Convert str to number. If an error occurred, the value specified in def
@@ -23,7 +22,8 @@ template <typename T>
     requires std::integral<T> || std::floating_point<T>
 T s2num(std::string_view str, T def = T())
 {
-    if constexpr (from_chars_available<T>) {
+    if constexpr (FROM_CHARS_AVAILABLE<T>)
+    {
         T value {};
         if (auto [p, ec] = std::from_chars(str.data(), str.data() + str.size(), value);
             ec == std::errc())
@@ -31,11 +31,13 @@ T s2num(std::string_view str, T def = T())
             return value;
         }
     }
-    else {
+    else
+    {
         // fallback for macOS, because from_chars(float) is deleted
-        char* end{};
+        char* end {};
         T value = std::strtod(std::string(str).c_str(), &end);
-        if (end != str.data()) {
+        if (end != str.data())
+        {
             return value;
         }
         return def;

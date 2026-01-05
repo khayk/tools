@@ -27,27 +27,30 @@ public:
 };
 
 
-class MockDeletionStrategy : public IDeletionStrategy {
+class MockDeletionStrategy : public IDeletionStrategy
+{
 public:
     MOCK_METHOD(void, apply, (const fs::path&), (const, override));
 };
 
 
-class MockDuplicateGroups : public IDuplicateGroups {
+class MockDuplicateGroups : public IDuplicateGroups
+{
 public:
     MOCK_METHOD((size_t), numGroups, (), (const, noexcept, override));
     MOCK_METHOD((void), enumGroups, (const DupGroupCallback&), (const, override));
 };
 
-void emulateDupGroups(const std::vector<PathsVec>& groupVec, const DupGroupCallback& cb)
+void emulateDupGroups(const std::vector<PathsVec>& groupVec,
+                      const DupGroupCallback& cb)
 {
     DupGroup group;
     std::vector<DupEntry> entries;
 
-    for (const auto& grp: groupVec)
+    for (const auto& grp : groupVec)
     {
         entries.clear();
-        for (const auto& p: grp)
+        for (const auto& p : grp)
         {
             entries.emplace_back(p, 0, "n/a");
         }
@@ -97,11 +100,7 @@ TEST(DuplicateDeletionTest, IgnoreFilesModule)
 
 TEST(DuplicateDeletionTest, DeleteFiles)
 {
-    PathsVec files {
-        "file1.txt",
-        "file2.txt",
-        "file3.txt"
-    };
+    PathsVec files {"file1.txt", "file2.txt", "file3.txt"};
     PathsVec deleted;
     PathsSet ignoredFiles;
     MockDelete strategy;
@@ -124,11 +123,7 @@ TEST(DuplicateDeletionTest, DeleteFilesException)
 {
     TestStLogInterceptor logInterceptor;
 
-    PathsVec files {
-        "file1.txt",
-        "file2.txt",
-        "file3.txt"
-    };
+    PathsVec files {"file1.txt", "file2.txt", "file3.txt"};
     MockDelete strategy;
     EXPECT_CALL(strategy, apply(testing::_))
         .Times(static_cast<int>(files.size()))
@@ -137,17 +132,14 @@ TEST(DuplicateDeletionTest, DeleteFilesException)
 
     EXPECT_NO_THROW(deleteFiles(strategy, files));
     EXPECT_TRUE(logInterceptor.count() > 0);
-    EXPECT_TRUE(logInterceptor.contains("Error 'Deletion error' while deleting file 'file1.txt'"));
+    EXPECT_TRUE(logInterceptor.contains(
+        "Error 'Deletion error' while deleting file 'file1.txt'"));
 }
 
 
 TEST(DuplicateDeletionTest, DeleteFilesInteractively_KeepSecond)
 {
-    PathsVec files {
-        "file1.txt",
-        "file2.txt",
-        "file3.txt"
-    };
+    PathsVec files {"file1.txt", "file2.txt", "file3.txt"};
     PathsVec deleted;
     IgnoredFiles ignoredFiles;
     MockDelete strategy;
@@ -171,17 +163,14 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_KeepSecond)
 
 TEST(DuplicateDeletionTest, DeleteFilesInteractively_ConsecutiveCalls)
 {
-    PathsVec files {
-        "file1.txt",
-        "file2.txt",
-        "file3.txt"
-    };
+    PathsVec files {"file1.txt", "file2.txt", "file3.txt"};
     PathsVec filesCopy = files;
     IgnoredFiles ignoredFiles;
     MockDelete strategy;
 
     // 2 calls per deleteInteractively call
-    EXPECT_CALL(strategy, apply(testing::_)).Times(4)
+    EXPECT_CALL(strategy, apply(testing::_))
+        .Times(4)
         .WillRepeatedly([](const fs::path& p) {
             EXPECT_TRUE(p.string() != "file1.txt");
         });
@@ -199,11 +188,7 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_ConsecutiveCalls)
 TEST(DuplicateDeletionTest, DeleteFilesInteractively_IgnoreGroup)
 {
     SilenceLogger silenceLogger;
-    PathsVec files {
-        "file1.txt",
-        "file2.txt",
-        "file3.txt"
-    };
+    PathsVec files {"file1.txt", "file2.txt", "file3.txt"};
     IgnoredFiles ignoredFiles;
     MockDelete strategy;
 
@@ -223,10 +208,7 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_IgnoreGroup)
 TEST(DuplicateDeletionTest, DeleteFilesInteractively_QuitDeletion)
 {
     SilenceLogger silenceLogger;
-    PathsVec files {
-        "file1.txt",
-        "file2.txt"
-    };
+    PathsVec files {"file1.txt", "file2.txt"};
     IgnoredFiles ignoredFiles;
     MockDelete strategy;
 
@@ -284,11 +266,9 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesInSafeDirs)
     Progress progress;
 
     // Two groups, each with two files in safeDir
-    std::vector<PathsVec> groupVec
-    {
+    std::vector<PathsVec> groupVec {
         {fs::path("origDir/file1.txt"), fs::path("safeDir/file2.txt")},
-        {fs::path("origDir/file3.txt"), fs::path("safeDir/file4.txt")}
-    };
+        {fs::path("origDir/file3.txt"), fs::path("safeDir/file4.txt")}};
 
     EXPECT_CALL(groups, numGroups()).Times(1);
     EXPECT_CALL(groups, enumGroups(testing::_))
@@ -315,11 +295,9 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesAllInSafeDirs)
     Progress progress;
 
     // Two groups, each with two files in safeDir
-    std::vector<PathsVec> groupVec
-    {
+    std::vector<PathsVec> groupVec {
         {fs::path("safeDir/file1.txt"), fs::path("safeDir/file2.txt")},
-        {fs::path("safeDir/file3.txt"), fs::path("safeDir/file4.txt")}
-    };
+        {fs::path("safeDir/file3.txt"), fs::path("safeDir/file4.txt")}};
 
     EXPECT_CALL(groups, numGroups()).Times(1);
     EXPECT_CALL(groups, enumGroups(testing::_))
@@ -348,11 +326,9 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesSelectively)
     Progress progress;
 
     // Two groups, each with two files in safeDir
-    std::vector<PathsVec> groupVec
-    {
+    std::vector<PathsVec> groupVec {
         {fs::path("origDir/file1.txt"), fs::path("dupDir/file2.txt")},
-        {fs::path("origDir/file3.txt"), fs::path("dupDir/file4.txt")}
-    };
+        {fs::path("origDir/file3.txt"), fs::path("dupDir/file4.txt")}};
 
     EXPECT_CALL(groups, numGroups()).Times(1);
     EXPECT_CALL(groups, enumGroups(testing::_))
@@ -387,8 +363,7 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_SkipsIgnoredFiles)
     ignored.add(fs::path("safeDir/file2.txt"));
 
     std::vector<PathsVec> groupVec = {
-        {fs::path("OrigDir/file1.txt"), fs::path("safeDir/file2.txt")}
-    };
+        {fs::path("OrigDir/file1.txt"), fs::path("safeDir/file2.txt")}};
 
     EXPECT_CALL(groups, numGroups()).Times(1);
     EXPECT_CALL(groups, enumGroups(testing::_))

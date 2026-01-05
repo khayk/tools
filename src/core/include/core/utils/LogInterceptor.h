@@ -2,6 +2,7 @@
 
 #include <spdlog/sinks/base_sink.h>
 #include <spdlog/spdlog.h>
+#include <algorithm>
 #include <vector>
 #include <string>
 #include <mutex>
@@ -15,7 +16,8 @@ namespace tools::utl {
 // Improvements will be done as I see the need for them in the codebase.
 
 template <typename Mutex>
-class LogSink : public spdlog::sinks::base_sink<Mutex> {
+class LogSink : public spdlog::sinks::base_sink<Mutex>
+{
 public:
     LogSink() = default;
     LogSink(const LogSink&) = delete;
@@ -56,7 +58,7 @@ public:
     [[nodiscard]] bool contains(std::string_view message) const
     {
         auto lock = std::lock_guard(this->mutex_);
-        return std::find(messages_.begin(), messages_.end(), message) != messages_.end();
+        return std::ranges::find(messages_, message) != messages_.end();
     }
 
     /**
@@ -69,7 +71,8 @@ public:
     }
 
 protected:
-    void sink_it_(const spdlog::details::log_msg& msg) override {
+    void sink_it_(const spdlog::details::log_msg& msg) override
+    {
         messages_.emplace_back(msg.payload.data(), msg.payload.size());
     }
 
@@ -82,7 +85,8 @@ private:
 // Type alias for common usage (thread-safe)
 using TestMtLogSink = LogSink<std::mutex>;
 
-// Type alias for single-threaded usage (if performance is critical and no mt contention)
+// Type alias for single-threaded usage (if performance is critical and no mt
+// contention)
 using TestStLogSink = LogSink<spdlog::details::null_mutex>;
 
 template <typename Mutex>
@@ -90,9 +94,9 @@ class LogInterceptor
 {
 public:
     LogInterceptor()
-        : name_{"log_interceptor"}
-        , sink_{std::make_shared<LogSink<Mutex>>()}
-        , defaultLogger_{spdlog::default_logger()}
+        : name_ {"log_interceptor"}
+        , sink_ {std::make_shared<LogSink<Mutex>>()}
+        , defaultLogger_ {spdlog::default_logger()}
     {
         auto logger = std::make_shared<spdlog::logger>(name_, sink_);
         logger->set_level(spdlog::level::trace);
@@ -143,7 +147,8 @@ private:
 // Type alias for common usage (thread-safe)
 using TestMtLogInterceptor = LogInterceptor<std::mutex>;
 
-// Type alias for single-threaded usage (if performance is critical and no mt contention)
+// Type alias for single-threaded usage (if performance is critical and no mt
+// contention)
 using TestStLogInterceptor = LogInterceptor<spdlog::details::null_mutex>;
 
 } // namespace tools::utl

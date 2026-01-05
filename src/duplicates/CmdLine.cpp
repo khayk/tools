@@ -104,13 +104,14 @@ void populateConfig(const cxxopts::ParseResult& opts, Config& cfg)
         return;
     }
 
-    if (opts.contains("dry-run")) {
+    if (opts.contains("dry-run"))
+    {
         cfg.setDryRun(opts["dry-run"].as<bool>());
     }
 
     if (opts.contains("scan-dir"))
     {
-        for (const auto& scanDir: opts["scan-dir"].as<std::vector<std::string>>())
+        for (const auto& scanDir : opts["scan-dir"].as<std::vector<std::string>>())
         {
             cfg.addScanDir(scanDir);
         }
@@ -118,7 +119,7 @@ void populateConfig(const cxxopts::ParseResult& opts, Config& cfg)
 
     if (opts.contains("exclude"))
     {
-        for (const auto& excludeDir: opts["exclude"].as<std::vector<std::string>>())
+        for (const auto& excludeDir : opts["exclude"].as<std::vector<std::string>>())
         {
             cfg.addExclusionPattern(excludeDir);
         }
@@ -126,7 +127,7 @@ void populateConfig(const cxxopts::ParseResult& opts, Config& cfg)
 
     if (opts.contains("safe-path"))
     {
-        for (const auto& safePath: opts["safe-path"].as<std::vector<std::string>>())
+        for (const auto& safePath : opts["safe-path"].as<std::vector<std::string>>())
         {
             cfg.addPreferredDeletionDir(safePath);
         }
@@ -144,7 +145,8 @@ void populateConfig(const cxxopts::ParseResult& opts, Config& cfg)
 
     if (opts.contains("update-freq"))
     {
-        cfg.setUpdateFrequency(std::chrono::milliseconds(opts["update-freq"].as<uint64_t>()));
+        cfg.setUpdateFrequency(
+            std::chrono::milliseconds(opts["update-freq"].as<uint64_t>()));
     }
 
     if (opts.contains("all-files"))

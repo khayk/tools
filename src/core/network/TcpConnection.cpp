@@ -81,7 +81,8 @@ void Connection::write(std::string_view sv)
 
 void Connection::close()
 {
-    if (closing_) {
+    if (closing_)
+    {
         return;
     }
 

@@ -64,7 +64,7 @@ private:
     std::string data_;
     std::chrono::milliseconds timeout_ {};
     net::steady_timer timer_;
-    bool closing_{false};
+    bool closing_ {false};
 };
 
 } // namespace tcp
