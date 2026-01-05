@@ -81,6 +81,21 @@ void Config::addScanDir(fs::path dir)
     scanDirs_.push_back(std::move(dir));
 }
 
+const std::vector<fs::path>& Config::dirsToKeepFrom() const noexcept
+{
+    return dirsToKeepFrom_;
+}
+
+void Config::setDirsToKeepFrom(std::vector<fs::path> dirs)
+{
+    dirsToKeepFrom_ = std::move(dirs);
+}
+
+void Config::addDirToKeepFrom(fs::path dir)
+{
+    dirsToKeepFrom_.push_back(std::move(dir));
+}
+
 const std::vector<fs::path>& Config::dirsToDeleteFrom() const noexcept
 {
     return dirsToDeleteFrom_;
@@ -253,7 +268,10 @@ void logConfig(const Config& cfg)
     spdlog::trace(pattern, "Ignored files path", cfg.ignFilesPath());
     spdlog::trace(pattern, "Scan directories", concat(cfg.scanDirs(), ", "));
     spdlog::trace(pattern,
-                  "Safe to delete directories",
+                  "Directories to keep from",
+                  concat(cfg.dirsToKeepFrom(), ", "));
+    spdlog::trace(pattern,
+                  "Directories to delete from",
                   concat(cfg.dirsToDeleteFrom(), ", "));
     spdlog::trace(pattern, "Cache directory", cfg.cacheDir());
     spdlog::trace(pattern, "Min file size bytes", cfg.minFileSizeBytes());

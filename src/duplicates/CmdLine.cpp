@@ -55,7 +55,7 @@ void defineOptions(cxxopts::Options& opts)
         ("exclude", "Exclude regex pattern (repeatable)",
             cxxopts::value<std::vector<std::string>>())
 
-        ("safe-path", "Safe-to-delete path (repeatable)",
+        ("delete-path", "Path to delete from (repeatable)",
             cxxopts::value<std::vector<std::string>>())
 
         ("min-size", "Ignore files smaller than this (bytes)",
@@ -125,11 +125,11 @@ void populateConfig(const cxxopts::ParseResult& opts, Config& cfg)
         }
     }
 
-    if (opts.contains("safe-path"))
+    if (opts.contains("delete-path"))
     {
-        for (const auto& safePath : opts["safe-path"].as<std::vector<std::string>>())
+        for (const auto& deletePath : opts["delete-path"].as<std::vector<std::string>>())
         {
-            cfg.addDirToDeleteFrom(safePath);
+            cfg.addDirToDeleteFrom(deletePath);
         }
     }
 

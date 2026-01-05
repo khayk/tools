@@ -310,8 +310,8 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesAllInSafeDirs)
     EXPECT_CALL(strategy, apply(fs::path("safeDir/file4.txt"))).Times(1);
 
     std::ostringstream out;
-    // Need to perform selection, as both candidates are from the safe to
-    // delete group
+    // Need to perform selection, as both candidates are from the directory to
+    // delete from
     std::istringstream in("1\n1\n");
 
     deleteDuplicates(strategy, groups, dirsToDeleteFrom, ignored, progress, out, in);

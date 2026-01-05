@@ -304,7 +304,7 @@ void deleteDuplicates(const IDeletionStrategy& strategy,
                 }
             }
 
-            // Not all files fall under the safe to delete category
+            // Not all files are in the directory that is marked to delete from
             if (!deleteSelectively.empty())
             {
                 // So after deleting the files below, we know that at least one
