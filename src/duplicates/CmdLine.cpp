@@ -129,7 +129,7 @@ void populateConfig(const cxxopts::ParseResult& opts, Config& cfg)
     {
         for (const auto& safePath : opts["safe-path"].as<std::vector<std::string>>())
         {
-            cfg.addPreferredDeletionDir(safePath);
+            cfg.addDirToDeleteFrom(safePath);
         }
     }
 

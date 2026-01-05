@@ -87,7 +87,7 @@ bool deleteInteractively(const IDeletionStrategy& strategy,
  *
  * @param strategy The deletion strategy to use.
  * @param detector The duplicate detector containing the groups of duplicates.
- * @param safeToDeleteDirs Directories where files can be safely deleted.
+ * @param dirsToDeleteFrom Directories where files can be safely deleted.
  * @param ignoredFiles Object to track ignored files.
  * @param progress Object for updating progress
  * @param out Output stream for messages.
@@ -95,7 +95,7 @@ bool deleteInteractively(const IDeletionStrategy& strategy,
  */
 void deleteDuplicates(const IDeletionStrategy& strategy,
                       const IDuplicateGroups& duplicates,
-                      const PathsVec& safeToDeleteDirs,
+                      const PathsVec& dirsToDeleteFrom,
                       IgnoredFiles& ignoredFiles,
                       Progress& progress,
                       std::ostream& out,

@@ -262,7 +262,7 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesInSafeDirs)
     MockDeletionStrategy strategy;
     MockDuplicateGroups groups;
     IgnoredFiles ignored;
-    PathsVec safeToDeleteDirs = {"safeDir"};
+    PathsVec dirsToDeleteFrom = {"safeDir"};
     Progress progress;
 
     // Two groups, each with two files in safeDir
@@ -283,7 +283,7 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesInSafeDirs)
     std::ostringstream out;
     std::istringstream in;
 
-    deleteDuplicates(strategy, groups, safeToDeleteDirs, ignored, progress, out, in);
+    deleteDuplicates(strategy, groups, dirsToDeleteFrom, ignored, progress, out, in);
 }
 
 TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesAllInSafeDirs)
@@ -291,7 +291,7 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesAllInSafeDirs)
     MockDeletionStrategy strategy;
     MockDuplicateGroups groups;
     IgnoredFiles ignored;
-    PathsVec safeToDeleteDirs = {"safeDir"};
+    PathsVec dirsToDeleteFrom = {"safeDir"};
     Progress progress;
 
     // Two groups, each with two files in safeDir
@@ -314,7 +314,7 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesAllInSafeDirs)
     // delete group
     std::istringstream in("1\n1\n");
 
-    deleteDuplicates(strategy, groups, safeToDeleteDirs, ignored, progress, out, in);
+    deleteDuplicates(strategy, groups, dirsToDeleteFrom, ignored, progress, out, in);
 }
 
 TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesSelectively)
@@ -322,7 +322,7 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesSelectively)
     MockDeletionStrategy strategy;
     MockDuplicateGroups groups;
     IgnoredFiles ignored;
-    PathsVec safeToDeleteDirs;
+    PathsVec dirsToDeleteFrom;
     Progress progress;
 
     // Two groups, each with two files in safeDir
@@ -347,7 +347,7 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesSelectively)
     // in other words we keep second file (i.e. orig file), that's why we specify 2,2
     std::istringstream in("2\n2\n");
 
-    deleteDuplicates(strategy, groups, safeToDeleteDirs, ignored, progress, out, in);
+    deleteDuplicates(strategy, groups, dirsToDeleteFrom, ignored, progress, out, in);
 }
 
 TEST(DuplicateDeletionTest, DeleteDuplicates_SkipsIgnoredFiles)
@@ -356,7 +356,7 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_SkipsIgnoredFiles)
     MockDeletionStrategy strategy;
     MockDuplicateGroups groups;
     IgnoredFiles ignored;
-    PathsVec safeToDeleteDirs = {"safeDir"};
+    PathsVec dirsToDeleteFrom = {"safeDir"};
     Progress progress;
 
     // Mark file2.txt as ignored
@@ -376,7 +376,7 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_SkipsIgnoredFiles)
     std::ostringstream out;
     std::istringstream in;
 
-    deleteDuplicates(strategy, groups, safeToDeleteDirs, ignored, progress, out, in);
+    deleteDuplicates(strategy, groups, dirsToDeleteFrom, ignored, progress, out, in);
 }
 
 } // namespace tools::dups

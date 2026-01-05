@@ -81,19 +81,19 @@ void Config::addScanDir(fs::path dir)
     scanDirs_.push_back(std::move(dir));
 }
 
-const std::vector<fs::path>& Config::preferredDeletionDirs() const noexcept
+const std::vector<fs::path>& Config::dirsToDeleteFrom() const noexcept
 {
-    return safeDeletionDirs_;
+    return dirsToDeleteFrom_;
 }
 
-void Config::setPreferredDeletionDirs(std::vector<fs::path> dirs)
+void Config::setDirsToDeleteFrom(std::vector<fs::path> dirs)
 {
-    safeDeletionDirs_ = std::move(dirs);
+    dirsToDeleteFrom_ = std::move(dirs);
 }
 
-void Config::addPreferredDeletionDir(fs::path dir)
+void Config::addDirToDeleteFrom(fs::path dir)
 {
-    safeDeletionDirs_.push_back(std::move(dir));
+    dirsToDeleteFrom_.push_back(std::move(dir));
 }
 
 const std::vector<std::regex>& Config::exclusionPatterns() const noexcept
@@ -254,7 +254,7 @@ void logConfig(const Config& cfg)
     spdlog::trace(pattern, "Scan directories", concat(cfg.scanDirs(), ", "));
     spdlog::trace(pattern,
                   "Safe to delete directories",
-                  concat(cfg.preferredDeletionDirs(), ", "));
+                  concat(cfg.dirsToDeleteFrom(), ", "));
     spdlog::trace(pattern, "Cache directory", cfg.cacheDir());
     spdlog::trace(pattern, "Min file size bytes", cfg.minFileSizeBytes());
     spdlog::trace(pattern, "Max file size bytes", cfg.maxFileSizeBytes());
@@ -294,10 +294,10 @@ void applyOverrides(const fs::path& cfgFile, Config& cfg)
         }
     });
 
-    config["preferred_deletion_dirs"].as_array()->for_each([&cfg](const auto& value) {
+    config["dirs_to_delete_from"].as_array()->for_each([&cfg](const auto& value) {
         if constexpr (toml::is_string<decltype(value)>)
         {
-            cfg.addPreferredDeletionDir(value.value_or(""sv));
+            cfg.addDirToDeleteFrom(value.value_or(""sv));
         }
     });
 

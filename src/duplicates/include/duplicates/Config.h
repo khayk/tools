@@ -18,9 +18,9 @@ public:
     void setScanDirs(std::vector<fs::path> dirs);
     void addScanDir(fs::path dir);
 
-    const std::vector<fs::path>& preferredDeletionDirs() const noexcept;
-    void setPreferredDeletionDirs(std::vector<fs::path> dirs);
-    void addPreferredDeletionDir(fs::path dir);
+    const std::vector<fs::path>& dirsToDeleteFrom() const noexcept;
+    void setDirsToDeleteFrom(std::vector<fs::path> dirs);
+    void addDirToDeleteFrom(fs::path dir);
 
     const std::vector<std::regex>& exclusionPatterns() const noexcept;
     void setExclusionPatterns(const std::vector<std::string>& patterns);
@@ -61,7 +61,7 @@ public:
 
 private:
     std::vector<fs::path> scanDirs_;
-    std::vector<fs::path> safeDeletionDirs_;
+    std::vector<fs::path> dirsToDeleteFrom_;
     std::vector<std::regex> exclusionPatterns_;
     fs::path dataDir_;
     fs::path cacheDir_;

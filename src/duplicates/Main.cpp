@@ -78,7 +78,7 @@ int main(int argc, const char* argv[])
 
         deleteDuplicates(*strategy,
                          detector,
-                         cfg.preferredDeletionDirs(),
+                         cfg.dirsToDeleteFrom(),
                          ignored,
                          progress,
                          std::cout,

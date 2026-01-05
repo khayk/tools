@@ -254,7 +254,7 @@ bool deleteInteractively(const IDeletionStrategy& strategy,
 
 void deleteDuplicates(const IDeletionStrategy& strategy,
                       const IDuplicateGroups& duplicates,
-                      const PathsVec& safeToDeleteDirs,
+                      const PathsVec& dirsToDeleteFrom,
                       IgnoredFiles& ignoredFiles,
                       Progress& progress,
                       std::ostream& out,
@@ -294,7 +294,7 @@ void deleteDuplicates(const IDeletionStrategy& strategy,
                     return true;
                 }
 
-                if (isSafeToDelete(safeToDeleteDirs, e.file.parent_path()))
+                if (isSafeToDelete(dirsToDeleteFrom, e.file.parent_path()))
                 {
                     deleteWithoutAsking.emplace_back(e.file);
                 }
