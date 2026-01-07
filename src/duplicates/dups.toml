@@ -8,6 +8,11 @@ exclusion_patterns = [
     # this section might contain multiple patterns
 ]
 
+# Preferred locations to keep file from
+dirs_to_keep_from = [
+
+]
+
 # Directories to be marked as safe candidates for deletion
 # If all paths of the given duplicate group are inside the directory specified in the list
 # the application will behave interactively. i.e. it will ask the user to confirm the deletion

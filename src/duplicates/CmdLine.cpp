@@ -55,6 +55,9 @@ void defineOptions(cxxopts::Options& opts)
         ("exclude", "Exclude regex pattern (repeatable)",
             cxxopts::value<std::vector<std::string>>())
 
+        ("keep-path", "Path to keep from (repeatable)",
+            cxxopts::value<std::vector<std::string>>())
+
         ("delete-path", "Path to delete from (repeatable)",
             cxxopts::value<std::vector<std::string>>())
 
@@ -86,15 +89,13 @@ void defineOptions(cxxopts::Options& opts)
 
 void populateConfig(const cxxopts::ParseResult& opts, Config& cfg)
 {
+    applyDefaults(cfg);
+
     fs::path cfgFile;
     if (opts.contains("cfg-file"))
     {
         cfgFile = opts["cfg-file"].as<std::string>();
         applyOverrides(cfgFile, cfg);
-    }
-    else
-    {
-        applyDefaults(cfg);
     }
 
     if (!cfgFile.empty() && cfgFile.extension() != ".toml")
@@ -122,6 +123,14 @@ void populateConfig(const cxxopts::ParseResult& opts, Config& cfg)
         for (const auto& excludeDir : opts["exclude"].as<std::vector<std::string>>())
         {
             cfg.addExclusionPattern(excludeDir);
+        }
+    }
+
+    if (opts.contains("keep-path"))
+    {
+        for (const auto& keepPath : opts["keep-path"].as<std::vector<std::string>>())
+        {
+            cfg.addDirToKeepFrom(keepPath);
         }
     }
 
@@ -161,7 +170,7 @@ void populateConfig(const cxxopts::ParseResult& opts, Config& cfg)
 
     if (opts.contains("ign-files"))
     {
-        cfg.setDupFilesPath(opts["ign-files"].as<std::string>());
+        cfg.setIgnFilesPath(opts["ign-files"].as<std::string>());
     }
 }
 

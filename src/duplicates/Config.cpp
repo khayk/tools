@@ -312,6 +312,13 @@ void applyOverrides(const fs::path& cfgFile, Config& cfg)
         }
     });
 
+    config["dirs_to_keep_from"].as_array()->for_each([&cfg](const auto& value) {
+        if constexpr (toml::is_string<decltype(value)>)
+        {
+            cfg.addDirToKeepFrom(value.value_or(""sv));
+        }
+    });
+
     config["dirs_to_delete_from"].as_array()->for_each([&cfg](const auto& value) {
         if constexpr (toml::is_string<decltype(value)>)
         {
