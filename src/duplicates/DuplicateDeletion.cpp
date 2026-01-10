@@ -162,50 +162,74 @@ bool deleteInteractively(const IDeletionStrategy& strategy,
 };
 
 
-DeletionConfig::DeletionConfig(
-    const IDuplicateGroups& duplicates,
-    const IDeletionStrategy& strategy,
-    std::ostream& out,
-    std::istream& in)
-    : duplicates_{&duplicates}
-    , strategy_{&strategy}
-    , out_{&out}
-    , in_{&in} {}
+DeletionConfig::DeletionConfig(const IDuplicateGroups& duplicates,
+                               const IDeletionStrategy& strategy,
+                               std::ostream& out,
+                               std::istream& in)
+    : duplicates_ {&duplicates}
+    , strategy_ {&strategy}
+    , out_ {&out}
+    , in_ {&in}
+{
+}
 
-void DeletionConfig::setProgress(Progress& progress) { progress_ = &progress; }
-void DeletionConfig::setIgnoredPaths(IgnoredPaths& ignored) { ignored_ = &ignored; }
-void DeletionConfig::setKeepFromPaths(KeepFromPaths& keepFrom) { keepFrom_ = &keepFrom; }
-void DeletionConfig::setDeleteFromPaths(DeleteFromPaths& deleteFrom) { deleteFrom_ = &deleteFrom; }
+void DeletionConfig::setProgress(Progress& progress)
+{
+    progress_ = &progress;
+}
 
-const IDuplicateGroups& DeletionConfig::duplicates() const {
+void DeletionConfig::setIgnoredPaths(IgnoredPaths& ignored)
+{
+    ignored_ = &ignored;
+}
+
+void DeletionConfig::setKeepFromPaths(KeepFromPaths& keepFrom)
+{
+    keepFrom_ = &keepFrom;
+}
+
+void DeletionConfig::setDeleteFromPaths(DeleteFromPaths& deleteFrom)
+{
+    deleteFrom_ = &deleteFrom;
+}
+
+const IDuplicateGroups& DeletionConfig::duplicates() const
+{
     return *duplicates_;
 }
 
-const IDeletionStrategy& DeletionConfig::strategy() const {
+const IDeletionStrategy& DeletionConfig::strategy() const
+{
     return *strategy_;
 }
 
-std::ostream& DeletionConfig::out() {
+std::ostream& DeletionConfig::out()
+{
     return *out_;
 }
 
-std::istream& DeletionConfig::in() {
+std::istream& DeletionConfig::in()
+{
     return *in_;
 }
 
-Progress* DeletionConfig::progress() {
+Progress* DeletionConfig::progress()
+{
     return progress_;
 }
 
-IgnoredPaths* DeletionConfig::ignoredPaths() {
+IgnoredPaths* DeletionConfig::ignoredPaths()
+{
     return ignored_;
 }
 
-KeepFromPaths* DeletionConfig::keepFromPaths() {
+KeepFromPaths* DeletionConfig::keepFromPaths()
+{
     return keepFrom_;
 }
 
-DeleteFromPaths* DeletionConfig::deleteFromPaths() {
+DeleteFromPaths* DeletionConfig::deleteFromPaths()
+{
     return deleteFrom_;
 }
 
@@ -222,7 +246,8 @@ void deleteDuplicates(DeletionConfig& cfg)
     auto& in = cfg.in();
     auto* progress = cfg.progress();
     auto& ignoredPaths = cfg.ignoredPaths() ? *cfg.ignoredPaths() : sesIgnoredPaths;
-    auto& deleteFrom = cfg.deleteFromPaths() ? *cfg.deleteFromPaths() : sesDeleteFromPath;
+    auto& deleteFrom =
+        cfg.deleteFromPaths() ? *cfg.deleteFromPaths() : sesDeleteFromPath;
 
     PathsVec deleteWithoutAsking;
     PathsVec deleteSelectively;
@@ -236,7 +261,8 @@ void deleteDuplicates(DeletionConfig& cfg)
             deleteWithoutAsking.clear();
             deleteSelectively.clear();
 
-            if (progress) {
+            if (progress)
+            {
                 progress->update([&numGroup, &numDuplicates](std::ostream& os) {
                     os << "Deleting duplicate group " << numGroup << " out of "
                        << numDuplicates << '\n';

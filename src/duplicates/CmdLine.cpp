@@ -136,7 +136,8 @@ void populateConfig(const cxxopts::ParseResult& opts, Config& cfg)
 
     if (opts.contains("delete-path"))
     {
-        for (const auto& deletePath : opts["delete-path"].as<std::vector<std::string>>())
+        for (const auto& deletePath :
+             opts["delete-path"].as<std::vector<std::string>>())
         {
             cfg.addDirToDeleteFrom(deletePath);
         }

@@ -11,7 +11,8 @@
 
 namespace tools::dups {
 
-enum class Purpose : std::int8_t {
+enum class Purpose : std::int8_t
+{
     Ignored,
     KeepFrom,
     DeleteFrom
@@ -51,7 +52,8 @@ bool deleteInteractively(const IDeletionStrategy& strategy,
 /**
  * @brief Configuration for duplication deletion process
  */
-class DeletionConfig {
+class DeletionConfig
+{
     const IDuplicateGroups* duplicates_ {};
     const IDeletionStrategy* strategy_ {};
     std::ostream* out_ {};
@@ -63,16 +65,17 @@ class DeletionConfig {
 
 public:
     /**
-    * @brief Construct a new Deletion Config object
-    *
-    * @param duplicates The groups of duplicates
-    * @param strategy The deletion strategy to use
-    * @param out Output stream interactive output
-    * @param in Input stream to interact with user
-    */
+     * @brief Construct a new Deletion Config object
+     *
+     * @param duplicates The groups of duplicates
+     * @param strategy The deletion strategy to use
+     * @param out Output stream interactive output
+     * @param in Input stream to interact with user
+     */
     DeletionConfig(const IDuplicateGroups& duplicates,
                    const IDeletionStrategy& strategy,
-                   std::ostream& out, std::istream& in);
+                   std::ostream& out,
+                   std::istream& in);
 
     /**
      * @brief Set the Progress object
@@ -89,10 +92,10 @@ public:
     void setIgnoredPaths(IgnoredPaths& ignored);
 
     /**
-    * @brief Set the Keep From Paths object
-    *
-    * @param keepFrom Directories to use as desired locations to keep from
-    */
+     * @brief Set the Keep From Paths object
+     *
+     * @param keepFrom Directories to use as desired locations to keep from
+     */
     void setKeepFromPaths(KeepFromPaths& keepFrom);
 
     /**

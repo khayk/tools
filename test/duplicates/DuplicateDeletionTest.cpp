@@ -263,7 +263,7 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesInSafeDirs)
     MockDuplicateGroups groups;
     DeleteFromPaths deleteFrom;
 
-    deleteFrom.add(fs::path{"safeDir"});
+    deleteFrom.add(fs::path {"safeDir"});
 
     // Two groups, each with two files in safeDir
     std::vector<PathsVec> groupVec {
@@ -283,7 +283,7 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesInSafeDirs)
     std::ostringstream out;
     std::istringstream in;
 
-    DeletionConfig cfg{groups, strategy, out, in};
+    DeletionConfig cfg {groups, strategy, out, in};
     cfg.setDeleteFromPaths(deleteFrom);
 
     deleteDuplicates(cfg);
@@ -295,7 +295,7 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesAllInSafeDirs)
     MockDuplicateGroups groups;
     DeleteFromPaths deleteFrom;
 
-    deleteFrom.add(fs::path{"safeDir"});
+    deleteFrom.add(fs::path {"safeDir"});
 
     // Two groups, each with two files in safeDir
     std::vector<PathsVec> groupVec {
@@ -317,7 +317,7 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesAllInSafeDirs)
     // delete from
     std::istringstream in("1\n1\n");
 
-    DeletionConfig cfg{groups, strategy, out, in};
+    DeletionConfig cfg {groups, strategy, out, in};
     cfg.setDeleteFromPaths(deleteFrom);
 
     deleteDuplicates(cfg);
@@ -350,7 +350,7 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesSelectively)
     // in other words we keep second file (i.e. orig file), that's why we specify 2,2
     std::istringstream in("2\n2\n");
 
-    DeletionConfig cfg{groups, strategy, out, in};
+    DeletionConfig cfg {groups, strategy, out, in};
     deleteDuplicates(cfg);
 }
 
@@ -364,7 +364,7 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_SkipsIgnoredFiles)
 
     // Mark file2.txt as ignored
     ignored.add(fs::path("safeDir/file2.txt"));
-    deleteFrom.add(fs::path{"safeDir"});
+    deleteFrom.add(fs::path {"safeDir"});
 
     std::vector<PathsVec> groupVec = {
         {fs::path("OrigDir/file1.txt"), fs::path("safeDir/file2.txt")}};
@@ -374,13 +374,14 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_SkipsIgnoredFiles)
         .WillOnce([&groupVec](const DupGroupCallback& cb) {
             emulateDupGroups(groupVec, cb);
         });
-    // Only file2.txt would be deleted, but it's ignored, so remove should not be called
+    // Only file2.txt would be deleted, but it's ignored, so remove should not be
+    // called
     EXPECT_CALL(strategy, remove(testing::_)).Times(0);
 
     std::ostringstream out;
     std::istringstream in;
 
-    DeletionConfig cfg{groups, strategy, out, in};
+    DeletionConfig cfg {groups, strategy, out, in};
     cfg.setIgnoredPaths(ignored);
     cfg.setDeleteFromPaths(deleteFrom);
 

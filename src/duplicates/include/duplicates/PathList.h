@@ -47,13 +47,15 @@ private:
 template <auto EnumPurpose>
 class PathList : public PathListImpl
 {
-    static_assert(
-      std::is_enum_v<decltype(EnumPurpose)>,
-      "StrongType must be instantiated with scoped enum (enum class)");
+    static_assert(std::is_enum_v<decltype(EnumPurpose)>,
+                  "StrongType must be instantiated with scoped enum (enum class)");
 
 public:
     PathList() = default;
-    PathList(fs::path file, bool saveWhenDone = true) : PathListImpl(file, saveWhenDone) {}
+    PathList(fs::path file, bool saveWhenDone = true)
+        : PathListImpl(file, saveWhenDone)
+    {
+    }
 };
 
 } // namespace tools::dups

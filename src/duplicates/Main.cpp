@@ -75,7 +75,7 @@ int main(int argc, const char* argv[])
 
         // start deletion of the duplicates
         auto strategy = createDeletionStrategy(cfg);
-        DeletionConfig deletionCfg{detector, *strategy, std::cout, std::cin};
+        DeletionConfig deletionCfg {detector, *strategy, std::cout, std::cin};
 
         IgnoredPaths ignored(cfg.ignFilesPath());
         KeepFromPaths keepFrom;
