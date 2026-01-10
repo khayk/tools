@@ -9,24 +9,24 @@ namespace tools::dups {
 using PathsVec = std::vector<fs::path>;
 using PathsSet = std::unordered_set<fs::path>;
 
-class FileList
+class PathList
 {
 public:
-    FileList() = default;
-    FileList(fs::path file, bool saveWhenDone = true);
-    ~FileList();
+    PathList() = default;
+    PathList(fs::path file, bool saveWhenDone = true);
+    ~PathList();
 
     const PathsSet& files() const;
 
-    bool contains(const fs::path& file) const;
+    bool contains(const fs::path& path) const;
 
     bool empty() const noexcept;
 
     size_t size() const noexcept;
 
-    void add(const fs::path& file);
+    void add(const fs::path& path);
 
-    void add(const PathsVec& files);
+    void add(const PathsVec& paths);
 
 private:
     /**
@@ -40,7 +40,7 @@ private:
     void load();
 
     fs::path filePath_;
-    PathsSet files_;
+    PathsSet paths_;
     bool saveWhenDone_ {false};
 };
 

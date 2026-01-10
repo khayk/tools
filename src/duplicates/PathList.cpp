@@ -1,4 +1,4 @@
-#include <duplicates/FileList.h>
+#include <duplicates/PathList.h>
 #include <core/utils/File.h>
 #include <core/utils/FmtExt.h>
 
@@ -10,7 +10,7 @@
 
 namespace tools::dups {
 
-FileList::FileList(fs::path file, bool saveWhenDone)
+PathList::PathList(fs::path file, bool saveWhenDone)
     : filePath_(std::move(file))
     , saveWhenDone_(saveWhenDone)
 {
@@ -20,7 +20,7 @@ FileList::FileList(fs::path file, bool saveWhenDone)
     }
 }
 
-FileList::~FileList()
+PathList::~PathList()
 {
     try
     {
@@ -37,52 +37,52 @@ FileList::~FileList()
     }
 }
 
-bool FileList::contains(const fs::path& file) const
+bool PathList::contains(const fs::path& path) const
 {
-    return files_.contains(file);
+    return paths_.contains(path);
 }
 
-bool FileList::empty() const noexcept
+bool PathList::empty() const noexcept
 {
-    return files_.empty();
+    return paths_.empty();
 }
 
 
-size_t FileList::size() const noexcept
+size_t PathList::size() const noexcept
 {
-    return files_.size();
+    return paths_.size();
 }
 
-const PathsSet& FileList::files() const
+const PathsSet& PathList::files() const
 {
-    return files_;
+    return paths_;
 }
 
-void FileList::add(const fs::path& file)
+void PathList::add(const fs::path& path)
 {
-    files_.insert(file);
+    paths_.insert(path);
 }
 
-void FileList::add(const PathsVec& files)
+void PathList::add(const PathsVec& paths)
 {
-    std::ranges::copy(files, std::inserter(files_, files_.end()));
+    std::ranges::copy(paths, std::inserter(paths_, paths_.end()));
 }
 
-void FileList::load()
+void PathList::load()
 {
     spdlog::info("Loading files from: {}", filePath_);
     file::readLines(filePath_, [&](const std::string& line) {
         if (!line.empty())
         {
-            files_.emplace(line);
+            paths_.emplace(line);
         }
         return true;
     });
 }
 
-void FileList::save() const
+void PathList::save() const
 {
-    if (files_.empty())
+    if (paths_.empty())
     {
         return;
     }
@@ -94,7 +94,7 @@ void FileList::save() const
         throw std::runtime_error(fmt::format("Unable to open file: '{}'", filePath_));
     }
 
-    for (const auto& file : files_)
+    for (const auto& file : paths_)
     {
         out << file::path2s(file) << '\n';
     }
