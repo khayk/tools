@@ -9,12 +9,12 @@ namespace tools::dups {
 using PathsVec = std::vector<fs::path>;
 using PathsSet = std::unordered_set<fs::path>;
 
-class PathList
+class PathListImpl
 {
 public:
-    PathList() = default;
-    PathList(fs::path file, bool saveWhenDone = true);
-    ~PathList();
+    PathListImpl() = default;
+    PathListImpl(fs::path file, bool saveWhenDone = true);
+    ~PathListImpl();
 
     const PathsSet& files() const;
 
@@ -42,6 +42,18 @@ private:
     fs::path filePath_;
     PathsSet paths_;
     bool saveWhenDone_ {false};
+};
+
+template <auto EnumPurpose>
+class PathList : public PathListImpl
+{
+    static_assert(
+      std::is_enum_v<decltype(EnumPurpose)>,
+      "StrongType must be instantiated with scoped enum (enum class)");
+
+public:
+    PathList() = default;
+    PathList(fs::path file, bool saveWhenDone = true) : PathListImpl(file, saveWhenDone) {}
 };
 
 } // namespace tools::dups

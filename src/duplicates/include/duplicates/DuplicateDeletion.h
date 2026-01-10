@@ -5,12 +5,21 @@
 #include <duplicates/Progress.h>
 #include <duplicates/Config.h>
 #include <duplicates/PathList.h>
+#include <cstdint>
 #include <ostream>
 
 
 namespace tools::dups {
 
-using IgnoredPaths = PathList;
+enum class Purpose : std::int8_t {
+    Ignored,
+    KeepFrom,
+    DeleteFrom
+};
+
+using IgnoredPaths = PathList<Purpose::Ignored>;
+using KeepFromPaths = PathList<Purpose::KeepFrom>;
+using DeleteFromPaths = PathList<Purpose::DeleteFrom>;
 
 /**
  * @brief Deletes files using the provided deletion strategy.
@@ -39,35 +48,76 @@ bool deleteInteractively(const IDeletionStrategy& strategy,
                          std::ostream& out,
                          std::istream& in);
 
+/**
+ * @brief Configuration for duplication deletion process
+ */
 class DeletionConfig {
-public:
-    DeletionConfig(std::ostream& out, std::ostream& in);
+    const IDuplicateGroups* duplicates_ {};
+    const IDeletionStrategy* strategy_ {};
+    std::ostream* out_ {};
+    std::istream* in_ {};
+    Progress* progress_ {};
+    IgnoredPaths* ignored_ {};
+    KeepFromPaths* keepFrom_ {};
+    DeleteFromPaths* deleteFrom_ {};
 
-    void setDeletionStrategy(IDeletionStrategy* strategy);
-    void setDuplicateGroup(IDuplicateGroups* duplicates);
-    void setProgress(Progress* progress);
-    void setIgnoredPaths(const PathList& ignored);
-    void setKeepFromPaths(const PathList& keepFrom);
-    void setDeleteFromPaths(const PathList& deleteFrom);
+public:
+    /**
+    * @brief Construct a new Deletion Config object
+    *
+    * @param duplicates The groups of duplicates
+    * @param strategy The deletion strategy to use
+    * @param out Output stream interactive output
+    * @param in Input stream to interact with user
+    */
+    DeletionConfig(const IDuplicateGroups& duplicates,
+                   const IDeletionStrategy& strategy,
+                   std::ostream& out, std::istream& in);
+
+    /**
+     * @brief Set the Progress object
+     *
+     * @param progress Object to deliver deletion progress
+     */
+    void setProgress(Progress& progress);
+
+    /**
+     * @brief Set the Ignored Paths object
+     *
+     * @param ignored Paths to ignored
+     */
+    void setIgnoredPaths(IgnoredPaths& ignored);
+
+    /**
+    * @brief Set the Keep From Paths object
+    *
+    * @param keepFrom Directories to use as desired locations to keep from
+    */
+    void setKeepFromPaths(KeepFromPaths& keepFrom);
+
+    /**
+     * @brief Set the Delete From Paths object
+     *
+     * @param deleteFrom Directories where files can be safely deleted
+     */
+    void setDeleteFromPaths(DeleteFromPaths& deleteFrom);
+
+    const IDeletionStrategy& strategy() const;
+    const IDuplicateGroups& duplicates() const;
+    std::ostream& out();
+    std::istream& in();
+
+    Progress* progress();
+    IgnoredPaths* ignoredPaths();
+    KeepFromPaths* keepFromPaths();
+    DeleteFromPaths* deleteFromPaths();
 };
 
 /**
- * @brief Deletes duplicate files based on the provided detector and deletion strategy.
+ * @brief Deletes duplicate files based on the provided config
  *
- * @param strategy The deletion strategy to use.
- * @param detector The duplicate detector containing the groups of duplicates.
- * @param dirsToDeleteFrom Directories where files can be safely deleted.
- * @param ignoredPaths Object to track ignored files.
- * @param progress Object for updating progress
- * @param out Output stream for messages.
- * @param in Input stream for user interaction.
+ * @param cfg Settings for deletion process
  */
-void deleteDuplicates(const IDeletionStrategy& strategy,
-                      const IDuplicateGroups& duplicates,
-                      const PathsVec& dirsToDeleteFrom,
-                      IgnoredPaths& ignoredPaths,
-                      Progress& progress,
-                      std::ostream& out,
-                      std::istream& in);
+void deleteDuplicates(DeletionConfig& cfg);
 
 } // namespace tools::dups

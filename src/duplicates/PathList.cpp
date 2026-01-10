@@ -10,7 +10,7 @@
 
 namespace tools::dups {
 
-PathList::PathList(fs::path file, bool saveWhenDone)
+PathListImpl::PathListImpl(fs::path file, bool saveWhenDone)
     : filePath_(std::move(file))
     , saveWhenDone_(saveWhenDone)
 {
@@ -20,7 +20,7 @@ PathList::PathList(fs::path file, bool saveWhenDone)
     }
 }
 
-PathList::~PathList()
+PathListImpl::~PathListImpl()
 {
     try
     {
@@ -37,38 +37,38 @@ PathList::~PathList()
     }
 }
 
-bool PathList::contains(const fs::path& path) const
+bool PathListImpl::contains(const fs::path& path) const
 {
     return paths_.contains(path);
 }
 
-bool PathList::empty() const noexcept
+bool PathListImpl::empty() const noexcept
 {
     return paths_.empty();
 }
 
 
-size_t PathList::size() const noexcept
+size_t PathListImpl::size() const noexcept
 {
     return paths_.size();
 }
 
-const PathsSet& PathList::files() const
+const PathsSet& PathListImpl::files() const
 {
     return paths_;
 }
 
-void PathList::add(const fs::path& path)
+void PathListImpl::add(const fs::path& path)
 {
     paths_.insert(path);
 }
 
-void PathList::add(const PathsVec& paths)
+void PathListImpl::add(const PathsVec& paths)
 {
     std::ranges::copy(paths, std::inserter(paths_, paths_.end()));
 }
 
-void PathList::load()
+void PathListImpl::load()
 {
     spdlog::info("Loading files from: {}", filePath_);
     file::readLines(filePath_, [&](const std::string& line) {
@@ -80,7 +80,7 @@ void PathList::load()
     });
 }
 
-void PathList::save() const
+void PathListImpl::save() const
 {
     if (paths_.empty())
     {

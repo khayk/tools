@@ -8,13 +8,15 @@
 #include <iostream>
 #include <algorithm>
 #include <iterator>
+#include <cassert>
+
 #include <spdlog/spdlog.h>
 
 namespace tools::dups {
 
 namespace {
 
-bool isSafeToDelete(const PathsVec& delDirs, const fs::path& path)
+bool isSafeToDelete(const PathsSet& delDirs, const fs::path& path)
 {
     const auto& pathStr = path.native();
 
@@ -160,17 +162,70 @@ bool deleteInteractively(const IDeletionStrategy& strategy,
 };
 
 
-void deleteDuplicates(const IDeletionStrategy& strategy,
-                      const IDuplicateGroups& duplicates,
-                      const PathsVec& dirsToDeleteFrom,
-                      IgnoredPaths& ignoredPaths,
-                      Progress& progress,
-                      std::ostream& out,
-                      std::istream& in)
+DeletionConfig::DeletionConfig(
+    const IDuplicateGroups& duplicates,
+    const IDeletionStrategy& strategy,
+    std::ostream& out,
+    std::istream& in)
+    : duplicates_{&duplicates}
+    , strategy_{&strategy}
+    , out_{&out}
+    , in_{&in} {}
+
+void DeletionConfig::setProgress(Progress& progress) { progress_ = &progress; }
+void DeletionConfig::setIgnoredPaths(IgnoredPaths& ignored) { ignored_ = &ignored; }
+void DeletionConfig::setKeepFromPaths(KeepFromPaths& keepFrom) { keepFrom_ = &keepFrom; }
+void DeletionConfig::setDeleteFromPaths(DeleteFromPaths& deleteFrom) { deleteFrom_ = &deleteFrom; }
+
+const IDuplicateGroups& DeletionConfig::duplicates() const {
+    return *duplicates_;
+}
+
+const IDeletionStrategy& DeletionConfig::strategy() const {
+    return *strategy_;
+}
+
+std::ostream& DeletionConfig::out() {
+    return *out_;
+}
+
+std::istream& DeletionConfig::in() {
+    return *in_;
+}
+
+Progress* DeletionConfig::progress() {
+    return progress_;
+}
+
+IgnoredPaths* DeletionConfig::ignoredPaths() {
+    return ignored_;
+}
+
+KeepFromPaths* DeletionConfig::keepFromPaths() {
+    return keepFrom_;
+}
+
+DeleteFromPaths* DeletionConfig::deleteFromPaths() {
+    return deleteFrom_;
+}
+
+void deleteDuplicates(DeletionConfig& cfg)
 {
+    IgnoredPaths sesIgnoredPaths;
+    DeleteFromPaths sesDeleteFromPath;
+    KeepFromPaths sesKeepFromPaths;
+
+    // aliasing for convenient usage
+    const auto& strategy = cfg.strategy();
+    const auto& duplicates = cfg.duplicates();
+    auto& out = cfg.out();
+    auto& in = cfg.in();
+    auto* progress = cfg.progress();
+    auto& ignoredPaths = cfg.ignoredPaths() ? *cfg.ignoredPaths() : sesIgnoredPaths;
+    auto& deleteFrom = cfg.deleteFromPaths() ? *cfg.deleteFromPaths() : sesDeleteFromPath;
+
     PathsVec deleteWithoutAsking;
     PathsVec deleteSelectively;
-
     size_t numDuplicates = duplicates.numGroups();
     bool resumeEnumeration = true;
     bool sensitiveToExternalEvents = false;
@@ -181,10 +236,12 @@ void deleteDuplicates(const IDeletionStrategy& strategy,
             deleteWithoutAsking.clear();
             deleteSelectively.clear();
 
-            progress.update([&numGroup, &numDuplicates](std::ostream& os) {
-                os << "Deleting duplicate group " << numGroup << " out of "
-                   << numDuplicates << '\n';
-            });
+            if (progress) {
+                progress->update([&numGroup, &numDuplicates](std::ostream& os) {
+                    os << "Deleting duplicate group " << numGroup << " out of "
+                       << numDuplicates << '\n';
+                });
+            }
 
             // Categorize files into 2 groups
             for (const auto& e : group.entires)
@@ -202,7 +259,7 @@ void deleteDuplicates(const IDeletionStrategy& strategy,
                     return true;
                 }
 
-                if (isSafeToDelete(dirsToDeleteFrom, e.file.parent_path()))
+                if (isSafeToDelete(deleteFrom.files(), e.file.parent_path()))
                 {
                     deleteWithoutAsking.emplace_back(e.file);
                 }
@@ -215,7 +272,7 @@ void deleteDuplicates(const IDeletionStrategy& strategy,
             // Not all files are in the directory that is marked to delete from
             if (!deleteSelectively.empty())
             {
-                // So after deleting the files below, we know that at least one
+                // So after deleting the files below, we are certain that at least one
                 // file will be left in the system
                 deleteFiles(strategy, deleteWithoutAsking);
             }

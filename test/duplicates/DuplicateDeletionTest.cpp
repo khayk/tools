@@ -261,9 +261,9 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesInSafeDirs)
 {
     MockDeletionStrategy strategy;
     MockDuplicateGroups groups;
-    IgnoredPaths ignored;
-    PathsVec dirsToDeleteFrom = {"safeDir"};
-    Progress progress;
+    DeleteFromPaths deleteFrom;
+
+    deleteFrom.add(fs::path{"safeDir"});
 
     // Two groups, each with two files in safeDir
     std::vector<PathsVec> groupVec {
@@ -283,16 +283,19 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesInSafeDirs)
     std::ostringstream out;
     std::istringstream in;
 
-    deleteDuplicates(strategy, groups, dirsToDeleteFrom, ignored, progress, out, in);
+    DeletionConfig cfg{groups, strategy, out, in};
+    cfg.setDeleteFromPaths(deleteFrom);
+
+    deleteDuplicates(cfg);
 }
 
 TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesAllInSafeDirs)
 {
     MockDeletionStrategy strategy;
     MockDuplicateGroups groups;
-    IgnoredPaths ignored;
-    PathsVec dirsToDeleteFrom = {"safeDir"};
-    Progress progress;
+    DeleteFromPaths deleteFrom;
+
+    deleteFrom.add(fs::path{"safeDir"});
 
     // Two groups, each with two files in safeDir
     std::vector<PathsVec> groupVec {
@@ -314,16 +317,16 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesAllInSafeDirs)
     // delete from
     std::istringstream in("1\n1\n");
 
-    deleteDuplicates(strategy, groups, dirsToDeleteFrom, ignored, progress, out, in);
+    DeletionConfig cfg{groups, strategy, out, in};
+    cfg.setDeleteFromPaths(deleteFrom);
+
+    deleteDuplicates(cfg);
 }
 
 TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesSelectively)
 {
     MockDeletionStrategy strategy;
     MockDuplicateGroups groups;
-    IgnoredPaths ignored;
-    PathsVec dirsToDeleteFrom;
-    Progress progress;
 
     // Two groups, each with two files in safeDir
     std::vector<PathsVec> groupVec {
@@ -347,7 +350,8 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesSelectively)
     // in other words we keep second file (i.e. orig file), that's why we specify 2,2
     std::istringstream in("2\n2\n");
 
-    deleteDuplicates(strategy, groups, dirsToDeleteFrom, ignored, progress, out, in);
+    DeletionConfig cfg{groups, strategy, out, in};
+    deleteDuplicates(cfg);
 }
 
 TEST(DuplicateDeletionTest, DeleteDuplicates_SkipsIgnoredFiles)
@@ -356,11 +360,11 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_SkipsIgnoredFiles)
     MockDeletionStrategy strategy;
     MockDuplicateGroups groups;
     IgnoredPaths ignored;
-    PathsVec dirsToDeleteFrom = {"safeDir"};
-    Progress progress;
+    DeleteFromPaths deleteFrom;
 
     // Mark file2.txt as ignored
     ignored.add(fs::path("safeDir/file2.txt"));
+    deleteFrom.add(fs::path{"safeDir"});
 
     std::vector<PathsVec> groupVec = {
         {fs::path("OrigDir/file1.txt"), fs::path("safeDir/file2.txt")}};
@@ -376,7 +380,11 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_SkipsIgnoredFiles)
     std::ostringstream out;
     std::istringstream in;
 
-    deleteDuplicates(strategy, groups, dirsToDeleteFrom, ignored, progress, out, in);
+    DeletionConfig cfg{groups, strategy, out, in};
+    cfg.setIgnoredPaths(ignored);
+    cfg.setDeleteFromPaths(deleteFrom);
+
+    deleteDuplicates(cfg);
 }
 
 } // namespace tools::dups
