@@ -1,14 +1,13 @@
 #include <duplicates/DuplicateDeletion.h>
 #include <duplicates/DeletionStrategy.h>
 #include <duplicates/Progress.h>
-#include <core/utils/FmtExt.h>
 #include <core/utils/Number.h>
+#include <core/utils/File.h>
+#include <core/utils/FmtExt.h>
 
 #include <iostream>
 #include <algorithm>
-#include <stdexcept>
 #include <iterator>
-#include "core/utils/File.h"
 #include <spdlog/spdlog.h>
 
 namespace tools::dups {
@@ -75,96 +74,6 @@ void openDirectories(const PathsVec& files)
 }
 
 } // namespace
-
-IgnoredFiles::IgnoredFiles(fs::path file, bool saveWhenDone)
-    : filePath_(std::move(file))
-    , saveWhenDone_(saveWhenDone)
-{
-    if (fs::exists(filePath_))
-    {
-        load();
-    }
-}
-
-IgnoredFiles::~IgnoredFiles()
-{
-    try
-    {
-        if (saveWhenDone_ && !filePath_.empty())
-        {
-            save();
-        }
-    }
-    catch (const std::exception& ex)
-    {
-        spdlog::error("Failed to save ignored files to: {}, exception: {}",
-                      filePath_,
-                      ex.what());
-    }
-}
-
-bool IgnoredFiles::contains(const fs::path& file) const
-{
-    return files_.contains(file);
-}
-
-bool IgnoredFiles::empty() const noexcept
-{
-    return files_.empty();
-}
-
-
-size_t IgnoredFiles::size() const noexcept
-{
-    return files_.size();
-}
-
-const PathsSet& IgnoredFiles::files() const
-{
-    return files_;
-}
-
-void IgnoredFiles::add(const fs::path& file)
-{
-    files_.insert(file);
-}
-
-void IgnoredFiles::add(const PathsVec& files)
-{
-    std::ranges::copy(files, std::inserter(files_, files_.end()));
-}
-
-void IgnoredFiles::load()
-{
-    spdlog::info("Loading ignored files from: {}", filePath_);
-    file::readLines(filePath_, [&](const std::string& line) {
-        if (!line.empty())
-        {
-            files_.emplace(line);
-        }
-        return true;
-    });
-}
-
-void IgnoredFiles::save() const
-{
-    if (files_.empty())
-    {
-        return;
-    }
-
-    std::ofstream out(filePath_, std::ios::out | std::ios::binary);
-
-    if (!out)
-    {
-        throw std::runtime_error(fmt::format("Unable to open file: '{}'", filePath_));
-    }
-
-    for (const auto& file : files_)
-    {
-        out << file::path2s(file) << '\n';
-    }
-}
 
 void deleteFiles(const IDeletionStrategy& strategy, PathsVec& files)
 {

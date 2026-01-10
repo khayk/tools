@@ -4,56 +4,12 @@
 #include <duplicates/DuplicateDetector.h>
 #include <duplicates/Progress.h>
 #include <duplicates/Config.h>
+#include <duplicates/FileList.h>
 
-#include <vector>
-#include <unordered_set>
-#include <filesystem>
 
 namespace tools::dups {
 
-using PathsVec = std::vector<fs::path>;
-using PathsSet = std::unordered_set<fs::path>;
-namespace fs = std::filesystem;
-
-class IgnoredFiles
-{
-public:
-    IgnoredFiles() = default;
-    IgnoredFiles(fs::path file, bool saveWhenDone = true);
-    ~IgnoredFiles();
-
-    const PathsSet& files() const;
-
-    bool contains(const fs::path& file) const;
-
-    bool empty() const noexcept;
-
-    size_t size() const noexcept;
-
-    void add(const fs::path& file);
-
-    void add(const PathsVec& files);
-
-private:
-    /**
-     * @brief Saves the ignored files to the specified file.
-     *
-     * @param files The set of file paths to save.
-     */
-    void save() const;
-
-    /**
-     * @brief Loads ignored files from the specified file.
-     *
-     * @param out Output stream for messages.
-     * @return A set of ignored file paths.
-     */
-    void load();
-
-    fs::path filePath_;
-    PathsSet files_;
-    bool saveWhenDone_ {false};
-};
+using IgnoredFiles = FileList;
 
 /**
  * @brief Deletes files using the provided deletion strategy.
