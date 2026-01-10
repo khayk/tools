@@ -72,29 +72,29 @@ TEST(DuplicateDeletionTest, IgnoreFilesModule)
 
     {
         // Tests that nothing is created if there is no file
-        IgnoredFiles ignoredFiles(filePath, true);
-        EXPECT_EQ(0, ignoredFiles.files().size());
+        IgnoredPaths ignoredPaths(filePath, true);
+        EXPECT_EQ(0, ignoredPaths.files().size());
     }
     EXPECT_FALSE(fs::exists(filePath));
 
     {
-        IgnoredFiles ignoredFiles(filePath, true);
-        EXPECT_EQ(0, ignoredFiles.files().size());
-        ignoredFiles.add("file.dat");
-        EXPECT_EQ(1, ignoredFiles.files().size());
+        IgnoredPaths ignoredPaths(filePath, true);
+        EXPECT_EQ(0, ignoredPaths.files().size());
+        ignoredPaths.add("file.dat");
+        EXPECT_EQ(1, ignoredPaths.files().size());
     }
 
     {
         // Should load previously saved file
-        IgnoredFiles ignoredFiles(filePath, true);
-        EXPECT_EQ(1, ignoredFiles.files().size());
-        EXPECT_EQ("file.dat", *ignoredFiles.files().begin());
+        IgnoredPaths ignoredPaths(filePath, true);
+        EXPECT_EQ(1, ignoredPaths.files().size());
+        EXPECT_EQ("file.dat", *ignoredPaths.files().begin());
     }
 
     {
         // Provide invalid file path
-        IgnoredFiles ignoredFiles(tmp.path() / "file_.txt/", true);
-        ignoredFiles.add("file.dat");
+        IgnoredPaths ignoredPaths(tmp.path() / "file_.txt/", true);
+        ignoredPaths.add("file.dat");
     }
 }
 
@@ -102,7 +102,7 @@ TEST(DuplicateDeletionTest, DeleteFiles)
 {
     PathsVec files {"file1.txt", "file2.txt", "file3.txt"};
     PathsVec deleted;
-    PathsSet ignoredFiles;
+    PathsSet ignoredPaths;
     MockDelete strategy;
 
     EXPECT_CALL(strategy, remove(testing::_))
@@ -141,7 +141,7 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_KeepSecond)
 {
     PathsVec files {"file1.txt", "file2.txt", "file3.txt"};
     PathsVec deleted;
-    IgnoredFiles ignoredFiles;
+    IgnoredPaths ignoredPaths;
     MockDelete strategy;
 
     EXPECT_CALL(strategy, remove(testing::_))
@@ -153,8 +153,8 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_KeepSecond)
     std::ostringstream out;
     std::istringstream in("2\n"); // Simulate user input to keep the second file
 
-    EXPECT_TRUE(deleteInteractively(strategy, files, ignoredFiles, out, in));
-    EXPECT_TRUE(ignoredFiles.empty());
+    EXPECT_TRUE(deleteInteractively(strategy, files, ignoredPaths, out, in));
+    EXPECT_TRUE(ignoredPaths.empty());
     ASSERT_TRUE(files.empty());
     ASSERT_EQ(deleted.size(), 2);
     ASSERT_EQ(deleted[0], "file1.txt");
@@ -165,7 +165,7 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_ConsecutiveCalls)
 {
     PathsVec files {"file1.txt", "file2.txt", "file3.txt"};
     PathsVec filesCopy = files;
-    IgnoredFiles ignoredFiles;
+    IgnoredPaths ignoredPaths;
     MockDelete strategy;
 
     // 2 calls per deleteInteractively call
@@ -178,9 +178,9 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_ConsecutiveCalls)
     std::ostringstream out;
     std::istringstream in("1\n\n"); // Keeps the first file during each call
 
-    EXPECT_TRUE(deleteInteractively(strategy, files, ignoredFiles, out, in));
-    EXPECT_TRUE(deleteInteractively(strategy, filesCopy, ignoredFiles, out, in));
-    EXPECT_TRUE(ignoredFiles.empty());
+    EXPECT_TRUE(deleteInteractively(strategy, files, ignoredPaths, out, in));
+    EXPECT_TRUE(deleteInteractively(strategy, filesCopy, ignoredPaths, out, in));
+    EXPECT_TRUE(ignoredPaths.empty());
     ASSERT_TRUE(files.empty());
     ASSERT_TRUE(filesCopy.empty());
 }
@@ -189,7 +189,7 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_IgnoreGroup)
 {
     SilenceLogger silenceLogger;
     PathsVec files {"file1.txt", "file2.txt", "file3.txt"};
-    IgnoredFiles ignoredFiles;
+    IgnoredPaths ignoredPaths;
     MockDelete strategy;
 
     EXPECT_CALL(strategy, remove(testing::_)).Times(0);
@@ -197,19 +197,19 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_IgnoreGroup)
     std::ostringstream out;
     std::istringstream in("i\n"); // Simulate user input to keep the second file
 
-    EXPECT_TRUE(deleteInteractively(strategy, files, ignoredFiles, out, in));
+    EXPECT_TRUE(deleteInteractively(strategy, files, ignoredPaths, out, in));
     ASSERT_EQ(files.size(), 3);
-    ASSERT_EQ(ignoredFiles.size(), 3);
-    EXPECT_TRUE(ignoredFiles.contains(files[0]));
-    EXPECT_TRUE(ignoredFiles.contains(files[1]));
-    EXPECT_TRUE(ignoredFiles.contains(files[2]));
+    ASSERT_EQ(ignoredPaths.size(), 3);
+    EXPECT_TRUE(ignoredPaths.contains(files[0]));
+    EXPECT_TRUE(ignoredPaths.contains(files[1]));
+    EXPECT_TRUE(ignoredPaths.contains(files[2]));
 }
 
 TEST(DuplicateDeletionTest, DeleteFilesInteractively_QuitDeletion)
 {
     SilenceLogger silenceLogger;
     PathsVec files {"file1.txt", "file2.txt"};
-    IgnoredFiles ignoredFiles;
+    IgnoredPaths ignoredPaths;
     MockDelete strategy;
 
     EXPECT_CALL(strategy, remove(testing::_)).Times(0);
@@ -217,15 +217,15 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_QuitDeletion)
     std::ostringstream out;
     std::istringstream in("q"); // Simulate user input to keep the second file
 
-    EXPECT_FALSE(deleteInteractively(strategy, files, ignoredFiles, out, in));
+    EXPECT_FALSE(deleteInteractively(strategy, files, ignoredPaths, out, in));
     ASSERT_EQ(files.size(), 2);
-    ASSERT_EQ(ignoredFiles.size(), 0);
+    ASSERT_EQ(ignoredPaths.size(), 0);
 }
 
 TEST(DuplicateDeletionTest, DeleteFilesInteractively_InvalidChoice)
 {
     PathsVec files {"file1.txt"};
-    IgnoredFiles ignoredFiles;
+    IgnoredPaths ignoredPaths;
     MockDelete strategy;
 
     EXPECT_CALL(strategy, remove(testing::_)).Times(0);
@@ -233,17 +233,17 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_InvalidChoice)
     std::ostringstream out;
     std::istringstream in("4\nW\n"); // Invalid choice
 
-    EXPECT_TRUE(deleteInteractively(strategy, files, ignoredFiles, out, in));
-    EXPECT_TRUE(deleteInteractively(strategy, files, ignoredFiles, out, in));
+    EXPECT_TRUE(deleteInteractively(strategy, files, ignoredPaths, out, in));
+    EXPECT_TRUE(deleteInteractively(strategy, files, ignoredPaths, out, in));
     ASSERT_EQ(files.size(), 1);
-    ASSERT_TRUE(ignoredFiles.empty());
+    ASSERT_TRUE(ignoredPaths.empty());
 }
 
 TEST(DuplicateDeletionTest, DeleteFilesInteractively_BadStream)
 {
     SilenceLogger silenceLogger;
     PathsVec files {"file1.txt"};
-    IgnoredFiles ignoredFiles;
+    IgnoredPaths ignoredPaths;
     MockDelete strategy;
 
     EXPECT_CALL(strategy, remove(testing::_)).Times(0);
@@ -251,9 +251,9 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_BadStream)
     std::ostringstream out;
     std::istringstream in; // no input
 
-    EXPECT_FALSE(deleteInteractively(strategy, files, ignoredFiles, out, in));
+    EXPECT_FALSE(deleteInteractively(strategy, files, ignoredPaths, out, in));
     ASSERT_EQ(files.size(), 1);
-    ASSERT_TRUE(ignoredFiles.empty());
+    ASSERT_TRUE(ignoredPaths.empty());
 }
 
 
@@ -261,7 +261,7 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesInSafeDirs)
 {
     MockDeletionStrategy strategy;
     MockDuplicateGroups groups;
-    IgnoredFiles ignored;
+    IgnoredPaths ignored;
     PathsVec dirsToDeleteFrom = {"safeDir"};
     Progress progress;
 
@@ -290,7 +290,7 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesAllInSafeDirs)
 {
     MockDeletionStrategy strategy;
     MockDuplicateGroups groups;
-    IgnoredFiles ignored;
+    IgnoredPaths ignored;
     PathsVec dirsToDeleteFrom = {"safeDir"};
     Progress progress;
 
@@ -321,7 +321,7 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesSelectively)
 {
     MockDeletionStrategy strategy;
     MockDuplicateGroups groups;
-    IgnoredFiles ignored;
+    IgnoredPaths ignored;
     PathsVec dirsToDeleteFrom;
     Progress progress;
 
@@ -355,7 +355,7 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_SkipsIgnoredFiles)
     SilenceLogger silenceLogger;
     MockDeletionStrategy strategy;
     MockDuplicateGroups groups;
-    IgnoredFiles ignored;
+    IgnoredPaths ignored;
     PathsVec dirsToDeleteFrom = {"safeDir"};
     Progress progress;
 

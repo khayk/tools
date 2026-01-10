@@ -94,7 +94,7 @@ void deleteFiles(const IDeletionStrategy& strategy, PathsVec& files)
 
 bool deleteInteractively(const IDeletionStrategy& strategy,
                          PathsVec& files,
-                         IgnoredFiles& ignoredFiles,
+                         IgnoredPaths& ignoredPaths,
                          std::ostream& out,
                          std::istream& in)
 {
@@ -139,7 +139,7 @@ bool deleteInteractively(const IDeletionStrategy& strategy,
     if (tolower(input[0]) == 'i')
     {
         spdlog::info("User requested to ignore this group...");
-        ignoredFiles.add(files);
+        ignoredPaths.add(files);
         return true;
     }
 
@@ -163,7 +163,7 @@ bool deleteInteractively(const IDeletionStrategy& strategy,
 void deleteDuplicates(const IDeletionStrategy& strategy,
                       const IDuplicateGroups& duplicates,
                       const PathsVec& dirsToDeleteFrom,
-                      IgnoredFiles& ignoredFiles,
+                      IgnoredPaths& ignoredPaths,
                       Progress& progress,
                       std::ostream& out,
                       std::istream& in)
@@ -196,7 +196,7 @@ void deleteDuplicates(const IDeletionStrategy& strategy,
                     continue;
                 }
 
-                if (ignoredFiles.contains(e.file))
+                if (ignoredPaths.contains(e.file))
                 {
                     spdlog::warn("File is ignored: {}", e.file);
                     return true;
@@ -234,7 +234,7 @@ void deleteDuplicates(const IDeletionStrategy& strategy,
                 std::ranges::sort(deleteSelectively);
                 resumeEnumeration = deleteInteractively(strategy,
                                                         deleteSelectively,
-                                                        ignoredFiles,
+                                                        ignoredPaths,
                                                         out,
                                                         in);
             }

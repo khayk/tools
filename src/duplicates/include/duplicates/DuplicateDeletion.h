@@ -4,12 +4,13 @@
 #include <duplicates/DuplicateDetector.h>
 #include <duplicates/Progress.h>
 #include <duplicates/Config.h>
-#include <duplicates/FileList.h>
+#include <duplicates/PathList.h>
+#include <ostream>
 
 
 namespace tools::dups {
 
-using IgnoredFiles = FileList;
+using IgnoredPaths = PathList;
 
 /**
  * @brief Deletes files using the provided deletion strategy.
@@ -26,7 +27,7 @@ void deleteFiles(const IDeletionStrategy& strategy, PathsVec& files);
  *
  * @param strategy The deletion strategy to use.
  * @param files The vector of file paths to delete.
- * @param ignoredFiles Object to track ignored files.
+ * @param ignoredPaths Object to track ignored files.
  * @param out Output stream for messages.
  * @param in Input stream for user interaction.
  *
@@ -34,9 +35,21 @@ void deleteFiles(const IDeletionStrategy& strategy, PathsVec& files);
  */
 bool deleteInteractively(const IDeletionStrategy& strategy,
                          PathsVec& files,
-                         IgnoredFiles& ignoredFiles,
+                         IgnoredPaths& ignoredPaths,
                          std::ostream& out,
                          std::istream& in);
+
+class DeletionConfig {
+public:
+    DeletionConfig(std::ostream& out, std::ostream& in);
+
+    void setDeletionStrategy(IDeletionStrategy* strategy);
+    void setDuplicateGroup(IDuplicateGroups* duplicates);
+    void setProgress(Progress* progress);
+    void setIgnoredPaths(const PathList& ignored);
+    void setKeepFromPaths(const PathList& keepFrom);
+    void setDeleteFromPaths(const PathList& deleteFrom);
+};
 
 /**
  * @brief Deletes duplicate files based on the provided detector and deletion strategy.
@@ -44,7 +57,7 @@ bool deleteInteractively(const IDeletionStrategy& strategy,
  * @param strategy The deletion strategy to use.
  * @param detector The duplicate detector containing the groups of duplicates.
  * @param dirsToDeleteFrom Directories where files can be safely deleted.
- * @param ignoredFiles Object to track ignored files.
+ * @param ignoredPaths Object to track ignored files.
  * @param progress Object for updating progress
  * @param out Output stream for messages.
  * @param in Input stream for user interaction.
@@ -52,7 +65,7 @@ bool deleteInteractively(const IDeletionStrategy& strategy,
 void deleteDuplicates(const IDeletionStrategy& strategy,
                       const IDuplicateGroups& duplicates,
                       const PathsVec& dirsToDeleteFrom,
-                      IgnoredFiles& ignoredFiles,
+                      IgnoredPaths& ignoredPaths,
                       Progress& progress,
                       std::ostream& out,
                       std::istream& in);

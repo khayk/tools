@@ -66,7 +66,7 @@ int main(int argc, const char* argv[])
 
         DuplicateDetector detector;
         Progress progress(cfg.updateFrequency());
-        IgnoredFiles ignored(cfg.ignFilesPath());
+        IgnoredPaths ignored(cfg.ignFilesPath());
 
         scanDirectories(cfg, detector, progress);
         outputFiles(cfg.allFilesPath(), detector);
