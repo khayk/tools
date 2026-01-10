@@ -12,14 +12,14 @@ class IDeletionStrategy
 public:
     virtual ~IDeletionStrategy() = default;
 
-    virtual void apply(const fs::path& file) const = 0;
+    virtual void remove(const fs::path& file) const = 0;
 };
 
 
 class PermanentDelete : public IDeletionStrategy
 {
 public:
-    void apply(const fs::path& file) const override;
+    void remove(const fs::path& file) const override;
 };
 
 
@@ -34,7 +34,7 @@ class BackupAndDelete : public IDeletionStrategy
 public:
     BackupAndDelete(fs::path backupDir);
 
-    void apply(const fs::path& file) const override;
+    void remove(const fs::path& file) const override;
 
     const fs::path& journalFile() const;
 };
@@ -43,7 +43,7 @@ public:
 class DryRunDelete : public IDeletionStrategy
 {
 public:
-    void apply(const fs::path& file) const override;
+    void remove(const fs::path& file) const override;
 };
 
 

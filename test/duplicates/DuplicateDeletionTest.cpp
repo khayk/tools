@@ -23,14 +23,14 @@ namespace {
 class MockDelete : public IDeletionStrategy
 {
 public:
-    MOCK_METHOD(void, apply, (const fs::path& file), (const, override));
+    MOCK_METHOD(void, remove, (const fs::path& file), (const, override));
 };
 
 
 class MockDeletionStrategy : public IDeletionStrategy
 {
 public:
-    MOCK_METHOD(void, apply, (const fs::path&), (const, override));
+    MOCK_METHOD(void, remove, (const fs::path&), (const, override));
 };
 
 
@@ -105,7 +105,7 @@ TEST(DuplicateDeletionTest, DeleteFiles)
     PathsSet ignoredFiles;
     MockDelete strategy;
 
-    EXPECT_CALL(strategy, apply(testing::_))
+    EXPECT_CALL(strategy, remove(testing::_))
         .Times(static_cast<int>(files.size()))
         .WillRepeatedly([&deleted](const fs::path& p) {
             deleted.push_back(p);
@@ -125,7 +125,7 @@ TEST(DuplicateDeletionTest, DeleteFilesException)
 
     PathsVec files {"file1.txt", "file2.txt", "file3.txt"};
     MockDelete strategy;
-    EXPECT_CALL(strategy, apply(testing::_))
+    EXPECT_CALL(strategy, remove(testing::_))
         .Times(static_cast<int>(files.size()))
         .WillOnce(testing::Throw(std::runtime_error("Deletion error")))
         .WillRepeatedly(testing::Return());
@@ -144,7 +144,7 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_KeepSecond)
     IgnoredFiles ignoredFiles;
     MockDelete strategy;
 
-    EXPECT_CALL(strategy, apply(testing::_))
+    EXPECT_CALL(strategy, remove(testing::_))
         .Times(2)
         .WillRepeatedly([&deleted](const fs::path& p) {
             deleted.push_back(p);
@@ -169,7 +169,7 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_ConsecutiveCalls)
     MockDelete strategy;
 
     // 2 calls per deleteInteractively call
-    EXPECT_CALL(strategy, apply(testing::_))
+    EXPECT_CALL(strategy, remove(testing::_))
         .Times(4)
         .WillRepeatedly([](const fs::path& p) {
             EXPECT_TRUE(p.string() != "file1.txt");
@@ -192,7 +192,7 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_IgnoreGroup)
     IgnoredFiles ignoredFiles;
     MockDelete strategy;
 
-    EXPECT_CALL(strategy, apply(testing::_)).Times(0);
+    EXPECT_CALL(strategy, remove(testing::_)).Times(0);
 
     std::ostringstream out;
     std::istringstream in("i\n"); // Simulate user input to keep the second file
@@ -212,7 +212,7 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_QuitDeletion)
     IgnoredFiles ignoredFiles;
     MockDelete strategy;
 
-    EXPECT_CALL(strategy, apply(testing::_)).Times(0);
+    EXPECT_CALL(strategy, remove(testing::_)).Times(0);
 
     std::ostringstream out;
     std::istringstream in("q"); // Simulate user input to keep the second file
@@ -228,7 +228,7 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_InvalidChoice)
     IgnoredFiles ignoredFiles;
     MockDelete strategy;
 
-    EXPECT_CALL(strategy, apply(testing::_)).Times(0);
+    EXPECT_CALL(strategy, remove(testing::_)).Times(0);
 
     std::ostringstream out;
     std::istringstream in("4\nW\n"); // Invalid choice
@@ -246,7 +246,7 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_BadStream)
     IgnoredFiles ignoredFiles;
     MockDelete strategy;
 
-    EXPECT_CALL(strategy, apply(testing::_)).Times(0);
+    EXPECT_CALL(strategy, remove(testing::_)).Times(0);
 
     std::ostringstream out;
     std::istringstream in; // no input
@@ -277,8 +277,8 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesInSafeDirs)
         });
 
     // Only the second file in each group should be deleted
-    EXPECT_CALL(strategy, apply(fs::path("safeDir/file2.txt"))).Times(1);
-    EXPECT_CALL(strategy, apply(fs::path("safeDir/file4.txt"))).Times(1);
+    EXPECT_CALL(strategy, remove(fs::path("safeDir/file2.txt"))).Times(1);
+    EXPECT_CALL(strategy, remove(fs::path("safeDir/file4.txt"))).Times(1);
 
     std::ostringstream out;
     std::istringstream in;
@@ -306,8 +306,8 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesAllInSafeDirs)
         });
 
     // Only the second file in each group should be deleted
-    EXPECT_CALL(strategy, apply(fs::path("safeDir/file2.txt"))).Times(1);
-    EXPECT_CALL(strategy, apply(fs::path("safeDir/file4.txt"))).Times(1);
+    EXPECT_CALL(strategy, remove(fs::path("safeDir/file2.txt"))).Times(1);
+    EXPECT_CALL(strategy, remove(fs::path("safeDir/file4.txt"))).Times(1);
 
     std::ostringstream out;
     // Need to perform selection, as both candidates are from the directory to
@@ -337,8 +337,8 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesSelectively)
         });
 
     // Only the second file in each group should be deleted
-    EXPECT_CALL(strategy, apply(fs::path("dupDir/file2.txt"))).Times(1);
-    EXPECT_CALL(strategy, apply(fs::path("dupDir/file4.txt"))).Times(1);
+    EXPECT_CALL(strategy, remove(fs::path("dupDir/file2.txt"))).Times(1);
+    EXPECT_CALL(strategy, remove(fs::path("dupDir/file4.txt"))).Times(1);
 
     std::ostringstream out;
 
@@ -370,8 +370,8 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_SkipsIgnoredFiles)
         .WillOnce([&groupVec](const DupGroupCallback& cb) {
             emulateDupGroups(groupVec, cb);
         });
-    // Only file2.txt would be deleted, but it's ignored, so apply should not be called
-    EXPECT_CALL(strategy, apply(testing::_)).Times(0);
+    // Only file2.txt would be deleted, but it's ignored, so remove should not be called
+    EXPECT_CALL(strategy, remove(testing::_)).Times(0);
 
     std::ostringstream out;
     std::istringstream in;

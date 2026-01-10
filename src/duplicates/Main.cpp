@@ -25,7 +25,7 @@ using tools::utl::configureLogger;
 namespace tools::dups {
 namespace {
 
-std::unique_ptr<IDeletionStrategy> getDeletionStrategy(const Config& cfg)
+std::unique_ptr<IDeletionStrategy> createDeletionStrategy(const Config& cfg)
 {
     if (cfg.dryRun())
     {
@@ -74,7 +74,16 @@ int main(int argc, const char* argv[])
         detectDuplicates(cfg, detector, progress);
         reportDuplicates(cfg.dupFilesPath(), detector);
 
-        auto strategy = getDeletionStrategy(cfg);
+        auto strategy = createDeletionStrategy(cfg);
+
+        // DeletorConfig delCfg;
+
+        // delCfg.setDeletionStrategy();
+        // delCfg.setDetector(detector);
+        // delCfg.setProgress(progress);
+        // delCfg.setIgnoredFiles();
+        // delCfg.setKeepFromDirs();
+        // delCfg.setDeleteFromDirs();
 
         deleteDuplicates(*strategy,
                          detector,

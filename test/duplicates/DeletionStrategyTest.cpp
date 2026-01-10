@@ -22,7 +22,7 @@ TEST(DeletionStrategyTest, PermanentDelete)
     file::write(file, "test content");
 
     EXPECT_TRUE(fs::exists(file));
-    strategy.apply(file);
+    strategy.remove(file);
     EXPECT_FALSE(fs::exists(file));
 }
 
@@ -48,7 +48,7 @@ TEST(DeletionStrategyTest, BackupAndDelete)
     {
         file::write(file, sampleContent);
         EXPECT_TRUE(fs::exists(file));
-        strategy->apply(file);
+        strategy->remove(file);
         EXPECT_FALSE(fs::exists(file));
 
         const auto parentPath = files.front().parent_path();

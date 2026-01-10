@@ -172,7 +172,7 @@ void deleteFiles(const IDeletionStrategy& strategy, PathsVec& files)
     {
         try
         {
-            strategy.apply(file);
+            strategy.remove(file);
         }
         catch (const std::exception& e)
         {
