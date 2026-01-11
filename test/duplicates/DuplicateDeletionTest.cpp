@@ -295,10 +295,10 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_InvalidChoice)
     std::ostringstream out;
     std::istringstream in("4\nW\n"); // Invalid choice
 
-    EXPECT_TRUE(deleteInteractively(strategy, files, ignored, keepFrom, out, in));
-    EXPECT_TRUE(deleteInteractively(strategy, files, ignored, keepFrom, out, in));
+    EXPECT_FALSE(deleteInteractively(strategy, files, ignored, keepFrom, out, in));
     ASSERT_EQ(files.size(), 1);
     ASSERT_TRUE(ignored.empty());
+    EXPECT_TRUE(!in); // input should be fully consumed
 }
 
 TEST(DuplicateDeletionTest, DeleteFilesInteractively_BadStream)

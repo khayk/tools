@@ -6,8 +6,8 @@
 #include <core/utils/FmtExt.h>
 
 #include <algorithm>
+#include <cstdint>
 #include <iostream>
-#include <algorithm>
 #include <iterator>
 #include <cassert>
 
@@ -38,7 +38,7 @@ std::string promptUser(std::ostream& out, std::istream& in)
 
     while (in && input.empty())
     {
-        out << "Enter a number to KEEP (q - quit, i - ignore, o - open dirs) > ";
+        out << "Enter a number to KEEP  ('i' - ignore, 'o' - open dirs, 'q' - quit) > ";
         std::getline(in, input);
 
         if (input.empty())
@@ -130,6 +130,71 @@ bool deduceTheOneToKeep(const IDeletionStrategy& strategy,
     return true;
 }
 
+enum class UserAction : std::uint8_t
+{
+    KeepIndex,
+    IgnoreGroup,
+    OpenFolders,
+    Quit,
+    Retry
+};
+
+struct ParsedInput
+{
+    UserAction action {};
+    size_t index = 0;
+};
+
+// Handles the console rendering logic
+void displayFileOptions(std::ostream& out, const PathsVec& files)
+{
+    const size_t maxVisible = 10;
+    const int width = static_cast<int>(num::digits(files.size()));
+
+    for (size_t i = 0; i < files.size(); ++i)
+    {
+        if (i < maxVisible - 1 || i == files.size() - 1)
+        {
+            out << std::setw(width + 1) << (i + 1) << ": " << files[i] << '\n';
+        }
+        else if (i == maxVisible - 1)
+        {
+            out << std::setw(width + 1) << " " << ": ...\n";
+        }
+    }
+}
+
+// Translates string input into a structured Command
+ParsedInput parseUserInput(const std::string& input, size_t maxIdx)
+{
+    if (input.empty())
+    {
+        return {UserAction::Quit};
+    }
+    char cmd = static_cast<char>(std::tolower(input[0]));
+
+    if (cmd == 'q')
+    {
+        return {UserAction::Quit};
+    }
+    if (cmd == 'i')
+    {
+        return {UserAction::IgnoreGroup};
+    }
+    if (cmd == 'o')
+    {
+        return {UserAction::OpenFolders};
+    }
+
+    const auto choice = num::s2num<size_t>(input);
+    if (choice > 0 && choice <= maxIdx)
+    {
+        return {UserAction::KeepIndex, choice};
+    }
+
+    return {UserAction::Retry, choice};
+}
+
 bool deleteInteractively(const IDeletionStrategy& strategy,
                          PathsVec& files,
                          IgnoredPaths& ignoredPaths,
@@ -137,73 +202,48 @@ bool deleteInteractively(const IDeletionStrategy& strategy,
                          std::ostream& out,
                          std::istream& in)
 {
-    // Find out if there is a single file under the to "keep from" directories.
-    // if there is only one such file, keep it and move on
+    // Try automatic resolution first
     if (deduceTheOneToKeep(strategy, files, keepFromPaths))
     {
         return true;
     }
 
-    // Display files to be deleted
-    size_t i = 0;
-    size_t maxDisplayGroupSize = 10;
-    const auto width = static_cast<int>(num::digits(files.size()));
-
-    for (const auto& file : files)
+    // UI Loop
+    while (true)
     {
-        ++i;
-        if (i < maxDisplayGroupSize || i == files.size())
+        displayFileOptions(out, files);
+        auto input = parseUserInput(promptUser(out, in), files.size());
+
+        switch (input.action)
         {
-            out << std::setw(width + 1) << i << ": " << file << '\n';
+            case UserAction::OpenFolders:
+                openDirectories(files);
+                continue; // Re-prompt after opening folders
+
+            case UserAction::IgnoreGroup:
+                spdlog::info("Ignoring group...");
+                ignoredPaths.add(files);
+                return true;
+
+            case UserAction::Quit:
+                lastInput().clear();
+                spdlog::info("Stopping deletion...");
+                return false;
+
+            case UserAction::KeepIndex:
+                // The user chose which one to KEEP. Swap it away and delete the rest.
+                std::swap(files[input.index - 1], files.back());
+                files.pop_back();
+                deleteFiles(strategy, files);
+                return true;
+
+            case UserAction::Retry:
+            default:
+                // We don't return false here so the user gets another chance
+                out << "'" << input.index << "'" " is an invalid choice, no file is deleted.\n";
         }
-        else if (i == maxDisplayGroupSize)
-        {
-            out << std::setw(width + 1) << ' ' << ": ..." << '\n';
-        }
     }
-
-    auto input = promptUser(out, in);
-
-    while (!input.empty() && tolower(input[0]) == 'o')
-    {
-        openDirectories(files);
-        input = promptUser(out, in);
-    }
-
-    if (input.empty())
-    {
-        return false;
-    }
-
-    if (tolower(input[0]) == 'q')
-    {
-        spdlog::info("User requested to stop deletion...");
-        lastInput().clear();
-        return false;
-    }
-
-    if (tolower(input[0]) == 'i')
-    {
-        spdlog::info("User requested to ignore this group...");
-        ignoredPaths.add(files);
-        return true;
-    }
-
-    const auto choice = num::s2num<size_t>(input);
-    if (choice > 0 && choice <= files.size())
-    {
-        std::swap(files[choice - 1], files.back());
-        files.pop_back();
-        deleteFiles(strategy, files);
-    }
-    else
-    {
-        out << "Invalid choice, no file is deleted.\n";
-        lastInput().clear();
-    }
-
-    return true;
-};
+}
 
 
 DeletionConfig::DeletionConfig(const IDuplicateGroups& duplicates,
