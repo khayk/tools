@@ -5,6 +5,7 @@
 #include <core/utils/File.h>
 #include <core/utils/FmtExt.h>
 
+#include <algorithm>
 #include <iostream>
 #include <algorithm>
 #include <iterator>
@@ -16,7 +17,7 @@ namespace tools::dups {
 
 namespace {
 
-bool isSafeToDelete(const PathsSet& delDirs, const fs::path& path)
+bool findPath(const PathsSet& delDirs, const fs::path& path)
 {
     const auto& pathStr = path.native();
 
@@ -94,12 +95,52 @@ void deleteFiles(const IDeletionStrategy& strategy, PathsVec& files)
     files.clear();
 };
 
+bool deduceTheOneToKeep(const IDeletionStrategy& strategy,
+                        PathsVec& files,
+                        KeepFromPaths& keepFromPaths)
+{
+    // Find the first file that should be kept
+    auto it = std::ranges::find_if(files, [&](const auto& file) {
+        return findPath(keepFromPaths.files(), file.parent_path());
+    });
+
+    // If no file needs to be kept, we can't "deduce the one," so we exit
+    if (it == files.end()) {
+        return false;
+    }
+
+    // Check if there is a SECOND file that matches (ambiguity check)
+    auto nextMatch = std::find_if(std::next(it), files.end(), [&](const auto& file) {
+        return findPath(keepFromPaths.files(), file.parent_path());
+    });
+
+    if (nextMatch != files.end()) {
+        return false; // Multiple candidates found; conflict!
+    }
+
+    // Move the 'keep' file out of the deletion list
+    // We swap it to the end and pop it so 'files' now only contains targets for deletion
+    std::iter_swap(it, std::prev(files.end()));
+    files.pop_back();
+    deleteFiles(strategy, files);
+
+    return true;
+}
+
 bool deleteInteractively(const IDeletionStrategy& strategy,
                          PathsVec& files,
                          IgnoredPaths& ignoredPaths,
+                         KeepFromPaths& keepFromPaths,
                          std::ostream& out,
                          std::istream& in)
 {
+    // Find out if there is a single file under the to "keep from" directories.
+    // if there is only one such file, keep it and move on
+    if (deduceTheOneToKeep(strategy, files, keepFromPaths))
+    {
+        return true;
+    }
+
     // Display files to be deleted
     size_t i = 0;
     size_t maxDisplayGroupSize = 10;
@@ -246,8 +287,8 @@ void deleteDuplicates(DeletionConfig& cfg)
     auto& in = cfg.in();
     auto* progress = cfg.progress();
     auto& ignoredPaths = cfg.ignoredPaths() ? *cfg.ignoredPaths() : sesIgnoredPaths;
-    auto& deleteFrom =
-        cfg.deleteFromPaths() ? *cfg.deleteFromPaths() : sesDeleteFromPath;
+    auto& keepFromPaths = cfg.keepFromPaths() ? *cfg.keepFromPaths() : sesKeepFromPaths;
+    auto& deleteFromPaths = cfg.deleteFromPaths() ? *cfg.deleteFromPaths() : sesDeleteFromPath;
 
     PathsVec deleteWithoutAsking;
     PathsVec deleteSelectively;
@@ -285,7 +326,7 @@ void deleteDuplicates(DeletionConfig& cfg)
                     return true;
                 }
 
-                if (isSafeToDelete(deleteFrom.files(), e.file.parent_path()))
+                if (findPath(deleteFromPaths.files(), e.file.parent_path()))
                 {
                     deleteWithoutAsking.emplace_back(e.file);
                 }
@@ -318,6 +359,7 @@ void deleteDuplicates(DeletionConfig& cfg)
                 resumeEnumeration = deleteInteractively(strategy,
                                                         deleteSelectively,
                                                         ignoredPaths,
+                                                        keepFromPaths,
                                                         out,
                                                         in);
             }

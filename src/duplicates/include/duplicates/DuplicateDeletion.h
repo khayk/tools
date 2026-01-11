@@ -38,6 +38,7 @@ void deleteFiles(const IDeletionStrategy& strategy, PathsVec& files);
  * @param strategy The deletion strategy to use.
  * @param files The vector of file paths to delete.
  * @param ignoredPaths Object to track ignored files.
+ * @param keepFromPaths Directories to use as locations to keep from
  * @param out Output stream for messages.
  * @param in Input stream for user interaction.
  *
@@ -46,6 +47,7 @@ void deleteFiles(const IDeletionStrategy& strategy, PathsVec& files);
 bool deleteInteractively(const IDeletionStrategy& strategy,
                          PathsVec& files,
                          IgnoredPaths& ignoredPaths,
+                         KeepFromPaths& keepFromPaths,
                          std::ostream& out,
                          std::istream& in);
 
