@@ -105,7 +105,8 @@ bool deduceTheOneToKeep(const IDeletionStrategy& strategy,
     });
 
     // If no file needs to be kept, we can't "deduce the one," so we exit
-    if (it == files.end()) {
+    if (it == files.end())
+    {
         return false;
     }
 
@@ -114,12 +115,14 @@ bool deduceTheOneToKeep(const IDeletionStrategy& strategy,
         return findPath(keepFromPaths.files(), file.parent_path());
     });
 
-    if (nextMatch != files.end()) {
+    if (nextMatch != files.end())
+    {
         return false; // Multiple candidates found; conflict!
     }
 
     // Move the 'keep' file out of the deletion list
-    // We swap it to the end and pop it so 'files' now only contains targets for deletion
+    // We swap it to the end and pop it so 'files' now only contains targets for
+    // deletion
     std::iter_swap(it, std::prev(files.end()));
     files.pop_back();
     deleteFiles(strategy, files);
@@ -281,27 +284,36 @@ DeleteFromPaths& DeletionConfig::deleteFromPaths()
     return *deleteFrom_;
 }
 
-class GroupProcessor {
+class GroupProcessor
+{
     DeletionConfig& cfg;
     bool sensitiveToExternalEvents = false;
     PathsVec autoDelete;
     PathsVec selective;
 
 public:
-    GroupProcessor(DeletionConfig& dcfg) : cfg(dcfg) {}
+    GroupProcessor(DeletionConfig& dcfg)
+        : cfg(dcfg)
+    {
+    }
 
     // The entry point for the loop
-    bool process(const DupGroup& group, size_t groupIdx, size_t totalGroups) {
+    bool process(const DupGroup& group, size_t groupIdx, size_t totalGroups)
+    {
         updateProgress(groupIdx, totalGroups);
         categorizeFiles(group.entires);
 
         // Safety: If every file is in a "DeleteFrom" path, we must treat them
         // as selective to avoid deleting the entire group by accident.
-        if (selective.empty()) {
+        if (selective.empty())
+        {
             selective = std::move(autoDelete);
             autoDelete.clear();
-        } else {
-            // Delete the "unwanted" ones immediately, keeping the "selective" ones for review
+        }
+        else
+        {
+            // Delete the "unwanted" ones immediately, keeping the "selective" ones for
+            // review
             deleteFiles(cfg.strategy(), autoDelete);
         }
 
@@ -309,43 +321,65 @@ public:
     }
 
 private:
-    void updateProgress(size_t current, size_t total) {
-        if (auto* p = cfg.progress()) {
+    void updateProgress(size_t current, size_t total)
+    {
+        if (auto* p = cfg.progress())
+        {
             p->update([&](auto& os) {
                 os << "Processing group " << current << " of " << total << '\n';
             });
         }
     }
 
-    void categorizeFiles(const std::vector<DupEntry>& entries) {
+    void categorizeFiles(const std::vector<DupEntry>& entries)
+    {
         autoDelete.clear();
         selective.clear();
-        for (const auto& e : entries) {
-            if (sensitiveToExternalEvents && !fs::exists(e.file)) continue;
-            if (cfg.ignoredPaths().contains(e.file)) continue;
+        for (const auto& e : entries)
+        {
+            if (sensitiveToExternalEvents && !fs::exists(e.file))
+            {
+                continue;
+            }
+            if (cfg.ignoredPaths().contains(e.file))
+            {
+                continue;
+            }
 
-            if (findPath(cfg.deleteFromPaths().files(), e.file.parent_path())) {
+            if (findPath(cfg.deleteFromPaths().files(), e.file.parent_path()))
+            {
                 autoDelete.push_back(e.file);
-            } else {
+            }
+            else
+            {
                 selective.push_back(e.file);
             }
         }
     }
 
-    bool handleReview(const DupGroup& group, PathsVec& selective) {
-        if (selective.size() <= 1) return true;
+    bool handleReview(const DupGroup& group, PathsVec& selective)
+    {
+        if (selective.size() <= 1)
+        {
+            return true;
+        }
 
         cfg.out() << "Size: " << group.entires.front().size
                   << " SHA256: " << group.entires.front().sha256 << '\n';
 
         std::ranges::sort(selective);
-        return deleteInteractively(cfg.strategy(), selective, cfg.ignoredPaths(),
-                                   cfg.keepFromPaths(), cfg.out(), cfg.in());
+        return deleteInteractively(cfg.strategy(),
+                                   selective,
+                                   cfg.ignoredPaths(),
+                                   cfg.keepFromPaths(),
+                                   cfg.out(),
+                                   cfg.in());
     }
 };
 
 // The main function is now very clean
-void deleteDuplicates(DeletionConfig& cfg) {
+void deleteDuplicates(DeletionConfig& cfg)
+{
     GroupProcessor processor {cfg};
     size_t total = cfg.duplicates().numGroups();
 

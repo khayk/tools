@@ -141,8 +141,8 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_KeepSecond)
 {
     PathsVec files {"file1.txt", "file2.txt", "file3.txt"};
     PathsVec deleted;
-    IgnoredPaths ignoredPaths;
-    KeepFromPaths keepPaths;
+    IgnoredPaths ignored;
+    KeepFromPaths keepFrom;
     MockDelete strategy;
 
     EXPECT_CALL(strategy, remove(testing::_))
@@ -154,8 +154,8 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_KeepSecond)
     std::ostringstream out;
     std::istringstream in("2\n"); // Simulate user input to keep the second file
 
-    EXPECT_TRUE(deleteInteractively(strategy, files, ignoredPaths, keepPaths, out, in));
-    EXPECT_TRUE(ignoredPaths.empty());
+    EXPECT_TRUE(deleteInteractively(strategy, files, ignored, keepFrom, out, in));
+    EXPECT_TRUE(ignored.empty());
     ASSERT_TRUE(files.empty());
     ASSERT_EQ(deleted.size(), 2);
     ASSERT_EQ(deleted[0], "file1.txt");
@@ -167,11 +167,11 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_KeepPaths_OneMatch)
 {
     PathsVec files {"keep/file1.txt", "file2.txt", "file3.txt"};
     PathsVec deleted;
-    IgnoredPaths ignoredPaths;
-    KeepFromPaths keepPaths;
+    IgnoredPaths ignored;
+    KeepFromPaths keepFrom;
     MockDelete strategy;
 
-    keepPaths.add(fs::path {"keep"});
+    keepFrom.add(fs::path {"keep"});
 
     EXPECT_CALL(strategy, remove(testing::_))
         .Times(2)
@@ -182,8 +182,8 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_KeepPaths_OneMatch)
     std::ostringstream out;
     std::istringstream in; // No user input should be needed, as keep path will resolve
 
-    EXPECT_TRUE(deleteInteractively(strategy, files, ignoredPaths, keepPaths, out, in));
-    EXPECT_TRUE(ignoredPaths.empty());
+    EXPECT_TRUE(deleteInteractively(strategy, files, ignored, keepFrom, out, in));
+    EXPECT_TRUE(ignored.empty());
     ASSERT_TRUE(files.empty());
     ASSERT_EQ(deleted.size(), 2);
     ASSERT_EQ(deleted[0], "file3.txt");
@@ -195,11 +195,11 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_KeepPaths_MultipleMatches)
 {
     PathsVec files {"keep/file1.txt", "keep/file2.txt", "file3.txt"};
     PathsVec deleted;
-    IgnoredPaths ignoredPaths;
-    KeepFromPaths keepPaths;
+    IgnoredPaths ignored;
+    KeepFromPaths keepFrom;
     MockDelete strategy;
 
-    keepPaths.add(fs::path {"keep"});
+    keepFrom.add(fs::path {"keep"});
 
     EXPECT_CALL(strategy, remove(testing::_))
         .Times(2)
@@ -210,8 +210,8 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_KeepPaths_MultipleMatches)
     std::ostringstream out;
     std::istringstream in("3\n"); // User instruct to keep file3.txt
 
-    EXPECT_TRUE(deleteInteractively(strategy, files, ignoredPaths, keepPaths, out, in));
-    EXPECT_TRUE(ignoredPaths.empty());
+    EXPECT_TRUE(deleteInteractively(strategy, files, ignored, keepFrom, out, in));
+    EXPECT_TRUE(ignored.empty());
     ASSERT_TRUE(files.empty());
     ASSERT_EQ(deleted.size(), 2);
     ASSERT_EQ(deleted[0], "keep/file1.txt");
@@ -223,8 +223,8 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_ConsecutiveCalls)
 {
     PathsVec files {"file1.txt", "file2.txt", "file3.txt"};
     PathsVec filesCopy = files;
-    IgnoredPaths ignoredPaths;
-    KeepFromPaths keepPaths;
+    IgnoredPaths ignored;
+    KeepFromPaths keepFrom;
     MockDelete strategy;
 
     // 2 calls per deleteInteractively call
@@ -237,9 +237,9 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_ConsecutiveCalls)
     std::ostringstream out;
     std::istringstream in("1\n\n"); // Keeps the first file during each call
 
-    EXPECT_TRUE(deleteInteractively(strategy, files, ignoredPaths, keepPaths, out, in));
-    EXPECT_TRUE(deleteInteractively(strategy, filesCopy, ignoredPaths, keepPaths, out, in));
-    EXPECT_TRUE(ignoredPaths.empty());
+    EXPECT_TRUE(deleteInteractively(strategy, files, ignored, keepFrom, out, in));
+    EXPECT_TRUE(deleteInteractively(strategy, filesCopy, ignored, keepFrom, out, in));
+    EXPECT_TRUE(ignored.empty());
     ASSERT_TRUE(files.empty());
     ASSERT_TRUE(filesCopy.empty());
 }
@@ -248,8 +248,8 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_IgnoreGroup)
 {
     SilenceLogger silenceLogger;
     PathsVec files {"file1.txt", "file2.txt", "file3.txt"};
-    IgnoredPaths ignoredPaths;
-    KeepFromPaths keepPaths;
+    IgnoredPaths ignored;
+    KeepFromPaths keepFrom;
     MockDelete strategy;
 
     EXPECT_CALL(strategy, remove(testing::_)).Times(0);
@@ -257,20 +257,20 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_IgnoreGroup)
     std::ostringstream out;
     std::istringstream in("i\n"); // Simulate user input to keep the second file
 
-    EXPECT_TRUE(deleteInteractively(strategy, files, ignoredPaths, keepPaths, out, in));
+    EXPECT_TRUE(deleteInteractively(strategy, files, ignored, keepFrom, out, in));
     ASSERT_EQ(files.size(), 3);
-    ASSERT_EQ(ignoredPaths.size(), 3);
-    EXPECT_TRUE(ignoredPaths.contains(files[0]));
-    EXPECT_TRUE(ignoredPaths.contains(files[1]));
-    EXPECT_TRUE(ignoredPaths.contains(files[2]));
+    ASSERT_EQ(ignored.size(), 3);
+    EXPECT_TRUE(ignored.contains(files[0]));
+    EXPECT_TRUE(ignored.contains(files[1]));
+    EXPECT_TRUE(ignored.contains(files[2]));
 }
 
 TEST(DuplicateDeletionTest, DeleteFilesInteractively_InterruptDeletion)
 {
     SilenceLogger silenceLogger;
     PathsVec files {"file1.txt", "file2.txt"};
-    IgnoredPaths ignoredPaths;
-    KeepFromPaths keepPaths;
+    IgnoredPaths ignored;
+    KeepFromPaths keepFrom;
     MockDelete strategy;
 
     EXPECT_CALL(strategy, remove(testing::_)).Times(0);
@@ -278,16 +278,16 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_InterruptDeletion)
     std::ostringstream out;
     std::istringstream in("q"); // Simulate user input to keep the second file
 
-    EXPECT_FALSE(deleteInteractively(strategy, files, ignoredPaths, keepPaths, out, in));
+    EXPECT_FALSE(deleteInteractively(strategy, files, ignored, keepFrom, out, in));
     ASSERT_EQ(files.size(), 2);
-    ASSERT_EQ(ignoredPaths.size(), 0);
+    ASSERT_EQ(ignored.size(), 0);
 }
 
 TEST(DuplicateDeletionTest, DeleteFilesInteractively_InvalidChoice)
 {
     PathsVec files {"file1.txt"};
-    IgnoredPaths ignoredPaths;
-    KeepFromPaths keepPaths;
+    IgnoredPaths ignored;
+    KeepFromPaths keepFrom;
     MockDelete strategy;
 
     EXPECT_CALL(strategy, remove(testing::_)).Times(0);
@@ -295,18 +295,18 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_InvalidChoice)
     std::ostringstream out;
     std::istringstream in("4\nW\n"); // Invalid choice
 
-    EXPECT_TRUE(deleteInteractively(strategy, files, ignoredPaths, keepPaths, out, in));
-    EXPECT_TRUE(deleteInteractively(strategy, files, ignoredPaths, keepPaths, out, in));
+    EXPECT_TRUE(deleteInteractively(strategy, files, ignored, keepFrom, out, in));
+    EXPECT_TRUE(deleteInteractively(strategy, files, ignored, keepFrom, out, in));
     ASSERT_EQ(files.size(), 1);
-    ASSERT_TRUE(ignoredPaths.empty());
+    ASSERT_TRUE(ignored.empty());
 }
 
 TEST(DuplicateDeletionTest, DeleteFilesInteractively_BadStream)
 {
     SilenceLogger silenceLogger;
     PathsVec files {"file1.txt"};
-    IgnoredPaths ignoredPaths;
-    KeepFromPaths keepPaths;
+    IgnoredPaths ignored;
+    KeepFromPaths keepFrom;
     MockDelete strategy;
 
     EXPECT_CALL(strategy, remove(testing::_)).Times(0);
@@ -314,9 +314,9 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_BadStream)
     std::ostringstream out;
     std::istringstream in; // no input
 
-    EXPECT_FALSE(deleteInteractively(strategy, files, ignoredPaths, keepPaths, out, in));
+    EXPECT_FALSE(deleteInteractively(strategy, files, ignored, keepFrom, out, in));
     ASSERT_EQ(files.size(), 1);
-    ASSERT_TRUE(ignoredPaths.empty());
+    ASSERT_TRUE(ignored.empty());
 }
 
 
