@@ -113,9 +113,9 @@ public:
     std::istream& in();
 
     Progress* progress();
-    IgnoredPaths* ignoredPaths();
-    KeepFromPaths* keepFromPaths();
-    DeleteFromPaths* deleteFromPaths();
+    IgnoredPaths& ignoredPaths();
+    KeepFromPaths& keepFromPaths();
+    DeleteFromPaths& deleteFromPaths();
 };
 
 /**

@@ -212,6 +212,13 @@ DeletionConfig::DeletionConfig(const IDuplicateGroups& duplicates,
     , out_ {&out}
     , in_ {&in}
 {
+    static IgnoredPaths s_ignorePaths;
+    static KeepFromPaths s_keepPaths;
+    static DeleteFromPaths s_deletePaths;
+
+    ignored_ = &s_ignorePaths;
+    keepFrom_ = &s_keepPaths;
+    deleteFrom_ = &s_deletePaths;
 }
 
 void DeletionConfig::setProgress(Progress& progress)
@@ -259,114 +266,92 @@ Progress* DeletionConfig::progress()
     return progress_;
 }
 
-IgnoredPaths* DeletionConfig::ignoredPaths()
+IgnoredPaths& DeletionConfig::ignoredPaths()
 {
-    return ignored_;
+    return *ignored_;
 }
 
-KeepFromPaths* DeletionConfig::keepFromPaths()
+KeepFromPaths& DeletionConfig::keepFromPaths()
 {
-    return keepFrom_;
+    return *keepFrom_;
 }
 
-DeleteFromPaths* DeletionConfig::deleteFromPaths()
+DeleteFromPaths& DeletionConfig::deleteFromPaths()
 {
-    return deleteFrom_;
+    return *deleteFrom_;
 }
 
-void deleteDuplicates(DeletionConfig& cfg)
-{
-    IgnoredPaths sesIgnoredPaths;
-    DeleteFromPaths sesDeleteFromPath;
-    KeepFromPaths sesKeepFromPaths;
-
-    // aliasing for convenient usage
-    const auto& strategy = cfg.strategy();
-    const auto& duplicates = cfg.duplicates();
-    auto& out = cfg.out();
-    auto& in = cfg.in();
-    auto* progress = cfg.progress();
-    auto& ignoredPaths = cfg.ignoredPaths() ? *cfg.ignoredPaths() : sesIgnoredPaths;
-    auto& keepFromPaths = cfg.keepFromPaths() ? *cfg.keepFromPaths() : sesKeepFromPaths;
-    auto& deleteFromPaths = cfg.deleteFromPaths() ? *cfg.deleteFromPaths() : sesDeleteFromPath;
-
-    PathsVec deleteWithoutAsking;
-    PathsVec deleteSelectively;
-    size_t numDuplicates = duplicates.numGroups();
-    bool resumeEnumeration = true;
+class GroupProcessor {
+    DeletionConfig& cfg;
     bool sensitiveToExternalEvents = false;
+    PathsVec autoDelete;
+    PathsVec selective;
 
-    duplicates.enumGroups(
-        [&, numDuplicates, numGroup = 0](const DupGroup& group) mutable {
-            ++numGroup;
-            deleteWithoutAsking.clear();
-            deleteSelectively.clear();
+public:
+    GroupProcessor(DeletionConfig& dcfg) : cfg(dcfg) {}
 
-            if (progress)
-            {
-                progress->update([&numGroup, &numDuplicates](std::ostream& os) {
-                    os << "Deleting duplicate group " << numGroup << " out of "
-                       << numDuplicates << '\n';
-                });
+    // The entry point for the loop
+    bool process(const DupGroup& group, size_t groupIdx, size_t totalGroups) {
+        updateProgress(groupIdx, totalGroups);
+        categorizeFiles(group.entires);
+
+        // Safety: If every file is in a "DeleteFrom" path, we must treat them
+        // as selective to avoid deleting the entire group by accident.
+        if (selective.empty()) {
+            selective = std::move(autoDelete);
+            autoDelete.clear();
+        } else {
+            // Delete the "unwanted" ones immediately, keeping the "selective" ones for review
+            deleteFiles(cfg.strategy(), autoDelete);
+        }
+
+        return handleReview(group, selective);
+    }
+
+private:
+    void updateProgress(size_t current, size_t total) {
+        if (auto* p = cfg.progress()) {
+            p->update([&](auto& os) {
+                os << "Processing group " << current << " of " << total << '\n';
+            });
+        }
+    }
+
+    void categorizeFiles(const std::vector<DupEntry>& entries) {
+        autoDelete.clear();
+        selective.clear();
+        for (const auto& e : entries) {
+            if (sensitiveToExternalEvents && !fs::exists(e.file)) continue;
+            if (cfg.ignoredPaths().contains(e.file)) continue;
+
+            if (findPath(cfg.deleteFromPaths().files(), e.file.parent_path())) {
+                autoDelete.push_back(e.file);
+            } else {
+                selective.push_back(e.file);
             }
+        }
+    }
 
-            // Categorize files into 2 groups
-            for (const auto& e : group.entires)
-            {
-                // In case if the file is deleted manually by the user while the
-                // interactive file deletion was running
-                if (sensitiveToExternalEvents && !fs::exists(e.file))
-                {
-                    continue;
-                }
+    bool handleReview(const DupGroup& group, PathsVec& selective) {
+        if (selective.size() <= 1) return true;
 
-                if (ignoredPaths.contains(e.file))
-                {
-                    spdlog::warn("File is ignored: {}", e.file);
-                    return true;
-                }
+        cfg.out() << "Size: " << group.entires.front().size
+                  << " SHA256: " << group.entires.front().sha256 << '\n';
 
-                if (findPath(deleteFromPaths.files(), e.file.parent_path()))
-                {
-                    deleteWithoutAsking.emplace_back(e.file);
-                }
-                else
-                {
-                    deleteSelectively.emplace_back(e.file);
-                }
-            }
+        std::ranges::sort(selective);
+        return deleteInteractively(cfg.strategy(), selective, cfg.ignoredPaths(),
+                                   cfg.keepFromPaths(), cfg.out(), cfg.in());
+    }
+};
 
-            // Not all files are in the directory that is marked to delete from
-            if (!deleteSelectively.empty())
-            {
-                // So after deleting the files below, we are certain that at least one
-                // file will be left in the system
-                deleteFiles(strategy, deleteWithoutAsking);
-            }
-            else
-            {
-                deleteSelectively.insert(
-                    deleteSelectively.end(),
-                    std::make_move_iterator(deleteWithoutAsking.begin()),
-                    std::make_move_iterator(deleteWithoutAsking.end()));
-            }
+// The main function is now very clean
+void deleteDuplicates(DeletionConfig& cfg) {
+    GroupProcessor processor {cfg};
+    size_t total = cfg.duplicates().numGroups();
 
-            if (deleteSelectively.size() > 1)
-            {
-                out << "file size: " << group.entires.front().size
-                    << ", sha256: " << group.entires.front().sha256 << '\n';
-                std::ranges::sort(deleteSelectively);
-                resumeEnumeration = deleteInteractively(strategy,
-                                                        deleteSelectively,
-                                                        ignoredPaths,
-                                                        keepFromPaths,
-                                                        out,
-                                                        in);
-            }
-
-            // We left with one file, which is now unique in the system
-            return resumeEnumeration;
-        });
+    cfg.duplicates().enumGroups([&, i = 0ULL](const DupGroup& group) mutable {
+        return processor.process(group, ++i, total);
+    });
 }
 
 } // namespace tools::dups
