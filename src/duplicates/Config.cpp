@@ -52,6 +52,19 @@ void adjustPath(const fs::path& dataDir, fs::path& path)
     }
 };
 
+void normalizePath(fs::path& path)
+{
+    path = fs::absolute(path).lexically_normal();
+}
+
+void normalizePaths(std::vector<fs::path>& paths)
+{
+    for (auto& path : paths)
+    {
+        normalizePath(path);
+    }
+}
+
 } // namespace
 
 Config::Config(fs::path dataDir, fs::path cacheDir)
@@ -60,8 +73,11 @@ Config::Config(fs::path dataDir, fs::path cacheDir)
 {
     constexpr std::string_view appName = "duplicates";
 
-    dataDir_ = dirs::config() / appName;
-    cacheDir_ = dirs::cache() / appName;
+    normalizePath(dataDir_);
+    normalizePath(cacheDir_);
+
+    dataDir_ = dataDir_ / appName;
+    cacheDir_ = cacheDir_ / appName;
     logDir_ = dataDir_ / "logs";
     logFilename_ = tools::utl::makeLogFilename(appName);
 }
@@ -73,11 +89,13 @@ const std::vector<fs::path>& Config::scanDirs() const noexcept
 
 void Config::setScanDirs(std::vector<fs::path> dirs)
 {
+    normalizePaths(dirs);
     scanDirs_ = std::move(dirs);
 }
 
 void Config::addScanDir(fs::path dir)
 {
+    normalizePath(dir);
     scanDirs_.push_back(std::move(dir));
 }
 
@@ -88,11 +106,13 @@ const std::vector<fs::path>& Config::dirsToKeepFrom() const noexcept
 
 void Config::setDirsToKeepFrom(std::vector<fs::path> dirs)
 {
+    normalizePaths(dirs);
     dirsToKeepFrom_ = std::move(dirs);
 }
 
 void Config::addDirToKeepFrom(fs::path dir)
 {
+    normalizePath(dir);
     dirsToKeepFrom_.push_back(std::move(dir));
 }
 
@@ -103,11 +123,13 @@ const std::vector<fs::path>& Config::dirsToDeleteFrom() const noexcept
 
 void Config::setDirsToDeleteFrom(std::vector<fs::path> dirs)
 {
+    normalizePaths(dirs);
     dirsToDeleteFrom_ = std::move(dirs);
 }
 
 void Config::addDirToDeleteFrom(fs::path dir)
 {
+    normalizePath(dir);
     dirsToDeleteFrom_.push_back(std::move(dir));
 }
 
