@@ -217,7 +217,7 @@ TEST(DuplicateDetectorTest, MetricsThresholds)
 TEST(DuplicateDetectorTest, Progress)
 {
     std::ostringstream oss;
-    Progress progress(std::chrono::milliseconds(0), &oss);
+    Progress progress(&oss, std::chrono::milliseconds(0));
     size_t totalCalls = 0;
 
     for (int i = 1; i <= 3; ++i)

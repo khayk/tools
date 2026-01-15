@@ -9,14 +9,18 @@ namespace tools::dups {
 using PathsVec = std::vector<fs::path>;
 using PathsSet = std::unordered_set<fs::path>;
 
-class PathListImpl
+class PathsImpl
 {
-public:
-    PathListImpl() = default;
-    PathListImpl(fs::path file, bool saveWhenDone = true);
-    ~PathListImpl();
+    PathsSet paths_;
 
-    const PathsSet& files() const;
+public:
+    PathsImpl() = default;
+    PathsImpl(const PathsVec& paths);
+    PathsImpl(const PathsSet& paths);
+
+    PathsSet& paths();
+
+    const PathsSet& paths() const;
 
     bool contains(const fs::path& path) const;
 
@@ -27,6 +31,23 @@ public:
     void add(const fs::path& path);
 
     void add(const PathsVec& paths);
+};
+
+
+class PathsPersister
+{
+    PathsSet& paths_;
+    fs::path filePath_;
+    bool saveWhenDone_ {false};
+
+public:
+    PathsPersister(PathsSet& paths, fs::path filePath, bool saveWhenDone = true);
+    ~PathsPersister();
+
+    PathsPersister(const PathsPersister&) = delete;
+    PathsPersister(PathsPersister&&) = delete;
+    PathsPersister& operator=(const PathsPersister&) = delete;
+    PathsPersister& operator=(PathsPersister&&) = delete;
 
 private:
     /**
@@ -38,24 +59,19 @@ private:
      * @brief Loads the files from the `filePath_` file
      */
     void load();
-
-    fs::path filePath_;
-    PathsSet paths_;
-    bool saveWhenDone_ {false};
 };
 
+
 template <auto EnumPurpose>
-class PathList : public PathListImpl
+class Paths : public PathsImpl
 {
     static_assert(std::is_enum_v<decltype(EnumPurpose)>,
                   "StrongType must be instantiated with scoped enum (enum class)");
 
 public:
-    PathList() = default;
-    PathList(fs::path file, bool saveWhenDone = true)
-        : PathListImpl(file, saveWhenDone)
-    {
-    }
+    Paths() = default;
+    Paths(const PathsVec& paths) : PathsImpl(paths) {}
+    Paths(const PathsSet& paths) : PathsImpl(paths) {}
 };
 
 } // namespace tools::dups

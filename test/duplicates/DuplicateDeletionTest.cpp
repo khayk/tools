@@ -23,13 +23,6 @@ namespace {
 class MockDelete : public IDeletionStrategy
 {
 public:
-    MOCK_METHOD(void, remove, (const fs::path& file), (const, override));
-};
-
-
-class MockDeletionStrategy : public IDeletionStrategy
-{
-public:
     MOCK_METHOD(void, remove, (const fs::path&), (const, override));
 };
 
@@ -64,7 +57,17 @@ void emulateDupGroups(const std::vector<PathsVec>& groupVec,
 
 } // namespace
 
-TEST(DuplicateDeletionTest, IgnoreFilesModule)
+class DuplicateDeletionTest : public ::testing::Test
+{
+protected:
+    MockDelete strategy;
+    std::ostringstream out;
+    std::istringstream in;
+    Progress progress {nullptr};
+    DeletionConfig cfg {strategy, out, in, progress};
+};
+
+TEST_F(DuplicateDeletionTest, IgnoreFilesModule)
 {
     SilenceLogger silenceLogger;
     file::TempDir tmp("ignored");
@@ -72,38 +75,44 @@ TEST(DuplicateDeletionTest, IgnoreFilesModule)
 
     {
         // Tests that nothing is created if there is no file
-        IgnoredPaths ignoredPaths(filePath, true);
-        EXPECT_EQ(0, ignoredPaths.files().size());
+        IgnoredPaths ignoredPaths;
+        PathsPersister persister(ignoredPaths.paths(), filePath, true);
+
+        EXPECT_EQ(0, ignoredPaths.paths().size());
     }
     EXPECT_FALSE(fs::exists(filePath));
 
     {
-        IgnoredPaths ignoredPaths(filePath, true);
-        EXPECT_EQ(0, ignoredPaths.files().size());
+        IgnoredPaths ignoredPaths;
+        PathsPersister persister(ignoredPaths.paths(), filePath, true);
+
+        EXPECT_EQ(0, ignoredPaths.paths().size());
         ignoredPaths.add("file.dat");
-        EXPECT_EQ(1, ignoredPaths.files().size());
+        EXPECT_EQ(1, ignoredPaths.paths().size());
     }
 
     {
         // Should load previously saved file
-        IgnoredPaths ignoredPaths(filePath, true);
-        EXPECT_EQ(1, ignoredPaths.files().size());
-        EXPECT_EQ("file.dat", *ignoredPaths.files().begin());
+        IgnoredPaths ignoredPaths;
+        PathsPersister persister(ignoredPaths.paths(), filePath, true);
+
+        EXPECT_EQ(1, ignoredPaths.paths().size());
+        EXPECT_EQ("file.dat", *ignoredPaths.paths().begin());
     }
 
     {
         // Provide invalid file path
-        IgnoredPaths ignoredPaths(tmp.path() / "file_.txt/", true);
+        IgnoredPaths ignoredPaths;
+        PathsPersister persister(ignoredPaths.paths(), tmp.path() / "file_.txt/", true);
+
         ignoredPaths.add("file.dat");
     }
 }
 
-TEST(DuplicateDeletionTest, DeleteFiles)
+TEST_F(DuplicateDeletionTest, DeleteFiles)
 {
     PathsVec files {"file1.txt", "file2.txt", "file3.txt"};
     PathsVec deleted;
-    PathsSet ignoredPaths;
-    MockDelete strategy;
 
     EXPECT_CALL(strategy, remove(testing::_))
         .Times(static_cast<int>(files.size()))
@@ -119,12 +128,11 @@ TEST(DuplicateDeletionTest, DeleteFiles)
     EXPECT_EQ(deleted[2], "file3.txt");
 }
 
-TEST(DuplicateDeletionTest, DeleteFilesException)
+TEST_F(DuplicateDeletionTest, DeleteFilesException)
 {
     TestStLogInterceptor logInterceptor;
-
     PathsVec files {"file1.txt", "file2.txt", "file3.txt"};
-    MockDelete strategy;
+
     EXPECT_CALL(strategy, remove(testing::_))
         .Times(static_cast<int>(files.size()))
         .WillOnce(testing::Throw(std::runtime_error("Deletion error")))
@@ -137,13 +145,10 @@ TEST(DuplicateDeletionTest, DeleteFilesException)
 }
 
 
-TEST(DuplicateDeletionTest, DeleteFilesInteractively_KeepSecond)
+TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_KeepSecond)
 {
     PathsVec files {"file1.txt", "file2.txt", "file3.txt"};
     PathsVec deleted;
-    IgnoredPaths ignored;
-    KeepFromPaths keepFrom;
-    MockDelete strategy;
 
     EXPECT_CALL(strategy, remove(testing::_))
         .Times(2)
@@ -151,11 +156,10 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_KeepSecond)
             deleted.push_back(p);
         });
 
-    std::ostringstream out;
-    std::istringstream in("2\n"); // Simulate user input to keep the second file
+    in.str("2\n"); // Simulate user input to keep the second file
 
-    EXPECT_TRUE(deleteInteractively(strategy, files, ignored, keepFrom, out, in));
-    EXPECT_TRUE(ignored.empty());
+    EXPECT_TRUE(deleteInteractively(files, cfg));
+    EXPECT_TRUE(cfg.ignoredPaths().empty());
     ASSERT_TRUE(files.empty());
     ASSERT_EQ(deleted.size(), 2);
     ASSERT_EQ(deleted[0], "file1.txt");
@@ -163,15 +167,12 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_KeepSecond)
 }
 
 
-TEST(DuplicateDeletionTest, DeleteFilesInteractively_KeepPaths_OneMatch)
+TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_KeepPaths_OneMatch)
 {
     PathsVec files {"keep/file1.txt", "file2.txt", "file3.txt"};
     PathsVec deleted;
-    IgnoredPaths ignored;
-    KeepFromPaths keepFrom;
-    MockDelete strategy;
 
-    keepFrom.add(fs::path {"keep"});
+    cfg.keepFromPaths().add(fs::path {"keep"});
 
     EXPECT_CALL(strategy, remove(testing::_))
         .Times(2)
@@ -179,11 +180,10 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_KeepPaths_OneMatch)
             deleted.push_back(p);
         });
 
-    std::ostringstream out;
-    std::istringstream in; // No user input should be needed, as keep path will resolve
+    // No user input should be needed, as keep path will resolve
 
-    EXPECT_TRUE(deleteInteractively(strategy, files, ignored, keepFrom, out, in));
-    EXPECT_TRUE(ignored.empty());
+    EXPECT_TRUE(deleteInteractively(files, cfg));
+    EXPECT_TRUE(cfg.ignoredPaths().empty());
     ASSERT_TRUE(files.empty());
     ASSERT_EQ(deleted.size(), 2);
     ASSERT_EQ(deleted[0], "file3.txt");
@@ -191,15 +191,12 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_KeepPaths_OneMatch)
 }
 
 
-TEST(DuplicateDeletionTest, DeleteFilesInteractively_KeepPaths_MultipleMatches)
+TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_KeepPaths_MultipleMatches)
 {
     PathsVec files {"keep/file1.txt", "keep/file2.txt", "file3.txt"};
     PathsVec deleted;
-    IgnoredPaths ignored;
-    KeepFromPaths keepFrom;
-    MockDelete strategy;
 
-    keepFrom.add(fs::path {"keep"});
+    cfg.keepFromPaths().add(fs::path {"keep"});
 
     EXPECT_CALL(strategy, remove(testing::_))
         .Times(2)
@@ -207,11 +204,10 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_KeepPaths_MultipleMatches)
             deleted.push_back(p);
         });
 
-    std::ostringstream out;
-    std::istringstream in("3\n"); // User instruct to keep file3.txt
+    in.str("3\n"); // User instruct to keep file3.txt
 
-    EXPECT_TRUE(deleteInteractively(strategy, files, ignored, keepFrom, out, in));
-    EXPECT_TRUE(ignored.empty());
+    EXPECT_TRUE(deleteInteractively(files, cfg));
+    EXPECT_TRUE(cfg.ignoredPaths().empty());
     ASSERT_TRUE(files.empty());
     ASSERT_EQ(deleted.size(), 2);
     ASSERT_EQ(deleted[0], "keep/file1.txt");
@@ -219,13 +215,10 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_KeepPaths_MultipleMatches)
 }
 
 
-TEST(DuplicateDeletionTest, DeleteFilesInteractively_ConsecutiveCalls)
+TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_ConsecutiveCalls)
 {
     PathsVec files {"file1.txt", "file2.txt", "file3.txt"};
     PathsVec filesCopy = files;
-    IgnoredPaths ignored;
-    KeepFromPaths keepFrom;
-    MockDelete strategy;
 
     // 2 calls per deleteInteractively call
     EXPECT_CALL(strategy, remove(testing::_))
@@ -234,99 +227,78 @@ TEST(DuplicateDeletionTest, DeleteFilesInteractively_ConsecutiveCalls)
             EXPECT_TRUE(p.string() != "file1.txt");
         });
 
-    std::ostringstream out;
-    std::istringstream in("1\n\n"); // Keeps the first file during each call
+    in.str("1\n\n"); // Keeps the first file during each call
 
-    EXPECT_TRUE(deleteInteractively(strategy, files, ignored, keepFrom, out, in));
-    EXPECT_TRUE(deleteInteractively(strategy, filesCopy, ignored, keepFrom, out, in));
-    EXPECT_TRUE(ignored.empty());
+    EXPECT_TRUE(deleteInteractively(files, cfg));
+    EXPECT_TRUE(deleteInteractively(filesCopy, cfg));
+    EXPECT_TRUE(cfg.ignoredPaths().empty());
     ASSERT_TRUE(files.empty());
     ASSERT_TRUE(filesCopy.empty());
 }
 
-TEST(DuplicateDeletionTest, DeleteFilesInteractively_IgnoreGroup)
+TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_IgnoreGroup)
 {
     SilenceLogger silenceLogger;
     PathsVec files {"file1.txt", "file2.txt", "file3.txt"};
-    IgnoredPaths ignored;
-    KeepFromPaths keepFrom;
-    MockDelete strategy;
 
     EXPECT_CALL(strategy, remove(testing::_)).Times(0);
 
-    std::ostringstream out;
-    std::istringstream in("i\n"); // Simulate user input to keep the second file
+    in.str("i\n"); // Simulate user input to keep the second file
 
-    EXPECT_TRUE(deleteInteractively(strategy, files, ignored, keepFrom, out, in));
+    EXPECT_TRUE(deleteInteractively(files, cfg));
     ASSERT_EQ(files.size(), 3);
-    ASSERT_EQ(ignored.size(), 3);
-    EXPECT_TRUE(ignored.contains(files[0]));
-    EXPECT_TRUE(ignored.contains(files[1]));
-    EXPECT_TRUE(ignored.contains(files[2]));
+    ASSERT_EQ(cfg.ignoredPaths().size(), 3);
+    EXPECT_TRUE(cfg.ignoredPaths().contains(files[0]));
+    EXPECT_TRUE(cfg.ignoredPaths().contains(files[1]));
+    EXPECT_TRUE(cfg.ignoredPaths().contains(files[2]));
 }
 
-TEST(DuplicateDeletionTest, DeleteFilesInteractively_InterruptDeletion)
+TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_InterruptDeletion)
 {
     SilenceLogger silenceLogger;
     PathsVec files {"file1.txt", "file2.txt"};
-    IgnoredPaths ignored;
-    KeepFromPaths keepFrom;
-    MockDelete strategy;
 
     EXPECT_CALL(strategy, remove(testing::_)).Times(0);
 
-    std::ostringstream out;
-    std::istringstream in("q"); // Simulate user input to keep the second file
+    in.str("q"); // Simulate user input to keep the second file
 
-    EXPECT_FALSE(deleteInteractively(strategy, files, ignored, keepFrom, out, in));
+    EXPECT_FALSE(deleteInteractively(files, cfg));
     ASSERT_EQ(files.size(), 2);
-    ASSERT_EQ(ignored.size(), 0);
+    ASSERT_EQ(cfg.ignoredPaths().size(), 0);
 }
 
-TEST(DuplicateDeletionTest, DeleteFilesInteractively_InvalidChoice)
+TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_InvalidChoice)
 {
     PathsVec files {"file1.txt"};
-    IgnoredPaths ignored;
-    KeepFromPaths keepFrom;
-    MockDelete strategy;
 
     EXPECT_CALL(strategy, remove(testing::_)).Times(0);
 
-    std::ostringstream out;
-    std::istringstream in("4\nW\n"); // Invalid choice
+    in.str("4\nW\n"); // Invalid choice
 
-    EXPECT_FALSE(deleteInteractively(strategy, files, ignored, keepFrom, out, in));
+    EXPECT_FALSE(deleteInteractively(files, cfg));
     ASSERT_EQ(files.size(), 1);
-    ASSERT_TRUE(ignored.empty());
+    ASSERT_TRUE(cfg.ignoredPaths().empty());
     EXPECT_TRUE(!in); // input should be fully consumed
 }
 
-TEST(DuplicateDeletionTest, DeleteFilesInteractively_BadStream)
+TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_BadStream)
 {
     SilenceLogger silenceLogger;
     PathsVec files {"file1.txt"};
-    IgnoredPaths ignored;
-    KeepFromPaths keepFrom;
-    MockDelete strategy;
 
     EXPECT_CALL(strategy, remove(testing::_)).Times(0);
 
-    std::ostringstream out;
-    std::istringstream in; // no input
-
-    EXPECT_FALSE(deleteInteractively(strategy, files, ignored, keepFrom, out, in));
+    EXPECT_FALSE(deleteInteractively(files, cfg));
     ASSERT_EQ(files.size(), 1);
-    ASSERT_TRUE(ignored.empty());
+    ASSERT_TRUE(cfg.ignoredPaths().empty());
 }
 
 
-TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesInSafeDirs)
+TEST_F(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesInSafeDirs)
 {
-    MockDeletionStrategy strategy;
     MockDuplicateGroups groups;
-    DeleteFromPaths deleteFrom;
 
-    deleteFrom.add(fs::path {"safeDir"});
+    cfg.deleteFromPaths().add(fs::path {"safeDir"});
 
     // Two groups, each with two files in safeDir
     std::vector<PathsVec> groupVec {
@@ -343,22 +315,14 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesInSafeDirs)
     EXPECT_CALL(strategy, remove(fs::path("safeDir/file2.txt"))).Times(1);
     EXPECT_CALL(strategy, remove(fs::path("safeDir/file4.txt"))).Times(1);
 
-    std::ostringstream out;
-    std::istringstream in;
-
-    DeletionConfig cfg {groups, strategy, out, in};
-    cfg.setDeleteFromPaths(deleteFrom);
-
-    deleteDuplicates(cfg);
+    deleteDuplicates(groups, cfg);
 }
 
-TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesAllInSafeDirs)
+TEST_F(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesAllInSafeDirs)
 {
-    MockDeletionStrategy strategy;
     MockDuplicateGroups groups;
-    DeleteFromPaths deleteFrom;
 
-    deleteFrom.add(fs::path {"safeDir"});
+    cfg.deleteFromPaths().add(fs::path {"safeDir"});
 
     // Two groups, each with two files in safeDir
     std::vector<PathsVec> groupVec {
@@ -375,20 +339,15 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesAllInSafeDirs)
     EXPECT_CALL(strategy, remove(fs::path("safeDir/file2.txt"))).Times(1);
     EXPECT_CALL(strategy, remove(fs::path("safeDir/file4.txt"))).Times(1);
 
-    std::ostringstream out;
     // Need to perform selection, as both candidates are from the directory to
     // delete from
-    std::istringstream in("1\n1\n");
+    in.str("1\n1\n");
 
-    DeletionConfig cfg {groups, strategy, out, in};
-    cfg.setDeleteFromPaths(deleteFrom);
-
-    deleteDuplicates(cfg);
+    deleteDuplicates(groups, cfg);
 }
 
-TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesSelectively)
+TEST_F(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesSelectively)
 {
-    MockDeletionStrategy strategy;
     MockDuplicateGroups groups;
 
     // Two groups, each with two files in safeDir
@@ -406,28 +365,22 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesSelectively)
     EXPECT_CALL(strategy, remove(fs::path("dupDir/file2.txt"))).Times(1);
     EXPECT_CALL(strategy, remove(fs::path("dupDir/file4.txt"))).Times(1);
 
-    std::ostringstream out;
-
     // keep the second file
     // paths are listed in a sorted order, thus dupDir* comes before origDir*
     // in other words we keep second file (i.e. orig file), that's why we specify 2,2
-    std::istringstream in("2\n2\n");
+    in.str("2\n2\n");
 
-    DeletionConfig cfg {groups, strategy, out, in};
-    deleteDuplicates(cfg);
+    deleteDuplicates(groups, cfg);
 }
 
-TEST(DuplicateDeletionTest, DeleteDuplicates_SkipsIgnoredFiles)
+TEST_F(DuplicateDeletionTest, DeleteDuplicates_SkipsIgnoredFiles)
 {
     SilenceLogger silenceLogger;
-    MockDeletionStrategy strategy;
     MockDuplicateGroups groups;
-    IgnoredPaths ignored;
-    DeleteFromPaths deleteFrom;
 
     // Mark file2.txt as ignored
-    ignored.add(fs::path("safeDir/file2.txt"));
-    deleteFrom.add(fs::path {"safeDir"});
+    cfg.ignoredPaths().add(fs::path("safeDir/file2.txt"));
+    cfg.deleteFromPaths().add(fs::path {"safeDir"});
 
     std::vector<PathsVec> groupVec = {
         {fs::path("OrigDir/file1.txt"), fs::path("safeDir/file2.txt")}};
@@ -441,14 +394,7 @@ TEST(DuplicateDeletionTest, DeleteDuplicates_SkipsIgnoredFiles)
     // called
     EXPECT_CALL(strategy, remove(testing::_)).Times(0);
 
-    std::ostringstream out;
-    std::istringstream in;
-
-    DeletionConfig cfg {groups, strategy, out, in};
-    cfg.setIgnoredPaths(ignored);
-    cfg.setDeleteFromPaths(deleteFrom);
-
-    deleteDuplicates(cfg);
+    deleteDuplicates(groups, cfg);
 }
 
 } // namespace tools::dups

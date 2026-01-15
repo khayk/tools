@@ -65,7 +65,7 @@ int main(int argc, const char* argv[])
         logConfig(cfg);
 
         DuplicateDetector detector;
-        Progress progress(cfg.updateFrequency());
+        Progress progress(&std::cout, cfg.updateFrequency());
 
         scanDirectories(cfg, detector, progress);
         outputFiles(cfg.allFilesPath(), detector);
@@ -75,21 +75,14 @@ int main(int argc, const char* argv[])
 
         // start deletion of the duplicates
         auto strategy = createDeletionStrategy(cfg);
-        DeletionConfig deletionCfg {detector, *strategy, std::cout, std::cin};
 
-        IgnoredPaths ignored(cfg.ignFilesPath());
-        KeepFromPaths keepFrom;
-        DeleteFromPaths deleteFrom;
+        DeletionConfig deletionCfg {*strategy, std::cout, std::cin, progress};
+        PathsPersister persister(deletionCfg.ignoredPaths().paths(), cfg.ignFilesPath());
 
-        deleteFrom.add(cfg.dirsToDeleteFrom());
-        keepFrom.add(cfg.dirsToKeepFrom());
+        deletionCfg.keepFromPaths().add(cfg.dirsToKeepFrom());
+        deletionCfg.deleteFromPaths().add(cfg.dirsToDeleteFrom());
 
-        deletionCfg.setProgress(progress);
-        deletionCfg.setIgnoredPaths(ignored);
-        deletionCfg.setKeepFromPaths(keepFrom);
-        deletionCfg.setDeleteFromPaths(deleteFrom);
-
-        deleteDuplicates(deletionCfg);
+        deleteDuplicates(detector, deletionCfg);
     }
     catch (const std::system_error& se)
     {

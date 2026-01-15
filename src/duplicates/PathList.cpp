@@ -10,8 +10,58 @@
 
 namespace tools::dups {
 
-PathListImpl::PathListImpl(fs::path file, bool saveWhenDone)
-    : filePath_(std::move(file))
+PathsImpl::PathsImpl(const PathsVec& paths)
+{
+    add(paths);
+}
+
+PathsImpl::PathsImpl(const PathsSet& paths)
+    : paths_(paths)
+{
+}
+
+bool PathsImpl::contains(const fs::path& path) const
+{
+    return paths_.contains(path);
+}
+
+bool PathsImpl::empty() const noexcept
+{
+    return paths_.empty();
+}
+
+size_t PathsImpl::size() const noexcept
+{
+    return paths_.size();
+}
+
+PathsSet& PathsImpl::paths()
+{
+    return paths_;
+}
+
+const PathsSet& PathsImpl::paths() const
+{
+    return paths_;
+}
+
+void PathsImpl::add(const fs::path& path)
+{
+    paths_.insert(path);
+}
+
+void PathsImpl::add(const PathsVec& paths)
+{
+    std::ranges::copy(paths, std::inserter(paths_, paths_.end()));
+}
+
+// ----------------------------------------------------------------------------
+//
+// ----------------------------------------------------------------------------
+
+PathsPersister::PathsPersister(PathsSet& paths, fs::path filePath, bool saveWhenDone)
+    : paths_ (paths)
+    , filePath_(std::move(filePath))
     , saveWhenDone_(saveWhenDone)
 {
     if (fs::exists(filePath_))
@@ -20,7 +70,7 @@ PathListImpl::PathListImpl(fs::path file, bool saveWhenDone)
     }
 }
 
-PathListImpl::~PathListImpl()
+PathsPersister::~PathsPersister()
 {
     try
     {
@@ -37,38 +87,7 @@ PathListImpl::~PathListImpl()
     }
 }
 
-bool PathListImpl::contains(const fs::path& path) const
-{
-    return paths_.contains(path);
-}
-
-bool PathListImpl::empty() const noexcept
-{
-    return paths_.empty();
-}
-
-
-size_t PathListImpl::size() const noexcept
-{
-    return paths_.size();
-}
-
-const PathsSet& PathListImpl::files() const
-{
-    return paths_;
-}
-
-void PathListImpl::add(const fs::path& path)
-{
-    paths_.insert(path);
-}
-
-void PathListImpl::add(const PathsVec& paths)
-{
-    std::ranges::copy(paths, std::inserter(paths_, paths_.end()));
-}
-
-void PathListImpl::load()
+void PathsPersister::load()
 {
     spdlog::info("Loading files from: {}", filePath_);
     file::readLines(filePath_, [&](const std::string& line) {
@@ -80,7 +99,7 @@ void PathListImpl::load()
     });
 }
 
-void PathListImpl::save() const
+void PathsPersister::save() const
 {
     if (paths_.empty())
     {
