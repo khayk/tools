@@ -67,6 +67,12 @@ public:
     DeleteFromPaths& deleteFromPaths();
 };
 
+enum class Flow : std::uint8_t
+{
+    Retry,
+    Done,
+    Quit
+};
 
 /**
  * @brief Deletes files interactively, allowing the user to choose which files to
@@ -75,9 +81,11 @@ public:
  * @param files The vector of file paths to delete.
  * @param cfg Settings for deletion process
  *
- * @return true if the operation was successful, false otherwise.
+ * @return Done if the operation was successful,
+           Retry if the operation need to be retried again
+           Quit if the user selected quit
  */
-bool deleteInteractively(PathsVec& files, DeletionConfig& cfg);
+Flow deleteInteractively(PathsVec& files, DeletionConfig& cfg);
 
 
 /**

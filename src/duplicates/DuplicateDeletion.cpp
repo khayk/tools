@@ -16,9 +16,26 @@
 
 namespace tools::dups {
 
-constexpr std::string_view MAIN_PROMPT = "Enter a number to KEEP  ( 'i' - ignore, 'o' - open dirs, 'k' - edit keep from, 'd' - edit delete from, 'q' - quit ) > ";
-constexpr std::string_view KEEP_PROMPT = "Chose a number to mark as 'KEEP FROM'  ( 'b' - back, 'q' - quit ) > ";
-constexpr std::string_view DELT_PROMPT = "Chose a number to mark as 'DELETE FROM'  ( 'b' - back, 'q' - quit ) > ";
+constexpr std::string_view MAIN_PROMPT =
+    "Enter a number to keep, or select an action:\n"
+    "  [i] Ignore\n"
+    "  [o] Open directories\n"
+    "  [k] Edit keep-from list\n"
+    "  [d] Edit delete-from list\n"
+    "  [q] Quit\n"
+    "> ";
+
+constexpr std::string_view KEEP_PROMPT =
+    "Select a number to mark as KEEP FROM\n"
+    "  [b] Back\n"
+    "  [q] Quit\n"
+    "> ";
+
+constexpr std::string_view DELT_PROMPT =
+    "Select a number to mark as DELETE FROM\n"
+    "  [b] Back\n"
+    "  [q] Quit\n"
+    "> ";
 
 namespace {
 
@@ -283,13 +300,13 @@ bool deduceTheOneToKeep(const IDeletionStrategy& strategy,
     return true;
 }
 
-bool deleteInteractively(PathsVec& files,
-                         DeletionConfig& cfg)
+Flow deleteInteractively(PathsVec& files,
+                                DeletionConfig& cfg)
 {
     // Try automatic resolution first
     if (deduceTheOneToKeep(cfg.strategy(), files, cfg.keepFromPaths()))
     {
-        return true;
+        return Flow::Done;
     }
 
     // UI Loop
@@ -305,18 +322,21 @@ bool deleteInteractively(PathsVec& files,
                 {
                     // Stop is requested
                     spdlog::info("Stopping deletion...");
-                    return false;
+                    return Flow::Quit;
                 }
-                continue; // Re-prompt after opening folders
+
+                // This ensures the user’s most recent choice is respected.
+                return Flow::Retry;
 
             case UserChoice::EditDeleteFrom:
                 if (!editConfig(files, DELT_PROMPT, cfg.deleteFromPaths(), cfg.out(), cfg.in()))
                 {
                     // Stop is requested
                     spdlog::info("Stopping deletion...");
-                    return false;
+                    return Flow::Quit;
                 }
-                continue; // Re-prompt after opening folders
+                // This ensures the user’s most recent choice is respected.
+                return Flow::Retry;
 
             case UserChoice::OpenFolders:
                 openDirectories(files);
@@ -325,19 +345,19 @@ bool deleteInteractively(PathsVec& files,
             case UserChoice::IgnoreGroup:
                 spdlog::info("Ignoring group...");
                 cfg.ignoredPaths().add(files);
-                return true;
+                return Flow::Done;
 
             case UserChoice::Quit:
                 lastInput().clear();
                 spdlog::info("Stopping deletion...");
-                return false;
+                return Flow::Quit;
 
             case UserChoice::Number:
                 // The user chose which one to KEEP. Swap it away and delete the rest.
                 std::swap(files[input.index - 1], files.back());
                 files.pop_back();
                 deleteFiles(cfg.strategy(), files);
-                return true;
+                return Flow::Done;
 
             case UserChoice::Retry:
             default:
@@ -410,24 +430,32 @@ public:
     // The entry point for the loop
     bool process(const DupGroup& group, size_t groupIdx, size_t totalGroups)
     {
+        auto flow = Flow::Retry;
+
         updateProgress(groupIdx, totalGroups);
-        categorizeFiles(group.entires);
 
-        // Safety: If every file is in a "DeleteFrom" path, we must treat them
-        // as selective to avoid deleting the entire group by accident.
-        if (selective.empty())
+        while (flow == Flow::Retry)
         {
-            selective = std::move(autoDelete);
-            autoDelete.clear();
-        }
-        else
-        {
-            // Delete the "unwanted" ones immediately, keeping the "selective" ones for
-            // review
-            deleteFiles(cfg.strategy(), autoDelete);
+            categorizeFiles(group.entires);
+
+            // Safety: If every file is in a "DeleteFrom" path, we must treat them
+            // as selective to avoid deleting the entire group by accident.
+            if (selective.empty())
+            {
+                selective = std::move(autoDelete);
+                autoDelete.clear();
+            }
+            else
+            {
+                // Delete the "unwanted" ones immediately, keeping the "selective" ones for
+                // review
+                deleteFiles(cfg.strategy(), autoDelete);
+            }
+
+            flow = handleReview(group, selective);
         }
 
-        return handleReview(group, selective);
+        return flow != Flow::Quit;
     }
 
 private:
@@ -464,11 +492,11 @@ private:
         }
     }
 
-    bool handleReview(const DupGroup& group, PathsVec& selective)
+    Flow handleReview(const DupGroup& group, PathsVec& selective)
     {
         if (selective.size() <= 1)
         {
-            return true;
+            return Flow::Done;
         }
 
         cfg.out() << "Size: " << group.entires.front().size

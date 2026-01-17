@@ -158,7 +158,7 @@ TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_KeepSecond)
 
     in.str("2\n"); // Simulate user input to keep the second file
 
-    EXPECT_TRUE(deleteInteractively(files, cfg));
+    EXPECT_EQ(deleteInteractively(files, cfg), Flow::Done);
     EXPECT_TRUE(cfg.ignoredPaths().empty());
     ASSERT_TRUE(files.empty());
     ASSERT_EQ(deleted.size(), 2);
@@ -182,7 +182,7 @@ TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_KeepPaths_OneMatch)
 
     // No user input should be needed, as keep path will resolve
 
-    EXPECT_TRUE(deleteInteractively(files, cfg));
+    EXPECT_EQ(deleteInteractively(files, cfg), Flow::Done);
     EXPECT_TRUE(cfg.ignoredPaths().empty());
     ASSERT_TRUE(files.empty());
     ASSERT_EQ(deleted.size(), 2);
@@ -206,7 +206,7 @@ TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_KeepPaths_MultipleMatches
 
     in.str("3\n"); // User instruct to keep file3.txt
 
-    EXPECT_TRUE(deleteInteractively(files, cfg));
+    EXPECT_EQ(deleteInteractively(files, cfg), Flow::Done);
     EXPECT_TRUE(cfg.ignoredPaths().empty());
     ASSERT_TRUE(files.empty());
     ASSERT_EQ(deleted.size(), 2);
@@ -229,8 +229,8 @@ TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_ConsecutiveCalls)
 
     in.str("1\n\n"); // Keeps the first file during each call
 
-    EXPECT_TRUE(deleteInteractively(files, cfg));
-    EXPECT_TRUE(deleteInteractively(filesCopy, cfg));
+    EXPECT_EQ(deleteInteractively(files, cfg), Flow::Done);
+    EXPECT_EQ(deleteInteractively(filesCopy, cfg), Flow::Done);
     EXPECT_TRUE(cfg.ignoredPaths().empty());
     ASSERT_TRUE(files.empty());
     ASSERT_TRUE(filesCopy.empty());
@@ -245,7 +245,7 @@ TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_IgnoreGroup)
 
     in.str("i\n"); // Simulate user input to keep the second file
 
-    EXPECT_TRUE(deleteInteractively(files, cfg));
+    EXPECT_EQ(deleteInteractively(files, cfg), Flow::Done);
     ASSERT_EQ(files.size(), 3);
     ASSERT_EQ(cfg.ignoredPaths().size(), 3);
     EXPECT_TRUE(cfg.ignoredPaths().contains(files[0]));
@@ -262,7 +262,7 @@ TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_InterruptDeletion)
 
     in.str("q"); // Simulate user input to keep the second file
 
-    EXPECT_FALSE(deleteInteractively(files, cfg));
+    EXPECT_EQ(deleteInteractively(files, cfg), Flow::Quit);
     ASSERT_EQ(files.size(), 2);
     ASSERT_EQ(cfg.ignoredPaths().size(), 0);
 }
@@ -275,7 +275,7 @@ TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_InvalidChoice)
 
     in.str("4\nW\n"); // Invalid choice
 
-    EXPECT_FALSE(deleteInteractively(files, cfg));
+    EXPECT_EQ(deleteInteractively(files, cfg), Flow::Quit);
     ASSERT_EQ(files.size(), 1);
     ASSERT_TRUE(cfg.ignoredPaths().empty());
     EXPECT_TRUE(!in); // input should be fully consumed
@@ -288,7 +288,7 @@ TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_BadStream)
 
     EXPECT_CALL(strategy, remove(testing::_)).Times(0);
 
-    EXPECT_FALSE(deleteInteractively(files, cfg));
+    EXPECT_EQ(deleteInteractively(files, cfg), Flow::Quit);
     ASSERT_EQ(files.size(), 1);
     ASSERT_TRUE(cfg.ignoredPaths().empty());
 }
