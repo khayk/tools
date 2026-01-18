@@ -70,8 +70,14 @@ class Paths : public PathsImpl
 
 public:
     Paths() = default;
-    Paths(const PathsVec& paths) : PathsImpl(paths) {}
-    Paths(const PathsSet& paths) : PathsImpl(paths) {}
+    Paths(const PathsVec& paths)
+        : PathsImpl(paths)
+    {
+    }
+    Paths(const PathsSet& paths)
+        : PathsImpl(paths)
+    {
+    }
 };
 
 } // namespace tools::dups

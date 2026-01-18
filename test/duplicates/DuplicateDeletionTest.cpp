@@ -103,7 +103,9 @@ TEST_F(DuplicateDeletionTest, IgnoreFilesModule)
     {
         // Provide invalid file path
         IgnoredPaths ignoredPaths;
-        PathsPersister persister(ignoredPaths.paths(), tmp.path() / "file_.txt/", true);
+        PathsPersister persister(ignoredPaths.paths(),
+                                 tmp.path() / "file_.txt/",
+                                 true);
 
         ignoredPaths.add("file.dat");
     }

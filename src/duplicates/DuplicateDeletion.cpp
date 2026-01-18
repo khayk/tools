@@ -25,17 +25,15 @@ constexpr std::string_view MAIN_PROMPT =
     "  [q] Quit\n"
     "> ";
 
-constexpr std::string_view KEEP_PROMPT =
-    "Select a number to mark as KEEP FROM\n"
-    "  [b] Back\n"
-    "  [q] Quit\n"
-    "> ";
+constexpr std::string_view KEEP_PROMPT = "Select a number to mark as KEEP FROM\n"
+                                         "  [b] Back\n"
+                                         "  [q] Quit\n"
+                                         "> ";
 
-constexpr std::string_view DELT_PROMPT =
-    "Select a number to mark as DELETE FROM\n"
-    "  [b] Back\n"
-    "  [q] Quit\n"
-    "> ";
+constexpr std::string_view DELT_PROMPT = "Select a number to mark as DELETE FROM\n"
+                                         "  [b] Back\n"
+                                         "  [q] Quit\n"
+                                         "> ";
 
 namespace {
 
@@ -239,7 +237,7 @@ bool editConfig(const PathsVec& files,
             case UserChoice::Retry:
             default:
                 // We don't return false here so the user gets another chance
-                out << "'" << input.index << "'" " is an invalid choice.\n";
+                out << "'" << input.index << "' is an invalid choice.\n";
         }
     }
 
@@ -300,8 +298,7 @@ bool deduceTheOneToKeep(const IDeletionStrategy& strategy,
     return true;
 }
 
-Flow deleteInteractively(PathsVec& files,
-                                DeletionConfig& cfg)
+Flow deleteInteractively(PathsVec& files, DeletionConfig& cfg)
 {
     // Try automatic resolution first
     if (deduceTheOneToKeep(cfg.strategy(), files, cfg.keepFromPaths()))
@@ -313,12 +310,17 @@ Flow deleteInteractively(PathsVec& files,
     while (true)
     {
         displayPathOptions(cfg.out(), files);
-        auto input = parseUserInput(promptUser(MAIN_PROMPT, cfg.out(), cfg.in()), files.size());
+        auto input =
+            parseUserInput(promptUser(MAIN_PROMPT, cfg.out(), cfg.in()), files.size());
 
         switch (input.action)
         {
             case UserChoice::EditKeepFrom:
-                if (!editConfig(files, KEEP_PROMPT, cfg.keepFromPaths(), cfg.out(), cfg.in()))
+                if (!editConfig(files,
+                                KEEP_PROMPT,
+                                cfg.keepFromPaths(),
+                                cfg.out(),
+                                cfg.in()))
                 {
                     // Stop is requested
                     spdlog::info("Stopping deletion...");
@@ -329,7 +331,11 @@ Flow deleteInteractively(PathsVec& files,
                 return Flow::Retry;
 
             case UserChoice::EditDeleteFrom:
-                if (!editConfig(files, DELT_PROMPT, cfg.deleteFromPaths(), cfg.out(), cfg.in()))
+                if (!editConfig(files,
+                                DELT_PROMPT,
+                                cfg.deleteFromPaths(),
+                                cfg.out(),
+                                cfg.in()))
                 {
                     // Stop is requested
                     spdlog::info("Stopping deletion...");
@@ -362,7 +368,8 @@ Flow deleteInteractively(PathsVec& files,
             case UserChoice::Retry:
             default:
                 // We don't return false here so the user gets another chance
-                cfg.out() << "'" << input.index << "'" " is an invalid choice, no file is deleted.\n";
+                cfg.out() << "'" << input.index
+                          << "' is an invalid choice, no file is deleted.\n";
         }
     }
 }
@@ -447,8 +454,8 @@ public:
             }
             else
             {
-                // Delete the "unwanted" ones immediately, keeping the "selective" ones for
-                // review
+                // Delete the "unwanted" ones immediately, keeping the "selective" ones
+                // for review
                 deleteFiles(cfg.strategy(), autoDelete);
             }
 

@@ -12,7 +12,8 @@ class Progress
 public:
     using DisplayCb = std::function<void(std::ostream&)>;
 
-    explicit Progress(std::ostream* os, std::chrono::milliseconds freq = std::chrono::milliseconds(100))
+    explicit Progress(std::ostream* os,
+                      std::chrono::milliseconds freq = std::chrono::milliseconds(100))
         : sw_(true)
         , os_(os)
         , freq_ {freq}

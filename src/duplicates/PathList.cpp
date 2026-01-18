@@ -60,7 +60,7 @@ void PathsImpl::add(const PathsVec& paths)
 // ----------------------------------------------------------------------------
 
 PathsPersister::PathsPersister(PathsSet& paths, fs::path filePath, bool saveWhenDone)
-    : paths_ (paths)
+    : paths_(paths)
     , filePath_(std::move(filePath))
     , saveWhenDone_(saveWhenDone)
 {
