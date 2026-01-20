@@ -11,6 +11,7 @@
 #include <iterator>
 #include <cassert>
 #include <tuple>
+#include "core/utils/Str.h"
 
 #include <spdlog/spdlog.h>
 
@@ -298,10 +299,78 @@ bool deduceTheOneToKeep(const IDeletionStrategy& strategy,
     return true;
 }
 
+bool isDuplicateNamingPattern(const IDeletionStrategy& strategy,
+                              PathsVec& files)
+{
+    if (2 > files.size())
+    {
+        return false;
+    }
+
+    // find the file with a shortest name
+    auto it = files.begin();
+    auto shortest = it->stem();
+    for (auto it2 = files.begin(); it2 != files.end(); ++it2)
+    {
+        auto tmp = (*it2).stem();
+        if (shortest.native().size() > tmp.native().size())
+        {
+            shortest = tmp;
+            it = it2;
+        }
+    }
+
+    auto ss = shortest.native();
+    std::regex r(R"((\(\d+\)|_copy|copy)$)");
+
+    for (const auto& file: files)
+    {
+        auto tmp = file.stem();
+        if (tmp != shortest)
+        {
+            auto p = tmp.native().find(ss);
+            if (p != 0)
+            {
+                return false;
+            }
+
+            const auto& ns = tmp.native();
+            std::string_view sv(ns);
+            sv.remove_prefix(ss.size());
+
+            if (sv.size() < 2)
+            {
+                return false;
+            }
+
+            sv = str::trim(sv);
+            if (!std::regex_search(std::string(sv), r))
+            {
+                return false;
+            }
+        }
+    }
+
+    std::iter_swap(it, std::prev(files.end()));
+    files.pop_back();
+    deleteFiles(strategy, files);
+
+    return true;
+}
+
 Flow deleteInteractively(PathsVec& files, DeletionConfig& cfg)
 {
     // Try automatic resolution first
     if (deduceTheOneToKeep(cfg.strategy(), files, cfg.keepFromPaths()))
+    {
+        return Flow::Done;
+    }
+
+    // From these name.txt, name(1).txt, name(2).txt ... only name.txt will be preserved
+    // @todo:hayk - if pattern emerges that tells we need to run various checks based
+    // on different conditions, we might use template method design pattern to delegate
+    // the decision to user defined logic
+    if (isDuplicateNamingPattern(cfg.strategy(), files))
     {
         return Flow::Done;
     }

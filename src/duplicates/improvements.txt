@@ -4,7 +4,7 @@
 4. [x] show progress during a deletion, how many processed so far (M out of N)
 5. [x] during a selection, once a folder selected as a "to keep" option, it should be respected all the time (without asking)
 6. [x] always show paths in a sorted way during deletion
-7. [ ] anything with (number) as a suffix, can be considered a secondary (if they reside in the same folder)
+7. [x] anything with (number) as a suffix, can be considered a secondary (if they reside in the same folder)
 
     ```
     1: "/Source/Photos from 2017/_DSC5128(1).JPG"
@@ -24,3 +24,7 @@
     ...
     12345. i
     ```
+
+13. [ ] Ability to view actual keep/delete directories that user altered during the execution
+14. [ ] Ability to list and delete entry from each of them
+15. [ ] Ensure files to keep and delete are stored in the appropriate metadata files, as ignored file
