@@ -196,6 +196,29 @@ void Config::setIgnFilesPath(fs::path path)
     adjustPath(dataDir(), ignFilesPath_);
 }
 
+const fs::path& Config::keepFilesPath() const noexcept
+{
+    return keepFilesPath_;
+}
+
+void Config::setKeepFilesPath(fs::path path)
+{
+    keepFilesPath_ = std::move(path);
+    adjustPath(dataDir(), keepFilesPath_);
+}
+
+const fs::path& Config::delFilesPath() const noexcept
+{
+    return delFilesPath_;
+}
+
+void Config::setDelFilesPath(fs::path path)
+{
+    delFilesPath_ = std::move(path);
+    adjustPath(dataDir(), delFilesPath_);
+}
+
+
 const fs::path& Config::logDir() const noexcept
 {
     return logDir_;
@@ -277,6 +300,8 @@ void applyDefaults(Config& cfg)
     cfg.setUpdateFrequency(std::chrono::milliseconds(100));
     cfg.setAllFilesPath("all.txt");
     cfg.setIgnFilesPath("ignored.txt");
+    cfg.setKeepFilesPath("keep.txt");
+    cfg.setDelFilesPath("delete.txt");
     cfg.setDupFilesPath("duplicates.txt");
 }
 

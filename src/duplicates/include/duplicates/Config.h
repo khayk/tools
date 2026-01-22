@@ -42,6 +42,12 @@ public:
     const fs::path& ignFilesPath() const noexcept;
     void setIgnFilesPath(fs::path path);
 
+    const fs::path& keepFilesPath() const noexcept;
+    void setKeepFilesPath(fs::path path);
+
+    const fs::path& delFilesPath() const noexcept;
+    void setDelFilesPath(fs::path path);
+
     const fs::path& logDir() const noexcept;
     void setLogDir(fs::path path);
 
@@ -73,6 +79,8 @@ private:
     fs::path allFilesPath_;
     fs::path dupFilesPath_;
     fs::path ignFilesPath_;
+    fs::path keepFilesPath_;
+    fs::path delFilesPath_;
     fs::path logDir_;
     fs::path logFilename_;
     size_t minFileSizeBytes_ {};
