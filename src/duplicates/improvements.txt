@@ -25,6 +25,6 @@
     12345. i
     ```
 
-13. [ ] Ability to view actual keep/delete directories that user altered during the execution
-14. [ ] Ability to list and delete entry from each of them
-15. [ ] Ensure files to keep and delete are stored in the appropriate metadata files, as ignored file
+13. [x] Ability to view actual keep/delete directories that user altered during the execution
+14. [ ] Ability to list and delete entry from each of list
+15. [x] Ensure files to keep and delete are stored in the appropriate metadata files, as ignored file

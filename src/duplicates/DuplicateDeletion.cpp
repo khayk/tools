@@ -23,6 +23,7 @@ constexpr std::string_view MAIN_PROMPT =
     "  [o] Open directories\n"
     "  [k] Edit keep-from list\n"
     "  [d] Edit delete-from list\n"
+    "  [v] View keep/delete list\n"
     "  [q] Quit\n"
     "> ";
 
@@ -102,6 +103,7 @@ enum class UserChoice : std::uint8_t
     Number,
     IgnoreGroup,
     OpenFolders,
+    ViewPaths,
     EditKeepFrom,
     EditDeleteFrom,
     GoBack,
@@ -135,6 +137,10 @@ ParsedInput parseUserInput(const std::string& input, size_t maxIdx)
     if (cmd == 'o')
     {
         return {UserChoice::OpenFolders};
+    }
+    if (cmd == 'v')
+    {
+        return {UserChoice::ViewPaths};
     }
     if (cmd == 'k')
     {
@@ -358,6 +364,22 @@ bool isDuplicateNamingPattern(const IDeletionStrategy& strategy,
     return true;
 }
 
+template <typename Paths>
+void displayPaths(const std::string_view desc, const Paths& paths, std::ostream& out)
+{
+    out << desc << '\n';
+    size_t i = 0;
+    for (const auto& path: paths.paths())
+    {
+        out << "    " << std::setw(2) << ++i << ". " << path << '\n';
+    }
+
+    if (paths.paths().empty())
+    {
+        out << "    " << "Empty list\n";
+    }
+}
+
 Flow deleteInteractively(PathsVec& files, DeletionConfig& cfg)
 {
     // Try automatic resolution first
@@ -375,15 +397,25 @@ Flow deleteInteractively(PathsVec& files, DeletionConfig& cfg)
         return Flow::Done;
     }
 
+    constexpr size_t splitterLength = 80;
+    const std::string splitter = std::string(splitterLength, '-') + "\n";
+
     // UI Loop
     while (true)
     {
+        cfg.out() << splitter;
+
         displayPathOptions(cfg.out(), files);
         auto input =
             parseUserInput(promptUser(MAIN_PROMPT, cfg.out(), cfg.in()), files.size());
 
         switch (input.action)
         {
+            case UserChoice::ViewPaths:
+                displayPaths("Keep from paths:", cfg.keepFromPaths(), cfg.out());
+                displayPaths("Delete from paths:", cfg.deleteFromPaths(), cfg.out());
+                break;
+
             case UserChoice::EditKeepFrom:
                 if (!editConfig(files,
                                 KEEP_PROMPT,
