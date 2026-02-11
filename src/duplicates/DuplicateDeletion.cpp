@@ -220,10 +220,10 @@ void displayPathOptions(std::ostream& out, const PathsVec& paths)
 
 template <typename Paths>
 bool editConfig(const PathsVec& files,
-              std::string_view prompt,
-              Paths& paths,
-              std::ostream& out,
-              std::istream& in)
+                std::string_view prompt,
+                Paths& paths,
+                std::ostream& out,
+                std::istream& in)
 {
     auto dirs = createDirectoriesList(files);
 
@@ -346,8 +346,7 @@ bool deduceTheOneToKeep(const IDeletionStrategy& strategy,
     return true;
 }
 
-bool isDuplicateNamingPattern(const IDeletionStrategy& strategy,
-                              PathsVec& files)
+bool isDuplicateNamingPattern(const IDeletionStrategy& strategy, PathsVec& files)
 {
     if (2 > files.size())
     {
@@ -370,7 +369,7 @@ bool isDuplicateNamingPattern(const IDeletionStrategy& strategy,
     auto ss = shortest.native();
     std::regex r(R"((\(\d+\)|_copy|copy)$)");
 
-    for (const auto& file: files)
+    for (const auto& file : files)
     {
         auto tmp = file.stem();
         if (tmp != shortest)
@@ -410,7 +409,7 @@ void displayPaths(const std::string_view desc, const Paths& paths, std::ostream&
 {
     out << desc << '\n';
     size_t i = 0;
-    for (const auto& path: paths.paths())
+    for (const auto& path : paths.paths())
     {
         out << "    " << std::setw(2) << ++i << ". " << path << '\n';
     }
@@ -429,7 +428,8 @@ Flow deleteInteractively(PathsVec& files, DeletionConfig& cfg)
         return Flow::Done;
     }
 
-    // From these name.txt, name(1).txt, name(2).txt ... only name.txt will be preserved
+    // From these name.txt, name(1).txt, name(2).txt ... only name.txt will be
+    // preserved
     // @todo:hayk - if pattern emerges that tells we need to run various checks based
     // on different conditions, we might use template method design pattern to delegate
     // the decision to user defined logic

@@ -7,26 +7,51 @@
 namespace tools::dups {
 
 MenuEntry::MenuEntry(std::string_view title, Matcher matcher, Action action)
-    : title_(title), matcher_(std::move(matcher)), action_(std::move(action))
-{}
+    : title_(title)
+    , matcher_(std::move(matcher))
+    , action_(std::move(action))
+{
+}
 
-const std::string& MenuEntry::getTitle() const noexcept{ return title_; }
-const Matcher& MenuEntry::matcher() const noexcept { return matcher_; }
-Action& MenuEntry::action() noexcept { return action_; }
+const std::string& MenuEntry::getTitle() const noexcept
+{
+    return title_;
+}
+const Matcher& MenuEntry::matcher() const noexcept
+{
+    return matcher_;
+}
+Action& MenuEntry::action() noexcept
+{
+    return action_;
+}
+
+
 
 Menu::Menu(std::string_view title)
     : title_(title)
-{}
+{
+}
 
-const std::string& Menu::getTitle() const noexcept { return title_; }
-Menu::Children& Menu::children() noexcept { return children_; }
-const Menu::Children& Menu::children() const noexcept { return children_; }
+const std::string& Menu::getTitle() const noexcept
+{
+    return title_;
+}
+Menu::Children& Menu::children() noexcept
+{
+    return children_;
+}
+const Menu::Children& Menu::children() const noexcept
+{
+    return children_;
+}
 
 void Menu::add(std::string_view t, Matcher m, Action a)
 {
     auto entry = std::make_unique<MenuEntry>(t, m, a);
     children_.push_back(std::move(entry));
 }
+
 
 Navigation Renderer::run(Menu& m, bool isChild)
 {
@@ -36,7 +61,8 @@ Navigation Renderer::run(Menu& m, bool isChild)
 
         prompt_ = prompt();
 
-        if (prompt_.empty()) {
+        if (prompt_.empty())
+        {
             return Navigation::Quit;
         }
 
@@ -61,7 +87,10 @@ Navigation Renderer::run(Menu& m, bool isChild)
                 handled = true;
             }
 
-            if (result == Navigation::Quit) return result;
+            if (result == Navigation::Quit)
+            {
+                return result;
+            }
         }
 
         if (!handled)
@@ -73,7 +102,10 @@ Navigation Renderer::run(Menu& m, bool isChild)
     return Navigation::Continue;
 }
 
-const std::string& Renderer::currentPrompt() const noexcept { return prompt_; }
+const std::string& Renderer::currentPrompt() const noexcept
+{
+    return prompt_;
+}
 
 
 StreamRenderer::StreamRenderer(std::ostream& out, std::istream& in)
@@ -126,7 +158,8 @@ std::string StreamRenderer::prompt()
     return input;
 }
 
-auto Matchers::Range(int min, int max) {
+auto Matchers::Range(int min, int max)
+{
     return [min, max](const std::string& s) {
         int def {max + 1};
         auto val = num::s2num(s, def);
@@ -134,7 +167,8 @@ auto Matchers::Range(int min, int max) {
     };
 }
 
-auto Matchers::Key(char c) {
+auto Matchers::Key(char c)
+{
     return [c](const std::string& s) {
         return s.length() == 1 && std::tolower(s[0]) == std::tolower(c);
     };

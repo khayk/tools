@@ -7,14 +7,20 @@
 
 namespace tools::dups {
 
-enum class Navigation : uint8_t { Continue, Back, Quit };
+enum class Navigation : uint8_t
+{
+    Continue,
+    Back,
+    Quit
+};
 
 class Renderer;
 
 using Matcher = std::function<bool(const std::string&)>;
-using Action  = std::function<Navigation (Renderer&)>;
+using Action = std::function<Navigation(Renderer&)>;
 
-class MenuEntry {
+class MenuEntry
+{
     std::string title_;
     Matcher matcher_;
     Action action_;
@@ -29,7 +35,9 @@ public:
 
 using MenuPtr = std::unique_ptr<MenuEntry>;
 
-class Menu  {
+
+class Menu
+{
     using Children = std::vector<MenuPtr>;
     Children children_;
     std::string title_;
@@ -45,7 +53,8 @@ public:
 };
 
 
-class Renderer {
+class Renderer
+{
     std::string prompt_;
 
 public:
@@ -63,7 +72,8 @@ private:
 };
 
 
-class StreamRenderer : public Renderer {
+class StreamRenderer : public Renderer
+{
     std::string prevInput_;
     std::ostream& out_;
     std::istream& in_;
@@ -76,6 +86,7 @@ protected:
     void invalidInput() override;
     std::string prompt() override;
 };
+
 
 struct Matchers
 {

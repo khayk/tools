@@ -77,9 +77,12 @@ int main(int argc, const char* argv[])
         auto strategy = createDeletionStrategy(cfg);
 
         DeletionConfig deletionCfg {*strategy, std::cout, std::cin, progress};
-        PathsPersister persisIgn(deletionCfg.ignoredPaths().paths(), cfg.ignFilesPath());
-        PathsPersister persisKeep(deletionCfg.keepFromPaths().paths(), cfg.keepFilesPath());
-        PathsPersister persisDel(deletionCfg.deleteFromPaths().paths(), cfg.delFilesPath());
+        PathsPersister persisIgn(deletionCfg.ignoredPaths().paths(),
+                                 cfg.ignFilesPath());
+        PathsPersister persisKeep(deletionCfg.keepFromPaths().paths(),
+                                  cfg.keepFilesPath());
+        PathsPersister persisDel(deletionCfg.deleteFromPaths().paths(),
+                                 cfg.delFilesPath());
 
         deletionCfg.keepFromPaths().add(cfg.dirsToKeepFrom());
         deletionCfg.deleteFromPaths().add(cfg.dirsToDeleteFrom());
