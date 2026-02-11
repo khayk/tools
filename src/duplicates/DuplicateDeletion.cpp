@@ -37,6 +37,12 @@ constexpr std::string_view DELT_PROMPT = "Select a number to mark as DELETE FROM
                                          "  [q] Quit\n"
                                          "> ";
 
+// constexpr std::string_view ADD_REMOVE_PROMPT = "Make your choice\n"
+//                                                "  [a] Add to list\n"
+//                                                "  [d] Delete from list\n"
+//                                                "  [q] Quit\n"
+//                                                "> ";
+
 namespace {
 
 bool findPath(const PathsSet& delDirs, const fs::path& path)
@@ -214,10 +220,10 @@ void displayPathOptions(std::ostream& out, const PathsVec& paths)
 
 template <typename Paths>
 bool editConfig(const PathsVec& files,
-                std::string_view prompt,
-                Paths& paths,
-                std::ostream& out,
-                std::istream& in)
+              std::string_view prompt,
+              Paths& paths,
+              std::ostream& out,
+              std::istream& in)
 {
     auto dirs = createDirectoriesList(files);
 
@@ -250,6 +256,41 @@ bool editConfig(const PathsVec& files,
 
     return true;
 }
+
+/*
+template <typename Paths>
+bool editConfig(const PathsVec& files,
+                std::string_view prompt,
+                Paths& paths,
+                std::ostream& out,
+                std::istream& in)
+{
+
+    while (true)
+    {
+        auto input = parseUserInput(promptUser(ADD_REMOVE_PROMPT, out, in), 0);
+        switch (input.action)
+        {
+            case UserChoice::Add:
+                return addPaths(files, prompt, paths, out, in);
+
+            case UserChoice::Delete:
+                return deletePaths();
+
+            case UserChoice::Quit:
+                lastInput().clear();
+                return false;
+
+            case UserChoice::GoBack:
+                return true;
+
+            default:
+                // We don't return false here so the user gets another chance
+                out << "'" << input.index << "' is an invalid choice.\n";
+        }
+
+    return true;
+}*/
 
 } // namespace
 
@@ -376,7 +417,7 @@ void displayPaths(const std::string_view desc, const Paths& paths, std::ostream&
 
     if (paths.paths().empty())
     {
-        out << "    " << "Empty list\n";
+        out << "    " << "Path list is empty\n";
     }
 }
 
