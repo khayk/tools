@@ -8,16 +8,21 @@ using ::testing::InSequence;
 
 namespace tools::dups {
 
-class MockMenuActions {
+class MockMenuActions
+{
 public:
     MOCK_METHOD(void, optionSelected, (std::string option), ());
     MOCK_METHOD(void, invalidInput, (std::string option), ());
 };
 
-class MockRenderer : public StreamRenderer {
+class MockRenderer : public StreamRenderer
+{
 public:
     MockRenderer(std::ostream& os, std::istream& is, MockMenuActions& actions)
-        : StreamRenderer(os, is), actions_(actions) {}
+        : StreamRenderer(os, is)
+        , actions_(actions)
+    {
+    }
 
     void invalidInput() override
     {
@@ -42,7 +47,7 @@ TEST(MenuTest, BasicNavigationLetters)
         acts.optionSelected(r.currentPrompt());
         return Navigation::Continue;
     });
-    m.add("select", Matchers::Key('s'), [&](Renderer& r)  {
+    m.add("select", Matchers::Key('s'), [&](Renderer& r) {
         acts.optionSelected(r.currentPrompt());
         return Navigation::Continue;
     });

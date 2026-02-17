@@ -50,8 +50,8 @@ const Menu::Children& Menu::children() const noexcept
 
 void Menu::add(std::string_view title, Matcher matcher, Action action)
 {
-    auto entry = std::make_unique<MenuEntry>(title, std::move(matcher), std::move(action));
-    children_.push_back(std::move(entry));
+    children_.push_back(
+        std::make_unique<MenuEntry>(title, std::move(matcher), std::move(action)));
 }
 
 
