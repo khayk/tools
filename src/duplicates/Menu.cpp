@@ -17,16 +17,16 @@ const std::string& MenuEntry::getTitle() const noexcept
 {
     return title_;
 }
+
 const Matcher& MenuEntry::matcher() const noexcept
 {
     return matcher_;
 }
+
 Action& MenuEntry::action() noexcept
 {
     return action_;
 }
-
-
 
 Menu::Menu(std::string_view title)
     : title_(title)
@@ -37,18 +37,20 @@ const std::string& Menu::getTitle() const noexcept
 {
     return title_;
 }
+
 Menu::Children& Menu::children() noexcept
 {
     return children_;
 }
+
 const Menu::Children& Menu::children() const noexcept
 {
     return children_;
 }
 
-void Menu::add(std::string_view t, Matcher m, Action a)
+void Menu::add(std::string_view title, Matcher matcher, Action action)
 {
-    auto entry = std::make_unique<MenuEntry>(t, m, a);
+    auto entry = std::make_unique<MenuEntry>(title, std::move(matcher), std::move(action));
     children_.push_back(std::move(entry));
 }
 
@@ -132,7 +134,7 @@ void StreamRenderer::renderEntries(const Menu& m, bool isChild)
 
 void StreamRenderer::invalidInput()
 {
-    out_ << ">> Invalid input or hidden option.\n";
+    out_ << "Invalid input.\n";
 }
 
 std::string StreamRenderer::prompt()
