@@ -90,8 +90,8 @@ protected:
 
 struct Matchers
 {
-    static auto Range(int min, int max);
-    static auto Key(char c);
+    static Matcher Range(int min, int max);
+    static Matcher Key(char c);
 };
 
 } // namespace tools::dups

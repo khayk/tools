@@ -144,7 +144,7 @@ std::string StreamRenderer::prompt()
         out_ << "> ";
         std::getline(in_, input);
 
-        if (input.empty())
+        if (in_ && input.empty())
         {
             input = prevInput_;
         }
@@ -158,7 +158,7 @@ std::string StreamRenderer::prompt()
     return input;
 }
 
-auto Matchers::Range(int min, int max)
+Matcher Matchers::Range(int min, int max)
 {
     return [min, max](const std::string& s) {
         int def {max + 1};
@@ -167,7 +167,7 @@ auto Matchers::Range(int min, int max)
     };
 }
 
-auto Matchers::Key(char c)
+Matcher Matchers::Key(char c)
 {
     return [c](const std::string& s) {
         return s.length() == 1 && std::tolower(s[0]) == std::tolower(c);
