@@ -5,6 +5,7 @@
 #include <duplicates/Config.h>
 #include <duplicates/Node.h>
 #include <duplicates/CmdLine.h>
+#include <duplicates/Menu.h>
 
 #include <core/utils/Log.h>
 #include <core/utils/File.h>
@@ -76,7 +77,8 @@ int main(int argc, const char* argv[])
         // start deletion of the duplicates
         auto strategy = createDeletionStrategy(cfg);
 
-        DeletionConfig deletionCfg {*strategy, std::cout, std::cin, progress};
+        StreamRenderer renderer(std::cout, std::cin);
+        DeletionConfig deletionCfg {*strategy, std::cout, std::cin, progress, renderer};
         PathsPersister persisIgn(deletionCfg.ignoredPaths().paths(),
                                  cfg.ignFilesPath());
         PathsPersister persisKeep(deletionCfg.keepFromPaths().paths(),

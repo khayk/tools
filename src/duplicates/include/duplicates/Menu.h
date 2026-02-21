@@ -1,3 +1,5 @@
+#pragma once
+
 #include <cstdint>
 #include <string>
 #include <functional>
@@ -9,6 +11,7 @@ namespace tools::dups {
 
 enum class Navigation : uint8_t
 {
+    Done,
     Continue,
     Back,
     Quit

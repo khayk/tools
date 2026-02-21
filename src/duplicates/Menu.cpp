@@ -60,7 +60,6 @@ Navigation Renderer::run(Menu& m, bool isChild)
     while (true)
     {
         renderEntries(m, isChild);
-
         prompt_ = prompt();
 
         if (prompt_.empty())
@@ -89,7 +88,7 @@ Navigation Renderer::run(Menu& m, bool isChild)
                 handled = true;
             }
 
-            if (result == Navigation::Quit)
+            if (result == Navigation::Quit || result == Navigation::Done)
             {
                 return result;
             }
@@ -118,7 +117,8 @@ StreamRenderer::StreamRenderer(std::ostream& out, std::istream& in)
 
 void StreamRenderer::renderEntries(const Menu& m, bool isChild)
 {
-    out_ << std::format("========= {} =========\n", m.getTitle());
+    out_ << std::format("{:-^60s}\n", std::format("> {} <", m.getTitle()));
+
     for (const auto& child : m.children())
     {
         out_ << std::format("  {}\n", child->getTitle());

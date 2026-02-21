@@ -5,6 +5,7 @@
 #include <duplicates/Progress.h>
 #include <duplicates/Config.h>
 #include <duplicates/PathList.h>
+#include <duplicates/Menu.h>
 #include <cstdint>
 #include <ostream>
 
@@ -40,6 +41,7 @@ class DeletionConfig
     std::ostream& out_;
     std::istream& in_;
     Progress& progress_;
+    StreamRenderer& renderer_;
 
     IgnoredPaths ignored_;
     KeepFromPaths keepFrom_;
@@ -52,13 +54,17 @@ public:
      * @param strategy The deletion strategy to use
      * @param out Output stream interactive output
      * @param in Input stream to interact with user
+     * @param progress Progress reporter
+     * @param renderer Menu renderer instance
      */
     DeletionConfig(const IDeletionStrategy& strategy,
                    std::ostream& out,
                    std::istream& in,
-                   Progress& progress);
+                   Progress& progress,
+                   StreamRenderer& renderer);
 
     const IDeletionStrategy& strategy() const;
+    StreamRenderer& renderer();
     std::ostream& out();
     std::istream& in();
     Progress& progress();
