@@ -7,8 +7,6 @@
 #include <core/utils/FmtExt.h>
 
 #include <algorithm>
-#include <cstdint>
-#include <iostream>
 #include <iterator>
 #include <cassert>
 #include <stdexcept>
@@ -161,7 +159,6 @@ Navigation deletePaths(std::string_view listName,
         auto index = num::s2num<size_t>(r.currentPrompt());
 
         std::ignore = index;
-        std::cout << "Deleting: " << index << std::endl;
         //paths.add(dirs[index - 1]);
         // @todo:khayk - implement
         return Navigation::Back;

@@ -20,6 +20,7 @@
 
 #include <memory>
 #include <system_error>
+#include <iostream>
 
 using tools::utl::configureLogger;
 

@@ -2,7 +2,7 @@
 
 #include <core/utils/StopWatch.h>
 
-#include <iostream>
+#include <ostream>
 #include <functional>
 
 namespace tools::dups {
