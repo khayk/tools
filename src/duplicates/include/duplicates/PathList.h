@@ -16,7 +16,7 @@ class PathsImpl
 public:
     PathsImpl() = default;
     PathsImpl(const PathsVec& paths);
-    PathsImpl(const PathsSet& paths);
+    PathsImpl(PathsSet paths) noexcept;
 
     PathsSet& paths();
 

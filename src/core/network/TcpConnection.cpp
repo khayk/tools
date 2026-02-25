@@ -1,9 +1,10 @@
 #include <core/network/TcpConnection.h>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
+#include <spdlog/spdlog.h>
 
 namespace tcp {
 
-Connection::Connection(Socket socket, uint16_t bufferSize) noexcept
+Connection::Connection(Socket socket, uint16_t bufferSize)
     : socket_ {std::move(socket)}
     , data_(bufferSize, ' ')
     , timer_(socket_.get_executor())
@@ -12,7 +13,14 @@ Connection::Connection(Socket socket, uint16_t bufferSize) noexcept
 
 Connection::~Connection()
 {
-    disconnectCb_();
+    try
+    {
+        disconnectCb_();
+    }
+    catch (const std::exception& e)
+    {
+        spdlog::error("Exception in ~Connection: {}", e.what());
+    }
 }
 
 void Connection::onRead(ReadCb readCb)

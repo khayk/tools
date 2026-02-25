@@ -12,6 +12,7 @@
 #include <array>
 #include <span>
 #include <format>
+#include <utility>
 
 
 namespace crypto {
@@ -157,7 +158,7 @@ void encodeBase64(std::string_view byteSeq, std::string& base64Seq)
                         reinterpret_cast<const unsigned char*>(byteSeq.data()),
                         static_cast<int>(byteSeq.size()));
 
-    if (res != static_cast<int>(len))
+    if (std::cmp_not_equal(res, len))
     {
         const auto s = fmt::format("Encode predicted {} but we got {}", len, res);
         throw std::system_error(std::make_error_code(std::errc::result_out_of_range),
@@ -181,7 +182,7 @@ void decodeBase64(const std::string& base64Seq, std::string& byteSeq)
         EVP_DecodeBlock(reinterpret_cast<unsigned char*>(byteSeq.data()),
                         reinterpret_cast<const unsigned char*>(base64Seq.data()),
                         static_cast<int>(base64Seq.size()));
-    if (res != static_cast<int>(len))
+    if (std::cmp_not_equal(res, len))
     {
         const auto s = fmt::format("Encode predicted {} but we got {}", len, res);
         throw std::system_error(std::make_error_code(std::errc::result_out_of_range),

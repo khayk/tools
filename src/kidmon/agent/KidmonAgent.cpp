@@ -356,9 +356,16 @@ public:
 
     ~Impl()
     {
-        std::ostringstream oss;
-        stats_.report(oss);
-        spdlog::info(oss.str());
+        try
+        {
+            std::ostringstream oss;
+            stats_.report(oss);
+            spdlog::info(oss.str());
+        }
+        catch (const std::exception& e)
+        {
+            spdlog::error("Exception in ~KidmonAgent::Impl:", e.what());
+        }
     }
 
     void run()

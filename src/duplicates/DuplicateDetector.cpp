@@ -154,7 +154,7 @@ void DuplicateDetector::detect(const Options& opts, const ProgressCallback& cb)
                 std::remove_if(std::begin(nodes),
                                std::end(nodes),
                                [&hashes](const Node* const node) {
-                                   return hashes.find(node->sha256()) == hashes.end();
+                                   return !hashes.contains(node->sha256());
                                });
 
             nodes.erase(it, nodes.end());
