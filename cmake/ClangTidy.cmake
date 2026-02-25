@@ -1,6 +1,6 @@
 function(AddClangTidy target)
 	if(TOOLS_TIDY)
-		find_program(CLANG_TIDY_PATH NAMES "clang-tidy-19" REQUIRED)
+		find_program(CLANG_TIDY_PATH NAMES "clang-tidy" REQUIRED)
 		message("Found clang-tidy      : ${CLANG_TIDY_PATH}")
 
 		set_target_properties(
