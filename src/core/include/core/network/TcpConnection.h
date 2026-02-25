@@ -33,7 +33,7 @@ public:
     using DisconnectCb = DisconnectCbs::Function;
     using TimeoutCb = TimeoutCbs::Function;
 
-    explicit Connection(Socket socket, uint16_t bufferSize = 4096) noexcept;
+    explicit Connection(Socket socket, uint16_t bufferSize = 4096);
     ~Connection();
 
     void onRead(ReadCb readCb);

@@ -68,7 +68,7 @@ int main(int argc, char* argv[])
         const bool agentMode = result["agent"].as<bool>();
         const std::string token = result["token"].as<std::string>();
 
-        if (result.count("help"))
+        if (result.contains("help"))
         {
             std::cout << opts.help() << '\n';
             return 0;

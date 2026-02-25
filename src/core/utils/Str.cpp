@@ -90,7 +90,7 @@ std::string ws2s(std::wstring_view utf16)
     return utf8;
 }
 
-#if !defined(__cpp_lib_char8_t)
+#ifndef __cpp_lib_char8_t
 std::string_view u8tos(const std::string_view sv)
 {
     return sv;

@@ -13,7 +13,7 @@ fs::path makeLogFilename(std::string_view appName)
     const auto time = std::chrono::system_clock::to_time_t(now);
 
     std::tm tm {};
-#if defined(_WIN32)
+#ifdef _WIN32
     localtime_s(&tm, &time);
 #else
     localtime_r(&time, &tm);

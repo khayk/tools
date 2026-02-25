@@ -1,4 +1,7 @@
 #include <core/network/TcpServer.h>
+#include <boost/system/detail/errc.hpp>
+#include <boost/system/detail/error_category.hpp>
+#include <spdlog/spdlog.h>
 
 namespace tcp {
 
@@ -14,7 +17,14 @@ Server::Server(IoContext& ioc)
 
 Server::~Server()
 {
-    close();
+    try
+    {
+        close();
+    }
+    catch (const std::exception& e)
+    {
+        spdlog::error("Exception in ~Server: {}", e.what());
+    }
 }
 
 void Server::onListening(ListeningCb listenCb)

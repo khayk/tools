@@ -15,8 +15,8 @@ PathsImpl::PathsImpl(const PathsVec& paths)
     add(paths);
 }
 
-PathsImpl::PathsImpl(const PathsSet& paths)
-    : paths_(paths)
+PathsImpl::PathsImpl(PathsSet paths) noexcept
+    : paths_(std::move(paths))
 {
 }
 

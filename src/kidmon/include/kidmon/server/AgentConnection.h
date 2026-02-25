@@ -2,6 +2,7 @@
 
 #include <core/network/TcpConnection.h>
 #include <core/network/TcpCommunicator.h>
+#include <cstdint>
 
 class AuthorizationHandler;
 class DataHandler;
@@ -11,7 +12,7 @@ class AgentConnection : public tcp::Connection
 public:
     using AuthorizationCb = std::function<bool(AgentConnection* conn, bool)>;
 
-    enum State
+    enum State : std::uint8_t
     {
         Disconnected,
         Connected,

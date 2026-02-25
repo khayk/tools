@@ -13,6 +13,7 @@
 #include <atomic>
 #include <regex>
 #include <stdexcept>
+#include <utility>
 
 namespace file {
 
@@ -101,7 +102,7 @@ bool read(const fs::path& file, std::string& data, std::error_code& ec)
     ifs.read(data.data(), static_cast<std::streamsize>(data.size()));
 
     // Make sure we red all available data
-    if (ifs.tellg() != static_cast<std::streamoff>(data.size()))
+    if (std::cmp_not_equal(static_cast<std::streamoff>(ifs.tellg()), data.size()))
     {
         ec.assign(static_cast<int>(std::errc::invalid_seek), std::iostream_category());
         return false;

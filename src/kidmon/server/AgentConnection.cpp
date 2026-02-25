@@ -115,16 +115,23 @@ tcp::Communicator& AgentConnection::communicator()
 
 void AgentConnection::transitionTo(const State newState) noexcept
 {
-    if (currentState_ == State::Connected)
+    try
     {
-        if (newState == State::Authorized)
+        if (currentState_ == State::Connected)
         {
-            authCb_(this, true);
+            if (newState == State::Authorized)
+            {
+                authCb_(this, true);
+            }
+        }
+        else if (currentState_ == State::Authorized)
+        {
+            authCb_(this, false);
         }
     }
-    else if (currentState_ == State::Authorized)
+    catch (const std::exception& e)
     {
-        authCb_(this, false);
+        spdlog::error("Exception inside transitionTo: ", e.what());
     }
 
     currentState_ = newState;
