@@ -4,6 +4,7 @@
 #include <duplicates/DuplicateDeletion.h>
 #include <duplicates/DeletionStrategy.h>
 #include <duplicates/Progress.h>
+#include <duplicates/Menu.h>
 #include <core/utils/File.h>
 #include <core/utils/Log.h>
 #include <core/utils/LogInterceptor.h>
@@ -64,7 +65,8 @@ protected:
     std::ostringstream out;
     std::istringstream in;
     Progress progress {nullptr};
-    DeletionConfig cfg {strategy, out, in, progress};
+    StreamRenderer renderer {out, in};
+    DeletionConfig cfg {strategy, out, in, progress, renderer};
 };
 
 TEST_F(DuplicateDeletionTest, IgnoreFilesModule)
@@ -247,7 +249,7 @@ TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_IgnoreGroup)
 
     in.str("i\n"); // Simulate user input to keep the second file
 
-    EXPECT_EQ(deleteInteractively(files, cfg), Flow::Done);
+    EXPECT_EQ(deleteInteractively(files, cfg), Flow::Quit);
     ASSERT_EQ(files.size(), 3);
     ASSERT_EQ(cfg.ignoredPaths().size(), 3);
     EXPECT_TRUE(cfg.ignoredPaths().contains(files[0]));

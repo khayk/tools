@@ -8,9 +8,6 @@ file(GLOB LIB_SRCS
    "*.cpp"
 )
 
-# find_package(PkgConfig REQUIRED)
-# pkg_check_modules(tomlplusplus REQUIRED IMPORTED_TARGET tomlplusplus)
-
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(tomlplusplus CONFIG REQUIRED)
 

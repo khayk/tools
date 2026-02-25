@@ -5,6 +5,7 @@
 #include <duplicates/Config.h>
 #include <duplicates/Node.h>
 #include <duplicates/CmdLine.h>
+#include <duplicates/Menu.h>
 
 #include <core/utils/Log.h>
 #include <core/utils/File.h>
@@ -19,6 +20,7 @@
 
 #include <memory>
 #include <system_error>
+#include <iostream>
 
 using tools::utl::configureLogger;
 
@@ -76,10 +78,14 @@ int main(int argc, const char* argv[])
         // start deletion of the duplicates
         auto strategy = createDeletionStrategy(cfg);
 
-        DeletionConfig deletionCfg {*strategy, std::cout, std::cin, progress};
-        PathsPersister persisIgn(deletionCfg.ignoredPaths().paths(), cfg.ignFilesPath());
-        PathsPersister persisKeep(deletionCfg.keepFromPaths().paths(), cfg.keepFilesPath());
-        PathsPersister persisDel(deletionCfg.deleteFromPaths().paths(), cfg.delFilesPath());
+        StreamRenderer renderer(std::cout, std::cin);
+        DeletionConfig deletionCfg {*strategy, std::cout, std::cin, progress, renderer};
+        PathsPersister persisIgn(deletionCfg.ignoredPaths().paths(),
+                                 cfg.ignFilesPath());
+        PathsPersister persisKeep(deletionCfg.keepFromPaths().paths(),
+                                  cfg.keepFilesPath());
+        PathsPersister persisDel(deletionCfg.deleteFromPaths().paths(),
+                                 cfg.delFilesPath());
 
         deletionCfg.keepFromPaths().add(cfg.dirsToKeepFrom());
         deletionCfg.deleteFromPaths().add(cfg.dirsToDeleteFrom());

@@ -1,15 +1,15 @@
 #include <duplicates/DuplicateDeletion.h>
 #include <duplicates/DeletionStrategy.h>
 #include <duplicates/Progress.h>
+#include <duplicates/Menu.h>
 #include <core/utils/Number.h>
 #include <core/utils/File.h>
 #include <core/utils/FmtExt.h>
 
 #include <algorithm>
-#include <cstdint>
-#include <iostream>
 #include <iterator>
 #include <cassert>
+#include <stdexcept>
 #include <tuple>
 #include "core/utils/Str.h"
 
@@ -17,31 +17,6 @@
 
 namespace tools::dups {
 
-constexpr std::string_view MAIN_PROMPT =
-    "Enter a number to keep, or select an action:\n"
-    "  [i] Ignore\n"
-    "  [o] Open directories\n"
-    "  [k] Edit keep-from list\n"
-    "  [d] Edit delete-from list\n"
-    "  [v] View keep/delete list\n"
-    "  [q] Quit\n"
-    "> ";
-
-constexpr std::string_view KEEP_PROMPT = "Select a number to mark as KEEP FROM\n"
-                                         "  [b] Back\n"
-                                         "  [q] Quit\n"
-                                         "> ";
-
-constexpr std::string_view DELT_PROMPT = "Select a number to mark as DELETE FROM\n"
-                                         "  [b] Back\n"
-                                         "  [q] Quit\n"
-                                         "> ";
-
-// constexpr std::string_view ADD_REMOVE_PROMPT = "Make your choice\n"
-//                                                "  [a] Add to list\n"
-//                                                "  [d] Delete from list\n"
-//                                                "  [q] Quit\n"
-//                                                "> ";
 
 namespace {
 
@@ -54,39 +29,35 @@ bool findPath(const PathsSet& delDirs, const fs::path& path)
     });
 };
 
-std::string& lastInput()
+
+template <typename Paths>
+void displayPaths(const std::string_view desc, const Paths& paths, std::ostream& out)
 {
-    static std::string s_lastInput;
-    return s_lastInput;
+    out << desc << '\n';
+    size_t i = 0;
+    for (const auto& path : paths.paths())
+    {
+        out << "    " << std::setw(2) << ++i << ". " << path << '\n';
+    }
+
+    if (paths.paths().empty())
+    {
+        out << "    " << "Path list is empty\n";
+    }
 }
 
-std::string promptUser(std::string_view prompt, std::ostream& out, std::istream& in)
+void menuOption(Menu& menu, std::string_view title, char key, Action action)
 {
-    std::string input;
+    std::string menuLabel = std::format("[{}] {}", key, title);
 
-    while (in && input.empty())
-    {
-        out << prompt;
-        std::getline(in, input);
+    menu.add(menuLabel, Matchers::Key(key), std::move(action));
+}
 
-        if (input.empty())
-        {
-            input = lastInput();
-        }
-    }
+void menuOption(Menu& menu, size_t count, Action action)
+{
+    std::string menuLabel = std::format("[?] Number from 1 and {}", count);
 
-    if (!input.empty())
-    {
-        lastInput() = input;
-    }
-    else
-    {
-        // The input is corrupted, treating it as a quit signal
-        spdlog::error("Input stream is in bad state, quitting.");
-        return "";
-    }
-
-    return input;
+    menu.add(menuLabel, Matchers::Range(1, static_cast<int>(count)), std::move(action));
 }
 
 void openDirectories(const PathsVec& files)
@@ -102,72 +73,6 @@ void openDirectories(const PathsVec& files)
     {
         file::openDirectory(dir);
     }
-}
-
-enum class UserChoice : std::uint8_t
-{
-    Number,
-    IgnoreGroup,
-    OpenFolders,
-    ViewPaths,
-    EditKeepFrom,
-    EditDeleteFrom,
-    GoBack,
-    Retry,
-    Quit
-};
-
-struct ParsedInput
-{
-    UserChoice action {};
-    size_t index = 0;
-};
-
-// Translates string input into a structured Command
-ParsedInput parseUserInput(const std::string& input, size_t maxIdx)
-{
-    if (input.empty())
-    {
-        return {UserChoice::Quit};
-    }
-    char cmd = static_cast<char>(std::tolower(input[0]));
-
-    if (cmd == 'q')
-    {
-        return {UserChoice::Quit};
-    }
-    if (cmd == 'i')
-    {
-        return {UserChoice::IgnoreGroup};
-    }
-    if (cmd == 'o')
-    {
-        return {UserChoice::OpenFolders};
-    }
-    if (cmd == 'v')
-    {
-        return {UserChoice::ViewPaths};
-    }
-    if (cmd == 'k')
-    {
-        return {UserChoice::EditKeepFrom};
-    }
-    if (cmd == 'd')
-    {
-        return {UserChoice::EditDeleteFrom};
-    }
-    if (cmd == 'b')
-    {
-        return {UserChoice::GoBack};
-    }
-
-    const auto choice = num::s2num<size_t>(input);
-    if (choice > 0 && choice <= maxIdx)
-    {
-        return {UserChoice::Number, choice};
-    }
-
-    return {UserChoice::Retry, choice};
 }
 
 PathsVec createDirectoriesList(const PathsVec& files)
@@ -219,78 +124,75 @@ void displayPathOptions(std::ostream& out, const PathsVec& paths)
 }
 
 template <typename Paths>
-bool editConfig(const PathsVec& files,
-              std::string_view prompt,
-              Paths& paths,
-              std::ostream& out,
-              std::istream& in)
+Navigation addPaths(const PathsVec& files,
+                    std::string_view listName,
+                    Paths& paths,
+                    Renderer& r)
 {
     auto dirs = createDirectoriesList(files);
 
-    while (true)
-    {
-        displayPathOptions(out, dirs);
-        auto input = parseUserInput(promptUser(prompt, out, in), dirs.size());
-        std::ignore = input;
+    Menu menu(listName);
 
-        switch (input.action)
-        {
-            case UserChoice::Quit:
-                lastInput().clear();
-                return false;
+    menuOption(menu, dirs.size(), [&](Renderer& r) {
+        auto index = num::s2num<size_t>(r.currentPrompt());
+        paths.add(dirs[index - 1]);
+        return Navigation::Continue;
+    });
 
-            case UserChoice::GoBack:
-                return true;
-
-            case UserChoice::Number:
-                // Selected path will be added into directories of the given paths
-                paths.add(dirs[input.index - 1]);
-                return true;
-
-            case UserChoice::Retry:
-            default:
-                // We don't return false here so the user gets another chance
-                out << "'" << input.index << "' is an invalid choice.\n";
-        }
-    }
-
-    return true;
+    return r.run(menu);
 }
 
-/*
 template <typename Paths>
-bool editConfig(const PathsVec& files,
-                std::string_view prompt,
-                Paths& paths,
-                std::ostream& out,
-                std::istream& in)
+Navigation deletePaths(std::string_view listName,
+                       Paths& paths,
+                       Renderer& r)
+{
+    if (paths.empty())
+    {
+        spdlog::info("Path list is empty");
+        return Navigation::Back;
+    }
+
+    Menu menu(listName);
+
+    menuOption(menu, paths.size(), [&](Renderer& r) {
+        auto index = num::s2num<size_t>(r.currentPrompt());
+
+        std::ignore = index;
+        //paths.add(dirs[index - 1]);
+        // @todo:khayk - implement
+        return Navigation::Back;
+    });
+
+    return r.run(menu);
+}
+
+std::string concat(std::string_view lhs, std::string_view rhs)
+{
+    std::string str(lhs);
+    str.append(rhs);
+    return str;
+}
+
+template <typename Paths>
+Navigation editConfig(const PathsVec& files,
+                      std::string_view listName,
+                      Paths& paths,
+                      Renderer& r)
 {
 
-    while (true)
-    {
-        auto input = parseUserInput(promptUser(ADD_REMOVE_PROMPT, out, in), 0);
-        switch (input.action)
-        {
-            case UserChoice::Add:
-                return addPaths(files, prompt, paths, out, in);
+    Menu menu(listName);
 
-            case UserChoice::Delete:
-                return deletePaths();
+    menuOption(menu, "Add to list", 'a', [&](Renderer& r) {
+        return addPaths(files, concat("Add to ", listName), paths, r);
+    });
 
-            case UserChoice::Quit:
-                lastInput().clear();
-                return false;
+    menuOption(menu, "Delete from list", 'd', [&](Renderer& r) {
+        return deletePaths(concat("Delete from ", listName), paths, r);
+    });
 
-            case UserChoice::GoBack:
-                return true;
-
-            default:
-                // We don't return false here so the user gets another chance
-                out << "'" << input.index << "' is an invalid choice.\n";
-        }
-
-    return true;
-}*/
+    return r.run(menu);
+}
 
 } // namespace
 
@@ -346,8 +248,7 @@ bool deduceTheOneToKeep(const IDeletionStrategy& strategy,
     return true;
 }
 
-bool isDuplicateNamingPattern(const IDeletionStrategy& strategy,
-                              PathsVec& files)
+bool isDuplicateNamingPattern(const IDeletionStrategy& strategy, PathsVec& files)
 {
     if (2 > files.size())
     {
@@ -370,7 +271,7 @@ bool isDuplicateNamingPattern(const IDeletionStrategy& strategy,
     auto ss = shortest.native();
     std::regex r(R"((\(\d+\)|_copy|copy)$)");
 
-    for (const auto& file: files)
+    for (const auto& file : files)
     {
         auto tmp = file.stem();
         if (tmp != shortest)
@@ -405,22 +306,6 @@ bool isDuplicateNamingPattern(const IDeletionStrategy& strategy,
     return true;
 }
 
-template <typename Paths>
-void displayPaths(const std::string_view desc, const Paths& paths, std::ostream& out)
-{
-    out << desc << '\n';
-    size_t i = 0;
-    for (const auto& path: paths.paths())
-    {
-        out << "    " << std::setw(2) << ++i << ". " << path << '\n';
-    }
-
-    if (paths.paths().empty())
-    {
-        out << "    " << "Path list is empty\n";
-    }
-}
-
 Flow deleteInteractively(PathsVec& files, DeletionConfig& cfg)
 {
     // Try automatic resolution first
@@ -429,7 +314,8 @@ Flow deleteInteractively(PathsVec& files, DeletionConfig& cfg)
         return Flow::Done;
     }
 
-    // From these name.txt, name(1).txt, name(2).txt ... only name.txt will be preserved
+    // From these name.txt, name(1).txt, name(2).txt ... only name.txt will be
+    // preserved
     // @todo:hayk - if pattern emerges that tells we need to run various checks based
     // on different conditions, we might use template method design pattern to delegate
     // the decision to user defined logic
@@ -438,99 +324,77 @@ Flow deleteInteractively(PathsVec& files, DeletionConfig& cfg)
         return Flow::Done;
     }
 
-    constexpr size_t splitterLength = 80;
-    const std::string splitter = std::string(splitterLength, '-') + "\n";
+    displayPathOptions(cfg.out(), files);
 
-    // UI Loop
-    while (true)
-    {
-        cfg.out() << splitter;
+    Menu menu("Enter a number to keep, or select an action");
 
-        displayPathOptions(cfg.out(), files);
-        auto input =
-            parseUserInput(promptUser(MAIN_PROMPT, cfg.out(), cfg.in()), files.size());
+    menuOption(menu, files.size(), [&](Renderer& r) {
+        // User has chosen the number to KEEP.
+        auto index = num::s2num<size_t>(r.currentPrompt());
 
-        switch (input.action)
+        if (index == 0 || index > files.size())
         {
-            case UserChoice::ViewPaths:
-                displayPaths("Keep from paths:", cfg.keepFromPaths(), cfg.out());
-                displayPaths("Delete from paths:", cfg.deleteFromPaths(), cfg.out());
-                break;
-
-            case UserChoice::EditKeepFrom:
-                if (!editConfig(files,
-                                KEEP_PROMPT,
-                                cfg.keepFromPaths(),
-                                cfg.out(),
-                                cfg.in()))
-                {
-                    // Stop is requested
-                    spdlog::info("Stopping deletion...");
-                    return Flow::Quit;
-                }
-
-                // This ensures the user’s most recent choice is respected.
-                return Flow::Retry;
-
-            case UserChoice::EditDeleteFrom:
-                if (!editConfig(files,
-                                DELT_PROMPT,
-                                cfg.deleteFromPaths(),
-                                cfg.out(),
-                                cfg.in()))
-                {
-                    // Stop is requested
-                    spdlog::info("Stopping deletion...");
-                    return Flow::Quit;
-                }
-                // This ensures the user’s most recent choice is respected.
-                return Flow::Retry;
-
-            case UserChoice::OpenFolders:
-                openDirectories(files);
-                continue; // Re-prompt after opening folders
-
-            case UserChoice::IgnoreGroup:
-                spdlog::info("Ignoring group...");
-                cfg.ignoredPaths().add(files);
-                return Flow::Done;
-
-            case UserChoice::Quit:
-                lastInput().clear();
-                spdlog::info("Stopping deletion...");
-                return Flow::Quit;
-
-            case UserChoice::Number:
-                // The user chose which one to KEEP. Swap it away and delete the rest.
-                std::swap(files[input.index - 1], files.back());
-                files.pop_back();
-                deleteFiles(cfg.strategy(), files);
-                return Flow::Done;
-
-            case UserChoice::Retry:
-            default:
-                // We don't return false here so the user gets another chance
-                cfg.out() << "'" << input.index
-                          << "' is an invalid choice, no file is deleted.\n";
+            assert(index > 0 && index <= files.size() && "Out of bound access");
+            throw std::logic_error("Attempt to access an array out of bounds");
         }
-    }
+
+        std::swap(files[index - 1], files.back());
+        files.pop_back();
+        deleteFiles(cfg.strategy(), files);
+        return Navigation::Done;
+    });
+
+    menuOption(menu, "Ignore", 'i', [&](Renderer& ) {
+        spdlog::info("Ignoring group...");
+        cfg.ignoredPaths().add(files);
+        return Navigation::Continue;
+    });
+
+    menuOption(menu, "Open directories", 'o', [&](Renderer&) {
+        openDirectories(files);
+        return Navigation::Continue;
+    });
+
+    menuOption(menu, "Edit keep-from list", 'k', [&](Renderer& r) {
+        return editConfig(files, "Keep-from list", cfg.keepFromPaths(), r);
+    });
+
+    menuOption(menu, "Edit delete-from list", 'd', [&](Renderer& r) {
+        return editConfig(files, "Delete-from list", cfg.deleteFromPaths(), r);
+    });
+
+    menuOption(menu, "View keep/delete list", 'v', [&](Renderer& ) {
+        displayPaths("Keep from paths:", cfg.keepFromPaths(), cfg.out());
+        displayPaths("Delete from paths:", cfg.deleteFromPaths(), cfg.out());
+        return Navigation::Continue;
+    });
+
+    auto navigation = cfg.renderer().run(menu, false);
+    return navigation == Navigation::Quit ? Flow::Quit : Flow::Done;
 }
 
 
 DeletionConfig::DeletionConfig(const IDeletionStrategy& strategy,
                                std::ostream& out,
                                std::istream& in,
-                               Progress& progress)
+                               Progress& progress,
+                               StreamRenderer& renderer)
     : strategy_ {strategy}
     , out_ {out}
     , in_ {in}
     , progress_ {progress}
+    , renderer_ {renderer}
 {
 }
 
 const IDeletionStrategy& DeletionConfig::strategy() const
 {
     return strategy_;
+}
+
+StreamRenderer& DeletionConfig::renderer()
+{
+    return renderer_;
 }
 
 std::ostream& DeletionConfig::out()
