@@ -76,13 +76,14 @@ TEST_F(DuplicateDeletionTest, IgnoreFilesModule)
     const auto filePath(tmp.path() / "ignored.txt");
 
     {
-        // Tests that nothing is created if there is no file
+        // Tests that a file with 0 size is created if input list is empty
         IgnoredPaths ignoredPaths;
         PathsPersister persister(ignoredPaths.paths(), filePath, true);
 
         EXPECT_EQ(0, ignoredPaths.paths().size());
     }
-    EXPECT_FALSE(fs::exists(filePath));
+    EXPECT_TRUE(fs::exists(filePath));
+    EXPECT_EQ(fs::file_size(filePath), 0);
 
     {
         IgnoredPaths ignoredPaths;

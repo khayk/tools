@@ -121,6 +121,13 @@ void displayPathOptions(std::ostream& out, const PathsVec& paths)
     }
 }
 
+void displayPathOptions(std::string& out, const PathsVec& paths)
+{
+    std::ostringstream oss;
+    displayPathOptions(oss, paths);
+    out = oss.str();
+}
+
 template <typename Paths>
 Navigation addPaths(const PathsVec& files,
                     std::string_view listName,
@@ -128,6 +135,16 @@ Navigation addPaths(const PathsVec& files,
                     UserIO& io)
 {
     auto dirs = createDirectoriesList(files);
+
+    if (dirs.empty())
+    {
+        spdlog::info("The generated list of suggested paths is empty");
+        return Navigation::Continue;
+    }
+
+    std::string out;
+    displayPathOptions(out, dirs);
+    io.printText(out);
 
     Menu menu(listName);
 
@@ -148,17 +165,28 @@ Navigation deletePaths(std::string_view listName,
     if (paths.empty())
     {
         spdlog::info("Path list is empty");
-        return Navigation::Back;
+        return Navigation::Continue;
     }
+
+    PathsVec dirs;
+    std::string out;
+    const auto& input = paths.paths();
+    std::copy(input.begin(), input.end(), std::back_inserter(dirs));
+    displayPathOptions(out, dirs);
+    io.printText(out);
 
     Menu menu(listName);
 
     menuOption(menu, paths.size(), [&](UserIO& io) {
         auto index = num::s2num<size_t>(io.currentPrompt());
+        if (index > dirs.size())
+        {
+            spdlog::info("Attempt to access container with size {} at index {}", dirs.size(), index - 1);
+            return Navigation::Back;
+        }
 
-        std::ignore = index;
-        //paths.add(dirs[index - 1]);
-        // @todo:khayk - implement
+        spdlog::info("Removing item: {}", dirs[index - 1]);
+        paths.paths().erase(dirs[index - 1]);
         return Navigation::Back;
     });
 
@@ -178,7 +206,7 @@ Navigation editConfig(const PathsVec& files,
                       Paths& paths,
                       UserIO& io)
 {
-    Menu menu(listName);
+    Menu menu(std::format("Edit {}", listName));
 
     menuOption(menu, "Add to list", 'a', [&](UserIO& io) {
         return addPaths(files, concat("Add to ", listName), paths, io);
@@ -353,11 +381,11 @@ Flow deleteInteractively(PathsVec& files, DeletionConfig& cfg)
     });
 
     menuOption(menu, "Edit keep-from list", 'k', [&](UserIO& io) {
-        return editConfig(files, "Keep-from list", cfg.keepFromPaths(), io);
+        return editConfig(files, "keep-from list", cfg.keepFromPaths(), io);
     });
 
     menuOption(menu, "Edit delete-from list", 'd', [&](UserIO& io) {
-        return editConfig(files, "Delete-from list", cfg.deleteFromPaths(), io);
+        return editConfig(files, "delete-from list", cfg.deleteFromPaths(), io);
     });
 
     menuOption(menu, "View keep/delete list", 'v', [&](UserIO& ) {

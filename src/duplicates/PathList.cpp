@@ -101,11 +101,6 @@ void PathsPersister::load()
 
 void PathsPersister::save() const
 {
-    if (paths_.empty())
-    {
-        return;
-    }
-
     std::ofstream out(filePath_, std::ios::out | std::ios::binary);
 
     if (!out)

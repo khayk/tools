@@ -129,7 +129,7 @@ public:
 class TempDir : public ScopedDir
 {
 public:
-    enum class CreateMode
+    enum class CreateMode : std::uint8_t
     {
         // Temp directories will be created automatically
         Auto,

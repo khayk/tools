@@ -313,6 +313,8 @@ void logConfig(const Config& cfg)
     spdlog::trace(pattern, "All files path", cfg.allFilesPath());
     spdlog::trace(pattern, "Duplicate files path", cfg.dupFilesPath());
     spdlog::trace(pattern, "Ignored files path", cfg.ignFilesPath());
+    spdlog::trace(pattern, "Delete files path", cfg.delFilesPath());
+    spdlog::trace(pattern, "Keep files path", cfg.keepFilesPath());
     spdlog::trace(pattern, "Scan directories", concat(cfg.scanDirs(), ", "));
     spdlog::trace(pattern,
                   "Directories to keep from",

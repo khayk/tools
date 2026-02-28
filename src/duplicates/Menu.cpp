@@ -69,7 +69,7 @@ Navigation UserIO::run(Menu& m, bool isChild)
 
         if (isChild && (prompt_ == "b" || prompt_ == "B"))
         {
-            return Navigation::Back;
+            return Navigation::Continue;
         }
 
         if (prompt_ == "q" || prompt_ == "Q")
@@ -91,6 +91,11 @@ Navigation UserIO::run(Menu& m, bool isChild)
             if (result == Navigation::Quit || result == Navigation::Done)
             {
                 return result;
+            }
+
+            if (result == Navigation::Back)
+            {
+                return Navigation::Continue;
             }
         }
 
