@@ -83,6 +83,8 @@ Own implementation of different tools.
 
     * TBD - the command line above is for reference only, later create a script to produce coverage
 * Linux
+    * Prerequisite
+        * Install `lcov`
     * Generate
         * `cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug`
     * Build and run
