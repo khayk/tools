@@ -55,11 +55,11 @@ void Menu::add(std::string_view title, Matcher matcher, Action action)
 }
 
 
-Navigation Renderer::run(Menu& m, bool isChild)
+Navigation UserIO::run(Menu& m, bool isChild)
 {
     while (true)
     {
-        renderEntries(m, isChild);
+        printOptions(m, isChild);
         prompt_ = prompt();
 
         if (prompt_.empty())
@@ -103,19 +103,29 @@ Navigation Renderer::run(Menu& m, bool isChild)
     return Navigation::Continue;
 }
 
-const std::string& Renderer::currentPrompt() const noexcept
+void UserIO::printText(std::string_view text)
+{
+    std::ignore = text;
+}
+
+const std::string& UserIO::currentPrompt() const noexcept
 {
     return prompt_;
 }
 
 
-StreamRenderer::StreamRenderer(std::ostream& out, std::istream& in)
+StreamIO::StreamIO(std::ostream& out, std::istream& in)
     : out_(out)
     , in_(in)
 {
 }
 
-void StreamRenderer::renderEntries(const Menu& m, bool isChild)
+void StreamIO::printText(std::string_view text)
+{
+    out_ << text;
+}
+
+void StreamIO::printOptions(const Menu& m, bool isChild)
 {
     out_ << std::format("{:-^60s}\n", std::format("> {} <", m.getTitle()));
 
@@ -132,12 +142,12 @@ void StreamRenderer::renderEntries(const Menu& m, bool isChild)
     out_ << "  [q] Quit\n";
 }
 
-void StreamRenderer::invalidInput()
+void StreamIO::invalidInput()
 {
     out_ << "Invalid input.\n";
 }
 
-std::string StreamRenderer::prompt()
+std::string StreamIO::prompt()
 {
     std::string input;
 

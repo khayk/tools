@@ -65,8 +65,8 @@ protected:
     std::ostringstream out;
     std::istringstream in;
     Progress progress {nullptr};
-    StreamRenderer renderer {out, in};
-    DeletionConfig cfg {strategy, out, in, progress, renderer};
+    StreamIO sio {out, in};
+    DeletionConfig cfg {strategy, out, in, progress, sio};
 };
 
 TEST_F(DuplicateDeletionTest, IgnoreFilesModule)

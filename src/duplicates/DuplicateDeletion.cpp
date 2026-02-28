@@ -16,8 +16,6 @@
 #include <spdlog/spdlog.h>
 
 namespace tools::dups {
-
-
 namespace {
 
 bool findPath(const PathsSet& delDirs, const fs::path& path)
@@ -127,25 +125,25 @@ template <typename Paths>
 Navigation addPaths(const PathsVec& files,
                     std::string_view listName,
                     Paths& paths,
-                    Renderer& r)
+                    UserIO& io)
 {
     auto dirs = createDirectoriesList(files);
 
     Menu menu(listName);
 
-    menuOption(menu, dirs.size(), [&](Renderer& r) {
-        auto index = num::s2num<size_t>(r.currentPrompt());
+    menuOption(menu, dirs.size(), [&](UserIO& io) {
+        auto index = num::s2num<size_t>(io.currentPrompt());
         paths.add(dirs[index - 1]);
         return Navigation::Continue;
     });
 
-    return r.run(menu);
+    return io.run(menu);
 }
 
 template <typename Paths>
 Navigation deletePaths(std::string_view listName,
                        Paths& paths,
-                       Renderer& r)
+                       UserIO& io)
 {
     if (paths.empty())
     {
@@ -155,8 +153,8 @@ Navigation deletePaths(std::string_view listName,
 
     Menu menu(listName);
 
-    menuOption(menu, paths.size(), [&](Renderer& r) {
-        auto index = num::s2num<size_t>(r.currentPrompt());
+    menuOption(menu, paths.size(), [&](UserIO& io) {
+        auto index = num::s2num<size_t>(io.currentPrompt());
 
         std::ignore = index;
         //paths.add(dirs[index - 1]);
@@ -164,7 +162,7 @@ Navigation deletePaths(std::string_view listName,
         return Navigation::Back;
     });
 
-    return r.run(menu);
+    return io.run(menu);
 }
 
 std::string concat(std::string_view lhs, std::string_view rhs)
@@ -178,20 +176,19 @@ template <typename Paths>
 Navigation editConfig(const PathsVec& files,
                       std::string_view listName,
                       Paths& paths,
-                      Renderer& r)
+                      UserIO& io)
 {
-
     Menu menu(listName);
 
-    menuOption(menu, "Add to list", 'a', [&](Renderer& r) {
-        return addPaths(files, concat("Add to ", listName), paths, r);
+    menuOption(menu, "Add to list", 'a', [&](UserIO& io) {
+        return addPaths(files, concat("Add to ", listName), paths, io);
     });
 
-    menuOption(menu, "Delete from list", 'd', [&](Renderer& r) {
-        return deletePaths(concat("Delete from ", listName), paths, r);
+    menuOption(menu, "Delete from list", 'd', [&](UserIO& io) {
+        return deletePaths(concat("Delete from ", listName), paths, io);
     });
 
-    return r.run(menu);
+    return io.run(menu);
 }
 
 } // namespace
@@ -328,9 +325,9 @@ Flow deleteInteractively(PathsVec& files, DeletionConfig& cfg)
 
     Menu menu("Enter a number to keep, or select an action");
 
-    menuOption(menu, files.size(), [&](Renderer& r) {
+    menuOption(menu, files.size(), [&](UserIO& io) {
         // User has chosen the number to KEEP.
-        auto index = num::s2num<size_t>(r.currentPrompt());
+        auto index = num::s2num<size_t>(io.currentPrompt());
 
         if (index == 0 || index > files.size())
         {
@@ -344,32 +341,32 @@ Flow deleteInteractively(PathsVec& files, DeletionConfig& cfg)
         return Navigation::Done;
     });
 
-    menuOption(menu, "Ignore", 'i', [&](Renderer& ) {
+    menuOption(menu, "Ignore", 'i', [&](UserIO& ) {
         spdlog::info("Ignoring group...");
         cfg.ignoredPaths().add(files);
         return Navigation::Continue;
     });
 
-    menuOption(menu, "Open directories", 'o', [&](Renderer&) {
+    menuOption(menu, "Open directories", 'o', [&](UserIO&) {
         openDirectories(files);
         return Navigation::Continue;
     });
 
-    menuOption(menu, "Edit keep-from list", 'k', [&](Renderer& r) {
-        return editConfig(files, "Keep-from list", cfg.keepFromPaths(), r);
+    menuOption(menu, "Edit keep-from list", 'k', [&](UserIO& io) {
+        return editConfig(files, "Keep-from list", cfg.keepFromPaths(), io);
     });
 
-    menuOption(menu, "Edit delete-from list", 'd', [&](Renderer& r) {
-        return editConfig(files, "Delete-from list", cfg.deleteFromPaths(), r);
+    menuOption(menu, "Edit delete-from list", 'd', [&](UserIO& io) {
+        return editConfig(files, "Delete-from list", cfg.deleteFromPaths(), io);
     });
 
-    menuOption(menu, "View keep/delete list", 'v', [&](Renderer& ) {
+    menuOption(menu, "View keep/delete list", 'v', [&](UserIO& ) {
         displayPaths("Keep from paths:", cfg.keepFromPaths(), cfg.out());
         displayPaths("Delete from paths:", cfg.deleteFromPaths(), cfg.out());
         return Navigation::Continue;
     });
 
-    auto navigation = cfg.renderer().run(menu, false);
+    auto navigation = cfg.io().run(menu, false);
     return navigation == Navigation::Quit ? Flow::Quit : Flow::Done;
 }
 
@@ -378,12 +375,12 @@ DeletionConfig::DeletionConfig(const IDeletionStrategy& strategy,
                                std::ostream& out,
                                std::istream& in,
                                Progress& progress,
-                               StreamRenderer& renderer)
+                               StreamIO& io)
     : strategy_ {strategy}
     , out_ {out}
     , in_ {in}
     , progress_ {progress}
-    , renderer_ {renderer}
+    , io_ {io}
 {
 }
 
@@ -392,9 +389,9 @@ const IDeletionStrategy& DeletionConfig::strategy() const
     return strategy_;
 }
 
-StreamRenderer& DeletionConfig::renderer()
+StreamIO& DeletionConfig::io()
 {
-    return renderer_;
+    return io_;
 }
 
 std::ostream& DeletionConfig::out()

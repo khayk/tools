@@ -78,8 +78,8 @@ int main(int argc, const char* argv[])
         // start deletion of the duplicates
         auto strategy = createDeletionStrategy(cfg);
 
-        StreamRenderer renderer(std::cout, std::cin);
-        DeletionConfig deletionCfg {*strategy, std::cout, std::cin, progress, renderer};
+        StreamIO io(std::cout, std::cin);
+        DeletionConfig deletionCfg {*strategy, std::cout, std::cin, progress, io};
         PathsPersister persisIgn(deletionCfg.ignoredPaths().paths(),
                                  cfg.ignFilesPath());
         PathsPersister persisKeep(deletionCfg.keepFromPaths().paths(),

@@ -41,7 +41,7 @@ class DeletionConfig
     std::ostream& out_;
     std::istream& in_;
     Progress& progress_;
-    StreamRenderer& renderer_;
+    StreamIO& io_;
 
     IgnoredPaths ignored_;
     KeepFromPaths keepFrom_;
@@ -55,16 +55,16 @@ public:
      * @param out Output stream interactive output
      * @param in Input stream to interact with user
      * @param progress Progress reporter
-     * @param renderer Menu renderer instance
+     * @param io Menu Input ouput instance
      */
     DeletionConfig(const IDeletionStrategy& strategy,
                    std::ostream& out,
                    std::istream& in,
                    Progress& progress,
-                   StreamRenderer& renderer);
+                   StreamIO& io);
 
     const IDeletionStrategy& strategy() const;
-    StreamRenderer& renderer();
+    StreamIO& io();
     std::ostream& out();
     std::istream& in();
     Progress& progress();

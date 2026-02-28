@@ -17,10 +17,10 @@ enum class Navigation : uint8_t
     Quit
 };
 
-class Renderer;
+class UserIO;
 
 using Matcher = std::function<bool(const std::string&)>;
-using Action = std::function<Navigation(Renderer&)>;
+using Action = std::function<Navigation(UserIO&)>;
 
 class MenuEntry
 {
@@ -56,36 +56,37 @@ public:
 };
 
 
-class Renderer
+class UserIO
 {
     std::string prompt_;
 
 public:
-    Renderer() = default;
-    virtual ~Renderer() = default;
+    UserIO() = default;
+    virtual ~UserIO() = default;
 
     virtual Navigation run(Menu& m, bool isChild = true);
+    virtual void printText(std::string_view text);
 
     const std::string& currentPrompt() const noexcept;
-
 private:
-    virtual void renderEntries(const Menu& m, bool isChild) = 0;
+    virtual void printOptions(const Menu& m, bool isChild) = 0;
     virtual std::string prompt() = 0;
     virtual void invalidInput() = 0;
 };
 
 
-class StreamRenderer : public Renderer
+class StreamIO : public UserIO
 {
     std::string prevInput_;
     std::ostream& out_;
     std::istream& in_;
 
 public:
-    StreamRenderer(std::ostream& out, std::istream& in);
+    StreamIO(std::ostream& out, std::istream& in);
+    void printText(std::string_view text) override;
 
 protected:
-    void renderEntries(const Menu& m, bool isChild) override;
+    void printOptions(const Menu& m, bool isChild) override;
     void invalidInput() override;
     std::string prompt() override;
 };

@@ -15,11 +15,11 @@ public:
     MOCK_METHOD(void, invalidInput, (std::string option), ());
 };
 
-class MockRenderer : public StreamRenderer
+class MockIO : public StreamIO
 {
 public:
-    MockRenderer(std::ostream& os, std::istream& is, MockMenuActions& actions)
-        : StreamRenderer(os, is)
+    MockIO(std::ostream& os, std::istream& is, MockMenuActions& actions)
+        : StreamIO(os, is)
         , actions_(actions)
     {
     }
@@ -40,19 +40,19 @@ TEST(MenuTest, BasicNavigationLetters)
 
     Menu m("top");
     MockMenuActions acts;
-    StreamRenderer renderer(oss, iss);
+    StreamIO io(oss, iss);
 
     // Define menu structure and bind lambdas
-    m.add("view", Matchers::Key('v'), [&](Renderer& r) {
-        acts.optionSelected(r.currentPrompt());
+    m.add("view", Matchers::Key('v'), [&](UserIO& io) {
+        acts.optionSelected(io.currentPrompt());
         return Navigation::Continue;
     });
-    m.add("select", Matchers::Key('s'), [&](Renderer& r) {
-        acts.optionSelected(r.currentPrompt());
+    m.add("select", Matchers::Key('s'), [&](UserIO& io) {
+        acts.optionSelected(io.currentPrompt());
         return Navigation::Continue;
     });
-    m.add("edit", Matchers::Key('e'), [&](Renderer& r) {
-        acts.optionSelected(r.currentPrompt());
+    m.add("edit", Matchers::Key('e'), [&](UserIO& io) {
+        acts.optionSelected(io.currentPrompt());
         return Navigation::Continue;
     });
 
@@ -63,7 +63,7 @@ TEST(MenuTest, BasicNavigationLetters)
     EXPECT_CALL(acts, optionSelected("e")).Times(1);
 
     // Act
-    renderer.run(m, false);
+    io.run(m, false);
 }
 
 TEST(MenuTest, BasicNavigationNumbers)
@@ -73,11 +73,11 @@ TEST(MenuTest, BasicNavigationNumbers)
 
     Menu m("top");
     MockMenuActions acts;
-    StreamRenderer renderer(oss, iss);
+    StreamIO io(oss, iss);
 
     // Define menu structure and bind lambdas
-    m.add("range", Matchers::Range(9, 12), [&](Renderer& r) {
-        acts.optionSelected(r.currentPrompt());
+    m.add("range", Matchers::Range(9, 12), [&](UserIO& io) {
+        acts.optionSelected(io.currentPrompt());
         return Navigation::Continue;
     });
 
@@ -89,7 +89,7 @@ TEST(MenuTest, BasicNavigationNumbers)
     EXPECT_CALL(acts, optionSelected("12")).Times(1);
 
     // Act
-    renderer.run(m, false);
+    io.run(m, false);
 }
 
 TEST(MenuTest, SubMenuNavigation)
@@ -99,19 +99,19 @@ TEST(MenuTest, SubMenuNavigation)
 
     Menu m("top");
     MockMenuActions acts;
-    StreamRenderer renderer(oss, iss);
+    StreamIO io(oss, iss);
 
     // Define menu structure and bind lambdas
-    m.add("view", Matchers::Key('v'), [&](Renderer& r) {
-        acts.optionSelected(r.currentPrompt());
+    m.add("view", Matchers::Key('v'), [&](UserIO& io) {
+        acts.optionSelected(io.currentPrompt());
 
         Menu sm("sub");
-        sm.add("inner", Matchers::Key('i'), [&](Renderer& r) {
-            acts.optionSelected(r.currentPrompt());
+        sm.add("inner", Matchers::Key('i'), [&](UserIO& io) {
+            acts.optionSelected(io.currentPrompt());
             return Navigation::Continue;
         });
 
-        return r.run(sm);
+        return io.run(sm);
     });
 
     // Set expectation
@@ -126,7 +126,7 @@ TEST(MenuTest, SubMenuNavigation)
     EXPECT_CALL(acts, optionSelected("v")).Times(1);
 
     // Act
-    renderer.run(m, false);
+    io.run(m, false);
 }
 
 TEST(MenuTest, WrongInput)
@@ -136,10 +136,10 @@ TEST(MenuTest, WrongInput)
 
     Menu m("top");
     MockMenuActions acts;
-    MockRenderer renderer(oss, iss, acts);
+    MockIO io(oss, iss, acts);
 
-    m.add("view", Matchers::Key('v'), [&](Renderer& r) {
-        acts.optionSelected(r.currentPrompt());
+    m.add("view", Matchers::Key('v'), [&](UserIO& io) {
+        acts.optionSelected(io.currentPrompt());
         return Navigation::Continue;
     });
 
@@ -148,7 +148,7 @@ TEST(MenuTest, WrongInput)
     EXPECT_CALL(acts, invalidInput("oops")).Times(1);
     EXPECT_CALL(acts, optionSelected(_)).Times(0);
 
-    renderer.run(m, false);
+    io.run(m, false);
 }
 
 
