@@ -14,6 +14,19 @@ endif()
 project(tools VERSION 0.1.0 LANGUAGES CXX)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
+# option(ENABLE_COVERAGE "Enable code coverage" ON)
+
+# if(ENABLE_COVERAGE)
+#     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+#         message(STATUS "Building with code coverage enabled")
+
+#         add_compile_options(-O0 -g --coverage)
+#         add_link_options(--coverage)
+#     else()
+#         message(WARNING "Code coverage not supported for this compiler")
+#     endif()
+# endif()
+
 option(TOOLS_COVERAGE "Produce code coverage" OFF)
 option(TOOLS_TIDY "Use clang-tidy" OFF)
 option(BUILD_TESTING "Tests enabled by default" ON)

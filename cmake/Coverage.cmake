@@ -7,17 +7,29 @@ function(AddCoverage target)
       string(SUBSTRING "${target}" 0 ${pos} substr)
       message(STATUS "Coverage filter    : /src/${substr}/*")
 
+      # if(LCOV_PATH AND GENHTML_PATH)
+      #    add_custom_target(coverage-${target}
+      #       COMMENT "Running coverage for ${target}..."
+      #       COMMAND ${LCOV_PATH} --capture --directory . --output-file coverage.info
+      #       COMMAND ${LCOV_PATH} --remove coverage.info '/usr/*' '*/_deps/*' --output-file coverage.info
+      #       COMMAND ${GENHTML_PATH} coverage.info --output-directory coverage_html
+      #       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+      #       COMMENT "Generating coverage report"
+      #    )
+      # endif()
+
       add_custom_target(coverage-${target}
          COMMENT "Running coverage for ${target}..."
          COMMAND ${LCOV_PATH} -d . --zerocounters
          COMMAND $<TARGET_FILE:${target}>
          COMMAND ${LCOV_PATH} -d .
                               --ignore-errors mismatch
+                              --ignore-errors inconsistent
+                              --ignore-errors unsupported
                               --capture -o coverage.info
          COMMAND ${LCOV_PATH} -e coverage.info '/src/${substr}/*'
-                              # -r coverage.info '/usr/include/*'
-                              # -r coverage.info '/build/*'
-
+                              -r coverage.info '/usr/*'
+                              -r coverage.info '*/vcpkg_installed/*'
                               -o filtered.info
          COMMAND ${GENHTML_PATH} -o coverage-${target} filtered.info --legend
          COMMAND rm -rf coverage.info filtered.info
@@ -39,8 +51,8 @@ function(InstrumentForCoverage target)
          target_compile_options(
             ${target}
             PRIVATE --coverage -fno-inline
-                  -fno-inline-small-functions
-                  -fno-default-inline
+                  # -fno-inline-small-functions
+                  # -fno-default-inline
          )
          target_link_options(${target} PUBLIC --coverage)
       endif()
