@@ -1,6 +1,7 @@
 #include <duplicates/DuplicateDetector.h>
 #include <duplicates/Utils.h>
 #include <spdlog/spdlog.h>
+#include <algorithm>
 #include <system_error>
 
 namespace tools::dups {
@@ -93,7 +94,7 @@ void DuplicateDetector::detect(const Options& opts, const ProgressCallback& cb)
     size_t numUniqueFiles = 0;
     size_t outstandingSize = 0;
 
-    util::eraseIf(dups_, [&numUniqueFiles, &outstandingSize](const auto& vt) {
+    std::erase_if(dups_, [&numUniqueFiles, &outstandingSize](const auto& vt) {
         const Nodes& nodes = vt.second;
         if (nodes.size() < 2)
         {
@@ -107,14 +108,27 @@ void DuplicateDetector::detect(const Options& opts, const ProgressCallback& cb)
     totalFiles -= numUniqueFiles;
     size_t processedSize = 0;
 
-    // Here we have files with the same size
-    util::eraseIf(
-        dups_,
-        [&cb, totalFiles, &processedSize, outstandingSize](auto& vt) mutable {
-            std::map<std::string, Nodes> hashes;
-            std::string sha256;
+    std::vector<std::pair<size_t, Nodes>> ordered;
 
-            std::ignore = totalFiles;
+    for (auto& [sz, nodes] : dups_) {
+        ordered.emplace_back(sz, nodes);
+    }
+
+    // Weight based soring to have a smooter progress during detection
+    std::ranges::sort(ordered, [](const auto& a, const auto& b) {
+        return (a.first * a.second.size()) < (b.first * b.second.size());
+    });
+
+    std::unordered_map<std::string, Nodes> hashes;
+    std::string sha256;
+
+    std::erase_if(
+        ordered,
+        [&cb, &processedSize, &hashes, &sha256, outstandingSize](auto& vt) mutable {
+            hashes.clear();
+            sha256.clear();
+
+            // Here we have files with the same size
             Nodes& nodes = vt.second;
             for (const auto* node : nodes)
             {
@@ -139,7 +153,7 @@ void DuplicateDetector::detect(const Options& opts, const ProgressCallback& cb)
             }
 
             // Remove all unique items
-            util::eraseIf(hashes, [](const auto& vt) {
+            std::erase_if(hashes, [](const auto& vt) {
                 return vt.second.size() < 2;
             });
 
@@ -161,6 +175,19 @@ void DuplicateDetector::detect(const Options& opts, const ProgressCallback& cb)
 
             return false;
         });
+
+    if (ordered.size() != dups_.size()) {
+        // Build a set of sizes that survived in ordered
+        std::unordered_set<size_t> surviving;
+        for (const auto& [sz, nodes] : ordered) {
+            surviving.insert(sz);
+        }
+
+        // Remove from dups_ any size group not in ordered
+        std::erase_if(dups_, [&surviving](const auto& pair) {
+            return !surviving.contains(pair.first);
+        });
+    }
 
     for (const auto& [sz, nodes] : dups_)
     {

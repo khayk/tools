@@ -3,6 +3,7 @@
 #include <duplicates/IDuplicates.h>
 #include <duplicates/Node.h>
 
+#include <unordered_map>
 #include <unordered_set>
 #include <map>
 
@@ -33,7 +34,7 @@ public:
 private:
     using Nodes = std::vector<const Node*>;
     using MapBySize = std::map<size_t, Nodes, std::greater<>>;
-    using MapByHash = std::map<std::string_view, Nodes>;
+    using MapByHash = std::unordered_map<std::string_view, Nodes>;
     using PathTable = std::unordered_set<fs::path>;
 
     PathTable names_;

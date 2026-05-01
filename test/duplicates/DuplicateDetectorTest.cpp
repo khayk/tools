@@ -9,6 +9,7 @@
 #include <core/utils/Sys.h>
 
 #include <cstddef>
+#include <limits>
 #include <queue>
 #include <unordered_map>
 #include "duplicates/IDuplicates.h"
@@ -180,10 +181,16 @@ TEST(DuplicateDetectorTest, DetectDuplicates)
     });
 
     // Expect 3 duplicate group after detection, each with at least 2 entries
+    size_t lastGroupSize = std::numeric_limits<size_t>::max();
     EXPECT_CALL(dupCb, Call(testing::_))
         .Times(3)
-        .WillRepeatedly([](const DupGroup& grp) {
-            EXPECT_GE(grp.entires.size(), 2);
+        .WillRepeatedly([&lastGroupSize](const DupGroup& grp) {
+            ASSERT_GE(grp.entires.size(), 2);
+            const auto& first = grp.entires.front();
+
+            // Large entries enumerated first
+            EXPECT_LE(first.size, lastGroupSize);
+            lastGroupSize = first.size;
         });
 
     idd.detect(opts);
