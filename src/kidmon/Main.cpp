@@ -37,7 +37,7 @@ void constructAttribs(const bool agent, std::wstring& uniqueName, fs::path& logF
 
     std::time_t t = std::time(nullptr); // get time now
     std::tm now = utl::timet2tm(t);
-    const auto date = fmt::format("-{}-{:02}-{:02}",
+    const auto date = std::format("-{}-{:02}-{:02}",
                                   now.tm_year + 1900,
                                   now.tm_mon + 1,
                                   now.tm_mday);
@@ -92,8 +92,8 @@ int main(int argc, char* argv[])
         tools::utl::configureLogger(appConf.logsDir, appConf.logFilename);
 
         trace.emplace("",
-                      fmt::format("{:-^80s}", "> START <"),
-                      fmt::format("{:-^80s}\n", "> END <"));
+                      std::format("{:-^80s}", "> START <"),
+                      std::format("{:-^80s}\n", "> END <"));
         traceMain.emplace(__FUNCTION__);
 
         spdlog::info("Build time: {}", BuildInfo::Timestamp);

@@ -92,7 +92,7 @@ public:
         }
 #else
         std::ignore = name_;
-        throw std::runtime_error(fmt::format("Not implemented: {}", __func__));
+        throw std::runtime_error(std::format("Not implemented: {}", __func__));
 #endif
     }
 

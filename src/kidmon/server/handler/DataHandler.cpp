@@ -52,7 +52,7 @@ bool DataHandler::handle(const nlohmann::json& payload,
     }
     catch (const std::exception& ex)
     {
-        error = fmt::format("Unable to handle incoming payload: {}", ex.what());
+        error = std::format("Unable to handle incoming payload: {}", ex.what());
     }
 
     return false;

@@ -243,7 +243,7 @@ TEST(FileSystemRepositoryTest, Checks)
         });
 
     std::cout << "                                                            \r";
-    std::cout << fmt::format("Total entires queried {}\n", entriesQty);
+    std::cout << std::format("Total entires queried {}\n", entriesQty);
     std::cout << "Total duration: " << humanizeDuration(totalDuration, 3) << std::endl;
 
 

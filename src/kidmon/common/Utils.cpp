@@ -49,7 +49,7 @@ tm timet2tm(const time_t dt)
     if (!timet2tm(dt, d))
     {
         throw std::runtime_error(
-            fmt::format("Unable to convert '{}' to local time", dt));
+            std::format("Unable to convert '{}' to local time", dt));
     }
 
     return d;

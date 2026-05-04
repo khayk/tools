@@ -7,7 +7,7 @@
 
 #include <boost/iostreams/device/mapped_file.hpp>
 
-#include <fmt/format.h>
+#include <format>
 #include <filesystem>
 #include <fstream>
 #include <atomic>
@@ -45,7 +45,7 @@ void open(const fs::path& file, const std::ios_base::openmode mode, std::ofstrea
 
     if (!ofs)
     {
-        const auto s = fmt::format("Unable to open file: {}", file);
+        const auto s = std::format("Unable to open file: {}", file);
         throw std::system_error(
             std::make_error_code(std::errc::no_such_file_or_directory),
             s);
@@ -315,7 +315,7 @@ void openDirectory(const fs::path& path)
     else
     {
         throw std::runtime_error(
-            fmt::format("Unable to navigate directory: {}", path2s(path)));
+            std::format("Unable to navigate directory: {}", path2s(path)));
     }
 
 #ifdef _WIN32
@@ -348,7 +348,7 @@ void navigateFile(const fs::path& file)
         array:string:"file://{}" \
         string:""
     )";
-    const std::string command = fmt::format(pattern, path);
+    const std::string command = std::format(pattern, path);
 #else
     #error "Unsupported OS"
 #endif

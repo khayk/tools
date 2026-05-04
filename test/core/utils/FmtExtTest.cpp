@@ -7,7 +7,7 @@ namespace {
 TEST(UtilsFmtExtTests, Formatting)
 {
     fs::path testPath = "file.txt";
-    EXPECT_EQ("file.txt", fmt::format("{}", testPath));
+    EXPECT_EQ("file.txt", std::format("{}", testPath));
 }
 
 } // namespace

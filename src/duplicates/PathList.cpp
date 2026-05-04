@@ -105,7 +105,7 @@ void PathsPersister::save() const
 
     if (!out)
     {
-        throw std::runtime_error(fmt::format("Unable to open file: '{}'", filePath_));
+        throw std::runtime_error(std::format("Unable to open file: '{}'", filePath_));
     }
 
     for (const auto& file : paths_)

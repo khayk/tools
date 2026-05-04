@@ -318,7 +318,7 @@ class KidmonAgent::Impl
                     auto bytesWritten =
                         std::strftime(mbstr.data(), mbstr.size(), "%m%d-%H%M%S", &tm);
                     auto fileName =
-                        fmt::format("img-{}.{}",
+                        std::format("img-{}.{}",
                                     std::string_view(mbstr.data(), bytesWritten),
                                     toString(format));
 

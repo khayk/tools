@@ -15,7 +15,7 @@
 #include <core/utils/Str.h>
 #include <core/utils/Dirs.h>
 
-#include <fmt/format.h>
+#include <format>
 #include <cxxopts.hpp>
 
 #include <memory>
@@ -61,8 +61,8 @@ int main(int argc, const char* argv[])
         Config cfg(dirs::config(), dirs::cache());
         configureLogger(cfg.logDir(), cfg.logFilename());
         trace.emplace("",
-                      fmt::format("{:-^80s}", "> START <"),
-                      fmt::format("{:-^80s}\n", "> END <"));
+                      std::format("{:-^80s}", "> START <"),
+                      std::format("{:-^80s}\n", "> END <"));
         populateConfig(result, cfg);
         logConfig(cfg);
 

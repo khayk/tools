@@ -1,5 +1,5 @@
 #include <nlohmann/json.hpp>
-#include <fmt/format.h>
+#include <format>
 
 namespace jsu {
 
@@ -17,7 +17,7 @@ void get(const nlohmann::json& js,
 
     if (required)
     {
-        throw std::runtime_error(fmt::format("Missing required key: {}", key));
+        throw std::runtime_error(std::format("Missing required key: {}", key));
     }
 }
 

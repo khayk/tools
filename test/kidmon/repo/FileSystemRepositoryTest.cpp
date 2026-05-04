@@ -4,7 +4,7 @@
 #include <kidmon/repo/FileSystemRepository.h>
 #include <core/utils/File.h>
 
-#include <fmt/format.h>
+#include <format>
 #include <unordered_set>
 
 using namespace std::chrono_literals;
@@ -165,7 +165,7 @@ TEST(FileSystemRepositoryTest, QueryEntriesMultipleUsers)
 
     for (int i = 0; i < numUsers; ++i)
     {
-        const auto name = fmt::format("name-{}", i);
+        const auto name = std::format("name-{}", i);
 
         for (int j = 1; j <= numEntriesPerUser; ++j)
         {
@@ -244,7 +244,7 @@ TEST(FileSystemRepositoryTest, QueryLogic)
         Entry e;
         e.timestamp.capture = now + i * 1s;
         e.username = username;
-        e.processInfo.processPath = fmt::format("proc-{}", i);
+        e.processInfo.processPath = std::format("proc-{}", i);
 
         repo.add(e);
     }
@@ -268,7 +268,7 @@ TEST(FileSystemRepositoryTest, QueryLogic)
     for (size_t i = 0; i < numEntries; ++i)
     {
         std::vector<Entry> entries;
-        const fs::path expectedPath = fmt::format("proc-{}", i);
+        const fs::path expectedPath = std::format("proc-{}", i);
         const auto ts = now + i * 1s;
         filter = Filter(username, ts - 100ms, ts + 100ms);
 

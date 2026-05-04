@@ -2,7 +2,7 @@
 #include "Window.h"
 #include "ProcessLauncher.h"
 
-#include <fmt/format.h>
+#include <format>
 
 ApiPtr ApiFactory::create()
 {
@@ -11,7 +11,7 @@ ApiPtr ApiFactory::create()
 
 WindowPtr ApiImpl::foregroundWindow()
 {
-    throw std::logic_error(fmt::format("Not implemented: {}", __func__));
+    throw std::logic_error(std::format("Not implemented: {}", __func__));
     return WindowPtr {};
 }
 

@@ -3,7 +3,7 @@
 #include <core/utils/Crypto.h>
 #include <core/utils/FmtExt.h>
 
-#include <fmt/format.h>
+#include <format>
 #include <spdlog/spdlog.h>
 
 #include <filesystem>
@@ -35,9 +35,9 @@ BackupAndDelete::BackupAndDelete(fs::path backupDir)
     const auto tm = *std::localtime(&timeT);
 #endif
     const auto date =
-        fmt::format("{:04}{:02}{:02}", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday);
-    const auto time = fmt::format("{:02}{:02}{:02}", tm.tm_hour, tm.tm_min, tm.tm_sec);
-    const auto fileName = fmt::format("deleted_files_{}_{}.log", date, time);
+        std::format("{:04}{:02}{:02}", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday);
+    const auto time = std::format("{:02}{:02}{:02}", tm.tm_hour, tm.tm_min, tm.tm_sec);
+    const auto fileName = std::format("deleted_files_{}_{}.log", date, time);
     journalFilePath_ = backupDir_ / fileName;
 }
 
@@ -51,7 +51,7 @@ std::ofstream& BackupAndDelete::journal() const
         {
             throw std::system_error(
                 std::make_error_code(std::errc::no_such_file_or_directory),
-                fmt::format("Unable to open file: {}", journalFilePath_));
+                std::format("Unable to open file: {}", journalFilePath_));
         }
     }
 

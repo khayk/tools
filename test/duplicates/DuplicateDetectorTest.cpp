@@ -14,7 +14,7 @@
 #include <unordered_map>
 #include "duplicates/IDuplicates.h"
 #include "duplicates/Progress.h"
-#include <fmt/format.h>
+#include <format>
 
 using testing::MockFunction;
 using testing::Return;
@@ -42,13 +42,13 @@ void generateFiles(size_t numFiles,
 
         for (size_t i = 0; i < dirsPerLevel; ++i)
         {
-            fs::path subdir = dir / fmt::format("subdir-{}", i);
+            fs::path subdir = dir / std::format("subdir-{}", i);
             dirs.emplace(subdir);
         }
 
         for (size_t i = 0; i < filesPerLevel; ++i)
         {
-            fs::path file = dir / fmt::format("file-{}.txt", i);
+            fs::path file = dir / std::format("file-{}.txt", i);
             cb(file);
 
             if (--numFiles == 0)

@@ -442,8 +442,8 @@ int main(int argc, char* argv[])
         tools::utl::configureLogger(conf.logsDir, conf.logFilename);
 
         trace.emplace("",
-                      fmt::format("{:-^80s}", "> START <"),
-                      fmt::format("{:-^80s}\n", "> END <"));
+                      std::format("{:-^80s}", "> START <"),
+                      std::format("{:-^80s}\n", "> END <"));
 
         const auto result = opts.parse(argc, argv);
 

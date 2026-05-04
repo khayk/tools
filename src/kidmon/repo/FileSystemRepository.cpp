@@ -4,7 +4,7 @@
 #include <core/utils/File.h>
 #include <core/utils/Str.h>
 
-#include <fmt/format.h>
+#include <format>
 #include <nlohmann/json.hpp>
 #include <glaze/glaze.hpp>
 
@@ -28,7 +28,7 @@ int yearFromTimeT(const time_t tt, bool throwIfInvalid)
         if (throwIfInvalid)
         {
             throw std::runtime_error(
-                fmt::format("Unable to convert '{}' to local time", tt));
+                std::format("Unable to convert '{}' to local time", tt));
         }
 
         return 0;
@@ -70,14 +70,14 @@ public:
 
     const ReportDirs& dataDirs(const std::string& username, int year) const
     {
-        const auto key = fmt::format("{}_{}", username, year);
+        const auto key = std::format("{}_{}", username, year);
         if (auto it = dirs_.find(key); it != dirs_.end())
         {
             return it->second;
         }
 
         fs::path userReportsRoot =
-            getUserDir(username).append(fmt::format("{}", year));
+            getUserDir(username).append(std::format("{}", year));
 
         // Reports directory structure looks like this
         //
@@ -126,7 +126,7 @@ std::string buildRawFilename(const TimePoint tp)
     }
 
     const auto day = utl::daysSinceYearStart(tt);
-    return fmt::format("raw-{:03}-{:02}{:02}.dat", day, tm.tm_mon + 1, tm.tm_mday);
+    return std::format("raw-{:03}-{:02}{:02}.dat", day, tm.tm_mon + 1, tm.tm_mday);
 }
 
 template <typename T>

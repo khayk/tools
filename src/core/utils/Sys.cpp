@@ -54,7 +54,7 @@ std::wstring activeUserName()
 #ifdef _WIN32
     return userNameBySessionId(WTSGetActiveConsoleSessionId());
 #else
-    throw std::runtime_error(fmt::format("Not implemented: {}", __func__));
+    throw std::runtime_error(std::format("Not implemented: {}", __func__));
 #endif
 }
 
@@ -126,7 +126,7 @@ std::string constructErrorMsg(const std::string_view message, const uint64_t err
         return std::string(message);
     }
 
-    return fmt::format("{}, errorCode = {}, desc: {}",
+    return std::format("{}, errorCode = {}, desc: {}",
                        message,
                        errorCode,
                        errorDescription(errorCode));
@@ -179,14 +179,14 @@ std::string getExecutablePathReadlink(int pid)
     std::vector<char> buffer(PATH_MAX);
 
     // Read the symbolic link.
-    const auto fileLink = fmt::format("/proc/{}/exe", pid);
+    const auto fileLink = std::format("/proc/{}/exe", pid);
 
     ssize_t count = readlink(fileLink.c_str(), buffer.data(), buffer.size());
 
     if (count == -1)
     {
         throw std::runtime_error(
-            fmt::format("Failed to read {}: {}", fileLink, strerror(errno)));
+            std::format("Failed to read {}: {}", fileLink, strerror(errno)));
     }
 
     // Check if the buffer might have been too small.
@@ -242,7 +242,7 @@ size_t processMemoryUsage(uint32_t pid)
     std::ignore = pid;
     return 0;
 #else
-    std::string filename = fmt::format("/proc/{}/status", pid);
+    std::string filename = std::format("/proc/{}/status", pid);
     std::ifstream file(filename, std::ios::in);
 
     if (!file.is_open())

@@ -33,7 +33,7 @@ std::string hwndToString(HWND hwnd)
 {
     uint64_t value = *reinterpret_cast<const uint64_t*>(&hwnd);
 
-    return fmt::format("{:#010x}", value);
+    return std::format("{:#010x}", value);
 }
 
 } // namespace

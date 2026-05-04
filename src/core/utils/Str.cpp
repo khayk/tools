@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <cwctype>
 #include <ranges>
-#include <fmt/format.h>
+#include <format>
 
 namespace str {
 
@@ -274,7 +274,7 @@ std::string humanizeBytes(size_t bytes)
         ++i;
     }
 
-    return fmt::format("{:.2f} {}", size, units.at(i));
+    return std::format("{:.2f} {}", size, units.at(i));
 }
 
 

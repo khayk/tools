@@ -5,7 +5,7 @@
 #include <openssl/sha.h>
 #include <openssl/md5.h>
 
-#include <fmt/format.h>
+#include <format>
 
 #include <fstream>
 #include <cassert>
@@ -111,7 +111,7 @@ std::string fileSha256(const fs::path& file)
 
     if (!in)
     {
-        const auto s = fmt::format("Unable to open file: {}", file);
+        const auto s = std::format("Unable to open file: {}", file);
         throw std::system_error(
             std::make_error_code(std::errc::no_such_file_or_directory),
             s);
@@ -160,7 +160,7 @@ void encodeBase64(std::string_view byteSeq, std::string& base64Seq)
 
     if (std::cmp_not_equal(res, len))
     {
-        const auto s = fmt::format("Encode predicted {} but we got {}", len, res);
+        const auto s = std::format("Encode predicted {} but we got {}", len, res);
         throw std::system_error(std::make_error_code(std::errc::result_out_of_range),
                                 s);
     }
@@ -184,7 +184,7 @@ void decodeBase64(const std::string& base64Seq, std::string& byteSeq)
                         static_cast<int>(base64Seq.size()));
     if (std::cmp_not_equal(res, len))
     {
-        const auto s = fmt::format("Encode predicted {} but we got {}", len, res);
+        const auto s = std::format("Encode predicted {} but we got {}", len, res);
         throw std::system_error(std::make_error_code(std::errc::result_out_of_range),
                                 s);
     }

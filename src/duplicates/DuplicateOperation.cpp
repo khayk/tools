@@ -91,7 +91,7 @@ void outputFiles(const fs::path& allFiles, const DuplicateDetector& detector)
 
     if (!outf)
     {
-        const auto s = fmt::format("Unable to open file: '{}'", allFiles);
+        const auto s = std::format("Unable to open file: '{}'", allFiles);
         throw std::system_error(
             std::make_error_code(std::errc::no_such_file_or_directory),
             s);

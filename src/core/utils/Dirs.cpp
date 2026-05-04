@@ -3,7 +3,7 @@
     #include <Knownfolders.h>
 #else
     #include <cstdlib>
-    #include <fmt/format.h>
+    #include <format>
 #endif
 
 #include <core/utils/Dirs.h>

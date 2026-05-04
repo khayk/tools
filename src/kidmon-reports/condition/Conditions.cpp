@@ -2,7 +2,7 @@
 #include <core/utils/Str.h>
 #include <core/utils/File.h>
 
-#include <fmt/format.h>
+#include <format>
 
 void TrueCondition::write(std::ostream& os) const
 {
@@ -161,7 +161,7 @@ const std::string& StringCondition::attributeName() const noexcept
 
 void IsStringCondition::write(std::ostream& os) const
 {
-    os << fmt::format("{} is '{}'", attributeName(), needle());
+    os << std::format("{} is '{}'", attributeName(), needle());
 }
 
 bool IsStringCondition::met(const Entry& entry) const
@@ -171,7 +171,7 @@ bool IsStringCondition::met(const Entry& entry) const
 
 void HasStringCondition::write(std::ostream& os) const
 {
-    os << fmt::format("{} has '{}'", attributeName(), needle());
+    os << std::format("{} has '{}'", attributeName(), needle());
 }
 
 bool HasStringCondition::met(const Entry& entry) const

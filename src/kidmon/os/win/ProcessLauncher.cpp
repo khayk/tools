@@ -77,7 +77,7 @@ HandleUPtr activeUserMaxAllowedToken()
     if (!ret)
     {
         spdlog::debug(sys::constructLastErrorMsg(
-            fmt::format("GetTokenInformation failed for token class: {}",
+            std::format("GetTokenInformation failed for token class: {}",
                         static_cast<int>(TokenLinkedToken))));
     }
 
