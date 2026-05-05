@@ -40,7 +40,13 @@ message("Spdlog include        : ${spdlog_DIR}")
 # Source list for the library
 set(LIB_SRCS  ${NETWORK_FILES} ${PATTERNS_FILES} ${UTILS_FILES})
 add_library(${PROJECT_LIB} STATIC ${LIB_SRCS})
-target_include_directories(${PROJECT_LIB} PUBLIC include)
+add_library(${PROJECT_LIB}::${PROJECT_LIB} ALIAS ${PROJECT_LIB})
+
+target_include_directories(${PROJECT_LIB}
+    PUBLIC  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+            $<INSTALL_INTERFACE:include>
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}   # for internal headers
+)
 
 target_link_libraries(${PROJECT_LIB} PUBLIC
     OpenSSL::Crypto

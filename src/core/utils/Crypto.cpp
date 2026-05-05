@@ -5,8 +5,6 @@
 #include <openssl/sha.h>
 #include <openssl/md5.h>
 
-#include <format>
-
 #include <fstream>
 #include <cassert>
 #include <array>

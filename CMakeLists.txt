@@ -95,6 +95,9 @@ endif()
 add_subdirectory(src bin)
 
 if(BUILD_TESTING)
+    set(CTEST_BINARY_DIRECTORY "${CMAKE_BINARY_DIR}")
+    set(CTEST_DASHBOARD_ROOT "${CMAKE_BINARY_DIR}")
+
     enable_testing()
     add_subdirectory(test)
 endif()

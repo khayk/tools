@@ -45,5 +45,18 @@
                 "CMAKE_CXX_COMPILER": "clang++"
             }
         }
+    ],
+    "buildPresets": [
+        {
+            "name": "vcpkg-debug",
+            "configurePreset": "vcpkg-debug",
+            "jobs": 12
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "vcpkg-debug",
+            "configurePreset": "vcpkg-debug"
+        }
     ]
 }
