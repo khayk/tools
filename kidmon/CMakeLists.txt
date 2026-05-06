@@ -4,47 +4,47 @@ set(PROJECT_LIB "${PROJECT_NAME}")
 set(PROJECT_APP "${PROJECT_NAME}-app")
 
 file(GLOB LIB_SRCS
-   "*.h"
-   "*.cpp"
-   "agent/*.cpp"
-   "agent/*.h"
-   "common/*.cpp"
-   "common/*.h"
-   "config/*.cpp"
-   "config/*.h"
-   "data/*.cpp"
-   "data/*.h"
-   "geometry/*.cpp"
-   "geometry/*.h"
-   "os/*.cpp"
-   "os/*.h"
-   "repo/*.cpp"
-   "repo/*.h"
-   "server/*.cpp"
-   "server/*.h"
-   "server/handler/*.cpp"
-   "server/handler/*.h"
+   "src/*.h"
+   "src/*.cpp"
+   "src/agent/*.cpp"
+   "src/agent/*.h"
+   "src/common/*.cpp"
+   "src/common/*.h"
+   "src/config/*.cpp"
+   "src/config/*.h"
+   "src/data/*.cpp"
+   "src/data/*.h"
+   "src/geometry/*.cpp"
+   "src/geometry/*.h"
+   "src/os/*.cpp"
+   "src/os/*.h"
+   "src/repo/*.cpp"
+   "src/repo/*.h"
+   "src/server/*.cpp"
+   "src/server/*.h"
+   "src/server/handler/*.cpp"
+   "src/server/handler/*.h"
 )
 
 if(WIN32)
    # Windows
    file(GLOB OS_WIN
-      "os/win/*.h"
-      "os/win/*.cpp"
+      "src/os/win/*.h"
+      "src/os/win/*.cpp"
    )
    list(APPEND LIB_SRCS ${OS_WIN})
 elseif (APPLE)
     # macOS
     file(GLOB OS_MAC
-        "os/mac/*.h"
-        "os/mac/*.cpp"
+        "src/os/mac/*.h"
+        "src/os/mac/*.cpp"
     )
     list(APPEND LIB_SRCS ${OS_MAC})
 elseif(UNIX)
    # Linux, BSD, Solaris, Minix
    file(GLOB OS_LINUX
-      "os/linux/*.h"
-      "os/linux/*.cpp"
+      "src/os/linux/*.h"
+      "src/os/linux/*.cpp"
    )
    list(APPEND LIB_SRCS ${OS_LINUX})
 endif()
@@ -84,7 +84,7 @@ target_link_libraries(${PROJECT_LIB} PRIVATE
 # )
 
 # Adding executable project
-add_executable(${PROJECT_APP} Main.cpp)
+add_executable(${PROJECT_APP} src/Main.cpp)
 BuildInfo(${PROJECT_APP})
 target_link_libraries (${PROJECT_APP} PRIVATE ${PROJECT_LIB} cxxopts::cxxopts)
 
@@ -114,3 +114,7 @@ install(
     PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-"
     POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
 )
+
+if(BUILD_TESTING)
+    add_subdirectory(test)
+endif()

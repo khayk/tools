@@ -92,12 +92,15 @@ endif()
 
 # add_compile_options(-ftime-trace)
 
-add_subdirectory(src bin)
-
 if(BUILD_TESTING)
     set(CTEST_BINARY_DIRECTORY "${CMAKE_BINARY_DIR}")
     set(CTEST_DASHBOARD_ROOT "${CMAKE_BINARY_DIR}")
-
     enable_testing()
-    add_subdirectory(test)
+    include(Testing)
 endif()
+
+add_subdirectory(core)
+add_subdirectory(duplicates)
+add_subdirectory(kidmon)
+add_subdirectory(kidmon-reports)
+

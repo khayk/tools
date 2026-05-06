@@ -7,20 +7,20 @@ if(WIN32)
 endif()
 
 file(GLOB NETWORK_FILES
-    "network/data/*.cpp"
-    "network/data/*.h"
-    "network/*.cpp"
-    "network/*.h"
+    "src/network/data/*.cpp"
+    "src/network/data/*.h"
+    "src/network/*.cpp"
+    "src/network/*.h"
 )
 
 file(GLOB PATTERNS_FILES
-    "patterns/*.cpp"
-    "patterns/*.h"
+    "src/patterns/*.cpp"
+    "src/patterns/*.h"
 )
 
 file(GLOB UTILS_FILES
-    "utils/*.cpp"
-    "utils/*.h"
+    "src/utils/*.cpp"
+    "src/utils/*.h"
 )
 
 # set(SPDLOG_COMPILED_LIB true)
@@ -59,3 +59,7 @@ InstrumentForCoverage(${PROJECT_LIB})
 CleanCoverage(${PROJECT_LIB})
 
 AddClangTidy(${PROJECT_LIB})
+
+if(BUILD_TESTING)
+    add_subdirectory(test)
+endif()

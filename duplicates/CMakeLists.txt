@@ -4,8 +4,8 @@ set(PROJECT_LIB "${PROJECT_NAME}")
 set(PROJECT_APP "${PROJECT_NAME}-app")
 
 file(GLOB LIB_SRCS
-   "*.h"
-   "*.cpp"
+   "src/*.h"
+   "src/*.cpp"
 )
 
 find_package(nlohmann_json CONFIG REQUIRED)
@@ -23,8 +23,12 @@ InstrumentForCoverage(${PROJECT_LIB})
 CleanCoverage(${PROJECT_LIB})
 
 # Adding executable project
-add_executable(${PROJECT_APP} Main.cpp)
+add_executable(${PROJECT_APP} src/Main.cpp)
 target_link_libraries (${PROJECT_APP} ${PROJECT_LIB})
 
 AddClangTidy(${PROJECT_LIB})
 AddClangTidy(${PROJECT_APP})
+
+if(BUILD_TESTING)
+    add_subdirectory(test)
+endif()
