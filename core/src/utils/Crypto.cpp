@@ -182,7 +182,7 @@ void decodeBase64(const std::string& base64Seq, std::string& byteSeq)
                         static_cast<int>(base64Seq.size()));
     if (std::cmp_not_equal(res, len))
     {
-        const auto s = std::format("Encode predicted {} but we got {}", len, res);
+        const auto s = std::format("Decode predicted {} but we got {}", len, res);
         throw std::system_error(std::make_error_code(std::errc::result_out_of_range),
                                 s);
     }

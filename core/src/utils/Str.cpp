@@ -98,7 +98,7 @@ std::string_view u8tos(const std::string_view sv)
 
 std::string_view stou8(const std::string_view sv)
 {
-    return sw;
+    return sv;
 }
 
 #else
