@@ -56,3 +56,4 @@ kidmon.excalidraw
 CMakeUserPresets.json
 dups.user.toml
 .DS_Store
+.claude/memory.jsonl

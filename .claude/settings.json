@@ -1,7 +1,36 @@
 {
-  "permissions": {
-    "allow": [
-      "Bash(xargs -I {} find {} -type f -name \"*.h\")"
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/block_generated.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/clang_format.sh"
+          }
+        ]
+      }
     ]
+  },
+  "mcpServers": {
+    "memory": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"],
+      "env": {
+        "MEMORY_FILE_PATH": "/Users/khayk/dev/projects/tools/.claude/memory.jsonl"
+      }
+    }
   }
 }
