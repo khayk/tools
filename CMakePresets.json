@@ -44,6 +44,30 @@
                 "CMAKE_C_COMPILER": "clang",
                 "CMAKE_CXX_COMPILER": "clang++"
             }
+        },
+        {
+            "name": "vcpkg-msvc-debug",
+            "displayName": "ninja-debug (msvc x64)",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/msvc-debug",
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_C_COMPILER": "cl",
+                "CMAKE_CXX_COMPILER": "cl"
+            }
+        },
+        {
+            "name": "vcpkg-msvc-release",
+            "displayName": "ninja-release (msvc x64)",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/msvc-release",
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_C_COMPILER": "cl",
+                "CMAKE_CXX_COMPILER": "cl"
+            }
         }
     ],
     "buildPresets": [
