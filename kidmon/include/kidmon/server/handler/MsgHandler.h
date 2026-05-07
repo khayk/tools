@@ -7,12 +7,11 @@ class MsgHandler
 {
 protected:
     MsgHandler() = default;
+public:
     MsgHandler(const MsgHandler&) = delete;
     MsgHandler(MsgHandler&&) noexcept = delete;
     MsgHandler& operator=(const MsgHandler&) = delete;
     MsgHandler& operator=(MsgHandler&&) noexcept = delete;
-
-public:
     virtual ~MsgHandler() = default;
 
     virtual bool handle(const nlohmann::json& payload,

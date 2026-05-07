@@ -5,36 +5,6 @@
 * Add version to the app
 * Slightly alter project organization to be something like this (Claude comms)
 
-```
-repo/
-├── CMakeLists.txt
-├── cmake/
-│   ├── FindSomeLib.cmake   # custom Find modules
-│   └── CompilerOptions.cmake
-├── libA/
-│   ├── CMakeLists.txt
-│   ├── include/A/
-│   ├── src/
-│   │   └── internal/           # private headers live here, not in include/
-│   └── tests/              # unit tests only — test A in isolation
-│       ├── CMakeLists.txt
-│       └── test_a.cpp
-├── libB/
-│   ├── CMakeLists.txt
-│   ├── include/B/
-│   ├── src/
-│   │   └── internal/           # private headers live here, not in include/
-│   └── tests/              # unit tests only
-│       ├── CMakeLists.txt
-│       └── test_b.cpp
-│── tests/
-│   └── integration/        # tests that require A + B + appX together
-│       ├── CMakeLists.txt
-│       └── test_ab_workflow.cpp
-├── extern/                 # git submodules or FetchContent sources
-│   └── googletest/
-```
-
 and consider this
 
 ```
@@ -46,24 +16,6 @@ repo/
 ├── apps/
 │   ├── server/
 │   └── client/
-└── tests/
-    └── integration/
-```
-
-```
-repo/
-├── kidmon/
-│   ├── CMakeLists.txt
-│   ├── lib/
-│   │   ├── CMakeLists.txt
-│   │   ├── include/kidmon/
-│   │   └── src/
-│   ├── app/
-│   │   ├── CMakeLists.txt
-│   │   └── src/
-│   └── tests/
-│       ├── CMakeLists.txt
-│       └── unit/
 └── tests/
     └── integration/
 ```
