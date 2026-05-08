@@ -2,7 +2,7 @@
 
 #include "AgentConnection.h"
 
-namespace tcp {
+namespace core::tcp {
 class Server;
 }
 
@@ -13,7 +13,7 @@ class AgentManager
 public:
     AgentManager(AuthorizationHandler& authHandler,
                  DataHandler& dataHandler,
-                 tcp::Server& svr,
+                 core::tcp::Server& svr,
                  std::chrono::milliseconds peerDropTimeout);
 
     [[nodiscard]] bool hasAuthorizedAgent() const;

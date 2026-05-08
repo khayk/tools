@@ -82,8 +82,8 @@ public:
 
     void add(const Entry& entry)
     {
-        auto procname = file::path2s(entry.processInfo.processPath.filename());
-        str::utf8LowerInplace(procname, &buf_);
+        auto procname = core::file::path2s(entry.processInfo.processPath.filename());
+        core::str::utf8LowerInplace(procname, &buf_);
 
         pathByNameAggr_->update(entry);
     }
@@ -115,7 +115,7 @@ public:
                     std::cout << ": " << value << ", ";
                 }
 
-                std::cout << "duration: " << str::humanizeDuration(data.duration())
+                std::cout << "duration: " << core::str::humanizeDuration(data.duration())
                           << '\n';
             });
     }
@@ -144,7 +144,7 @@ void makeLowercase(std::vector<std::string>& data)
 
     for (auto& str : data)
     {
-        str::utf8LowerInplace(str, &wstr);
+        core::str::utf8LowerInplace(str, &wstr);
     }
 }
 
@@ -439,7 +439,7 @@ int main(int argc, char* argv[])
 
         AppConfig conf;
         conf.logFilename = "kidmon-reports.log";
-        tools::utl::configureLogger(conf.logsDir, conf.logFilename);
+        core::utl::configureLogger(conf.logsDir, conf.logFilename);
 
         trace.emplace("",
                       std::format("{:-^80s}", "> START <"),
@@ -474,7 +474,7 @@ int main(int argc, char* argv[])
             queryVisualizer.display();
         }
 
-        spdlog::info("Processing took: {}", str::humanizeDuration(sw.elapsed()));
+        spdlog::info("Processing took: {}", core::str::humanizeDuration(sw.elapsed()));
     }
     catch (const std::exception& e)
     {

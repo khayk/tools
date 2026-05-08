@@ -1,6 +1,6 @@
 #pragma once
 
-namespace dp {
+namespace core::dp {
 
 template <typename T>
 class Singleton
@@ -21,4 +21,4 @@ protected:
     Singleton() = default;
 };
 
-} // namespace dp
+} // namespace core::dp

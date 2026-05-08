@@ -4,7 +4,7 @@
 
 namespace {
 
-using namespace tcp;
+using namespace core::tcp;
 
 TEST(TcpServerTest, ListenAndClose)
 {

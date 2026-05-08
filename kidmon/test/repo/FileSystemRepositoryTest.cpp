@@ -71,11 +71,11 @@ public:
 
 } // namespace
 
-using namespace file;
+using namespace core;
 
 TEST(FileSystemRepositoryTest, ReportsDirNotCreated)
 {
-    TempDir reportsDir("kdmn-tst", TempDir::CreateMode::Manual);
+    file::TempDir reportsDir("kdmn-tst", file::TempDir::CreateMode::Manual);
     FileSystemRepository repo(reportsDir.path());
 
     EXPECT_EQ(reportsDir.path(), repo.reportsDir());
@@ -86,7 +86,7 @@ TEST(FileSystemRepositoryTest, ReportsDirNotCreated)
 
 TEST(FileSystemRepositoryTest, ReportsDirCreated)
 {
-    file::TempDir reportsDir("kdmn-tst", TempDir::CreateMode::Manual);
+    file::TempDir reportsDir("kdmn-tst", file::TempDir::CreateMode::Manual);
     FileSystemRepository repo(reportsDir.path());
 
     const Entry entry = sampleEntry();

@@ -5,7 +5,7 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
-namespace tools::utl {
+namespace core::utl {
 
 fs::path makeLogFilename(std::string_view appName)
 {
@@ -57,4 +57,4 @@ SilenceLogger::~SilenceLogger()
     spdlog::set_level(prevLevel_);
 }
 
-} // namespace tools::utl
+} // namespace core::utl

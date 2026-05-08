@@ -6,7 +6,8 @@
 #include <array>
 #include <filesystem>
 
-using namespace crypto;
+using namespace core;
+using namespace core::crypto;
 namespace fs = std::filesystem;
 
 namespace {

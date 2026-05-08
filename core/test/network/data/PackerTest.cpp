@@ -3,7 +3,7 @@
 #include <core/network/data/Packer.h>
 #include <core/network/data/StringSource.h>
 
-using namespace data;
+using namespace core::data;
 
 TEST(PackerTest, PackData)
 {

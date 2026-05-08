@@ -15,7 +15,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace file {
+namespace core::file {
 
 bool open(const fs::path& file,
           const std::ios_base::openmode mode,
@@ -356,4 +356,4 @@ void navigateFile(const fs::path& file)
     std::ignore = std::system(command.c_str());
 }
 
-} // namespace file
+} // namespace core::file

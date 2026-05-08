@@ -7,6 +7,8 @@
 #include <core/utils/Str.h>
 #include <spdlog/spdlog.h>
 
+namespace core {
+
 SingleInstanceChecker::SingleInstanceChecker(std::wstring_view name)
     : appName_(name)
 {
@@ -51,3 +53,5 @@ void SingleInstanceChecker::report() const
 {
     spdlog::info("One instance of '{}' is already running.", str::ws2s(appName_));
 }
+
+} // namespace core

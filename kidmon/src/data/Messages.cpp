@@ -10,14 +10,14 @@ void buildAuthMsg(std::string_view authToken, nlohmann::ordered_json& js)
 {
     js = {{"name", "auth"},
           {"message",
-           {{"username", str::ws2s(sys::activeUserName())}, {"token", authToken}}}};
+           {{"username", core::str::ws2s(core::sys::activeUserName())}, {"token", authToken}}}};
 }
 
 void buildDataMsg(const Entry& entry, nlohmann::ordered_json& js)
 {
     js["name"] = "data";
     auto& msgJs = js["message"];
-    msgJs["username"] = str::ws2s(sys::activeUserName());
+    msgJs["username"] = core::str::ws2s(core::sys::activeUserName());
     toJson(entry, msgJs["entry"]);
 }
 

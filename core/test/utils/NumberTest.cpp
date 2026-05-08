@@ -2,7 +2,7 @@
 #include <core/utils/Number.h>
 #include <limits>
 
-using namespace num;
+using namespace core::num;
 
 namespace {
 

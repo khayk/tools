@@ -2,7 +2,7 @@
 
 #include <string>
 
-namespace data {
+namespace core::data {
 
 class ISource
 {
@@ -12,4 +12,4 @@ public:
     virtual size_t get(std::string& buf, size_t maxSize) = 0;
 };
 
-} // namespace data
+} // namespace core::data

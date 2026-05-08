@@ -1,7 +1,7 @@
 #include <core/network/data/Unpacker.h>
 #include <algorithm>
 
-namespace data {
+namespace core::data {
 
 void Unpacker::put(std::string_view bytes)
 {
@@ -69,4 +69,4 @@ void Unpacker::readSize() noexcept
     }
 }
 
-} // namespace data
+} // namespace core::data

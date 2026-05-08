@@ -25,7 +25,7 @@ constexpr std::string_view TIMESTAMP_DUR = "dur";
 
 void toJson(const ProcessInfo& pi, nlohmann::ordered_json& js)
 {
-    js[constants::PROC_PATH] = file::path2s(pi.processPath);
+    js[constants::PROC_PATH] = core::file::path2s(pi.processPath);
     js[constants::PROC_SHA] = pi.sha256;
 }
 

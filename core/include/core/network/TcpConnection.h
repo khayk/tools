@@ -13,7 +13,7 @@ using ErrorCode = boost::system::error_code;
 using IoContext = net::io_context;
 using ConstBuffer = net::const_buffer;
 
-namespace tcp {
+namespace core::tcp {
 
 using Socket = net::ip::tcp::socket;
 using Endpoint = net::ip::tcp::endpoint;
@@ -67,4 +67,4 @@ private:
     bool closing_ {false};
 };
 
-} // namespace tcp
+} // namespace core::tcp

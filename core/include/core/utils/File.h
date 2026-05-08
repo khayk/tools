@@ -8,7 +8,7 @@
 
 namespace fs = std::filesystem;
 
-namespace file {
+namespace core::file {
 
 void write(const fs::path& file, std::string_view data);
 
@@ -173,4 +173,4 @@ void openDirectory(const fs::path& path);
  */
 void navigateFile(const fs::path& file);
 
-} // namespace file
+} // namespace core::file

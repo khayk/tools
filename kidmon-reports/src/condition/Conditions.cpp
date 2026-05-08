@@ -181,7 +181,7 @@ bool HasStringCondition::met(const Entry& entry) const
 
 void HasProcessCondition::fetchValue(const Entry& entry, std::string& value) const
 {
-    value = file::path2s(entry.processInfo.processPath);
+    value = core::file::path2s(entry.processInfo.processPath);
 }
 
 HasProcessCondition::HasProcessCondition(std::string processName)

@@ -29,7 +29,7 @@ bool DataHandler::handle(const nlohmann::json& payload,
         entry.username = msg["username"];
 
         if (entry.username.empty() ||
-            entry.username != str::ws2s(sys::activeUserName()))
+            entry.username != core::str::ws2s(core::sys::activeUserName()))
         {
             error = "Username mismatch";
             return false;
@@ -41,7 +41,7 @@ bool DataHandler::handle(const nlohmann::json& payload,
 
         if (hasSnapshot)
         {
-            crypto::decodeBase64(imageBytes, buffer_);
+            core::crypto::decodeBase64(imageBytes, buffer_);
             entry.windowInfo.image.encoded = false;
             entry.windowInfo.image.bytes = buffer_;
         }

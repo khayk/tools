@@ -2,7 +2,7 @@
 #include <gmock/gmock.h>
 #include <core/patterns/Observer.h>
 
-using namespace dp;
+using namespace core::dp;
 using ::testing::_;
 
 namespace {

@@ -21,7 +21,7 @@ void scanDirectories(const Config& cfg,
         const auto srcDir = fs::path(scanDir).lexically_normal();
         spdlog::info("Scanning directory: '{}'", srcDir);
 
-        file::enumFilesRecursive(
+        core::file::enumFilesRecursive(
             srcDir,
             cfg.exclusionPatterns(),
             [numFiles = 0, &detector, &progress](const auto& p,
@@ -126,7 +126,7 @@ void reportDuplicates(const fs::path& reportPath, const DuplicateDetector& detec
             oss.str("");
             oss << group.groupId << separator
                 << std::string_view(e.sha256).substr(0, 16) << separator << e.size
-                << separator << file::path2s(e.file);
+                << separator << core::file::path2s(e.file);
             sortedLines.emplace_back(oss.str());
         }
 

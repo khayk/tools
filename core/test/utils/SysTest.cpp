@@ -5,7 +5,7 @@ namespace {
 
 TEST(UtilsSysTests, CurrentProcessPath)
 {
-    const auto path = sys::currentProcessPath();
+    const auto path = core::sys::currentProcessPath();
     EXPECT_EQ(path.filename().stem().string(), "core-test");
 }
 

@@ -11,7 +11,7 @@
 
 AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
                                  DataHandler& dataHandler,
-                                 tcp::Socket&& sock,
+                                 core::tcp::Socket&& sock,
                                  std::chrono::milliseconds peerDropTimeout)
     : Connection(std::move(sock))
     , authHandler_(authHandler)
@@ -77,7 +77,7 @@ AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
         std::ignore = ec;
         spdlog::trace("No data from agent: {}", fmt::ptr(this));
 
-        const auto activeUsername = str::ws2s(sys::activeUserName());
+        const auto activeUsername = core::str::ws2s(core::sys::activeUserName());
 
         if (!authHandler_.username().empty() && !activeUsername.empty() &&
             authHandler_.username() != activeUsername)
@@ -108,7 +108,7 @@ AgentConnection::State AgentConnection::state() const noexcept
     return currentState_;
 }
 
-tcp::Communicator& AgentConnection::communicator()
+core::tcp::Communicator& AgentConnection::communicator()
 {
     return comm_;
 }

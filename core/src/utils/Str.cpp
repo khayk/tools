@@ -6,7 +6,7 @@
 #include <ranges>
 #include <format>
 
-namespace str {
+namespace core::str {
 
 namespace {
 
@@ -278,4 +278,4 @@ std::string humanizeBytes(size_t bytes)
 }
 
 
-} // namespace str
+} // namespace core::str

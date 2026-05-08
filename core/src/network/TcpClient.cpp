@@ -1,6 +1,6 @@
 #include <core/network/TcpClient.h>
 
-namespace tcp {
+namespace core::tcp {
 
 Client::Client(IoContext& ioc) noexcept
     : socket_ {ioc}
@@ -35,4 +35,4 @@ void Client::connect(const Options& opts)
     });
 }
 
-} // namespace tcp
+} // namespace core::tcp

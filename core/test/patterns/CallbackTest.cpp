@@ -3,6 +3,7 @@
 
 #include <tuple>
 
+using namespace core;
 namespace {
 
 TEST(CallbackTests, OneCallbackOneArg)

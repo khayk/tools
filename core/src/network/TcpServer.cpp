@@ -3,7 +3,7 @@
 #include <boost/system/detail/error_category.hpp>
 #include <spdlog/spdlog.h>
 
-namespace tcp {
+namespace core::tcp {
 
 Server::Server(IoContext& ioc)
     : ioc_(ioc)
@@ -112,4 +112,4 @@ void Server::doAccept()
     });
 }
 
-} // namespace tcp
+} // namespace core::tcp

@@ -8,7 +8,7 @@ namespace fs = std::filesystem;
 /**
  * @brief Utility functions to provide full paths of know user/system directories
  */
-namespace dirs {
+namespace core::dirs {
 
 /**
  * @brief The user home directory. On Windows systems, this is '%USERPROFILE%'.
@@ -45,4 +45,4 @@ fs::path cache();
 fs::path config(std::error_code& ec);
 fs::path config();
 
-}; // namespace dirs
+}; // namespace core::dirs

@@ -69,7 +69,7 @@ void openDirectories(const PathsVec& files)
 
     for (const auto& dir : uniqueDirs)
     {
-        file::openDirectory(dir);
+        core::file::openDirectory(dir);
     }
 }
 
@@ -106,7 +106,7 @@ PathsVec createDirectoriesList(const PathsVec& files)
 void displayPathOptions(std::ostream& out, const PathsVec& paths)
 {
     const size_t maxVisible = 10;
-    const int width = static_cast<int>(num::digits(paths.size()));
+    const int width = static_cast<int>(core::num::digits(paths.size()));
 
     for (size_t i = 0; i < paths.size(); ++i)
     {
@@ -149,7 +149,7 @@ Navigation addPaths(const PathsVec& files,
     Menu menu(listName);
 
     menuOption(menu, dirs.size(), [&](UserIO& io) {
-        auto index = num::s2num<size_t>(io.currentPrompt());
+        auto index = core::num::s2num<size_t>(io.currentPrompt());
         paths.add(dirs[index - 1]);
         return Navigation::Continue;
     });
@@ -178,7 +178,7 @@ Navigation deletePaths(std::string_view listName,
     Menu menu(listName);
 
     menuOption(menu, paths.size(), [&](UserIO& io) {
-        auto index = num::s2num<size_t>(io.currentPrompt());
+        auto index = core::num::s2num<size_t>(io.currentPrompt());
         if (index > dirs.size())
         {
             spdlog::info("Attempt to access container with size {} at index {}", dirs.size(), index - 1);
@@ -316,7 +316,7 @@ bool isDuplicateNamingPattern(const IDeletionStrategy& strategy, PathsVec& files
                 return false;
             }
 
-            sv = str::trim(sv);
+            sv = core::str::trim(sv);
             if (!std::regex_search(std::string(sv), r))
             {
                 return false;
@@ -355,7 +355,7 @@ Flow deleteInteractively(PathsVec& files, DeletionConfig& cfg)
 
     menuOption(menu, files.size(), [&](UserIO& io) {
         // User has chosen the number to KEEP.
-        auto index = num::s2num<size_t>(io.currentPrompt());
+        auto index = core::num::s2num<size_t>(io.currentPrompt());
 
         if (index == 0 || index > files.size())
         {

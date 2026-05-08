@@ -5,7 +5,7 @@
 
 namespace {
 
-tcp::Communicator& communicator(tcp::Connection& conn)
+core::tcp::Communicator& communicator(core::tcp::Connection& conn)
 {
     auto& underlying = static_cast<AgentConnection&>(conn);
     return underlying.communicator();
@@ -15,11 +15,11 @@ tcp::Communicator& communicator(tcp::Connection& conn)
 
 AgentManager::AgentManager(AuthorizationHandler& authHandler,
                            DataHandler& dataHandler,
-                           tcp::Server& svr,
+                           core::tcp::Server& svr,
                            std::chrono::milliseconds peerDropTimeout)
 {
     svr.onCreateConnection(
-        [this, &authHandler, &dataHandler, peerDropTimeout](tcp::Socket&& socket) {
+        [this, &authHandler, &dataHandler, peerDropTimeout](core::tcp::Socket&& socket) {
             auto conn = std::make_shared<AgentConnection>(authHandler,
                                                           dataHandler,
                                                           std::move(socket),
@@ -46,7 +46,7 @@ AgentManager::AgentManager(AuthorizationHandler& authHandler,
             return conn;
         });
 
-    svr.onConnection([](tcp::Connection& conn) {
+    svr.onConnection([](core::tcp::Connection& conn) {
         spdlog::info("Accepted: {}", fmt::ptr(&conn));
         communicator(conn).start();
     });

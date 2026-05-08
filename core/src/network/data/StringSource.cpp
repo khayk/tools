@@ -1,6 +1,6 @@
 #include <core/network/data/StringSource.h>
 
-namespace data {
+namespace core::data {
 
 StringSource::StringSource(std::string_view src)
     : src_(src)
@@ -23,4 +23,4 @@ size_t StringSource::get(std::string& buf, size_t maxSize)
 
     return bytes;
 }
-} // namespace data
+} // namespace core::data

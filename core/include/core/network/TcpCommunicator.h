@@ -2,7 +2,7 @@
 
 #include <core/network/TcpConnection.h>
 
-namespace tcp {
+namespace core::tcp {
 
 class Communicator
 {
@@ -25,4 +25,4 @@ private:
     std::unique_ptr<Impl> pimpl_;
 };
 
-} // namespace tcp
+} // namespace core::tcp

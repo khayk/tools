@@ -2,7 +2,7 @@
 
 #include <core/network/TcpConnection.h>
 
-namespace tcp {
+namespace core::tcp {
 
 class Client
 {
@@ -32,4 +32,4 @@ private:
     ErrorCbs errorCb_;
 };
 
-} // namespace tcp
+} // namespace core::tcp

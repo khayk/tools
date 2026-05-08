@@ -8,7 +8,7 @@
 namespace fs = std::filesystem;
 using testing::_;
 using testing::MockFunction;
-using namespace file;
+using namespace core::file;
 
 namespace {
 

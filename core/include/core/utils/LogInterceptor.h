@@ -7,7 +7,7 @@
 #include <string>
 #include <mutex>
 
-namespace tools::utl {
+namespace core::utl {
 
 // @todo:hayk - The LogInterceptor has space for improvement, such as:
 // - Keep track of log levels
@@ -151,4 +151,4 @@ using TestMtLogInterceptor = LogInterceptor<std::mutex>;
 // contention)
 using TestStLogInterceptor = LogInterceptor<spdlog::details::null_mutex>;
 
-} // namespace tools::utl
+} // namespace core::utl

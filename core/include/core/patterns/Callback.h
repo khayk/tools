@@ -5,7 +5,7 @@
 #include <vector>
 #include <algorithm>
 
-namespace dp {
+namespace core::dp {
 
 template <class... Args>
 class Callback
@@ -100,4 +100,4 @@ public:
     }
 };
 
-} // namespace dp
+} // namespace core::dp

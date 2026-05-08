@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <vector>
 
-namespace dp {
+namespace core::dp {
 
 template <class Observer>
 class Observable
@@ -106,4 +106,4 @@ public:
     }
 };
 
-} // namespace dp
+} // namespace core::dp

@@ -3,7 +3,7 @@
 #include <array>
 #include <chrono>
 
-using namespace str;
+using namespace core::str;
 
 namespace {
 

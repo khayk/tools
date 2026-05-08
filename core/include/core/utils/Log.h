@@ -6,7 +6,7 @@
 
 namespace fs = std::filesystem;
 
-namespace tools::utl {
+namespace core::utl {
 
 fs::path makeLogFilename(std::string_view appName);
 void configureLogger(const fs::path& logsDir, const fs::path& logFilename);
@@ -20,4 +20,4 @@ public:
     ~SilenceLogger();
 };
 
-} // namespace tools::utl
+} // namespace core::utl

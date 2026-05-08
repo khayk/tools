@@ -2,7 +2,7 @@
 
 #include <core/network/TcpConnection.h>
 
-namespace tcp {
+namespace core::tcp {
 
 class Server
 {
@@ -60,4 +60,4 @@ private:
     CreateConnectionCb createConnCb_;
 };
 
-} // namespace tcp
+} // namespace core::tcp

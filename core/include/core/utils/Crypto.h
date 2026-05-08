@@ -5,7 +5,7 @@
 
 namespace fs = std::filesystem;
 
-namespace crypto {
+namespace core::crypto {
 
 /**
  * @brief Calculate SHA256 on the given data.
@@ -80,4 +80,4 @@ void decodeBase64(const std::string& base64Seq, std::string& byteSeq);
  */
 std::string decodeBase64(const std::string& base64Seq);
 
-} // namespace crypto
+} // namespace core::crypto

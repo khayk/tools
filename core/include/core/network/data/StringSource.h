@@ -2,7 +2,7 @@
 
 #include <core/network/data/ISource.h>
 
-namespace data {
+namespace core::data {
 
 class StringSource : public ISource
 {
@@ -17,4 +17,4 @@ private:
     std::string_view sv_;
 };
 
-} // namespace data
+} // namespace core::data

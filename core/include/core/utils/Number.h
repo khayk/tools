@@ -5,7 +5,7 @@
 #include <charconv>
 #include <cstdlib>
 
-namespace num {
+namespace core::num {
 
 template <typename T>
 constexpr bool FROM_CHARS_AVAILABLE =
@@ -100,4 +100,4 @@ size_t digits(T number)
     return digits;
 }
 
-} // namespace num
+} // namespace core::num

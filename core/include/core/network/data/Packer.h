@@ -2,7 +2,7 @@
 
 #include <core/network/data/ISource.h>
 
-namespace data {
+namespace core::data {
 
 class Packer
 {
@@ -15,4 +15,4 @@ public:
     size_t get(std::string& buf, size_t maxSize = 64UL * 1024UL);
 };
 
-} // namespace data
+} // namespace core::data

@@ -72,7 +72,7 @@ void BackupAndDelete::remove(const fs::path& file) const
 
     const auto absFile = file.is_absolute() ? file : fs::absolute(file);
     const auto parentPath = absFile.parent_path();
-    const auto hash = crypto::md5(file::path2s(parentPath));
+    const auto hash = core::crypto::md5(core::file::path2s(parentPath));
     const auto backupFilePath = backupDir_ / hash / absFile.filename();
 
     fs::create_directory(backupDir_ / hash);

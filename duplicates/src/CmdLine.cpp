@@ -15,7 +15,7 @@ void metricsReview(const fs::path& file)
     DuplicateDetector detector;
     StopWatch sw;
 
-    file::readLines(file, [&detector](const std::string& line) {
+    core::file::readLines(file, [&detector](const std::string& line) {
         std::string_view sv = line;
 
         while (line.size() >= 2 && sv.front() == '"')
@@ -31,7 +31,7 @@ void metricsReview(const fs::path& file)
         return true;
     });
 
-    spdlog::info("Memory: {}", str::humanizeBytes(sys::currentProcessMemoryUsage()));
+    spdlog::info("Memory: {}", core::str::humanizeBytes(core::sys::currentProcessMemoryUsage()));
     spdlog::info("Files: {}", detector.numFiles());
     spdlog::info("Nodes: {}", detector.root()->nodesCount());
     spdlog::info("Elapsed: {} ms", sw.elapsedMs());

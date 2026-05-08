@@ -38,7 +38,7 @@ std::string concat(const std::vector<fs::path>& vec, const std::string& sep)
     strVec.reserve(vec.size());
 
     std::ranges::transform(vec, std::back_inserter(strVec), [](const fs::path& p) {
-        return file::path2s(p);
+        return core::file::path2s(p);
     });
     return concat(strVec, sep);
 }
@@ -79,7 +79,7 @@ Config::Config(fs::path dataDir, fs::path cacheDir)
     dataDir_ = dataDir_ / appName;
     cacheDir_ = cacheDir_ / appName;
     logDir_ = dataDir_ / "logs";
-    logFilename_ = tools::utl::makeLogFilename(appName);
+    logFilename_ = core::utl::makeLogFilename(appName);
 }
 
 const std::vector<fs::path>& Config::scanDirs() const noexcept

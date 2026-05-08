@@ -3,7 +3,7 @@
 #include <string>
 #include <chrono>
 
-namespace str {
+namespace core::str {
 
 std::wstring s2ws(std::string_view utf8);
 void s2ws(std::string_view utf8, std::wstring& wstr);
@@ -127,4 +127,4 @@ std::string humanizeDuration(std::chrono::milliseconds ms, int units = 2);
  */
 std::string humanizeBytes(size_t bytes);
 
-} // namespace str
+} // namespace core::str

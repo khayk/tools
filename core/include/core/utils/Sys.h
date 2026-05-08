@@ -4,7 +4,7 @@
 
 namespace fs = std::filesystem;
 
-namespace sys {
+namespace core::sys {
 
 std::wstring activeUserName();
 
@@ -48,4 +48,4 @@ size_t processMemoryUsage(uint32_t pid);
  */
 size_t currentProcessMemoryUsage();
 
-} // namespace sys
+} // namespace core::sys

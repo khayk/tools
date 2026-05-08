@@ -179,7 +179,7 @@ Matcher Matchers::Range(int min, int max)
 {
     return [min, max](const std::string& s) {
         int def {max + 1};
-        auto val = num::s2num(s, def);
+        auto val = core::num::s2num(s, def);
         return val >= min && val <= max;
     };
 }

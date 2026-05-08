@@ -2,7 +2,7 @@
 
 #include <string>
 
-namespace data {
+namespace core::data {
 
 class Unpacker
 {
@@ -36,4 +36,4 @@ private:
     void readSize() noexcept;
 };
 
-} // namespace data
+} // namespace core::data

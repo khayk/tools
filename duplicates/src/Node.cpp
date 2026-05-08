@@ -75,7 +75,7 @@ const std::string& Node::sha256() const
 {
     if (sha256_.empty())
     {
-        sha256_ = crypto::fileSha256(fullPath());
+        sha256_ = core::crypto::fileSha256(fullPath());
     }
 
     return sha256_;

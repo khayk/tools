@@ -22,7 +22,7 @@
 #include <system_error>
 #include <iostream>
 
-using tools::utl::configureLogger;
+using core::utl::configureLogger;
 
 namespace tools::dups {
 namespace {
@@ -58,7 +58,7 @@ int main(int argc, const char* argv[])
             return 0;
         }
 
-        Config cfg(dirs::config(), dirs::cache());
+        Config cfg(core::dirs::config(), core::dirs::cache());
         configureLogger(cfg.logDir(), cfg.logFilename());
         trace.emplace("",
                       std::format("{:-^80s}", "> START <"),

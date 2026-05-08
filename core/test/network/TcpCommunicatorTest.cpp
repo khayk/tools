@@ -3,7 +3,7 @@
 #include <core/network/TcpServer.h>
 #include <core/network/TcpCommunicator.h>
 
-using namespace tcp;
+using namespace core::tcp;
 
 namespace {
 
@@ -23,7 +23,7 @@ void asyncCommunicatorTest(const std::vector<std::string>& input)
 
     std::unique_ptr<Communicator> svrComm;
     svr.onConnection([&](Connection& conn) {
-        svrComm = std::make_unique<tcp::Communicator>(conn);
+        svrComm = std::make_unique<core::tcp::Communicator>(conn);
 
         svrComm->onMsg([&received, &input, &conn](const std::string& msg) {
             received.push_back(msg);
@@ -53,7 +53,7 @@ void asyncCommunicatorTest(const std::vector<std::string>& input)
     std::unique_ptr<Communicator> clnComm;
 
     cnt.onConnect([&](Connection& conn) {
-        clnComm = std::make_unique<tcp::Communicator>(conn);
+        clnComm = std::make_unique<core::tcp::Communicator>(conn);
         clnComm->onMsg([](const std::string& /* msg */) {});
 
         conn.onDisconnect([&]() {

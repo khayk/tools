@@ -27,7 +27,7 @@ class KidmonServer::Impl
 
     std::unique_ptr<AgentManager> agentMngr_;
     net::io_context ioc_;
-    tcp::Server svr_;
+    core::tcp::Server svr_;
     net::steady_timer timer_;
     work_guard workGuard_;
     std::chrono::milliseconds timeout_;
@@ -58,7 +58,7 @@ public:
                                                     svr_,
                                                     cfg.peerDropTimeout);
 
-        tcp::Server::Options opts;
+        core::tcp::Server::Options opts;
         opts.port = cfg.listenPort;
 
         svr_.onError([&](const ErrorCode& ec) {
@@ -105,7 +105,7 @@ public:
                 const std::vector<std::string> args = {"--token", token, "--agent"};
                 authHandler_.setToken(token);
 
-                launcher_->launch(sys::currentProcessPath(), args);
+                launcher_->launch(core::sys::currentProcessPath(), args);
             }
         }
         catch (const std::exception& e)

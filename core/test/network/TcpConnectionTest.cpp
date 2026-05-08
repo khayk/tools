@@ -2,7 +2,7 @@
 #include <core/network/TcpClient.h>
 #include <core/network/TcpServer.h>
 
-using namespace tcp;
+using namespace core::tcp;
 
 namespace {
 

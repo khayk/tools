@@ -6,40 +6,40 @@
 class ProcNameBuilder
 {
 public:
-    std::string_view field() const noexcept
+    static std::string_view field() noexcept
     {
         return "proc_name";
     }
 
-    std::string value(const Entry& entry) const
+    static std::string value(const Entry& entry)
     {
-        return file::path2s(entry.processInfo.processPath.filename());
+        return core::file::path2s(entry.processInfo.processPath.filename());
     }
 };
 
 class ProcPathBuilder
 {
 public:
-    std::string_view field() const noexcept
+    static std::string_view field() noexcept
     {
         return "proc_path";
     }
 
-    std::string value(const Entry& entry) const
+    static std::string value(const Entry& entry)
     {
-        return file::path2s(entry.processInfo.processPath);
+        return core::file::path2s(entry.processInfo.processPath);
     }
 };
 
 class TitleBuilder
 {
 public:
-    std::string_view field() const noexcept
+    static std::string_view field() noexcept
     {
         return "title";
     }
 
-    std::string value(const Entry& entry) const
+    static std::string value(const Entry& entry)
     {
         return entry.windowInfo.title;
     }

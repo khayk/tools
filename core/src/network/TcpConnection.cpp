@@ -2,7 +2,7 @@
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 #include <spdlog/spdlog.h>
 
-namespace tcp {
+namespace core::tcp {
 
 Connection::Connection(Socket socket, uint16_t bufferSize)
     : socket_ {std::move(socket)}
@@ -158,4 +158,4 @@ void Connection::handleTimeout(const ErrorCode& ec)
     }
 }
 
-} // namespace tcp
+} // namespace core::tcp

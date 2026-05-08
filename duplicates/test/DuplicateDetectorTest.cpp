@@ -18,6 +18,7 @@
 
 using testing::MockFunction;
 using testing::Return;
+using namespace core;
 
 namespace tools::dups {
 namespace {

@@ -38,7 +38,7 @@ fs::path getKnownFolderPath(const GUID& id, std::error_code& ec) noexcept
 } // namespace
 
 
-namespace dirs {
+namespace core::dirs {
 
 fs::path home(std::error_code& ec)
 {
@@ -195,4 +195,4 @@ fs::path config()
     return path;
 }
 
-} // namespace dirs
+} // namespace core::dirs

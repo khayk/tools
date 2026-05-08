@@ -5,14 +5,14 @@
 
 void TitleToLowerTransform::apply(Entry& entry)
 {
-    str::utf8LowerInplace(entry.windowInfo.title, &wbuffer_);
+    core::str::utf8LowerInplace(entry.windowInfo.title, &wbuffer_);
 }
 
 
 void ProcessPathToLowerTransform::apply(Entry& entry)
 {
     auto wstr = entry.processInfo.processPath.wstring();
-    str::lowerInplace(wstr);
+    core::str::lowerInplace(wstr);
     entry.processInfo.processPath.assign(wstr);
 }
 

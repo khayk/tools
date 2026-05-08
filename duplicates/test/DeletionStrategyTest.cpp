@@ -10,6 +10,7 @@
 
 namespace tools::dups {
 
+using namespace core;
 using utl::SilenceLogger;
 
 TEST(DeletionStrategyTest, PermanentDelete)

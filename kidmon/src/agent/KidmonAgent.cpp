@@ -46,7 +46,7 @@ public:
         // Update SHA256 only if the file is changed or newly added
         if (fi.lastWriteTime != lwt)
         {
-            fi.sha256 = crypto::fileSha256(file);
+            fi.sha256 = core::crypto::fileSha256(file);
             fi.lastWriteTime = lwt;
         }
 
@@ -170,11 +170,11 @@ class KidmonAgent::Impl
     work_guard workGuard_;
     std::chrono::milliseconds timeout_;
     time_point nextCaptureTime_;
-    tcp::Client tcpClient_;
+    core::tcp::Client tcpClient_;
 
     ApiPtr api_;
     std::vector<char> wndContent_;
-    std::unique_ptr<tcp::Communicator> comm_;
+    std::unique_ptr<core::tcp::Communicator> comm_;
     AgentMsgHandler handler_;
     Statistics stats_;
 
@@ -207,8 +207,8 @@ class KidmonAgent::Impl
 
     void initiateConnect()
     {
-        tcpClient_.onConnect([this](tcp::Connection& conn) {
-            comm_ = std::make_unique<tcp::Communicator>(conn);
+        tcpClient_.onConnect([this](core::tcp::Connection& conn) {
+            comm_ = std::make_unique<core::tcp::Communicator>(conn);
 
             comm_->onMsg([this](const std::string& msg) {
                 spdlog::debug("Agent rcvd: {}", msg);
@@ -244,7 +244,7 @@ class KidmonAgent::Impl
             ioc_.stop();
         });
 
-        tcp::Client::Options opts {.host = "127.0.0.1", .port = cfg_.serverPort};
+        core::tcp::Client::Options opts {.host = "127.0.0.1", .port = cfg_.serverPort};
         spdlog::info("Connection attempt to: {}:{}", opts.host, opts.port);
 
         tcpClient_.connect(opts);
@@ -323,7 +323,7 @@ class KidmonAgent::Impl
                                     toString(format));
 
                     entry.windowInfo.image.name = fileName;
-                    auto data = crypto::encodeBase64(
+                    auto data = core::crypto::encodeBase64(
                         std::string_view(wndContent_.data(), wndContent_.size()));
                     entry.windowInfo.image.bytes = data;
                     entry.windowInfo.image.encoded = true;

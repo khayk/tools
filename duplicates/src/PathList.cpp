@@ -90,7 +90,7 @@ PathsPersister::~PathsPersister()
 void PathsPersister::load()
 {
     spdlog::info("Loading files from: {}", filePath_);
-    file::readLines(filePath_, [&](const std::string& line) {
+    core::file::readLines(filePath_, [&](const std::string& line) {
         if (!line.empty())
         {
             paths_.emplace(line);
@@ -110,7 +110,7 @@ void PathsPersister::save() const
 
     for (const auto& file : paths_)
     {
-        out << file::path2s(file) << '\n';
+        out << core::file::path2s(file) << '\n';
     }
 }
 

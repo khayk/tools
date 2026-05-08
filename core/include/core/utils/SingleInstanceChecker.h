@@ -3,6 +3,8 @@
 #include <atomic>
 #include <string>
 
+namespace core {
+
 class SingleInstanceChecker
 {
     std::wstring appName_;
@@ -16,3 +18,5 @@ public:
     bool processAlreadyRunning() const noexcept;
     void report() const;
 };
+
+} // namespace core

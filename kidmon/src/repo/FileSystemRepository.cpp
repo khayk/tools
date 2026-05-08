@@ -8,6 +8,8 @@
 #include <nlohmann/json.hpp>
 #include <glaze/glaze.hpp>
 
+using namespace core;
+
 namespace {
 
 struct ReportDirs

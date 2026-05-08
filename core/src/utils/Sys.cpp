@@ -47,7 +47,7 @@ std::wstring userNameBySessionId(unsigned long sessionId)
 } // namespace
 
 
-namespace sys {
+namespace core::sys {
 
 std::wstring activeUserName()
 {
@@ -272,4 +272,4 @@ size_t currentProcessMemoryUsage()
     return processMemoryUsage(currentProcessId());
 }
 
-} // namespace sys
+} // namespace core::sys

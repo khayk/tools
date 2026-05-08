@@ -13,7 +13,7 @@
 #include <utility>
 
 
-namespace crypto {
+namespace core::crypto {
 namespace {
 void hexadecimal(std::span<unsigned char> hash, std::string& out)
 {
@@ -201,4 +201,4 @@ std::string decodeBase64(const std::string& base64Seq)
     return byteSeq;
 }
 
-} // namespace crypto
+} // namespace core::crypto

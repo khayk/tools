@@ -5,7 +5,7 @@
 
 #include <array>
 
-using namespace data;
+using namespace core::data;
 
 namespace {
 

@@ -17,7 +17,7 @@ public:
     template <typename Context>
     constexpr auto format(const fs::path& ph, Context& ctx) const
     {
-        return format_to(ctx.out(), "{}", file::path2s(ph));
+        return format_to(ctx.out(), "{}", core::file::path2s(ph));
     }
 };
 
@@ -32,6 +32,6 @@ public:
     template <typename Context>
     constexpr auto format(const fs::path& ph, Context& ctx) const
     {
-        return format_to(ctx.out(), "{}", file::path2s(ph));
+        return format_to(ctx.out(), "{}", core::file::path2s(ph));
     }
 };

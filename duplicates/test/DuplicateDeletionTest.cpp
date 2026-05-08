@@ -16,6 +16,7 @@ using testing::Return;
 
 namespace tools::dups {
 
+using namespace core;
 using utl::SilenceLogger;
 using utl::TestStLogInterceptor;
 

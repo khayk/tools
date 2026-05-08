@@ -5,7 +5,7 @@
 
 #include <queue>
 
-namespace tcp {
+namespace core::tcp {
 
 class Communicator::Impl
 {
@@ -151,4 +151,4 @@ void Communicator::sendAsync(std::string_view data, SentCb sentCb)
 }
 
 
-} // namespace tcp
+} // namespace core::tcp

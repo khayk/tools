@@ -7,7 +7,7 @@
 class AuthorizationHandler;
 class DataHandler;
 
-class AgentConnection : public tcp::Connection
+class AgentConnection : public core::tcp::Connection
 {
 public:
     using AuthorizationCb = std::function<bool(AgentConnection* conn, bool)>;
@@ -21,7 +21,7 @@ public:
 
     AgentConnection(AuthorizationHandler& authHandler,
                     DataHandler& dataHandler,
-                    tcp::Socket&& socket,
+                    core::tcp::Socket&& socket,
                     std::chrono::milliseconds peerDropTimeout);
 
     ~AgentConnection();
@@ -30,14 +30,14 @@ public:
 
     State state() const noexcept;
 
-    tcp::Communicator& communicator();
+    core::tcp::Communicator& communicator();
 
 private:
     AuthorizationHandler& authHandler_;
     DataHandler& dataHandler_;
     State currentState_ {State::Connected};
 
-    tcp::Communicator comm_;
+    core::tcp::Communicator comm_;
     AuthorizationCb authCb_;
 
     void transitionTo(State newState) noexcept;

@@ -1,6 +1,6 @@
 #include <core/network/data/Packer.h>
 
-namespace data {
+namespace core::data {
 
 Packer::Packer(ISource& source)
     : source_(source)
@@ -21,4 +21,4 @@ size_t Packer::get(std::string& buf, size_t maxSize)
 }
 
 
-} // namespace data
+} // namespace core::data

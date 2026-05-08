@@ -26,7 +26,7 @@ void constructAttribs(const bool agent, std::wstring& uniqueName, fs::path& logF
 
     if (agent)
     {
-        uniqueName.append(L"-agent-" + sys::activeUserName());
+        uniqueName.append(L"-agent-" + core::sys::activeUserName());
         logFile.concat("-agent");
     }
     else
@@ -77,7 +77,7 @@ int main(int argc, char* argv[])
         std::wstring uniqueName;
         fs::path logFile;
         constructAttribs(agentMode, uniqueName, logFile);
-        SingleInstanceChecker sic(uniqueName);
+        core::SingleInstanceChecker sic(uniqueName);
 
         if (sic.processAlreadyRunning())
         {
@@ -89,7 +89,7 @@ int main(int argc, char* argv[])
         appConf.logFilename = logFile;
 
         // Configure logger as soon as possible
-        tools::utl::configureLogger(appConf.logsDir, appConf.logFilename);
+        core::utl::configureLogger(appConf.logsDir, appConf.logFilename);
 
         trace.emplace("",
                       std::format("{:-^80s}", "> START <"),
@@ -99,10 +99,10 @@ int main(int argc, char* argv[])
         spdlog::info("Build time: {}", BuildInfo::Timestamp);
         spdlog::info("Commit SHA: {}", BuildInfo::CommitSHA);
         spdlog::info("Version: {}", BuildInfo::Version);
-        spdlog::debug("Active username: {}", str::ws2s(sys::activeUserName()));
+        spdlog::debug("Active username: {}", core::str::ws2s(core::sys::activeUserName()));
 
         std::shared_ptr<Runnable> app;
-        const bool isInteractive = sys::isUserInteractive();
+        const bool isInteractive = core::sys::isUserInteractive();
 
         if (agentMode)
         {
