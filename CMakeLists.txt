@@ -53,6 +53,11 @@ set(ENABLE_SANITIZERS OFF)
 
 add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
 
+# In.Effective CMake advised to forget about these commands
+#   add_compile_options
+#   include_directories
+#   link_directories
+#   link_libraries
 if(WIN32)
     set_property(GLOBAL PROPERTY USE_FOLDERS ON)
     add_compile_options(/W4 /WX)
