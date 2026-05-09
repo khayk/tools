@@ -2,7 +2,7 @@
 
 #include <string_view>
 
-enum class ImageFormat
+enum class ImageFormat : std::uint8_t
 {
     jpg,
     bmp,

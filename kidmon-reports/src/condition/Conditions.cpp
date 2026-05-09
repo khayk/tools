@@ -176,7 +176,7 @@ void HasStringCondition::write(std::ostream& os) const
 
 bool HasStringCondition::met(const Entry& entry) const
 {
-    return value(entry).find(needle()) != std::string::npos;
+    return value(entry).contains(needle());
 }
 
 void HasProcessCondition::fetchValue(const Entry& entry, std::string& value) const

@@ -20,7 +20,7 @@ public:
     [[nodiscard]] virtual std::string title() const = 0;
     [[nodiscard]] virtual std::string className() const = 0;
     [[nodiscard]] virtual fs::path ownerProcessPath() const = 0;
-    [[nodiscard]] virtual uint64_t ownerProcessId() const noexcept = 0;
+    [[nodiscard]] virtual uint64_t ownerProcessId() const = 0;
     [[nodiscard]] virtual Rect boundingRect() const noexcept = 0;
 
     /**

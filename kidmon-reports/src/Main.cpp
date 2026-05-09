@@ -365,9 +365,9 @@ bool validateArguments(const cxxopts::ParseResult& result)
     return true;
 }
 
-void handleListUsers()
+void handleListUsers(const fs::path& reportsDir)
 {
-    FileSystemRepository repo(G_REPORTS_DIR);
+    FileSystemRepository repo(reportsDir);
     spdlog::trace("Listing users...");
 
     std::ostringstream ss;
@@ -458,7 +458,7 @@ int main(int argc, char* argv[])
 
         if (result.contains("list"))
         {
-            handleListUsers();
+            handleListUsers(G_REPORTS_DIR);
         }
         else
         {

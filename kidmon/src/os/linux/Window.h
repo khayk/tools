@@ -12,7 +12,7 @@ public:
     std::string title() const override;
     std::string className() const override;
     fs::path ownerProcessPath() const override;
-    uint64_t ownerProcessId() const noexcept override;
+    uint64_t ownerProcessId() const override;
     Rect boundingRect() const noexcept override;
 
     bool capture(const ImageFormat format, std::vector<char>& content) override;

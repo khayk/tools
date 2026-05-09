@@ -118,7 +118,7 @@ fs::path WindowImpl::ownerProcessPath() const
     return fs::path(std::wstring_view(imagePath.data(), sz));
 }
 
-uint64_t WindowImpl::ownerProcessId() const noexcept
+uint64_t WindowImpl::ownerProcessId() const
 {
     DWORD procId {0};
     GetWindowThreadProcessId(hwnd_, &procId);

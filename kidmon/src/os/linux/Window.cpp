@@ -20,7 +20,7 @@ fs::path WindowImpl::ownerProcessPath() const
     return {};
 }
 
-uint64_t WindowImpl::ownerProcessId() const noexcept
+uint64_t WindowImpl::ownerProcessId() const
 {
     return 0;
 }
