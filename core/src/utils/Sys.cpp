@@ -19,6 +19,7 @@
 #endif
 
 #include <core/utils/Sys.h>
+#include <core/utils/Throw.h>
 #include <spdlog/spdlog.h>
 
 namespace {
@@ -67,7 +68,7 @@ std::wstring activeUserName()
     CFRelease(cfName);
     return core::str::s2ws(std::string_view(buf.data()));
 #else
-    throw std::runtime_error(std::format("Not implemented: {}", __func__));
+    core::throwNotImplemented();
 #endif
 }
 

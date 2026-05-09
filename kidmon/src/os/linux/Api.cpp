@@ -2,7 +2,7 @@
 #include "Window.h"
 #include "ProcessLauncher.h"
 
-#include <format>
+#include <core/utils/Throw.h>
 
 ApiPtr ApiFactory::create()
 {
@@ -11,7 +11,7 @@ ApiPtr ApiFactory::create()
 
 WindowPtr ApiImpl::foregroundWindow()
 {
-    throw std::logic_error(std::format("Not implemented: {}", __func__));
+    core::throwNotImplemented();
     return WindowPtr {};
 }
 

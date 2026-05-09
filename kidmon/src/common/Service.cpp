@@ -1,4 +1,5 @@
 #include <kidmon/common/Service.h>
+#include <core/utils/Throw.h>
 #include <core/utils/Tracer.h>
 
 
@@ -92,7 +93,7 @@ public:
         }
 #else
         std::ignore = name_;
-        throw std::runtime_error(std::format("Not implemented: {}", __func__));
+        core::throwNotImplemented();
 #endif
     }
 

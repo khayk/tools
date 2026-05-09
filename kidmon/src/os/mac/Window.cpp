@@ -1,5 +1,5 @@
 #include "Window.h"
-#include <format>
+#include <core/utils/Throw.h>
 
 const std::string& WindowImpl::id() const
 {
@@ -8,25 +8,25 @@ const std::string& WindowImpl::id() const
 
 std::string WindowImpl::title() const
 {
-    throw std::logic_error(std::format("Not implemented: {}", __func__));
+    core::throwNotImplemented();
     return {};
 }
 
 std::string WindowImpl::className() const
 {
-    throw std::logic_error(std::format("Not implemented: {}", __func__));
+    core::throwNotImplemented();
     return {};
 }
 
 fs::path WindowImpl::ownerProcessPath() const
 {
-    throw std::logic_error(std::format("Not implemented: {}", __func__));
+    core::throwNotImplemented();
     return {};
 }
 
 uint64_t WindowImpl::ownerProcessId() const
 {
-    throw std::logic_error(std::format("Not implemented: {}", __func__));
+    core::throwNotImplemented();
     return 0;
 }
 
@@ -37,7 +37,7 @@ Rect WindowImpl::boundingRect() const noexcept
 
 bool WindowImpl::capture(const ImageFormat format, std::vector<char>& content)
 {
-    throw std::logic_error(std::format("Not implemented: {}", __func__));
+    core::throwNotImplemented();
     std::ignore = format;
     std::ignore = content;
     return false;
