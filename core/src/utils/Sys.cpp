@@ -1,3 +1,4 @@
+#include "core/utils/Str.h"
 #ifdef _WIN32
     #include <Windows.h>
     #include <WtsApi32.h>
@@ -6,8 +7,9 @@
 
     #pragma comment(lib, "Wtsapi32.lib")
 #elif __APPLE__
-    #include <unistd.h>
+    #include <SystemConfiguration/SystemConfiguration.h>
     #include <libproc.h>
+    #include <array>
     #include <fstream>
 #else
     #include <sys/types.h>
@@ -53,6 +55,17 @@ std::wstring activeUserName()
 {
 #ifdef _WIN32
     return userNameBySessionId(WTSGetActiveConsoleSessionId());
+#elif __APPLE__
+    CFStringRef cfName = SCDynamicStoreCopyConsoleUser(nullptr, nullptr, nullptr);
+    if (cfName == nullptr)
+    {
+        throw std::runtime_error("No active console user");
+    }
+    std::array<char, 256> buf {};
+    CFStringGetCString(cfName, buf.data(), static_cast<CFIndex>(buf.size()),
+                       kCFStringEncodingUTF8);
+    CFRelease(cfName);
+    return core::str::s2ws(std::string_view(buf.data()));
 #else
     throw std::runtime_error(std::format("Not implemented: {}", __func__));
 #endif

@@ -54,6 +54,13 @@ target_link_libraries(${PROJECT_LIB} PUBLIC
     Boost::iostreams
 )
 
+if(APPLE)
+    target_link_libraries(${PROJECT_LIB} PUBLIC
+        "-framework CoreFoundation"
+        "-framework SystemConfiguration"
+    )
+endif()
+
 # For code coverage
 InstrumentForCoverage(${PROJECT_LIB})
 CleanCoverage(${PROJECT_LIB})
