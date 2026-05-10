@@ -20,6 +20,8 @@ bool get(const nlohmann::json& js, std::string_view key, T& dest)
 
 } // namespace
 
+namespace km {
+
 void AuthorizationHandler::setToken(std::string_view token)
 {
     token_ = token;
@@ -61,3 +63,5 @@ bool AuthorizationHandler::handle(const nlohmann::json& payload,
 
     return true;
 }
+
+} // namespace km

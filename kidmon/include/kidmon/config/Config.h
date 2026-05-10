@@ -4,6 +4,8 @@
 
 namespace fs = std::filesystem;
 
+namespace km {
+
 struct AppConfig
 {
     AppConfig();
@@ -12,3 +14,5 @@ struct AppConfig
     fs::path logsDir;
     fs::path logFilename;
 };
+
+} // namespace km

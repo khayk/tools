@@ -7,6 +7,7 @@
 #include <format>
 #include <unordered_set>
 
+using namespace km;
 using namespace std::chrono_literals;
 using testing::_;
 using testing::Return;

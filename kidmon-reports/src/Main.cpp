@@ -18,15 +18,19 @@
 #include <iostream>
 #include <tuple>
 
+using namespace km;
+
 namespace {
 
 const std::string_view G_REPORTS_DIR =
 #ifdef _WIN32
-    "C:"
+    "C:/Windows/System32/config/systemprofile/AppData/Local/kidmon/reports"
+#elif __APPLE__
+    "/Users/khayk/.data/kidmon/reports"
 #else
-    "/mnt/c"
+    "/mnt/c/Windows/System32/config/systemprofile/AppData/Local/kidmon/reports"
 #endif
-    "/Windows/System32/config/systemprofile/AppData/Local/kidmon/reports";
+    "";
 
 struct ReportsConfig
 {

@@ -2,6 +2,8 @@
 
 #include <kidmon/data/Types.h>
 
+namespace km {
+
 class Filter
 {
 public:
@@ -34,3 +36,5 @@ private:
     TimePoint from_;
     TimePoint to_;
 };
+
+} // namespace km

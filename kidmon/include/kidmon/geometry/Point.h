@@ -1,5 +1,7 @@
 #pragma once
 
+namespace km {
+
 class Point
 {
     int x_ {0};
@@ -32,3 +34,5 @@ inline Point operator-(const Point& lhs, const Point& rhs)
 {
     return {lhs.x() - rhs.x(), lhs.y() - rhs.y()};
 }
+
+} // namespace km

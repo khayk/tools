@@ -8,12 +8,12 @@
 #include <stdexcept>
 #include <spdlog/spdlog.h>
 
+namespace km {
 
 DataHandler::DataHandler(IRepository& repo)
     : repo_(repo)
 {
 }
-
 
 bool DataHandler::handle(const nlohmann::json& payload,
                          nlohmann::json& answer,
@@ -57,3 +57,5 @@ bool DataHandler::handle(const nlohmann::json& payload,
 
     return false;
 }
+
+} // namespace km

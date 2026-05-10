@@ -12,6 +12,7 @@ void* g_instance {nullptr};
 
 } // namespace
 
+namespace km {
 
 class Console::Impl
 {
@@ -140,3 +141,5 @@ void Console::shutdown()
 {
     impl_->shutdown();
 }
+
+} // namespace km

@@ -2,7 +2,6 @@
 #include <core/utils/Throw.h>
 #include <core/utils/Tracer.h>
 
-
 // @todo:khayk - refactor this file, to get rid of ifdef _WIN32 ...
 #ifdef _WIN32
     #include <Windows.h>
@@ -62,6 +61,8 @@ const char* serviceControlCodeToStr(DWORD controlCode) noexcept
 #endif
 
 } // namespace
+
+namespace km {
 
 class Service::Impl
 {
@@ -180,7 +181,6 @@ private:
 
             try
             {
-                // Do the work
                 std::shared_ptr<Runnable> runnable = runnable_.lock();
 
                 if (runnable)
@@ -294,3 +294,5 @@ void Service::shutdown() noexcept
 {
     impl_->shutdown();
 }
+
+} // namespace km

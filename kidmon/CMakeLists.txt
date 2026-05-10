@@ -79,6 +79,13 @@ target_link_libraries(${PROJECT_LIB} PRIVATE
     glaze::glaze
 )
 
+if(APPLE)
+    target_link_libraries(${PROJECT_LIB} PRIVATE
+        "-framework CoreGraphics"
+        "-framework ImageIO"
+    )
+endif()
+
 # target_link_libraries(${PROJECT_LIB} PRIVATE
 #    msgpack-c
 # )

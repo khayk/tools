@@ -5,6 +5,8 @@
 
 #include <memory>
 
+namespace km {
+
 class Api
 {
 public:
@@ -21,3 +23,5 @@ class ApiFactory
 public:
     static ApiPtr create();
 };
+
+} // namespace km

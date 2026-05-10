@@ -4,6 +4,8 @@
 #include <core/network/TcpCommunicator.h>
 #include <cstdint>
 
+namespace km {
+
 class AuthorizationHandler;
 class DataHandler;
 
@@ -42,3 +44,5 @@ private:
 
     void transitionTo(State newState) noexcept;
 };
+
+} // namespace km

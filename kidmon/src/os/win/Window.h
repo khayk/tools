@@ -3,10 +3,10 @@
 
 #include <Windows.h>
 
-class WindowImpl : public Window
+class WindowImpl : public km::Window
 {
     HWND hwnd_ {nullptr};
-    Rect rect_;
+    km::Rect rect_;
     std::string id_;
 
 public:
@@ -17,7 +17,7 @@ public:
     std::string className() const override;
     fs::path ownerProcessPath() const override;
     uint64_t ownerProcessId() const override;
-    Rect boundingRect() const noexcept override;
+    km::Rect boundingRect() const noexcept override;
 
-    bool capture(const ImageFormat format, std::vector<char>& content) override;
+    bool capture(km::ImageFormat format, std::vector<char>& content) override;
 };

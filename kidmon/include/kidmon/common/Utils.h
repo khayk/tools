@@ -4,7 +4,7 @@
 #include <ctime>
 #include <cstdint>
 
-namespace utl {
+namespace km::utl {
 
 /**
  * @brief  Generate a alpha-numeric string with a given length
@@ -35,4 +35,4 @@ bool timet2tm(time_t dt, tm&);
  */
 uint32_t daysSinceYearStart(time_t dt = std::time(nullptr));
 
-} // namespace utl
+} // namespace km::utl

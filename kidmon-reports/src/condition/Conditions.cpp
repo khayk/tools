@@ -4,6 +4,8 @@
 
 #include <format>
 
+using namespace km;
+
 void TrueCondition::write(std::ostream& os) const
 {
     os << "true";

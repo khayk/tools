@@ -6,9 +6,12 @@
 
 #include <nlohmann/json_fwd.hpp>
 
-using SystemClock = std::chrono::system_clock;
-using TimePoint = SystemClock::time_point;
 namespace fs = std::filesystem;
+
+namespace km {
+
+using SystemClock = std::chrono::system_clock;
+using TimePoint   = SystemClock::time_point;
 
 struct ProcessInfo
 {
@@ -65,3 +68,5 @@ void fromJson(const nlohmann::json& js, WindowInfo& wi);
 void fromJson(const nlohmann::json& js, Image& image);
 void fromJson(const nlohmann::json& js, Timestamp& ts);
 void fromJson(const nlohmann::json& js, Entry& entry);
+
+} // namespace km

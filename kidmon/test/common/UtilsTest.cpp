@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <cctype>
 
+using namespace km;
+
 TEST(UtilsTest, GenerateToken)
 {
     const auto actual = utl::generateToken(42);

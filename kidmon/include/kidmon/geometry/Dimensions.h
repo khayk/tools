@@ -2,6 +2,8 @@
 
 #include <cstdint>
 
+namespace km {
+
 class Dimensions
 {
     uint32_t width_ {0};
@@ -24,3 +26,5 @@ public:
 
     bool operator==(const Dimensions&) const = default;
 };
+
+} // namespace km

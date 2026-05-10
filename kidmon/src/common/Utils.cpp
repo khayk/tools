@@ -5,10 +5,7 @@
 #include <algorithm>
 #include <ctime>
 
-namespace fs = std::filesystem;
-
-
-namespace utl {
+namespace km::utl {
 
 std::string generateToken(const size_t length)
 {
@@ -60,4 +57,4 @@ uint32_t daysSinceYearStart(time_t dt)
     return static_cast<uint32_t>(timet2tm(dt).tm_yday);
 }
 
-} // namespace utl
+} // namespace km::utl

@@ -23,8 +23,9 @@
 namespace net = boost::asio;
 namespace fs = std::filesystem;
 
-namespace {
+namespace km {
 
+namespace {
 
 class CachedFileSha256
 {
@@ -141,18 +142,15 @@ private:
 
 } // namespace
 
-
 std::ostream& operator<<(std::ostream& os, const Point& pt)
 {
     os << '(' << pt.x() << ", " << pt.y() << ')';
-
     return os;
 }
 
 std::ostream& operator<<(std::ostream& os, const Rect& rc)
 {
     os << '[' << rc.leftTop() << ", " << rc.rightBottom() << ']';
-
     return os;
 }
 
@@ -342,7 +340,6 @@ class KidmonAgent::Impl
         }
     }
 
-
 public:
     explicit Impl(Config cfg)
         : cfg_(std::move(cfg))
@@ -400,13 +397,13 @@ KidmonAgent::~KidmonAgent()
 void KidmonAgent::run()
 {
     spdlog::info("Running KidmonAgent");
-
     impl_->run();
 }
 
 void KidmonAgent::shutdown() noexcept
 {
     spdlog::info("Shutdown requested");
-
     impl_->shutdown();
 }
+
+} // namespace km

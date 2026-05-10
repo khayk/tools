@@ -7,14 +7,14 @@ class TrueCondition : public ICondition
 {
 public:
     void write(std::ostream& os) const override;
-    bool met(const Entry& entry) const override;
+    bool met(const km::Entry& entry) const override;
 };
 
 class FalseCondition : public ICondition
 {
 public:
     void write(std::ostream& os) const override;
-    bool met(const Entry& entry) const override;
+    bool met(const km::Entry& entry) const override;
 };
 
 class UnaryCondition : public ICondition
@@ -62,7 +62,7 @@ public:
 
     std::string_view name() const noexcept override;
 
-    bool met(const Entry& entry) const override;
+    bool met(const km::Entry& entry) const override;
 };
 
 
@@ -73,7 +73,7 @@ public:
 
     std::string_view name() const noexcept override;
 
-    bool met(const Entry& entry) const override;
+    bool met(const km::Entry& entry) const override;
 };
 
 
@@ -84,7 +84,7 @@ public:
 
     std::string_view name() const noexcept override;
 
-    bool met(const Entry& entry) const override;
+    bool met(const km::Entry& entry) const override;
 };
 
 
@@ -96,10 +96,10 @@ private:
 
     // We need this buffer to slightly improve performance
     mutable std::string buffer_;
-    virtual void fetchValue(const Entry& entry, std::string& value) const = 0;
+    virtual void fetchValue(const km::Entry& entry, std::string& value) const = 0;
 
 protected:
-    const std::string& value(const Entry& entry) const;
+    const std::string& value(const km::Entry& entry) const;
 
 public:
     StringCondition(std::string needle, std::string attributeName);
@@ -115,7 +115,7 @@ public:
     using StringCondition::StringCondition;
 
     void write(std::ostream& os) const override;
-    bool met(const Entry& entry) const override;
+    bool met(const km::Entry& entry) const override;
 };
 
 
@@ -125,13 +125,13 @@ public:
     using StringCondition::StringCondition;
 
     void write(std::ostream& os) const override;
-    bool met(const Entry& entry) const override;
+    bool met(const km::Entry& entry) const override;
 };
 
 
 class HasProcessCondition : public HasStringCondition
 {
-    void fetchValue(const Entry& entry, std::string& value) const override;
+    void fetchValue(const km::Entry& entry, std::string& value) const override;
 
 public:
     HasProcessCondition(std::string processName);
@@ -140,7 +140,7 @@ public:
 
 class HasTitleCondition : public HasStringCondition
 {
-    void fetchValue(const Entry& entry, std::string& value) const override;
+    void fetchValue(const km::Entry& entry, std::string& value) const override;
 
 public:
     HasTitleCondition(std::string title);

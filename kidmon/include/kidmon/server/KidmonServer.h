@@ -7,6 +7,8 @@
 
 namespace fs = std::filesystem;
 
+namespace km {
+
 class KidmonServer : public Runnable
 {
 public:
@@ -35,3 +37,5 @@ private:
     class Impl;
     std::unique_ptr<Impl> impl_;
 };
+
+} // namespace km

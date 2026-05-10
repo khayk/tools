@@ -4,13 +4,14 @@
 
 #include <nlohmann/json.hpp>
 
-namespace msgs {
+namespace km::msgs {
 
 void buildAuthMsg(std::string_view authToken, nlohmann::ordered_json& js)
 {
     js = {{"name", "auth"},
           {"message",
-           {{"username", core::str::ws2s(core::sys::activeUserName())}, {"token", authToken}}}};
+           {{"username", core::str::ws2s(core::sys::activeUserName())},
+            {"token", authToken}}}};
 }
 
 void buildDataMsg(const Entry& entry, nlohmann::ordered_json& js)
@@ -56,4 +57,4 @@ bool isDataMsg(const nlohmann::ordered_json& js)
     return !(nit == js.end() || (*nit).get<std::string>() != "data");
 }
 
-} // namespace msgs
+} // namespace km::msgs

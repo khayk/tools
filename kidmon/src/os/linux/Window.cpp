@@ -1,5 +1,7 @@
 #include "Window.h"
 
+using namespace km;
+
 const std::string& WindowImpl::id() const
 {
     return id_;
