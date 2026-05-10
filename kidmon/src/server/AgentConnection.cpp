@@ -9,6 +9,8 @@
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
 
+namespace km {
+
 AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
                                  DataHandler& dataHandler,
                                  core::tcp::Socket&& sock,
@@ -94,7 +96,6 @@ AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
 AgentConnection::~AgentConnection()
 {
     spdlog::info("Dropped: {}", fmt::ptr(this));
-
     transitionTo(State::Disconnected);
 }
 
@@ -136,3 +137,5 @@ void AgentConnection::transitionTo(const State newState) noexcept
 
     currentState_ = newState;
 }
+
+} // namespace km

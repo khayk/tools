@@ -17,7 +17,7 @@ class IAggregate
 {
 public:
     virtual ~IAggregate() = default;
-    virtual void update(const Entry& entry) = 0;
+    virtual void update(const km::Entry& entry) = 0;
     virtual void enumerate(size_t topN,
                            uint32_t depth,
                            const DataCb& dataCb) const = 0;
@@ -31,7 +31,7 @@ class Data : public IAggregate
     uint32_t frequency_ {};
 
 public:
-    void update(const Entry& entry) override
+    void update(const km::Entry& entry) override
     {
         duration_ += entry.timestamp.duration;
         ++frequency_;
@@ -72,7 +72,7 @@ class Splitter : public IAggregate
     Second second;
 
 public:
-    void update(const Entry& entry) override
+    void update(const km::Entry& entry) override
     {
         first.update(entry);
         second.update(entry);
@@ -140,7 +140,7 @@ class Aggregate : public Data
     }
 
 public:
-    void update(const Entry& entry) override
+    void update(const km::Entry& entry) override
     {
         std::string key = fieldBuilder_.value(entry);
         Data::update(entry);

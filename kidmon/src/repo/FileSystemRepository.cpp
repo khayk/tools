@@ -10,6 +10,8 @@
 
 using namespace core;
 
+namespace km {
+
 namespace {
 
 struct ReportDirs
@@ -90,7 +92,6 @@ public:
         //                             \raw\r-001.dat
 
         ReportDirs dirs;
-
         dirs.snapshotsDir = userReportsRoot / "snapshots";
         // dirs.dailyDir = userReportsRoot / "daily";
         // dirs.monthlyDir = userReportsRoot / "monthly";
@@ -108,7 +109,6 @@ public:
         if (!ok)
         {
             static ReportDirs s_dirs;
-
             return s_dirs;
         }
 
@@ -343,3 +343,5 @@ void FileSystemRepository::queryEntries(const Filter& filter, const EntryCb& cb)
 {
     pimpl_->queryEntries(filter, cb);
 }
+
+} // namespace km

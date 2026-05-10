@@ -2,6 +2,8 @@
 
 #include "Repository.h"
 
+namespace km {
+
 class FileSystemRepository : public IRepository
 {
 public:
@@ -21,3 +23,5 @@ private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;
 };
+
+} // namespace km

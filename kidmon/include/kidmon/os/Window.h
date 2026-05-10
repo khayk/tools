@@ -11,6 +11,8 @@
 
 namespace fs = std::filesystem;
 
+namespace km {
+
 class Window
 {
 public:
@@ -28,10 +30,11 @@ public:
      *
      * @param format  The format of the image
      * @param content The content of the given window
-
-     * @return true, if window is captured, otherwise false
+     * @return true if the window was captured, otherwise false
      */
     virtual bool capture(ImageFormat format, std::vector<char>& content) = 0;
 };
 
 using WindowPtr = std::unique_ptr<Window>;
+
+} // namespace km

@@ -1,5 +1,26 @@
 #include "Window.h"
-#include <core/utils/Throw.h>
+#include "CoreGraphicsUtils.h"
+
+#include <kidmon/geometry/Dimensions.h>
+#include <kidmon/geometry/Point.h>
+
+#include <format>
+
+using namespace km;
+
+WindowImpl::WindowImpl(uint32_t windowId,
+                       pid_t pid,
+                       std::string title,
+                       std::string ownerName,
+                       Rect rect) noexcept
+    : windowId_(windowId)
+    , pid_(pid)
+    , id_(std::format("{:#010x}", windowId))
+    , title_(std::move(title))
+    , ownerName_(std::move(ownerName))
+    , rect_(rect)
+{
+}
 
 const std::string& WindowImpl::id() const
 {
@@ -8,37 +29,32 @@ const std::string& WindowImpl::id() const
 
 std::string WindowImpl::title() const
 {
-    core::throwNotImplemented();
-    return {};
+    return title_;
 }
 
+// macOS has no equivalent to Win32 window class names. The owner application
+// name (kCGWindowOwnerName) is the closest useful substitute for monitoring.
 std::string WindowImpl::className() const
 {
-    core::throwNotImplemented();
-    return {};
+    return ownerName_;
 }
 
 fs::path WindowImpl::ownerProcessPath() const
 {
-    core::throwNotImplemented();
-    return {};
+    return cg::processPath(static_cast<int32_t>(pid_));
 }
 
 uint64_t WindowImpl::ownerProcessId() const
 {
-    core::throwNotImplemented();
-    return 0;
+    return static_cast<uint64_t>(pid_);
 }
 
 Rect WindowImpl::boundingRect() const noexcept
 {
-    return {};
+    return rect_;
 }
 
 bool WindowImpl::capture(const ImageFormat format, std::vector<char>& content)
 {
-    core::throwNotImplemented();
-    std::ignore = format;
-    std::ignore = content;
-    return false;
+    return cg::captureWindow(windowId_, format, content);
 }

@@ -2,6 +2,7 @@
 #include <core/utils/Str.h>
 #include <kidmon/data/Types.h>
 
+using namespace km;
 
 void TitleToLowerTransform::apply(Entry& entry)
 {

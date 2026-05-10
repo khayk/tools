@@ -1,5 +1,7 @@
 #include <kidmon/common/Enums.h>
 
+namespace km {
+
 std::string_view toString(const ImageFormat format)
 {
     switch (format)
@@ -18,3 +20,5 @@ std::string_view toString(const ImageFormat format)
 
     return "n/a";
 }
+
+} // namespace km

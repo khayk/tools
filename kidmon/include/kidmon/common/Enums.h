@@ -2,6 +2,8 @@
 
 #include <string_view>
 
+namespace km {
+
 enum class ImageFormat : std::uint8_t
 {
     jpg,
@@ -12,3 +14,5 @@ enum class ImageFormat : std::uint8_t
 };
 
 std::string_view toString(ImageFormat format);
+
+} // namespace km

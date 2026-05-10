@@ -16,6 +16,8 @@
 
 namespace net = boost::asio;
 
+namespace km {
+
 class KidmonServer::Impl
 {
     using work_guard = net::executor_work_guard<net::io_context::executor_type>;
@@ -74,7 +76,6 @@ public:
         // Set to never expire
         timer_.expires_at(time_point::max());
         healthCheck();
-
         ioc_.run();
     }
 
@@ -133,13 +134,13 @@ KidmonServer::~KidmonServer()
 void KidmonServer::run()
 {
     spdlog::info("Running KidmonServer");
-
     impl_->run();
 }
 
 void KidmonServer::shutdown() noexcept
 {
     spdlog::info("Shutdown requested");
-
     impl_->shutdown();
 }
+
+} // namespace km

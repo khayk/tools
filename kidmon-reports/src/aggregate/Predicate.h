@@ -11,7 +11,7 @@ public:
         return "proc_name";
     }
 
-    static std::string value(const Entry& entry)
+    static std::string value(const km::Entry& entry)
     {
         return core::file::path2s(entry.processInfo.processPath.filename());
     }
@@ -25,7 +25,7 @@ public:
         return "proc_path";
     }
 
-    static std::string value(const Entry& entry)
+    static std::string value(const km::Entry& entry)
     {
         return core::file::path2s(entry.processInfo.processPath);
     }
@@ -39,7 +39,7 @@ public:
         return "title";
     }
 
-    static std::string value(const Entry& entry)
+    static std::string value(const km::Entry& entry)
     {
         return entry.windowInfo.title;
     }

@@ -3,7 +3,9 @@
 #include <kidmon/repo/Filter.h>
 #include <functional>
 
-using UserCb = std::function<bool(const std::string&)>;
+namespace km {
+
+using UserCb  = std::function<bool(const std::string&)>;
 using EntryCb = std::function<bool(Entry&)>;
 
 class IRepository
@@ -17,3 +19,5 @@ public:
 
     virtual void queryEntries(const Filter& filter, const EntryCb& cb) const = 0;
 };
+
+} // namespace km

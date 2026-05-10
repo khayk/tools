@@ -3,6 +3,8 @@
 
 #include <nlohmann/json.hpp>
 
+namespace km {
+
 namespace constants {
 constexpr std::string_view PROC_INFO = "proc";
 constexpr std::string_view PROC_PATH = "path";
@@ -106,3 +108,5 @@ void fromJson(const nlohmann::json& js, Entry& entry)
     fromJson(js[constants::WND_INFO], entry.windowInfo);
     fromJson(js[constants::TIMESTAMP], entry.timestamp);
 }
+
+} // namespace km

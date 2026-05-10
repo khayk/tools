@@ -3,6 +3,8 @@
 #include "MsgHandler.h"
 #include <kidmon/repo/Repository.h>
 
+namespace km {
+
 // * Entry          // full representation of the event
 // * Statistics     // statistical data about multiple entries (part of report)
 //
@@ -28,3 +30,5 @@ public:
                 nlohmann::json& answer,
                 std::string& error) override;
 };
+
+} // namespace km

@@ -1,8 +1,8 @@
 #include <kidmon/os/Api.h>
 
-class ApiImpl : public Api
+class ApiImpl : public km::Api
 {
 public:
-    WindowPtr foregroundWindow() override;
-    ProcessLauncherPtr createProcessLauncher() override;
+    km::WindowPtr foregroundWindow() override;
+    km::ProcessLauncherPtr createProcessLauncher() override;
 };

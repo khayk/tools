@@ -21,6 +21,8 @@
 #pragma comment(lib, "Psapi.lib")
 #pragma comment(lib, "Dwmapi.lib")
 
+using namespace km;
+
 namespace {
 
 const std::wstring guidJpg = L"{557cf401-1a04-11d3-9a73-0000f81ef32e}";

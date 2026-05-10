@@ -3,6 +3,8 @@
 
 #include <spdlog/spdlog.h>
 
+namespace km {
+
 namespace {
 
 core::tcp::Communicator& communicator(core::tcp::Connection& conn)
@@ -68,3 +70,5 @@ bool AgentManager::hasAuthorizedAgent() const
 {
     return authAgentConn_ != nullptr;
 }
+
+} // namespace km

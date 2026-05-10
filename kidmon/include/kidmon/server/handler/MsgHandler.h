@@ -3,10 +3,13 @@
 #include <nlohmann/json_fwd.hpp>
 #include <string>
 
+namespace km {
+
 class MsgHandler
 {
 protected:
     MsgHandler() = default;
+
 public:
     MsgHandler(const MsgHandler&) = delete;
     MsgHandler(MsgHandler&&) noexcept = delete;
@@ -18,3 +21,5 @@ public:
                         nlohmann::json& answer,
                         std::string& error) = 0;
 };
+
+} // namespace km

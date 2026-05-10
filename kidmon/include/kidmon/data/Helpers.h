@@ -1,7 +1,9 @@
+#pragma once
+
 #include <nlohmann/json.hpp>
 #include <format>
 
-namespace jsu {
+namespace km::jsu {
 
 template <typename Value>
 void get(const nlohmann::json& js,
@@ -21,4 +23,4 @@ void get(const nlohmann::json& js,
     }
 }
 
-} // namespace jsu
+} // namespace km::jsu

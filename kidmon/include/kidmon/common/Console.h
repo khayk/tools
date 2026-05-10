@@ -3,6 +3,8 @@
 #include <kidmon/common/Runnable.h>
 #include <memory>
 
+namespace km {
+
 class Console
 {
 public:
@@ -16,3 +18,5 @@ private:
     class Impl;
     std::unique_ptr<Impl> impl_;
 };
+
+} // namespace km

@@ -4,6 +4,8 @@
 #include <memory>
 #include <chrono>
 
+namespace km {
+
 class KidmonAgent : public Runnable
 {
 public:
@@ -27,3 +29,5 @@ private:
     class Impl;
     std::unique_ptr<Impl> impl_;
 };
+
+} // namespace km

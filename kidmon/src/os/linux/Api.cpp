@@ -4,10 +4,16 @@
 
 #include <core/utils/Throw.h>
 
+using namespace km;
+
+namespace km {
+
 ApiPtr ApiFactory::create()
 {
     return std::make_unique<ApiImpl>();
 }
+
+} // namespace km
 
 WindowPtr ApiImpl::foregroundWindow()
 {

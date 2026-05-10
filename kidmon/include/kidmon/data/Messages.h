@@ -2,7 +2,7 @@
 
 #include "Types.h"
 
-namespace msgs {
+namespace km::msgs {
 
 void buildAuthMsg(std::string_view authToken, nlohmann::ordered_json& js);
 void buildDataMsg(const Entry& entry, nlohmann::ordered_json& js);
@@ -19,4 +19,4 @@ void buildResponse(int status,
 bool isAuthMsg(const nlohmann::ordered_json& js);
 bool isDataMsg(const nlohmann::ordered_json& js);
 
-} // namespace msgs
+} // namespace km::msgs

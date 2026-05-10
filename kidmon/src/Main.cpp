@@ -17,6 +17,8 @@
 #include <iostream>
 #include <optional>
 
+using namespace km;
+
 namespace {
 
 void constructAttribs(const bool agent, std::wstring& uniqueName, fs::path& logFile)
@@ -35,7 +37,7 @@ void constructAttribs(const bool agent, std::wstring& uniqueName, fs::path& logF
         logFile.concat("-server");
     }
 
-    std::time_t t = std::time(nullptr); // get time now
+    std::time_t t = std::time(nullptr);
     std::tm now = utl::timet2tm(t);
     const auto date = std::format("-{}-{:02}-{:02}",
                                   now.tm_year + 1900,
@@ -99,7 +101,8 @@ int main(int argc, char* argv[])
         spdlog::info("Build time: {}", BuildInfo::Timestamp);
         spdlog::info("Commit SHA: {}", BuildInfo::CommitSHA);
         spdlog::info("Version: {}", BuildInfo::Version);
-        spdlog::debug("Active username: {}", core::str::ws2s(core::sys::activeUserName()));
+        spdlog::debug("Active username: {}",
+                      core::str::ws2s(core::sys::activeUserName()));
 
         std::shared_ptr<Runnable> app;
         const bool isInteractive = core::sys::isUserInteractive();

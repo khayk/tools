@@ -2,6 +2,8 @@
 
 #include "MsgHandler.h"
 
+namespace km {
+
 class AuthorizationHandler : public MsgHandler
 {
     std::string token_;
@@ -16,3 +18,5 @@ public:
                 nlohmann::json& answer,
                 std::string& error) override;
 };
+
+} // namespace km

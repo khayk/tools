@@ -6,6 +6,8 @@ namespace core::tcp {
 class Server;
 }
 
+namespace km {
+
 class AgentManager
 {
     AgentConnection* authAgentConn_ {nullptr};
@@ -18,3 +20,5 @@ public:
 
     [[nodiscard]] bool hasAuthorizedAgent() const;
 };
+
+} // namespace km

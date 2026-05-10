@@ -3,6 +3,8 @@
 #include "Point.h"
 #include "Dimensions.h"
 
+namespace km {
+
 class Rect
 {
     Point leftTop_;
@@ -34,3 +36,5 @@ public:
 
     bool operator==(const Rect&) const = default;
 };
+
+} // namespace km

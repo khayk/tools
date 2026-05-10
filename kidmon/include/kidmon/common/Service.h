@@ -4,6 +4,8 @@
 #include <memory>
 #include <string>
 
+namespace km {
+
 class Service
 {
 public:
@@ -17,3 +19,5 @@ private:
     class Impl;
     std::unique_ptr<Impl> impl_;
 };
+
+} // namespace km

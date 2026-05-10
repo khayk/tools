@@ -7,6 +7,8 @@
 
 namespace fs = std::filesystem;
 
+namespace km {
+
 class ProcessLauncher
 {
 public:
@@ -17,3 +19,5 @@ public:
 };
 
 using ProcessLauncherPtr = std::unique_ptr<ProcessLauncher>;
+
+} // namespace km
