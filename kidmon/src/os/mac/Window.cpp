@@ -1,9 +1,12 @@
 #include "Window.h"
-#include "CoreGraphicsUtils.h"
 
 #include <kidmon/geometry/Dimensions.h>
 #include <kidmon/geometry/Point.h>
 
+#include <libproc.h>
+#include <spdlog/spdlog.h>
+
+#include <array>
 #include <format>
 
 using namespace km;
@@ -41,7 +44,12 @@ std::string WindowImpl::className() const
 
 fs::path WindowImpl::ownerProcessPath() const
 {
-    return cg::processPath(static_cast<int32_t>(pid_));
+    std::array<char, PROC_PIDPATHINFO_MAXSIZE> buf {};
+    if (proc_pidpath(static_cast<pid_t>(pid_), buf.data(), buf.size()) > 0)
+    {
+        return {buf.data()};
+    }
+    return {};
 }
 
 uint64_t WindowImpl::ownerProcessId() const
@@ -54,7 +62,13 @@ Rect WindowImpl::boundingRect() const noexcept
     return rect_;
 }
 
-bool WindowImpl::capture(const ImageFormat format, std::vector<char>& content)
+bool WindowImpl::capture([[maybe_unused]] const ImageFormat format,
+                         [[maybe_unused]] std::vector<char>& content)
 {
-    return cg::captureWindow(windowId_, format, content);
+    // Per-window screen capture was removed from CoreGraphics in macOS 15.
+    // The replacement (ScreenCaptureKit) is Objective-C only. Implementing
+    // this would require a .mm compilation unit. windowId_ will be needed there.
+    spdlog::warn("capture: not implemented for window {:#010x} on macOS (requires ScreenCaptureKit)",
+                 windowId_);
+    return false;
 }
