@@ -13,16 +13,6 @@ namespace fs = std::filesystem;
 
 namespace km {
 
-// @todo: Possible refactoring idea
-// struct WindowInfo {        // plain struct, no vtable
-//     std::string id;
-//     std::string title;
-//     std::string appName;
-//     fs::path    processPath;
-//     uint64_t    processId;
-//     Rect        bounds;
-// };
-
 class Window
 {
 public:
