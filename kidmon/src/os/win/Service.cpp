@@ -1,19 +1,13 @@
 #include <kidmon/common/Service.h>
-#include <core/utils/Throw.h>
+#include <kidmon/common/Runnable.h>
 #include <core/utils/Tracer.h>
 
-// @todo:khayk - refactor this file, to get rid of ifdef _WIN32 ...
-#ifdef _WIN32
-    #include <Windows.h>
-#endif
-
+#include <Windows.h>
 #include <spdlog/spdlog.h>
 
 #include <array>
 
 namespace {
-
-#ifdef _WIN32
 
 const char* serviceStateToStr(DWORD status) noexcept
 {
@@ -55,10 +49,9 @@ const char* serviceControlCodeToStr(DWORD controlCode) noexcept
         case SERVICE_CONTROL_PRESHUTDOWN:
             return "SERVICE_CONTROL_PRESHUTDOWN";
     }
+
     return "";
 }
-
-#endif
 
 } // namespace
 
@@ -81,7 +74,6 @@ public:
 
     void run()
     {
-#ifdef _WIN32
         auto name = name_;
         const std::array<SERVICE_TABLE_ENTRY, 2> startTable = {
             SERVICE_TABLE_ENTRY {name.data(), &Service::Impl::serviceMain},
@@ -92,10 +84,6 @@ public:
             spdlog::error("Failed to start service ctrl dispatcher: {0}",
                           GetLastError());
         }
-#else
-        std::ignore = name_;
-        core::throwNotImplemented();
-#endif
     }
 
     void shutdown() noexcept
@@ -117,10 +105,6 @@ public:
     }
 
 private:
-    std::weak_ptr<Runnable> runnable_;
-    std::string name_;
-
-#ifdef _WIN32
     static void serviceMain(unsigned long argc, char* argv[])
     {
         ScopedTrace sc(__FUNCTION__);
@@ -260,14 +244,15 @@ private:
 
         if (status_.dwCurrentState == SERVICE_STOP_PENDING)
         {
-            // Terminating
             shutdown();
         }
     }
 
+    std::weak_ptr<Runnable> runnable_;
+    std::string name_;
     SERVICE_STATUS_HANDLE handle_ {};
     SERVICE_STATUS status_ {};
-#endif
+
     static Impl* instance_;
 };
 
@@ -276,7 +261,7 @@ Service::Impl* Service::Impl::instance_ = nullptr;
 Service::Service(const std::shared_ptr<Runnable>& runnable, std::string name)
     : impl_(std::make_unique<Impl>(runnable, std::move(name)))
 {
-    spdlog::info("Working as a windows service");
+    spdlog::info("Working as a service");
 }
 
 Service::~Service()
