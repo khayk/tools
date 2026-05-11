@@ -83,20 +83,6 @@ std::string WindowImpl::title() const
     return {};
 }
 
-std::string WindowImpl::className() const
-{
-    std::array<char, 256> buffer {};
-    const int size =
-        RealGetWindowClassA(hwnd_, buffer.data(), static_cast<int>(buffer.size()));
-
-    if (size)
-    {
-        return std::string(buffer.data(), size);
-    }
-
-    return {};
-}
-
 fs::path WindowImpl::ownerProcessPath() const
 {
     DWORD procId = static_cast<DWORD>(ownerProcessId());

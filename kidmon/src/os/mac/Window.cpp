@@ -35,13 +35,6 @@ std::string WindowImpl::title() const
     return title_;
 }
 
-// macOS has no equivalent to Win32 window class names. The owner application
-// name (kCGWindowOwnerName) is the closest useful substitute for monitoring.
-std::string WindowImpl::className() const
-{
-    return ownerName_;
-}
-
 fs::path WindowImpl::ownerProcessPath() const
 {
     std::array<char, PROC_PIDPATHINFO_MAXSIZE> buf {};

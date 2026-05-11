@@ -10,7 +10,6 @@ class WindowImpl : public km::Window
 public:
     const std::string& id() const override;
     std::string title() const override;
-    std::string className() const override;
     fs::path ownerProcessPath() const override;
     uint64_t ownerProcessId() const override;
     km::Rect boundingRect() const noexcept override;

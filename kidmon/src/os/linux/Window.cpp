@@ -12,11 +12,6 @@ std::string WindowImpl::title() const
     return {};
 }
 
-std::string WindowImpl::className() const
-{
-    return {};
-}
-
 fs::path WindowImpl::ownerProcessPath() const
 {
     return {};
