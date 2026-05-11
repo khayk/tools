@@ -15,13 +15,13 @@ WindowImpl::WindowImpl(uint32_t windowId,
                        pid_t pid,
                        std::string title,
                        std::string ownerName,
-                       Rect rect) noexcept
+                       Rect bounds) noexcept
     : windowId_(windowId)
     , pid_(pid)
     , id_(std::format("{:#010x}", windowId))
     , title_(std::move(title))
     , ownerName_(std::move(ownerName))
-    , rect_(rect)
+    , bounds_(bounds)
 {
 }
 
@@ -52,7 +52,7 @@ uint64_t WindowImpl::ownerProcessId() const
 
 Rect WindowImpl::boundingRect() const noexcept
 {
-    return rect_;
+    return bounds_;
 }
 
 bool WindowImpl::capture([[maybe_unused]] const ImageFormat format,

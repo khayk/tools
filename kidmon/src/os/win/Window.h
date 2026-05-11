@@ -6,7 +6,7 @@
 class WindowImpl : public km::Window
 {
     HWND hwnd_ {nullptr};
-    km::Rect rect_;
+    km::Rect bounds_;
     std::string id_;
 
 public:

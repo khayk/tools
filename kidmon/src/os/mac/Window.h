@@ -11,14 +11,14 @@ class WindowImpl : public km::Window
     std::string id_;
     std::string title_;
     std::string ownerName_;
-    km::Rect rect_;
+    km::Rect bounds_;
 
 public:
     WindowImpl(uint32_t windowId,
                pid_t pid,
                std::string title,
                std::string ownerName,
-               km::Rect rect) noexcept;
+               km::Rect bounds) noexcept;
 
     const std::string& id() const override;
     std::string title() const override;

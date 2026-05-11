@@ -4,7 +4,7 @@
 
 class WindowImpl : public km::Window
 {
-    km::Rect rect_;
+    km::Rect bounds_;
     std::string id_;
 
 public:
