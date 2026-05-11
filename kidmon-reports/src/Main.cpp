@@ -22,16 +22,6 @@ using namespace km;
 
 namespace {
 
-const std::string_view G_REPORTS_DIR =
-#ifdef _WIN32
-    "C:/Windows/System32/config/systemprofile/AppData/Local/kidmon/reports"
-#elif __APPLE__
-    "/Users/khayk/.data/kidmon/reports"
-#else
-    "/mnt/c/Windows/System32/config/systemprofile/AppData/Local/kidmon/reports"
-#endif
-    "";
-
 struct ReportsConfig
 {
     uint32_t minutes {0};
@@ -46,7 +36,7 @@ struct ReportsConfig
     std::vector<std::string> excludeTitles;
     std::vector<std::string> excludeProcesses;
     std::string username;
-    bool caseInsensitive {false};
+    bool caseSensitive {true};
 };
 
 class QueryVisualizer
@@ -154,7 +144,7 @@ void makeLowercase(std::vector<std::string>& data)
 
 void applyCaseTransform(ReportsConfig& conf)
 {
-    if (conf.caseInsensitive)
+    if (!conf.caseSensitive)
     {
         makeLowercase(conf.titles);
         makeLowercase(conf.processes);
@@ -173,7 +163,7 @@ void initReportsConf(const cxxopts::ParseResult& res, ReportsConfig& conf)
     maybeGet("title", res, conf.titles);
     maybeGet("process", res, conf.processes);
     maybeGet("top", res, conf.topN);
-    maybeGet("case-insensitive", res, conf.caseInsensitive);
+    maybeGet("case-sensitive", res, conf.caseSensitive);
     maybeGet("exclude-process", res, conf.excludeProcesses);
     maybeGet("exclude-title", res, conf.excludeTitles);
 }
@@ -345,7 +335,7 @@ TransformPtr buildTransform(const ReportsConfig& conf)
 {
     std::vector<TransformPtr> transformers;
 
-    if (conf.caseInsensitive)
+    if (!conf.caseSensitive)
     {
         if (!conf.processes.empty() || !conf.excludeProcesses.empty())
         {
@@ -423,7 +413,7 @@ int main(int argc, char* argv[])
 
         // clang-format off
         opts.add_options()
-            ("c,case-insensitive", "Enables case-insensitive search")
+            ("c,case-sensitive", "Enables case-sensitive search")
             ("l,list", "Lists available users")
             ("u,user", "The name of the user to be queried", cxxopts::value<std::string>())
             ("m,minutes", "The last 'm' minutes", cxxopts::value<uint32_t>())
@@ -437,6 +427,7 @@ int main(int argc, char* argv[])
             ("T,top", "The top N results", cxxopts::value<uint32_t>()->default_value("10"))
             ("exclude-process", "The process names to exclude", cxxopts::value<std::vector<std::string>>())
             ("exclude-title", "The window titles to exclude", cxxopts::value<std::vector<std::string>>())
+            ("reports-dir", "The reports directory", cxxopts::value<std::string>())
             ("e,help", "Print usage")
         ;
         // clang-format on
@@ -457,12 +448,19 @@ int main(int argc, char* argv[])
             return 2;
         }
 
+        const fs::path reportDir(result["reports-dir"].as<std::string>());
         StopWatch sw;
         sw.start();
 
+        if (reportDir.empty())
+        {
+            spdlog::error("Please provide reports directory");
+            return 1;
+        }
+
         if (result.contains("list"))
         {
-            handleListUsers(G_REPORTS_DIR);
+            handleListUsers(reportDir);
         }
         else
         {
@@ -471,7 +469,7 @@ int main(int argc, char* argv[])
             initReportsConf(result, reportsConf);
             applyCaseTransform(reportsConf);
 
-            FileSystemRepository repo(G_REPORTS_DIR);
+            FileSystemRepository repo(reportDir);
             QueryVisualizer queryVisualizer = buildVisualizer(reportsConf);
 
             handleQueryUser(repo, reportsConf, queryVisualizer);
