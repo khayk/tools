@@ -9,6 +9,7 @@
 #elif __APPLE__
     #include <SystemConfiguration/SystemConfiguration.h>
     #include <libproc.h>
+    #include <unistd.h>
     #include <array>
     #include <fstream>
 #else
@@ -93,7 +94,8 @@ bool isUserInteractive() noexcept
         }
     }
 #else
-
+    // No controlling terminal means we were launched by launchd (daemon mode)
+    interactiveUser = (isatty(STDIN_FILENO) != 0);
 #endif
 
     return interactiveUser;

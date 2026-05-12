@@ -2,6 +2,8 @@
     #include <Shlobj.h>
     #include <Knownfolders.h>
 #else
+    #include <pwd.h>
+    #include <unistd.h>
     #include <cstdlib>
     #include <format>
 #endif
@@ -46,14 +48,22 @@ fs::path home(std::error_code& ec)
     return getKnownFolderPath(FOLDERID_Profile, ec);
 #else
     const char* homeDir = std::getenv("HOME");
-    if (!homeDir)
+    if (homeDir)
     {
-        ec.assign(static_cast<int>(std::errc::invalid_argument),
-                  std::system_category());
-        return {};
+        return fs::path {homeDir};
     }
 
-    return fs::path {homeDir};
+    // $HOME is not set (e.g. system daemon launched by launchd/systemd).
+    // Fall back to the passwd database which always has the home directory.
+    const passwd* pw = getpwuid(getuid());
+    if (pw && pw->pw_dir)
+    {
+        return fs::path {pw->pw_dir};
+    }
+
+    ec.assign(static_cast<int>(std::errc::invalid_argument),
+              std::system_category());
+    return {};
 #endif
 }
 

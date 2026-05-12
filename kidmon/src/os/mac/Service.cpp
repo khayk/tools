@@ -1,7 +1,7 @@
 #include <kidmon/common/Service.h>
 #include <kidmon/common/Runnable.h>
-#include <core/utils/Throw.h>
 
+#include <csignal>
 #include <spdlog/spdlog.h>
 
 namespace km {
@@ -23,8 +23,25 @@ public:
 
     void run()
     {
-        std::ignore = name_;
-        core::throwNotImplemented();
+        installSignalHandlers();
+
+        spdlog::info("Daemon '{}' starting", name_);
+
+        try
+        {
+            std::shared_ptr<Runnable> runnable = runnable_.lock();
+
+            if (runnable)
+            {
+                runnable->run();
+            }
+        }
+        catch (const std::exception& e)
+        {
+            spdlog::error("Exception inside the run function: {}", e.what());
+        }
+
+        spdlog::info("Daemon '{}' stopped", name_);
     }
 
     void shutdown() noexcept
@@ -45,6 +62,28 @@ public:
     }
 
 private:
+    // Must only call async-signal-safe functions — no spdlog, no malloc.
+    // asio::io_context::stop() (called transitively via shutdown()) uses
+    // atomics and is safe to call from a signal handler.
+    static void onSignal(int /*signum*/) noexcept
+    {
+        if (instance_)
+        {
+            instance_->shutdown();
+        }
+    }
+
+    static void installSignalHandlers() noexcept
+    {
+        struct sigaction sa {};
+        sa.sa_handler = &Impl::onSignal;
+        sigemptyset(&sa.sa_mask);
+        sa.sa_flags = SA_RESTART;
+
+        sigaction(SIGTERM, &sa, nullptr);
+        sigaction(SIGINT, &sa, nullptr);
+    }
+
     std::weak_ptr<Runnable> runnable_;
     std::string name_;
 
