@@ -5,34 +5,41 @@ function(AddCoverage target)
 
       string(FIND "${target}" "-test" pos)
       string(SUBSTRING "${target}" 0 ${pos} substr)
-      message(STATUS "Coverage filter    : /src/${substr}/*")
+      message(STATUS "Coverage filter    : ${CMAKE_SOURCE_DIR}/${substr}/src/*")
 
-      # if(LCOV_PATH AND GENHTML_PATH)
-      #    add_custom_target(coverage-${target}
-      #       COMMENT "Running coverage for ${target}..."
-      #       COMMAND ${LCOV_PATH} --capture --directory . --output-file coverage.info
-      #       COMMAND ${LCOV_PATH} --remove coverage.info '/usr/*' '*/_deps/*' --output-file coverage.info
-      #       COMMAND ${GENHTML_PATH} coverage.info --output-directory coverage_html
-      #       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-      #       COMMENT "Generating coverage report"
-      #    )
-      # endif()
+      set(LCOV_IGNORE
+         --ignore-errors mismatch
+         --ignore-errors inconsistent
+         --ignore-errors unsupported
+         --ignore-errors format
+         --ignore-errors unused
+      )
 
       add_custom_target(coverage-${target}
          COMMENT "Running coverage for ${target}..."
          COMMAND ${LCOV_PATH} -d . --zerocounters
+         COMMAND ${LCOV_PATH} -d . ${LCOV_IGNORE} --capture --initial -o baseline.info
          COMMAND $<TARGET_FILE:${target}>
-         COMMAND ${LCOV_PATH} -d .
-                              --ignore-errors mismatch
-                              --ignore-errors inconsistent
-                              --ignore-errors unsupported
-                              --capture -o coverage.info
-         COMMAND ${LCOV_PATH} -e coverage.info '/src/${substr}/*'
-                              -r coverage.info '/usr/*'
-                              -r coverage.info '*/vcpkg_installed/*'
+         COMMAND ${LCOV_PATH} -d . ${LCOV_IGNORE} --capture -o coverage.info
+         COMMAND ${LCOV_PATH} --add-tracefile baseline.info
+                              --add-tracefile coverage.info
+                              ${LCOV_IGNORE}
+                              -o coverage.info
+         COMMAND ${LCOV_PATH} --extract coverage.info
+                              "${CMAKE_SOURCE_DIR}/${substr}/src/*"
+                              ${LCOV_IGNORE}
+                              -o filtered.info
+         COMMAND ${LCOV_PATH} --remove filtered.info
+                              "/usr/*"
+                              "*/vcpkg_installed/*"
+                              ${LCOV_IGNORE}
                               -o filtered.info
          COMMAND ${GENHTML_PATH} -o coverage-${target} filtered.info --legend
-         COMMAND rm -rf coverage.info filtered.info
+                              --ignore-errors category
+                              --ignore-errors inconsistent
+                              --ignore-errors corrupt
+                              --ignore-errors unsupported
+         COMMAND rm -rf baseline.info coverage.info filtered.info
          WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 	endif()
 endfunction()

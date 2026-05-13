@@ -20,7 +20,7 @@ cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug
 cmake --build build --parallel 8 --config Debug
 ```
 
-Available presets: `vcpkg-debug`, `vcpkg-release`, `vcpkg-gcc15-debug`, `vcpkg-clang-debug`.
+Available presets: `vcpkg-debug`, `vcpkg-release`, `vcpkg-gcc15-debug`, `vcpkg-clang-debug`, `vcpkg-coverage`.
 
 Enable clang-tidy checks: add `-DTOOLS_TIDY=ON` to configure step.
 
@@ -39,14 +39,15 @@ Run a single test binary directly:
 ./build/debug/kidmon/test/kidmon-test
 ```
 
-### Coverage (Linux, requires `lcov`)
+### Coverage (requires `lcov` and `genhtml`)
 
 ```bash
-cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug
-cmake --build build -t coverage-core-test -j 8
-cmake --build build -t coverage-duplicates-test -j 8
-cmake --build build -t coverage-kidmon-test -j 8
-# Reports appear in build/coverage-<target-name>/
+cmake --preset vcpkg-coverage                              # configure (into build/coverage/)
+cmake --build --preset vcpkg-coverage                      # build all targets with instrumentation
+cmake --build --preset vcpkg-coverage -t coverage-core-test       # generate core report
+cmake --build --preset vcpkg-coverage -t coverage-duplicates-test # generate duplicates report
+cmake --build --preset vcpkg-coverage -t coverage-kidmon-test     # generate kidmon report
+# HTML reports appear in build/coverage/coverage-<target-name>/
 ```
 
 ### Formatting

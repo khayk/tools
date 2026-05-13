@@ -46,6 +46,17 @@
             }
         },
         {
+            "name": "vcpkg-coverage",
+            "displayName": "ninja-coverage (debug)",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/coverage",
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+                "CMAKE_BUILD_TYPE": "Debug",
+                "TOOLS_COVERAGE": "ON"
+            }
+        },
+        {
             "name": "vcpkg-msvc-debug",
             "displayName": "ninja-debug (msvc x64)",
             "generator": "Ninja",
@@ -79,6 +90,11 @@
         {
             "name": "vcpkg-release",
             "configurePreset": "vcpkg-release",
+            "jobs": 12
+        },
+        {
+            "name": "vcpkg-coverage",
+            "configurePreset": "vcpkg-coverage",
             "jobs": 12
         }
     ],
