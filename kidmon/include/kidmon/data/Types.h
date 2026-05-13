@@ -11,7 +11,7 @@ namespace fs = std::filesystem;
 namespace km {
 
 using SystemClock = std::chrono::system_clock;
-using TimePoint   = SystemClock::time_point;
+using TimePoint = SystemClock::time_point;
 
 struct ProcessInfo
 {

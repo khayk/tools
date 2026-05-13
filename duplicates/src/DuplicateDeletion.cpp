@@ -55,7 +55,9 @@ void menuOption(Menu& menu, size_t count, Action action)
 {
     std::string menuLabel = std::format("[?] Number from 1 and {}", count);
 
-    menu.add(menuLabel, Matchers::Range(1, static_cast<int>(count)), std::move(action));
+    menu.add(menuLabel,
+             Matchers::Range(1, static_cast<int>(count)),
+             std::move(action));
 }
 
 void openDirectories(const PathsVec& files)
@@ -158,9 +160,7 @@ Navigation addPaths(const PathsVec& files,
 }
 
 template <typename Paths>
-Navigation deletePaths(std::string_view listName,
-                       Paths& paths,
-                       UserIO& io)
+Navigation deletePaths(std::string_view listName, Paths& paths, UserIO& io)
 {
     if (paths.empty())
     {
@@ -181,7 +181,9 @@ Navigation deletePaths(std::string_view listName,
         auto index = core::num::s2num<size_t>(io.currentPrompt());
         if (index > dirs.size())
         {
-            spdlog::info("Attempt to access container with size {} at index {}", dirs.size(), index - 1);
+            spdlog::info("Attempt to access container with size {} at index {}",
+                         dirs.size(),
+                         index - 1);
             return Navigation::Back;
         }
 
@@ -369,7 +371,7 @@ Flow deleteInteractively(PathsVec& files, DeletionConfig& cfg)
         return Navigation::Done;
     });
 
-    menuOption(menu, "Ignore", 'i', [&](UserIO& ) {
+    menuOption(menu, "Ignore", 'i', [&](UserIO&) {
         spdlog::info("Ignoring group...");
         cfg.ignoredPaths().add(files);
         return Navigation::Continue;
@@ -388,7 +390,7 @@ Flow deleteInteractively(PathsVec& files, DeletionConfig& cfg)
         return editConfig(files, "delete-from list", cfg.deleteFromPaths(), io);
     });
 
-    menuOption(menu, "View keep/delete list", 'v', [&](UserIO& ) {
+    menuOption(menu, "View keep/delete list", 'v', [&](UserIO&) {
         displayPaths("Keep from paths:", cfg.keepFromPaths(), cfg.out());
         displayPaths("Delete from paths:", cfg.deleteFromPaths(), cfg.out());
         return Navigation::Continue;

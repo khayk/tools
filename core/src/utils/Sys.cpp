@@ -64,7 +64,9 @@ std::wstring activeUserName()
         throw std::runtime_error("No active console user");
     }
     std::array<char, 256> buf {};
-    CFStringGetCString(cfName, buf.data(), static_cast<CFIndex>(buf.size()),
+    CFStringGetCString(cfName,
+                       buf.data(),
+                       static_cast<CFIndex>(buf.size()),
                        kCFStringEncodingUTF8);
     CFRelease(cfName);
     return core::str::s2ws(std::string_view(buf.data()));

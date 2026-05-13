@@ -61,7 +61,8 @@ bool WindowImpl::capture([[maybe_unused]] const ImageFormat format,
     // Per-window screen capture was removed from CoreGraphics in macOS 15.
     // The replacement (ScreenCaptureKit) is Objective-C only. Implementing
     // this would require a .mm compilation unit. windowId_ will be needed there.
-    spdlog::warn("capture: not implemented for window {:#010x} on macOS (requires ScreenCaptureKit)",
+    spdlog::warn("capture: not implemented for window {:#010x} on macOS (requires "
+                 "ScreenCaptureKit)",
                  windowId_);
     return false;
 }

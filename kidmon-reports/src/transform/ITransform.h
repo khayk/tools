@@ -2,7 +2,9 @@
 
 #include <memory>
 
-namespace km { struct Entry; }
+namespace km {
+struct Entry;
+}
 
 class ITransform
 {

@@ -22,9 +22,18 @@ std::string formatFuncName(std::string_view full)
     int depth = 0;
     for (char c : full)
     {
-        if (c == '<')        { ++depth; }
-        else if (c == '>')   { --depth; }
-        else if (depth == 0) { s += c; }
+        if (c == '<')
+        {
+            ++depth;
+        }
+        else if (c == '>')
+        {
+            --depth;
+        }
+        else if (depth == 0)
+        {
+            s += c;
+        }
     }
 
     // Strip function parameters: everything from the first '('
@@ -46,14 +55,13 @@ std::string formatFuncName(std::string_view full)
         return s;
     }
 
-    std::string funcName        = s.substr(sep + 2);
+    std::string funcName = s.substr(sep + 2);
     const std::string qualifier = s.substr(0, sep);
 
     // Take the immediate qualifier (last :: component before the function)
-    const auto qualSep  = qualifier.rfind("::");
-    const auto lastQual = (qualSep == std::string::npos)
-                              ? qualifier
-                              : qualifier.substr(qualSep + 2);
+    const auto qualSep = qualifier.rfind("::");
+    const auto lastQual =
+        (qualSep == std::string::npos) ? qualifier : qualifier.substr(qualSep + 2);
 
     // Uppercase first char signals a class name, lowercase signals a namespace
     if (!lastQual.empty() && std::isupper(static_cast<unsigned char>(lastQual[0])))
@@ -70,11 +78,10 @@ namespace core {
 
 void throwNotImplemented(std::source_location loc)
 {
-    throw std::runtime_error(
-        std::format("Not implemented: {} ({}:{})",
-                    formatFuncName(loc.function_name()),
-                    fileNameOnly(loc.file_name()),
-                    loc.line()));
+    throw std::runtime_error(std::format("Not implemented: {} ({}:{})",
+                                         formatFuncName(loc.function_name()),
+                                         fileNameOnly(loc.file_name()),
+                                         loc.line()));
 }
 
 } // namespace core

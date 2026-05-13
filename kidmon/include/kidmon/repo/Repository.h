@@ -5,7 +5,7 @@
 
 namespace km {
 
-using UserCb  = std::function<bool(const std::string&)>;
+using UserCb = std::function<bool(const std::string&)>;
 using EntryCb = std::function<bool(Entry&)>;
 
 class IRepository

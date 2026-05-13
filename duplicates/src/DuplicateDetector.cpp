@@ -110,7 +110,8 @@ void DuplicateDetector::detect(const Options& opts, const ProgressCallback& cb)
 
     std::vector<std::pair<size_t, Nodes>> ordered;
 
-    for (auto& [sz, nodes] : dups_) {
+    for (auto& [sz, nodes] : dups_)
+    {
         ordered.emplace_back(sz, nodes);
     }
 
@@ -164,22 +165,23 @@ void DuplicateDetector::detect(const Options& opts, const ProgressCallback& cb)
             }
 
             // Remove files with unique hashes
-            auto it =
-                std::remove_if(std::begin(nodes),
-                               std::end(nodes),
-                               [&hashes](const Node* const node) {
-                                   return !hashes.contains(node->sha256());
-                               });
+            auto it = std::remove_if(std::begin(nodes),
+                                     std::end(nodes),
+                                     [&hashes](const Node* const node) {
+                                         return !hashes.contains(node->sha256());
+                                     });
 
             nodes.erase(it, nodes.end());
 
             return false;
         });
 
-    if (ordered.size() != dups_.size()) {
+    if (ordered.size() != dups_.size())
+    {
         // Build a set of sizes that survived in ordered
         std::unordered_set<size_t> surviving;
-        for (const auto& [sz, nodes] : ordered) {
+        for (const auto& [sz, nodes] : ordered)
+        {
             surviving.insert(sz);
         }
 

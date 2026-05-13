@@ -110,8 +110,8 @@ public:
                     std::cout << ": " << value << ", ";
                 }
 
-                std::cout << "duration: " << core::str::humanizeDuration(data.duration())
-                          << '\n';
+                std::cout << "duration: "
+                          << core::str::humanizeDuration(data.duration()) << '\n';
             });
     }
 

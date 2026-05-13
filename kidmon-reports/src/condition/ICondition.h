@@ -3,7 +3,9 @@
 #include <memory>
 #include <iosfwd>
 
-namespace km { struct Entry; }
+namespace km {
+struct Entry;
+}
 
 class ICondition
 {

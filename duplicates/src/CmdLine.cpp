@@ -31,7 +31,8 @@ void metricsReview(const fs::path& file)
         return true;
     });
 
-    spdlog::info("Memory: {}", core::str::humanizeBytes(core::sys::currentProcessMemoryUsage()));
+    spdlog::info("Memory: {}",
+                 core::str::humanizeBytes(core::sys::currentProcessMemoryUsage()));
     spdlog::info("Files: {}", detector.numFiles());
     spdlog::info("Nodes: {}", detector.root()->nodesCount());
     spdlog::info("Elapsed: {} ms", sw.elapsedMs());

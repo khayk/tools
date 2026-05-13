@@ -68,6 +68,7 @@ public:
     virtual void printText(std::string_view text);
 
     const std::string& currentPrompt() const noexcept;
+
 private:
     virtual void printOptions(const Menu& m, bool isChild) = 0;
     virtual std::string prompt() = 0;

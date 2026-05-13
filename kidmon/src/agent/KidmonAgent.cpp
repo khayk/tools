@@ -269,9 +269,7 @@ class KidmonAgent::Impl
             }
 
             spdlog::trace("collectData");
-            spdlog::debug("id: {}, title: {}",
-                          window->id(),
-                          window->title());
+            spdlog::debug("id: {}, title: {}", window->id(), window->title());
 
             Rect rc = window->boundingRect();
 

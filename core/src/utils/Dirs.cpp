@@ -61,8 +61,7 @@ fs::path home(std::error_code& ec)
         return fs::path {pw->pw_dir};
     }
 
-    ec.assign(static_cast<int>(std::errc::invalid_argument),
-              std::system_category());
+    ec.assign(static_cast<int>(std::errc::invalid_argument), std::system_category());
     return {};
 #endif
 }

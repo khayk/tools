@@ -25,9 +25,9 @@ std::string cfStringToString(CFStringRef ref)
     {
         return cstr;
     }
-    const CFIndex maxLen =
-        CFStringGetMaximumSizeForEncoding(CFStringGetLength(ref),
-                                          kCFStringEncodingUTF8) + 1;
+    const CFIndex maxLen = CFStringGetMaximumSizeForEncoding(CFStringGetLength(ref),
+                                                             kCFStringEncodingUTF8) +
+                           1;
     std::vector<char> buf(static_cast<size_t>(maxLen));
     if (CFStringGetCString(ref, buf.data(), maxLen, kCFStringEncodingUTF8))
     {
@@ -49,16 +49,16 @@ ApiPtr ApiFactory::create()
 
 WindowPtr ApiImpl::foregroundWindow()
 {
-    CFArrayRef rawList =
-        CGWindowListCopyWindowInfo(kCGWindowListOptionOnScreenOnly |
-                                       kCGWindowListExcludeDesktopElements,
-                                   kCGNullWindowID);
+    CFArrayRef rawList = CGWindowListCopyWindowInfo(
+        kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements,
+        kCGNullWindowID);
     if (!rawList)
     {
         return {};
     }
-    std::unique_ptr<std::remove_pointer_t<CFArrayRef>, decltype(&CFRelease)>
-        list(rawList, CFRelease);
+    std::unique_ptr<std::remove_pointer_t<CFArrayRef>, decltype(&CFRelease)> list(
+        rawList,
+        CFRelease);
 
     const CFIndex count = CFArrayGetCount(rawList);
     for (CFIndex i = 0; i < count; ++i)
@@ -69,8 +69,8 @@ WindowPtr ApiImpl::foregroundWindow()
         // CGWindowList is ordered front-to-back. Skip non-normal layers
         // (menu bar, dock, overlays live at non-zero layers).
         int32_t layer = 0;
-        if (const auto* n = static_cast<CFNumberRef>(
-                CFDictionaryGetValue(info, kCGWindowLayer)))
+        if (const auto* n =
+                static_cast<CFNumberRef>(CFDictionaryGetValue(info, kCGWindowLayer)))
         {
             CFNumberGetValue(n, kCFNumberSInt32Type, &layer);
         }
@@ -79,8 +79,8 @@ WindowPtr ApiImpl::foregroundWindow()
             continue;
         }
 
-        const auto* pidNum = static_cast<CFNumberRef>(
-            CFDictionaryGetValue(info, kCGWindowOwnerPID));
+        const auto* pidNum =
+            static_cast<CFNumberRef>(CFDictionaryGetValue(info, kCGWindowOwnerPID));
         if (!pidNum)
         {
             continue;
@@ -89,15 +89,15 @@ WindowPtr ApiImpl::foregroundWindow()
         CFNumberGetValue(pidNum, kCFNumberSInt32Type, &pid);
 
         uint32_t windowId = kCGNullWindowID;
-        if (const auto* n = static_cast<CFNumberRef>(
-                CFDictionaryGetValue(info, kCGWindowNumber)))
+        if (const auto* n =
+                static_cast<CFNumberRef>(CFDictionaryGetValue(info, kCGWindowNumber)))
         {
             CFNumberGetValue(n, kCFNumberSInt32Type, &windowId);
         }
 
         std::string title;
-        if (const auto* t = static_cast<CFStringRef>(
-                CFDictionaryGetValue(info, kCGWindowName)))
+        if (const auto* t =
+                static_cast<CFStringRef>(CFDictionaryGetValue(info, kCGWindowName)))
         {
             title = cfStringToString(t);
         }
