@@ -7,6 +7,7 @@
 #include <kidmon/config/Config.h>
 #include <kidmon/repo/FileSystemRepository.h>
 
+#include <core/utils/Dirs.h>
 #include <core/utils/Log.h>
 #include <core/utils/Str.h>
 #include <core/utils/File.h>
@@ -427,7 +428,7 @@ int main(int argc, char* argv[])
             ("T,top", "The top N results", cxxopts::value<uint32_t>()->default_value("10"))
             ("exclude-process", "The process names to exclude", cxxopts::value<std::vector<std::string>>())
             ("exclude-title", "The window titles to exclude", cxxopts::value<std::vector<std::string>>())
-            ("reports-dir", "The reports directory", cxxopts::value<std::string>())
+            ("reports-dir", "The reports directory", cxxopts::value<std::string>()->default_value(""))
             ("e,help", "Print usage")
         ;
         // clang-format on
@@ -448,14 +449,17 @@ int main(int argc, char* argv[])
             return 2;
         }
 
-        const fs::path reportDir(result["reports-dir"].as<std::string>());
+        fs::path reportDir(result["reports-dir"].as<std::string>());
         StopWatch sw;
         sw.start();
 
         if (reportDir.empty())
         {
-            spdlog::error("Please provide reports directory");
-            return 1;
+            reportDir = core::dirs::data().append("kidmon").lexically_normal();
+            reportDir /= "reports";
+
+            spdlog::warn("No reports directory is provided, defaulting to '{}'",
+                         core::file::path2s(reportDir));
         }
 
         if (result.contains("list"))
