@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: "Linux / GCC"
+            os: ubuntu-24.04
+            preset: vcpkg-debug
+            build-dir: build/debug
+
+          - name: "Linux / Clang"
+            os: ubuntu-24.04
+            preset: vcpkg-clang-debug
+            build-dir: build/clang-debug
+            extra-apt: clang
+
+          - name: "macOS / AppleClang"
+            os: macos-latest
+            preset: vcpkg-debug
+            build-dir: build/debug
+
+          - name: "Windows / MSVC"
+            os: windows-latest
+            preset: vcpkg-msvc-debug
+            build-dir: build/msvc-debug
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y ninja-build pkg-config ${{ matrix.extra-apt || '' }}
+
+      - name: Install macOS dependencies
+        if: runner.os == 'macOS'
+        run: brew install ninja pkg-config
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: '66c0373dc7fca549e5803087b9487edfe3aca0a1'
+
+      - name: Setup MSVC environment
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Configure
+        run: cmake --preset ${{ matrix.preset }}
+
+      - name: Build
+        run: cmake --build ${{ matrix.build-dir }} --parallel
+
+      - name: Test
+        run: ctest --test-dir ${{ matrix.build-dir }} --output-on-failure
