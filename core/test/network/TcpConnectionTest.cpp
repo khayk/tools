@@ -114,11 +114,8 @@ TEST(TcpConnectionTest, DataTransfer)
 
     ASSERT_TRUE(clientMngr);
     EXPECT_EQ(clientMngr->rcvd, serverToSend);
-#ifndef __APPLE__
-    // @todo:khayk - figure out why this is a flaky on mac
     EXPECT_TRUE(!(clientMngr->errc));
     EXPECT_TRUE(clientMngr->disconnected);
-#endif
 }
 
 

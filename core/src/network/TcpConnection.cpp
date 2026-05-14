@@ -100,13 +100,8 @@ void Connection::close()
     if (socket_.is_open())
     {
         ErrorCode ec;
-        ec = socket_.shutdown(Socket::shutdown_both, ec);
-
-        if (ec)
-        {
-            errorCb_(ec);
-            ec = {};
-        }
+        std::ignore = socket_.shutdown(Socket::shutdown_both, ec);
+        // Ignore shutdown errors (e.g. ENOTCONN when remote side already closed)
 
         ec = socket_.close(ec);
 
@@ -125,7 +120,10 @@ void Connection::handleRead(const ErrorCode& ec, std::size_t size)
 {
     if (ec)
     {
-        errorCb_(ec);
+        if (ec != net::error::eof && ec != net::error::operation_aborted)
+        {
+            errorCb_(ec);
+        }
         return;
     }
 
@@ -136,7 +134,10 @@ void Connection::handleWrite(const ErrorCode& ec, size_t size)
 {
     if (ec)
     {
-        errorCb_(ec);
+        if (ec != net::error::operation_aborted)
+        {
+            errorCb_(ec);
+        }
         return;
     }
 
