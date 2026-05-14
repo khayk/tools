@@ -341,13 +341,11 @@ void navigateFile(const fs::path& file)
     const std::string command = "open -R \"" + path + "\"";
 #elif __linux__
     constexpr auto pattern =
-        R"( dbus-send --session --dest=org.freedesktop.FileManager1 \
-        --type=method_call --print-reply \
-        /org/freedesktop/FileManager1 \
-        org.freedesktop.FileManager1.ShowItems \
-        array:string:"file://{}" \
-        string:""
-    )";
+        "dbus-send --session --dest=org.freedesktop.FileManager1"
+        " --type=method_call --print-reply"
+        " /org/freedesktop/FileManager1"
+        " org.freedesktop.FileManager1.ShowItems"
+        " array:string:\"file://{}\" string:\"\"";
     const std::string command = std::format(pattern, path);
 #else
     #error "Unsupported OS"
