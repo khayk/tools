@@ -311,7 +311,7 @@ bool isDuplicateNamingPattern(const IDeletionStrategy& strategy, PathsVec& files
 
             const auto& ns = tmp.native();
 #ifdef _WIN32
-            std::string_view sv(core::str::ws2s(ns.native()));
+            std::string_view sv(core::str::ws2s(ns));
 #else
             std::string_view sv(ns);
 #endif
