@@ -26,7 +26,7 @@ jobs:
             os: ubuntu-24.04
             preset: vcpkg-clang-debug
             build-dir: build/clang-debug
-            extra-apt: clang
+            extra-apt: clang g++-14
 
           - name: "macOS / AppleClang"
             os: macos-latest

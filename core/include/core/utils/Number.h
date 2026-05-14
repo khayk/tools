@@ -35,7 +35,19 @@ T s2num(std::string_view str, T def = T())
     {
         // fallback for macOS, because from_chars(float) is deleted
         char* end {};
-        T value = std::strtod(std::string(str).c_str(), &end);
+        T value {};
+        if constexpr (std::is_same_v<T, float>)
+        {
+            value = std::strtof(std::string(str).c_str(), &end);
+        }
+        else if constexpr (std::is_same_v<T, long double>)
+        {
+            value = std::strtold(std::string(str).c_str(), &end);
+        }
+        else
+        {
+            value = std::strtod(std::string(str).c_str(), &end);
+        }
         if (end != str.data())
         {
             return value;
