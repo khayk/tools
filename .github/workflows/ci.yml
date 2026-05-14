@@ -27,6 +27,7 @@ jobs:
             preset: vcpkg-clang-debug
             build-dir: build/clang-debug
             extra-apt: clang g++-14
+            extra-cmake: -DCMAKE_CXX_FLAGS=--gcc-toolchain=/usr
 
           - name: "macOS / AppleClang"
             os: macos-latest
@@ -62,7 +63,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: Configure
-        run: cmake --preset ${{ matrix.preset }}
+        run: cmake --preset ${{ matrix.preset }} ${{ matrix.extra-cmake || '' }}
 
       - name: Build
         run: cmake --build ${{ matrix.build-dir }} --parallel
