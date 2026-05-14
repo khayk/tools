@@ -456,14 +456,14 @@ DeleteFromPaths& DeletionConfig::deleteFromPaths()
 
 class GroupProcessor
 {
-    DeletionConfig& cfg;
-    bool sensitiveToExternalEvents = false;
-    PathsVec autoDelete;
-    PathsVec selective;
+    DeletionConfig& cfg_;
+    bool sensitiveToExternalEvents_ = false;
+    PathsVec autoDelete_;
+    PathsVec selective_;
 
 public:
     GroupProcessor(DeletionConfig& dcfg)
-        : cfg(dcfg)
+        : cfg_(dcfg)
     {
     }
 
@@ -480,19 +480,19 @@ public:
 
             // Safety: If every file is in a "DeleteFrom" path, we must treat them
             // as selective to avoid deleting the entire group by accident.
-            if (selective.empty())
+            if (selective_.empty())
             {
-                selective = std::move(autoDelete);
-                autoDelete.clear();
+                selective_ = std::move(autoDelete_);
+                autoDelete_.clear();
             }
             else
             {
                 // Delete the "unwanted" ones immediately, keeping the "selective" ones
                 // for review
-                deleteFiles(cfg.strategy(), autoDelete);
+                deleteFiles(cfg_.strategy(), autoDelete_);
             }
 
-            flow = handleReview(group, selective);
+            flow = handleReview(group);
         }
 
         return flow != Flow::Quit;
@@ -501,49 +501,49 @@ public:
 private:
     void updateProgress(size_t current, size_t total)
     {
-        cfg.progress().update([&](auto& os) {
+        cfg_.progress().update([&](auto& os) {
             os << "Processing group " << current << " of " << total << '\n';
         });
     }
 
     void categorizeFiles(const std::vector<DupEntry>& entries)
     {
-        autoDelete.clear();
-        selective.clear();
+        autoDelete_.clear();
+        selective_.clear();
         for (const auto& e : entries)
         {
-            if (sensitiveToExternalEvents && !fs::exists(e.file))
+            if (sensitiveToExternalEvents_ && !fs::exists(e.file))
             {
                 continue;
             }
-            if (cfg.ignoredPaths().contains(e.file))
+            if (cfg_.ignoredPaths().contains(e.file))
             {
                 continue;
             }
 
-            if (findPath(cfg.deleteFromPaths().paths(), e.file.parent_path()))
+            if (findPath(cfg_.deleteFromPaths().paths(), e.file.parent_path()))
             {
-                autoDelete.push_back(e.file);
+                autoDelete_.push_back(e.file);
             }
             else
             {
-                selective.push_back(e.file);
+                selective_.push_back(e.file);
             }
         }
     }
 
-    Flow handleReview(const DupGroup& group, PathsVec& selective)
+    Flow handleReview(const DupGroup& group)
     {
-        if (selective.size() <= 1)
+        if (selective_.size() <= 1)
         {
             return Flow::Done;
         }
 
-        cfg.out() << "Size: " << group.entires.front().size
+        cfg_.out() << "Size: " << group.entires.front().size
                   << " SHA256: " << group.entires.front().sha256 << '\n';
 
-        std::ranges::sort(selective);
-        return deleteInteractively(selective, cfg);
+        std::ranges::sort(selective_);
+        return deleteInteractively(selective_, cfg_);
     }
 };
 
