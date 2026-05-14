@@ -295,7 +295,7 @@ bool isDuplicateNamingPattern(const IDeletionStrategy& strategy, PathsVec& files
         }
     }
 
-    auto ss = shortest.native();
+    const auto& ss = shortest.native();
     std::regex r(R"((\(\d+\)|_copy|copy)$)");
 
     for (const auto& file : files)
@@ -310,7 +310,11 @@ bool isDuplicateNamingPattern(const IDeletionStrategy& strategy, PathsVec& files
             }
 
             const auto& ns = tmp.native();
+#ifdef _WIN32
+            std::string_view sv(core::str::ws2s(ns.native()));
+#else
             std::string_view sv(ns);
+#endif
             sv.remove_prefix(ss.size());
 
             if (sv.size() < 2)
