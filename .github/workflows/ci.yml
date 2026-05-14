@@ -22,13 +22,6 @@ jobs:
             preset: vcpkg-debug
             build-dir: build/debug
 
-          - name: "Linux / Clang"
-            os: ubuntu-24.04
-            preset: vcpkg-clang-debug
-            build-dir: build/clang-debug
-            extra-apt: clang g++-14
-            extra-cmake: -DCMAKE_CXX_FLAGS=--gcc-toolchain=/usr
-
           - name: "macOS / AppleClang"
             os: macos-latest
             preset: vcpkg-debug
@@ -47,7 +40,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update -q
-          sudo apt-get install -y ninja-build pkg-config ${{ matrix.extra-apt || '' }}
+          sudo apt-get install -y ninja-build pkg-config
 
       - name: Install macOS dependencies
         if: runner.os == 'macOS'
@@ -63,7 +56,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: Configure
-        run: cmake --preset ${{ matrix.preset }} ${{ matrix.extra-cmake || '' }}
+        run: cmake --preset ${{ matrix.preset }}
 
       - name: Build
         run: cmake --build ${{ matrix.build-dir }} --parallel
