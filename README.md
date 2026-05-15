@@ -1,154 +1,105 @@
 # Tools
 
-Own implementation of different tools.
+A C++23 monorepo of personal utility tools built on a shared core library.
 
-## Build & Test
+## Projects
 
-### Prerequisite
+| Project | Description |
+|---|---|
+| [core](core/README.md) | Shared library — TCP networking, design patterns, crypto, logging |
+| [duplicates](duplicates/README.md) | Finds and removes duplicate files using SHA-256 hashing |
+| [kidmon](kidmon/README.md) | Distributed process/window activity monitor (server + agent) |
+| [kidmon-reports](kidmon-reports/README.md) | Queries and displays kidmon activity data |
 
-1. Tested with
-    * IDEs
-        * Visual Studio 2022
-        * Visual Studio Code
-    * Compilers
-        * msvc14+
-        * gcc-{11, 12, 13}
+## Requirements
 
-2. Install `vcpkg`
-    * Clone the latest version of `vcpkg` in the directory of your choice
-    * Consider using `-disableMetrics` option while bootstraping vcpkg
-    * Set `VCPKG_ROOT` environment variable to point vcpkg root directory.
-    * Install `ninja` and `pkg-config`
-    * Deprecated manual instructions
-        * Checkout tag 2025.04.16 - `git checkout tags/2025.04.16 -b tag-2025.04.16`
-        * For the first time setup [see](https://learn.microsoft.com/en-us/vcpkg/get_started/get-started)
-        * Install libraries
-            * `./vcpkg install gtest spdlog openssl boost-asio boost-iostreams nlohmann-json cxxopts glaze --triplet=<platform>`
-                * Windows `<platform>` can be `x64-windows`
-                * Linux   `<platform>` can be `x64-linux`
+- C++ compiler with C++23 support — GCC 13+, Clang 16+, or MSVC 2022+
+- CMake 3.25+
+- Ninja and pkg-config
+- [vcpkg](https://github.com/microsoft/vcpkg) — clone it, then set `VCPKG_ROOT` to its root directory
 
-### Instructions
+Dependencies are declared in [vcpkg.json](vcpkg.json) and installed automatically on first build:
+`boost-asio`, `boost-iostreams`, `cxxopts`, `glaze`, `gtest`, `nlohmann-json`, `openssl`, `spdlog`, `tomlplusplus`
 
-* Configure
-    * Navigate the root directory of the project
-    * If the environment variable `VCPKG_ROOT` is defined, use the command below
-        * `cmake -B build -S .`
-    * Otherwise
-        * `cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=<vcpkg_path>/scripts/buildsystems/vcpkg.cmake`
-    * Additionally build type can be specified as below: `Debug`, `Release`, ...
-        * `-DCMAKE_BUILD_TYPE=<cfg>`
-* Build
-    * `cmake --build build --parallel 8 --config <cfg>`
-* Extras
-    * Run the command below before configure step to build with `clang`. Change clang path if required.
+## Build
 
-        ```bash
-        export CC=/usr/bin/clang
-        export CXX=/usr/bin/clang++
-        ```
+```bash
+cmake --preset vcpkg-debug          # configure → build/debug/
+cmake --build --preset vcpkg-debug  # build
+```
 
-* Tests
-    * CTest
-        * `ctest --test-dir build --build-config <cfg>`
-        * `ctest --test-dir build --build-config <cfg> [--tests-regex <regex>]`  # .*Pattern.*
-        * `ctest --test-dir build -C <cfg> [-R <regex>]`
-        * `-N` additional options disables execution and only prints a list of test
-    * Manually run application with ending with name `-test` (TBD, utilize `ctest`)
-        * Windows - `build\core\test\Debug\core-test.exe`
-        * Linux - `./build/core/test/core-test`
-    * [Creating and running tests with CTest](https://coderefinery.github.io/cmake-workshop/testing/)
-* Install
-    * `cmake --install build --prefix ./`   # Configuration picked up from the build dir
-    * `cmake --install build --prefix ./ --config <cfg>`    # Update this part
+Available presets: `vcpkg-debug`, `vcpkg-release`, `vcpkg-gcc15-debug`, `vcpkg-clang-debug`, `vcpkg-coverage`.
 
-## Run
+Add `-DTOOLS_TIDY=ON` to enable clang-tidy static analysis during configure.
 
-* Console application
-    * Run executable
-* Windows service
-    * Install autostart service
-        * `sc create kidmon binPath= "<absolute path of the kidmon app>" start= auto DisplayName= "Kidmon application"`
+## Tests
+
+```bash
+ctest --test-dir build/debug --output-on-failure   # all tests
+ctest --test-dir build/debug -R ".*Pattern.*"       # filter by regex
+ctest --test-dir build/debug -N                     # list without running
+```
 
 ## Coverage
 
-* Windows
-    * Install OpenCppCoverage
-    * Locate project root directory
-    * Run tests with coverage
+Use the helper script (requires `lcov`):
 
-        ```bat
-        OpenCppCoverage.exe --sources tools\src\core --modules test.exe --export_type=html:.reports/core/  -- out\build\x64-Debug\test\core\core-test.exe
-        OpenCppCoverage.exe --sources tools\src\kidmon --modules test.exe --export_type=html:.reports/kidmon/  -- out\build\x64-Debug\test\kidmon\kidmon-test.exe
-        ```
+```bash
+./scripts/coverage.sh                          # all targets
+./scripts/coverage.sh core-test               # one target
+./scripts/coverage.sh core-test duplicates-test
+```
 
-    * TBD - the command line above is for reference only, later create a script to produce coverage
-* Linux
-    * Prerequisite
-        * Install `lcov`
-    * Generate
-        * `cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug`
-    * Build and run
-        * `cmake --build build -t coverage-<target-name> -j 8`
-    * Example
-        * `cmake --build build -t coverage-core-test -j 8`
-        * `cmake --build build -t coverage-duplicates-test -j 8`
-        * `cmake --build build -t coverage-kidmon-test -j 8`
-    * Coverage report will be available under the `build` directory, inside `coverage-<build_target>` directory
+HTML reports are written to `build/coverage/coverage-<target>/index.html`. Coverage from the `main` branch is published to GitHub Pages:
 
-* Read about [codecov](https://docs.codecov.com/docs/quick-start) CI
+**https://khayk.github.io/tools/**
 
 ## Formatting
 
-* The project is formatted based on the settings in `.clang-format`
-    * Open bash, navigate the root directory of the project
-    * Ensure `clang-format` version `17.0.1` (or above) is installed
-    * Run `find . -type f \( -name "*.cpp" -o -name "*.h" \) -not -path "./build/*" | xargs clang-format -i`, to format all `{h,cpp}` files in place
-    * Alternatively checkout this approach `clang-format -i {src,tests}/*.{h,cpp}`
+Style rules are in [.clang-format](.clang-format). Requires `clang-format` 17+.
 
-## Clang Build Analyzer
+```bash
+./scripts/format.sh
+```
 
-* In order to inspect build times and identify expensive headers do the following
-    * Download build analyzer for the target platform [from](https://github.com/aras-p/ClangBuildAnalyzer/releases)
-    * Ensure the clang compiler is selected
-    * Add `-ftime-trace` compile option to the root `CMakeLists.txt` file `add_compile_options(-ftime-trace)`
-    * Run `<clang_build_analyzer> --start build/`
-    * Rebuild the project(s)
-    * Run `<clang_build_analyzer> --stop build/ <capture_file>`
-    * Run `<clang_build_analyzer> --analyze <capture_file>` to get report
+## CI
 
-## How-to
+Every push to `main` and every pull request is tested on:
 
-* Debug and Run
-    * Visual Studio 2022
-        * Customize debug/launch arguments
-            * Select configuration
-            * Select target
-            * Select `Debug -> Debug and Launch Settings For <Target>` from menu
-            * Add `"args": []` section in the same level where located attribute `name` and provide desired command line arguments
-    * Visual Studio Code
-        * Install `CMake Tools` extension
-        * From Command Palette
-            * Select `CMake: Set Launch/Debug Target`
-            * Select `CMake: Debug`
-        * If you need to pass custom command line argument to debugger check [this](https://github.com/microsoft/vscode-cmake-tools/blob/main/docs/debug-launch.md) documentation.
-        * Method 1
-            * Activate `Run and Debug` in the Sidebar
-            * Click `create a launch.json file` and select `C++ (GDB)/(LLDB)`
-            * Copy paste desired settings from section `Debug using a launch.json file` from the link above.
-                * If you debug with `msvc` use that setting
-            * Add custom arguments into `"args": [],`
-        * Method 2
-            * Create `settings.json` file under the `vscode` directory
-            * Consider adding this
+| Platform | Compiler |
+|---|---|
+| Ubuntu 24.04 | GCC |
+| macOS (latest) | AppleClang |
+| Windows 2022 | MSVC |
 
-                ```json
-                {
-                    "cmake.debugConfig": {
-                        "args": ["command arguments"]
-                    }
-                }
-                ```
+---
 
-* Profiling
-    * Linux
-        * [See usage of perf](https://stackoverflow.com/questions/2229336/linux-application-profiling) or gemini
+## Project details
+
+### core
+
+The shared library used by all other projects. Provides an Asio-based TCP stack, reusable design patterns (`Observable`, `Callback`, `Singleton`), OpenSSL crypto helpers, and common utilities for logging, file I/O, and string handling.
+
+[→ core/README.md](core/README.md)
+
+### duplicates
+
+A command-line tool that scans one or more directories for duplicate files (identified by SHA-256 hash) and lets you delete them — either interactively or automatically based on keep/delete path rules. Supports dry-run mode.
+
+[→ duplicates/README.md](duplicates/README.md)
+
+### kidmon
+
+A client-server activity monitor. The server runs on the host machine; the agent runs (spawned by the server or separately) and streams active window and process data over TCP. Data is stored locally and analysed with `kidmon-reports`.
+
+[→ kidmon/README.md](kidmon/README.md)
+
+### kidmon-reports
+
+A query tool for kidmon activity data. Filter by user, time range, process name, or window title. Supports top-N ranking, case-insensitive search, and include/exclude conditions.
+
+[→ kidmon-reports/README.md](kidmon-reports/README.md)
+
+## License
+
+[MIT](LICENSE) © Hayk Karapetyan
