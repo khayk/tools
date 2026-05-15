@@ -112,11 +112,44 @@ jobs:
           path: build/coverage/coverage-*/
           retention-days: 14
 
+      - name: Prepare Pages artifact
+        if: github.ref == 'refs/heads/main'
+        run: |
+          mkdir -p build/pages
+          cp -r build/coverage/coverage-core-test       build/pages/
+          cp -r build/coverage/coverage-duplicates-test build/pages/
+          cp -r build/coverage/coverage-kidmon-test     build/pages/
+          cat > build/pages/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <title>Coverage Reports</title>
+            <style>
+              body { font-family: sans-serif; max-width: 560px; margin: 60px auto; color: #24292f; }
+              h1 { font-size: 1.3rem; margin-bottom: 1.2em; }
+              ul { list-style: none; padding: 0; }
+              li { margin: 10px 0; }
+              a { color: #0969da; text-decoration: none; font-size: 1.05rem; }
+              a:hover { text-decoration: underline; }
+            </style>
+          </head>
+          <body>
+            <h1>Coverage Reports</h1>
+            <ul>
+              <li><a href="coverage-core-test/index.html">core</a></li>
+              <li><a href="coverage-duplicates-test/index.html">duplicates</a></li>
+              <li><a href="coverage-kidmon-test/index.html">kidmon</a></li>
+            </ul>
+          </body>
+          </html>
+          EOF
+
       - name: Upload to GitHub Pages
         if: github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@v3
         with:
-          path: build/coverage
+          path: build/pages
 
       - name: Deploy to GitHub Pages
         if: github.ref == 'refs/heads/main'
