@@ -218,7 +218,13 @@ TEST(DuplicateDetectorTest, MetricsThresholds)
                   });
 
     EXPECT_EQ(detector.numFiles(), numFiles);
+#ifdef _WIN32
+    // On windows, unordered_map size if bigger resulting to difference
+    EXPECT_LE(sizeof(Node), 160);
+#else
     EXPECT_LE(sizeof(Node), 120);
+#endif
+
     EXPECT_LE(sys::currentProcessMemoryUsage(), 27 * 1024 * 1024);
 }
 
