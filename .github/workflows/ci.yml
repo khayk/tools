@@ -69,3 +69,41 @@ jobs:
 
       - name: Test
         run: ctest --test-dir ${{ matrix.build-dir }} --output-on-failure
+
+  coverage:
+    name: "Coverage"
+    runs-on: ubuntu-24.04
+    needs: build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y ninja-build pkg-config lcov
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: '66c0373dc7fca549e5803087b9487edfe3aca0a1'
+
+      - name: Configure
+        run: cmake --preset vcpkg-coverage
+
+      - name: Build
+        run: cmake --build --preset vcpkg-coverage
+
+      - name: Generate reports
+        run: |
+          cmake --build --preset vcpkg-coverage -t coverage-core-test
+          cmake --build --preset vcpkg-coverage -t coverage-duplicates-test
+          cmake --build --preset vcpkg-coverage -t coverage-kidmon-test
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: build/coverage/coverage-*/
+          retention-days: 14
