@@ -1,0 +1,41 @@
+name: Linux
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Linux / GCC
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y ninja-build pkg-config
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: '66c0373dc7fca549e5803087b9487edfe3aca0a1'
+
+      - name: Configure
+        run: cmake --preset vcpkg-debug
+
+      - name: Build
+        run: cmake --build build/debug --parallel
+
+      - name: Test
+        run: ctest --test-dir build/debug --output-on-failure

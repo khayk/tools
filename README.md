@@ -1,5 +1,10 @@
 # Tools
 
+[![Linux](https://github.com/khayk/tools/actions/workflows/ci-linux.yml/badge.svg?branch=main)](https://github.com/khayk/tools/actions/workflows/ci-linux.yml)
+[![macOS](https://github.com/khayk/tools/actions/workflows/ci-macos.yml/badge.svg?branch=main)](https://github.com/khayk/tools/actions/workflows/ci-macos.yml)
+[![Windows](https://github.com/khayk/tools/actions/workflows/ci-windows.yml/badge.svg?branch=main)](https://github.com/khayk/tools/actions/workflows/ci-windows.yml)
+[![Coverage](https://github.com/khayk/tools/actions/workflows/coverage.yml/badge.svg?branch=main)](https://github.com/khayk/tools/actions/workflows/coverage.yml)
+
 A C++23 monorepo of personal utility tools built on a shared core library.
 
 ## Projects
@@ -64,13 +69,15 @@ Style rules are in [.clang-format](.clang-format). Requires `clang-format` 17+.
 
 ## CI
 
-Every push to `main` and every pull request is tested on:
+Every push to `main` and every pull request is tested on three platforms, each in its own workflow:
 
-| Platform | Compiler |
-|---|---|
-| Ubuntu 24.04 | GCC |
-| macOS (latest) | AppleClang |
-| Windows 2022 | MSVC |
+| Workflow | Platform | Compiler |
+|---|---|---|
+| [ci-linux.yml](.github/workflows/ci-linux.yml) | Ubuntu 24.04 | GCC |
+| [ci-macos.yml](.github/workflows/ci-macos.yml) | macOS (latest) | AppleClang |
+| [ci-windows.yml](.github/workflows/ci-windows.yml) | Windows 2022 | MSVC |
+
+Coverage reports are generated on push to `main` via [coverage.yml](.github/workflows/coverage.yml) and published to **https://khayk.github.io/tools/**.
 
 ---
 
