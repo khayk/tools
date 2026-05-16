@@ -27,7 +27,7 @@ jobs:
           sudo apt-get install -y ninja-build pkg-config
 
       - name: Setup vcpkg
-        uses: lukka/run-vcpkg@v11
+        uses: lukka/run-vcpkg@v11.6
         with:
           vcpkgGitCommitId: '66c0373dc7fca549e5803087b9487edfe3aca0a1'
 
