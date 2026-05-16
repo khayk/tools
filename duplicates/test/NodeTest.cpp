@@ -172,7 +172,7 @@ TEST_F(NodeTest, EnumLeafsMutableVisitsOnlyLeaves)
     EXPECT_EQ(count, 2U);
 }
 
-TEST_F(NodeTest, EnumNodesSkipsRoot)
+TEST_F(NodeTest, EnumNodes)
 {
     Node root(&rootName);
     Node* dir1 = root.addChild(dir1Name);
@@ -183,11 +183,7 @@ TEST_F(NodeTest, EnumNodesSkipsRoot)
         visited.push_back(n);
     });
 
-    EXPECT_EQ(visited.size(), 2U);
-    for (const Node* n : visited)
-    {
-        EXPECT_NE(n, &root);
-    }
+    EXPECT_EQ(visited.size(), 3U);
 }
 
 TEST_F(NodeTest, EnumNodesNonLeafsVisitedBeforeLeafs)
@@ -206,7 +202,7 @@ TEST_F(NodeTest, EnumNodesNonLeafsVisitedBeforeLeafs)
         isLeafOrder.push_back(n->leaf());
     });
 
-    ASSERT_EQ(isLeafOrder.size(), 4U);
+    ASSERT_EQ(isLeafOrder.size(), 5U);
     EXPECT_FALSE(isLeafOrder.front());  // dir1 visited first (non-leaf)
     EXPECT_TRUE(isLeafOrder.back());    // file3 visited last (leaf at root level)
 }

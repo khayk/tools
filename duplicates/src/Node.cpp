@@ -144,10 +144,7 @@ void Node::enumLeafs(const MutableNodeCallback& cb)
 
 void Node::enumNodes(const ConstNodeCallback& cb) const
 {
-    if (depth() != 0)
-    {
-        cb(this);
-    }
+    cb(this);
 
     // Non-leafs
     for (const auto& it : children_)
