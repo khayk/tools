@@ -158,6 +158,44 @@ TEST(ConfigTest, ApplyDefaultsSetsExpectedValues)
     EXPECT_FALSE(cfg.ignFilesPath().empty());
 }
 
+// ─── missing path setters / getters ──────────────────────────────────────────
+
+TEST(ConfigTest, SetDirsToDeleteFromReplacesExisting)
+{
+    Config cfg("/data", "/cache");
+    cfg.addDirToDeleteFrom("/old");
+    cfg.setDirsToDeleteFrom({"/new1", "/new2"});
+    EXPECT_EQ(cfg.dirsToDeleteFrom().size(), 2U);
+}
+
+TEST(ConfigTest, KeepFilesPath)
+{
+    Config cfg("/data", "/cache");
+    cfg.setKeepFilesPath("keep.txt");
+    EXPECT_EQ(cfg.keepFilesPath(), cfg.dataDir() / "keep.txt");
+}
+
+TEST(ConfigTest, DelFilesPath)
+{
+    Config cfg("/data", "/cache");
+    cfg.setDelFilesPath("delete.txt");
+    EXPECT_EQ(cfg.delFilesPath(), cfg.dataDir() / "delete.txt");
+}
+
+TEST(ConfigTest, SetLogDir)
+{
+    Config cfg("/data", "/cache");
+    cfg.setLogDir("/custom/logs");
+    EXPECT_EQ(cfg.logDir(), fs::path("/custom/logs"));
+}
+
+TEST(ConfigTest, LogFilenameSetAndGet)
+{
+    Config cfg("/data", "/cache");
+    cfg.setLogFilename("app.log");
+    EXPECT_EQ(cfg.logFilename(), fs::path("app.log"));
+}
+
 // ─── applyOverrides ───────────────────────────────────────────────────────────
 
 TEST(ConfigTest, ApplyOverridesIgnoresMissingFile)
@@ -196,6 +234,34 @@ TEST(ConfigTest, ApplyOverridesReadsTomlValues)
     EXPECT_FALSE(cfg.dryRun());
     EXPECT_EQ(cfg.scanDirs().size(), 1U);
     EXPECT_EQ(cfg.exclusionPatterns().size(), 1U);
+}
+
+TEST(ConfigTest, ApplyOverridesReadsDirAndFilePaths)
+{
+    core::file::TempDir tmp("cfg-paths-test");
+    const auto cfgFile = tmp.path() / "paths.toml";
+    core::file::write(cfgFile,
+        "dirs_to_keep_from   = [\"/keep/a\"]\n"
+        "dirs_to_delete_from = [\"/delete/b\"]\n"
+        "all_files = \"custom_all.txt\"\n"
+        "dup_files = \"custom_dup.txt\"\n"
+        "ign_files = \"custom_ign.txt\"\n"
+        "scan_directories = []\n"
+        "exclusion_patterns = []\n");
+
+    Config cfg("/data", "/cache");
+    applyDefaults(cfg);
+    applyOverrides(cfgFile, cfg);
+
+    ASSERT_EQ(cfg.dirsToKeepFrom().size(), 1U);
+    EXPECT_EQ(cfg.dirsToKeepFrom().front(), fs::path("/keep/a"));
+
+    ASSERT_EQ(cfg.dirsToDeleteFrom().size(), 1U);
+    EXPECT_EQ(cfg.dirsToDeleteFrom().front(), fs::path("/delete/b"));
+
+    EXPECT_EQ(cfg.allFilesPath(), cfg.dataDir() / "custom_all.txt");
+    EXPECT_EQ(cfg.dupFilesPath(), cfg.dataDir() / "custom_dup.txt");
+    EXPECT_EQ(cfg.ignFilesPath(), cfg.dataDir() / "custom_ign.txt");
 }
 
 } // namespace tools::dups
