@@ -3,6 +3,9 @@
 #include <spdlog/spdlog.h>
 
 #include <filesystem>
+#include <sstream>
+#include <string_view>
+#include <vector>
 
 namespace fs = std::filesystem;
 
@@ -21,6 +24,24 @@ class SilenceLogger
 public:
     SilenceLogger();
     ~SilenceLogger();
+};
+
+// RAII sink that captures spdlog output — useful in unit tests to verify
+// that a function emits the expected log messages.
+class LogCapture
+{
+    spdlog::level::level_enum prevLevel_ {spdlog::get_level()};
+    std::vector<spdlog::sink_ptr> prevSinks_;
+    std::ostringstream oss_;
+    spdlog::sink_ptr captureSink_;
+
+public:
+    explicit LogCapture(
+        spdlog::level::level_enum level = spdlog::level::trace);
+    ~LogCapture();
+
+    std::string str() const;
+    bool contains(std::string_view text) const;
 };
 
 } // namespace core::utl

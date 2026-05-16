@@ -201,8 +201,11 @@ TEST(ConfigTest, LogFilenameSetAndGet)
 TEST(ConfigTest, ApplyOverridesIgnoresMissingFile)
 {
     Config cfg("/data", "/cache");
+    core::utl::LogCapture capture;
+
     applyDefaults(cfg);
     EXPECT_NO_THROW(applyOverrides("/non/existent/file.toml", cfg));
+    EXPECT_TRUE(capture.contains("Missing config file: /non/existent/file.toml"));
 }
 
 TEST(ConfigTest, ApplyOverridesIgnoresEmptyPath)
@@ -226,8 +229,12 @@ TEST(ConfigTest, ApplyOverridesReadsTomlValues)
         "dirs_to_delete_from = []\n");
 
     Config cfg("/data", "/cache");
+    core::utl::LogCapture capture;
+
     applyDefaults(cfg);
     applyOverrides(cfgFile, cfg);
+
+    EXPECT_TRUE(capture.contains("Overriding config from file:"));
 
     EXPECT_EQ(cfg.minFileSizeBytes(), 2048U);
     EXPECT_EQ(cfg.maxFileSizeBytes(), 999999U);
@@ -250,8 +257,12 @@ TEST(ConfigTest, ApplyOverridesReadsDirAndFilePaths)
         "exclusion_patterns = []\n");
 
     Config cfg("/data", "/cache");
+    core::utl::LogCapture capture;
+
     applyDefaults(cfg);
     applyOverrides(cfgFile, cfg);
+
+    EXPECT_TRUE(capture.contains("Overriding config from file:"));
 
     ASSERT_EQ(cfg.dirsToKeepFrom().size(), 1U);
     EXPECT_EQ(cfg.dirsToKeepFrom().front(), fs::path("/keep/a"));
@@ -262,6 +273,29 @@ TEST(ConfigTest, ApplyOverridesReadsDirAndFilePaths)
     EXPECT_EQ(cfg.allFilesPath(), cfg.dataDir() / "custom_all.txt");
     EXPECT_EQ(cfg.dupFilesPath(), cfg.dataDir() / "custom_dup.txt");
     EXPECT_EQ(cfg.ignFilesPath(), cfg.dataDir() / "custom_ign.txt");
+}
+
+// ─── logConfig ───────────────────────────────────────────────────────────────
+
+TEST(ConfigTest, LogConfigEmitsExpectedFields)
+{
+    Config cfg("/data", "/cache");
+    cfg.setMinFileSizeBytes(512);
+    cfg.setMaxFileSizeBytes(2048);
+    cfg.setDryRun(false);
+    cfg.setDirsToKeepFrom({"/keep/dir1", "/keep/dir2"});
+
+    core::utl::LogCapture capture;
+    logConfig(cfg);
+
+    EXPECT_TRUE(capture.contains("Min file size bytes"));
+    EXPECT_TRUE(capture.contains("512"));
+    EXPECT_TRUE(capture.contains("Max file size bytes"));
+    EXPECT_TRUE(capture.contains("2048"));
+    EXPECT_TRUE(capture.contains("Dry run"));
+    EXPECT_TRUE(capture.contains("Cache directory"));
+    EXPECT_TRUE(capture.contains("Scan directories"));
+    EXPECT_TRUE(capture.contains("'/keep/dir1, /keep/dir2'"));
 }
 
 } // namespace tools::dups
