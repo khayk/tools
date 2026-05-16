@@ -11,7 +11,14 @@ if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     message("CMAKE_TOOLCHAIN_FILE: ${CMAKE_TOOLCHAIN_FILE}")
 endif()
 
-project(tools VERSION 0.1.0 LANGUAGES CXX)
+# Bump TOOLS_VERSION_BASE for major/minor releases; patch auto-increments from commit count
+set(TOOLS_VERSION_BASE "0.1")
+execute_process(
+    COMMAND git rev-list HEAD --count
+    OUTPUT_VARIABLE GIT_COMMIT_COUNT
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+project(tools VERSION "${TOOLS_VERSION_BASE}.${GIT_COMMIT_COUNT}" LANGUAGES CXX)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 option(TOOLS_COVERAGE "Produce code coverage" OFF)
