@@ -1,4 +1,4 @@
-project(core VERSION 0.0.1)
+project(core)
 
 set(PROJECT_LIB  ${PROJECT_NAME})
 

@@ -1,4 +1,4 @@
-project(duplicates VERSION 0.0.1)
+project(duplicates)
 
 set(PROJECT_LIB "${PROJECT_NAME}")
 set(PROJECT_APP "${PROJECT_NAME}-app")
@@ -24,7 +24,16 @@ CleanCoverage(${PROJECT_LIB})
 
 # Adding executable project
 add_executable(${PROJECT_APP} src/Main.cpp)
+BuildInfo(${PROJECT_APP})
 target_link_libraries (${PROJECT_APP} ${PROJECT_LIB})
+
+install(
+    TARGETS ${PROJECT_APP}
+    DESTINATION bin
+    RUNTIME_DEPENDENCIES
+    PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-"
+    POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
+)
 
 AddClangTidy(${PROJECT_LIB})
 AddClangTidy(${PROJECT_APP})

@@ -96,6 +96,11 @@
             "name": "vcpkg-coverage",
             "configurePreset": "vcpkg-coverage",
             "jobs": 12
+        },
+        {
+            "name": "vcpkg-msvc-release",
+            "configurePreset": "vcpkg-msvc-release",
+            "jobs": 12
         }
     ],
     "testPresets": [
