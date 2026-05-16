@@ -9,14 +9,17 @@
 
 namespace tools::dups {
 
+const auto NORM_PATH = fs::absolute(".").lexically_normal();
+
 // ─── construction ─────────────────────────────────────────────────────────────
 
 TEST(ConfigTest, ConstructorAppendsDuplicatesSubdir)
 {
-    Config cfg("/data", "/cache");
-    EXPECT_EQ(cfg.dataDir(),  fs::path("/data/duplicates"));
-    EXPECT_EQ(cfg.cacheDir(), fs::path("/cache/duplicates"));
-    EXPECT_EQ(cfg.logDir(),   fs::path("/data/duplicates/logs"));
+    Config cfg("data", "cache");
+
+    EXPECT_EQ(cfg.dataDir(),  NORM_PATH / "data/duplicates");
+    EXPECT_EQ(cfg.cacheDir(), NORM_PATH / "cache/duplicates");
+    EXPECT_EQ(cfg.logDir(),   NORM_PATH / "data/duplicates/logs");
 }
 
 TEST(ConfigTest, InitialStateHasEmptyCollectionsAndZeroSizes)
@@ -36,10 +39,11 @@ TEST(ConfigTest, InitialStateHasEmptyCollectionsAndZeroSizes)
 
 TEST(ConfigTest, AddScanDirNormalizesPath)
 {
-    Config cfg("/data", "/cache");
-    cfg.addScanDir("/tmp/foo/../bar");
+    Config cfg("data", "cache");
+    cfg.addScanDir("tmp/foo/../bar");
+
     ASSERT_EQ(cfg.scanDirs().size(), 1U);
-    EXPECT_EQ(cfg.scanDirs().front(), fs::path("/tmp/bar"));
+    EXPECT_EQ(cfg.scanDirs().front(), NORM_PATH / "tmp/bar");
 }
 
 TEST(ConfigTest, SetScanDirsReplacesExisting)
@@ -55,17 +59,18 @@ TEST(ConfigTest, SetScanDirsReplacesExisting)
 TEST(ConfigTest, AddDirToKeepFrom)
 {
     Config cfg("/data", "/cache");
-    cfg.addDirToKeepFrom("/keep/this");
+    cfg.addDirToKeepFrom("keep/this");
+
     ASSERT_EQ(cfg.dirsToKeepFrom().size(), 1U);
-    EXPECT_EQ(cfg.dirsToKeepFrom().front(), fs::path("/keep/this"));
+    EXPECT_EQ(cfg.dirsToKeepFrom().front(), NORM_PATH / "keep/this");
 }
 
 TEST(ConfigTest, AddDirToDeleteFrom)
 {
     Config cfg("/data", "/cache");
-    cfg.addDirToDeleteFrom("/delete/this");
+    cfg.addDirToDeleteFrom("delete/this");
     ASSERT_EQ(cfg.dirsToDeleteFrom().size(), 1U);
-    EXPECT_EQ(cfg.dirsToDeleteFrom().front(), fs::path("/delete/this"));
+    EXPECT_EQ(cfg.dirsToDeleteFrom().front(), NORM_PATH / "delete/this");
 }
 
 TEST(ConfigTest, SetDirsToKeepFromReplacesExisting)
@@ -106,8 +111,15 @@ TEST(ConfigTest, RelativeFilePathPrefixedWithDataDir)
 TEST(ConfigTest, AbsoluteFilePathKeptAsIs)
 {
     Config cfg("/data", "/cache");
+
+#ifdef _WIN32
+    cfg.setAllFilesPath("M:/absolute/all.txt");
+    EXPECT_EQ(cfg.allFilesPath(), fs::path("M:/absolute/all.txt"));
+#else
     cfg.setAllFilesPath("/absolute/all.txt");
     EXPECT_EQ(cfg.allFilesPath(), fs::path("/absolute/all.txt"));
+#endif
+
 }
 
 TEST(ConfigTest, EmptyFilePathRemainsEmpty)
@@ -248,8 +260,8 @@ TEST(ConfigTest, ApplyOverridesReadsDirAndFilePaths)
     core::file::TempDir tmp("cfg-paths-test");
     const auto cfgFile = tmp.path() / "paths.toml";
     core::file::write(cfgFile,
-        "dirs_to_keep_from   = [\"/keep/a\"]\n"
-        "dirs_to_delete_from = [\"/delete/b\"]\n"
+        "dirs_to_keep_from   = [\"keep/a\"]\n"
+        "dirs_to_delete_from = [\"delete/b\"]\n"
         "all_files = \"custom_all.txt\"\n"
         "dup_files = \"custom_dup.txt\"\n"
         "ign_files = \"custom_ign.txt\"\n"
@@ -265,10 +277,10 @@ TEST(ConfigTest, ApplyOverridesReadsDirAndFilePaths)
     EXPECT_TRUE(capture.contains("Overriding config from file:"));
 
     ASSERT_EQ(cfg.dirsToKeepFrom().size(), 1U);
-    EXPECT_EQ(cfg.dirsToKeepFrom().front(), fs::path("/keep/a"));
+    EXPECT_EQ(cfg.dirsToKeepFrom().front(), NORM_PATH / "keep/a");
 
     ASSERT_EQ(cfg.dirsToDeleteFrom().size(), 1U);
-    EXPECT_EQ(cfg.dirsToDeleteFrom().front(), fs::path("/delete/b"));
+    EXPECT_EQ(cfg.dirsToDeleteFrom().front(), NORM_PATH / "delete/b");
 
     EXPECT_EQ(cfg.allFilesPath(), cfg.dataDir() / "custom_all.txt");
     EXPECT_EQ(cfg.dupFilesPath(), cfg.dataDir() / "custom_dup.txt");
@@ -283,7 +295,7 @@ TEST(ConfigTest, LogConfigEmitsExpectedFields)
     cfg.setMinFileSizeBytes(512);
     cfg.setMaxFileSizeBytes(2048);
     cfg.setDryRun(false);
-    cfg.setDirsToKeepFrom({"/keep/dir1", "/keep/dir2"});
+    cfg.setDirsToKeepFrom({"keep/dir1", "keep/dir2"});
 
     core::utl::LogCapture capture;
     logConfig(cfg);
@@ -295,7 +307,8 @@ TEST(ConfigTest, LogConfigEmitsExpectedFields)
     EXPECT_TRUE(capture.contains("Dry run"));
     EXPECT_TRUE(capture.contains("Cache directory"));
     EXPECT_TRUE(capture.contains("Scan directories"));
-    EXPECT_TRUE(capture.contains("'/keep/dir1, /keep/dir2'"));
+    EXPECT_TRUE(capture.contains("keep/dir1"));
+    EXPECT_TRUE(capture.contains("keep/dir2"));
 }
 
 } // namespace tools::dups
