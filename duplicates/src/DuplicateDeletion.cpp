@@ -10,7 +10,6 @@
 #include <iterator>
 #include <cassert>
 #include <stdexcept>
-#include <tuple>
 #include "core/utils/Str.h"
 
 #include <spdlog/spdlog.h>
@@ -544,7 +543,7 @@ private:
         }
 
         cfg_.out() << "Size: " << group.entires.front().size
-                  << " SHA256: " << group.entires.front().sha256 << '\n';
+                   << " SHA256: " << group.entires.front().sha256 << '\n';
 
         std::ranges::sort(selective_);
         return deleteInteractively(selective_, cfg_);

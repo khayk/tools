@@ -97,10 +97,9 @@ int main(int argc, char* argv[])
                       std::format("{:-^80s}", "> START <"),
                       std::format("{:-^80s}\n", "> END <"));
         traceMain.emplace(__FUNCTION__);
-
-        spdlog::info("Build time: {}", BuildInfo::Timestamp);
-        spdlog::info("Commit SHA: {}", BuildInfo::CommitSHA);
-        spdlog::info("Version: {}", BuildInfo::Version);
+        core::utl::logBuildInfo(BuildInfo::Version,
+                                BuildInfo::CommitSHA,
+                                BuildInfo::Timestamp);
         spdlog::debug("Active username: {}",
                       core::str::ws2s(core::sys::activeUserName()));
 

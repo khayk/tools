@@ -6,6 +6,6 @@ struct BuildInfo {
         "@COMMIT_SHA@";
     static inline const std::string Timestamp =
         "@TIMESTAMP@";
-    static inline const
-        std::string Version = "@CMAKE_PROJECT_VERSION@";
+    static inline const std::string Version =
+        "@CMAKE_PROJECT_VERSION@";
 };

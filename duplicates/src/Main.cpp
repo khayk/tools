@@ -7,6 +7,8 @@
 #include <duplicates/CmdLine.h>
 #include <duplicates/Menu.h>
 
+#include <BuildInfo.h>
+
 #include <core/utils/Log.h>
 #include <core/utils/File.h>
 #include <core/utils/FmtExt.h>
@@ -60,6 +62,9 @@ int main(int argc, const char* argv[])
 
         Config cfg(core::dirs::config(), core::dirs::cache());
         configureLogger(cfg.logDir(), cfg.logFilename());
+        core::utl::logBuildInfo(BuildInfo::Version,
+                                BuildInfo::CommitSHA,
+                                BuildInfo::Timestamp);
         trace.emplace("",
                       std::format("{:-^80s}", "> START <"),
                       std::format("{:-^80s}\n", "> END <"));

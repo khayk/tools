@@ -47,6 +47,15 @@ void configureLogger(const fs::path& logsDir, const fs::path& logFilename)
     spdlog::flush_every(std::chrono::seconds(10));
 }
 
+void logBuildInfo(std::string_view version,
+                  std::string_view commitSha,
+                  std::string_view buildTime)
+{
+    spdlog::info("Version:    {}", version);
+    spdlog::info("Commit SHA: {}", commitSha);
+    spdlog::info("Build time: {}", buildTime);
+}
+
 SilenceLogger::SilenceLogger()
 {
     spdlog::set_level(spdlog::level::level_enum::off);
