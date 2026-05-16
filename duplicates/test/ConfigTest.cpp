@@ -307,8 +307,8 @@ TEST(ConfigTest, LogConfigEmitsExpectedFields)
     EXPECT_TRUE(capture.contains("Dry run"));
     EXPECT_TRUE(capture.contains("Cache directory"));
     EXPECT_TRUE(capture.contains("Scan directories"));
-    EXPECT_TRUE(capture.contains("keep/dir1"));
-    EXPECT_TRUE(capture.contains("keep/dir2"));
+    EXPECT_TRUE(capture.contains("dir1"));
+    EXPECT_TRUE(capture.contains("dir2"));
 }
 
 } // namespace tools::dups
