@@ -139,7 +139,7 @@ public:
     };
 
     TempDir(std::string_view namePrefix = "",
-            const CreateMode createMode = CreateMode::Auto,
+            CreateMode createMode = CreateMode::Auto,
             const fs::path& tempDir = fs::path());
 };
 

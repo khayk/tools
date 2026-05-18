@@ -23,8 +23,10 @@ A C++23 monorepo of personal utility tools built on a shared core library.
 - Ninja and pkg-config
 - [vcpkg](https://github.com/microsoft/vcpkg) — clone it, then set `VCPKG_ROOT` to its root directory
 
-Dependencies are declared in [vcpkg.json](vcpkg.json) and installed automatically on first build:
-`boost-asio`, `boost-iostreams`, `cxxopts`, `glaze`, `gtest`, `nlohmann-json`, `openssl`, `spdlog`, `tomlplusplus`
+Dependencies are declared in [vcpkg.json](vcpkg.json) and installed automatically on first build
+    - In case of errors check if these packages are installed `perl-core perl-IPC-Cmd kernel-headers ninja-build`
+
+
 
 ## Build
 
@@ -50,8 +52,8 @@ ctest --test-dir build/debug -N                     # list without running
 Use the helper script (requires `lcov`):
 
 ```bash
-./scripts/coverage.sh                          # all targets
-./scripts/coverage.sh core-test               # one target
+./scripts/coverage.sh                           # all targets
+./scripts/coverage.sh core-test                 # one target
 ./scripts/coverage.sh core-test duplicates-test
 ```
 

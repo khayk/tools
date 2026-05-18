@@ -4,6 +4,7 @@
 
 #include <core/utils/File.h>
 #include <core/utils/Log.h>
+#include <core/utils/LogCapture.h>
 
 #include <chrono>
 
@@ -213,7 +214,7 @@ TEST(ConfigTest, LogFilenameSetAndGet)
 TEST(ConfigTest, ApplyOverridesIgnoresMissingFile)
 {
     Config cfg("/data", "/cache");
-    core::utl::LogCapture capture;
+    core::utl::LogCaptureSt capture;
 
     applyDefaults(cfg);
     EXPECT_NO_THROW(applyOverrides("/non/existent/file.toml", cfg));
@@ -241,7 +242,7 @@ TEST(ConfigTest, ApplyOverridesReadsTomlValues)
         "dirs_to_delete_from = []\n");
 
     Config cfg("/data", "/cache");
-    core::utl::LogCapture capture;
+    core::utl::LogCaptureSt capture;
 
     applyDefaults(cfg);
     applyOverrides(cfgFile, cfg);
@@ -269,7 +270,7 @@ TEST(ConfigTest, ApplyOverridesReadsDirAndFilePaths)
         "exclusion_patterns = []\n");
 
     Config cfg("/data", "/cache");
-    core::utl::LogCapture capture;
+    core::utl::LogCaptureSt capture;
 
     applyDefaults(cfg);
     applyOverrides(cfgFile, cfg);
@@ -297,7 +298,7 @@ TEST(ConfigTest, LogConfigEmitsExpectedFields)
     cfg.setDryRun(false);
     cfg.setDirsToKeepFrom({"keep/dir1", "keep/dir2"});
 
-    core::utl::LogCapture capture;
+    core::utl::LogCaptureSt capture;
     logConfig(cfg);
 
     EXPECT_TRUE(capture.contains("Min file size bytes"));

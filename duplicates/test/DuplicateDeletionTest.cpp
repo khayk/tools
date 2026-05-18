@@ -7,7 +7,7 @@
 #include <duplicates/Menu.h>
 #include <core/utils/File.h>
 #include <core/utils/Log.h>
-#include <core/utils/LogInterceptor.h>
+#include <core/utils/LogCapture.h>
 
 #include <filesystem>
 
@@ -17,8 +17,8 @@ using testing::Return;
 namespace tools::dups {
 
 using namespace core;
-using utl::SilenceLogger;
-using utl::TestStLogInterceptor;
+using utl::MuteLogger;
+using utl::LogCaptureSt;
 
 namespace {
 
@@ -72,7 +72,7 @@ protected:
 
 TEST_F(DuplicateDeletionTest, IgnoreFilesModule)
 {
-    SilenceLogger silenceLogger;
+    MuteLogger mute;
     file::TempDir tmp("ignored");
     const auto filePath(tmp.path() / "ignored.txt");
 
@@ -136,7 +136,7 @@ TEST_F(DuplicateDeletionTest, DeleteFiles)
 
 TEST_F(DuplicateDeletionTest, DeleteFilesException)
 {
-    TestStLogInterceptor logInterceptor;
+    LogCaptureSt capture;
     PathsVec files {"file1.txt", "file2.txt", "file3.txt"};
 
     EXPECT_CALL(strategy, remove(testing::_))
@@ -145,8 +145,8 @@ TEST_F(DuplicateDeletionTest, DeleteFilesException)
         .WillRepeatedly(testing::Return());
 
     EXPECT_NO_THROW(deleteFiles(strategy, files));
-    EXPECT_TRUE(logInterceptor.count() > 0);
-    EXPECT_TRUE(logInterceptor.contains(
+    EXPECT_TRUE(capture.count() > 0);
+    EXPECT_TRUE(capture.contains(
         "Error 'Deletion error' while deleting file 'file1.txt'"));
 }
 
@@ -244,7 +244,7 @@ TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_ConsecutiveCalls)
 
 TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_IgnoreGroup)
 {
-    SilenceLogger silenceLogger;
+    MuteLogger mute;
     PathsVec files {"file1.txt", "file2.txt", "file3.txt"};
 
     EXPECT_CALL(strategy, remove(testing::_)).Times(0);
@@ -261,7 +261,7 @@ TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_IgnoreGroup)
 
 TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_InterruptDeletion)
 {
-    SilenceLogger silenceLogger;
+    MuteLogger mute;
     PathsVec files {"file1.txt", "file2.txt"};
 
     EXPECT_CALL(strategy, remove(testing::_)).Times(0);
@@ -289,7 +289,7 @@ TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_InvalidChoice)
 
 TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_BadStream)
 {
-    SilenceLogger silenceLogger;
+    MuteLogger mute;
     PathsVec files {"file1.txt"};
 
     EXPECT_CALL(strategy, remove(testing::_)).Times(0);
@@ -381,7 +381,7 @@ TEST_F(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesSelectively)
 
 TEST_F(DuplicateDeletionTest, DeleteDuplicates_SkipsIgnoredFiles)
 {
-    SilenceLogger silenceLogger;
+    MuteLogger mute;
     MockDuplicateGroups groups;
 
     // Mark file2.txt as ignored

@@ -57,43 +57,15 @@ void logBuildInfo(std::string_view version,
     spdlog::info("Build time: {}", buildTime);
 }
 
-SilenceLogger::SilenceLogger()
+MuteLogger::MuteLogger()
 {
     spdlog::set_level(spdlog::level::level_enum::off);
 }
 
-SilenceLogger::~SilenceLogger()
+MuteLogger::~MuteLogger()
 {
     spdlog::set_level(prevLevel_);
 }
 
-LogCapture::LogCapture(spdlog::level::level_enum level)
-{
-    auto sink = std::make_shared<spdlog::sinks::ostream_sink_mt>(oss_);
-    sink->set_pattern("%v");
-    sink->set_level(spdlog::level::trace);
-    captureSink_ = sink;
-
-    auto logger = spdlog::default_logger();
-    prevSinks_ = logger->sinks();
-    logger->sinks() = {captureSink_};
-    spdlog::set_level(level);
-}
-
-LogCapture::~LogCapture()
-{
-    spdlog::default_logger()->sinks() = prevSinks_;
-    spdlog::set_level(prevLevel_);
-}
-
-std::string LogCapture::str() const
-{
-    return oss_.str();
-}
-
-bool LogCapture::contains(std::string_view text) const
-{
-    return str().contains(text);
-}
 
 } // namespace core::utl

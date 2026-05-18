@@ -90,8 +90,8 @@ class ScopedCallback
 public:
     ScopedCallback(CallbackType& cb, typename CallbackType::Function&& fn)
         : cb_(cb)
+        , ptr_(cb_.add(std::move(fn)))
     {
-        ptr_ = cb_.add(std::move(fn));
     }
 
     ~ScopedCallback()

@@ -11,11 +11,11 @@
 namespace tools::dups {
 
 using namespace core;
-using utl::SilenceLogger;
+using utl::MuteLogger;
 
 TEST(DeletionStrategyTest, PermanentDelete)
 {
-    SilenceLogger silenceLogger;
+    MuteLogger mute;
     file::TempDir data("dups");
     PermanentDelete strategy;
 
@@ -29,7 +29,7 @@ TEST(DeletionStrategyTest, PermanentDelete)
 
 TEST(DeletionStrategyTest, BackupAndDelete)
 {
-    SilenceLogger silenceLogger;
+    MuteLogger mute;
     file::TempDir data("dups");
     const auto backupDir = data.path() / "backup";
     auto strategy = std::make_unique<BackupAndDelete>(backupDir);

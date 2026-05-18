@@ -23,7 +23,7 @@ cxxopts::ParseResult parse(std::vector<const char*> args)
 // emits when the default dups.toml doesn't exist.
 struct SilentConfig : testing::Test
 {
-    core::utl::SilenceLogger silence;
+    core::utl::MuteLogger mute;
     Config cfg {"/data", "/cache"};
 };
 

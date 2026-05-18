@@ -9,26 +9,26 @@
 
 namespace core::utl {
 
-// @todo:hayk - The LogInterceptor has space for improvement, such as:
+// @todo:hayk - The LogCapture has space for improvement, such as:
 // - Keep track of log levels
 // - Consider optimizing work with messages
 //
 // Improvements will be done as I see the need for them in the codebase.
 
 template <typename Mutex>
-class LogSink : public spdlog::sinks::base_sink<Mutex>
+class MemorySink : public spdlog::sinks::base_sink<Mutex>
 {
 public:
-    LogSink() = default;
-    LogSink(const LogSink&) = delete;
-    LogSink& operator=(const LogSink&) = delete;
+    MemorySink() = default;
+    MemorySink(const MemorySink&) = delete;
+    MemorySink& operator=(const MemorySink&) = delete;
 
     /**
      * @brief Get all captured messages.
      */
     [[nodiscard]] std::vector<std::string> messages() const
     {
-        auto lock = std::lock_guard(this->mutex_);
+        auto lock = std::lock_guard(mtx_);
         return messages_;
     }
 
@@ -37,7 +37,7 @@ public:
      */
     void clear()
     {
-        auto lock = std::lock_guard(this->mutex_);
+        auto lock = std::lock_guard(mtx_);
         messages_.clear();
     }
 
@@ -46,7 +46,7 @@ public:
      */
     [[nodiscard]] std::optional<std::string> lastMessage() const
     {
-        auto lock = std::lock_guard(this->mutex_);
+        auto lock = std::lock_guard(mtx_);
         if (messages_.empty())
         {
             return std::nullopt;
@@ -57,8 +57,10 @@ public:
 
     [[nodiscard]] bool contains(std::string_view message) const
     {
-        auto lock = std::lock_guard(this->mutex_);
-        return std::ranges::find(messages_, message) != messages_.end();
+        auto lock = std::lock_guard(mtx_);
+        return std::ranges::any_of(messages_, [message](const auto& msg) {
+            return msg.contains(message);
+        });
     }
 
     /**
@@ -66,7 +68,7 @@ public:
      */
     [[nodiscard]] size_t count() const
     {
-        auto lock = std::lock_guard(this->mutex_);
+        auto lock = std::lock_guard(mtx_);
         return messages_.size();
     }
 
@@ -79,45 +81,51 @@ protected:
     void flush_() override {}
 
 private:
+    mutable Mutex mtx_;
     std::vector<std::string> messages_;
 };
 
 // Type alias for common usage (thread-safe)
-using TestMtLogSink = LogSink<std::mutex>;
+using TestMtLogSink = MemorySink<std::mutex>;
 
 // Type alias for single-threaded usage (if performance is critical and no mt
 // contention)
-using TestStLogSink = LogSink<spdlog::details::null_mutex>;
+using TestStLogSink = MemorySink<spdlog::details::null_mutex>;
 
+// RAII sink that captures spdlog output — useful in unit tests to verify
+// that a function emits the expected log messages.
 template <typename Mutex>
-class LogInterceptor
+class LogCapture
 {
 public:
-    LogInterceptor()
-        : name_ {"log_interceptor"}
-        , sink_ {std::make_shared<LogSink<Mutex>>()}
-        , defaultLogger_ {spdlog::default_logger()}
+    LogCapture(spdlog::level::level_enum level = spdlog::level::trace)
     {
-        auto logger = std::make_shared<spdlog::logger>(name_, sink_);
-        logger->set_level(spdlog::level::trace);
-        spdlog::set_default_logger(logger);
+        auto sink = std::make_shared<MemorySink<Mutex>>();
+        sink->set_pattern("%v");
+        sink->set_level(spdlog::level::trace);
+        sink_ = sink;
+
+        auto logger = spdlog::default_logger();
+        prevSinks_ = logger->sinks();
+        logger->sinks() = {sink_};
+        spdlog::set_level(level);
     }
 
-    ~LogInterceptor()
+    ~LogCapture()
     {
-        spdlog::set_default_logger(defaultLogger_);
-        spdlog::drop(name_);
+        spdlog::default_logger()->sinks() = prevSinks_;
+        spdlog::set_level(prevLevel_);
     }
 
-    LogInterceptor(const LogInterceptor&) = delete;
-    LogInterceptor(LogInterceptor&&) = delete;
-    LogInterceptor& operator=(const LogInterceptor&) = delete;
-    LogInterceptor& operator=(LogInterceptor&&) = delete;
+    LogCapture(const LogCapture&) = delete;
+    LogCapture(LogCapture&&) = delete;
+    LogCapture& operator=(const LogCapture&) = delete;
+    LogCapture& operator=(LogCapture&&) = delete;
 
     /**
      * @brief Get the log sink used by this interceptor.
      */
-    [[nodiscard]] std::shared_ptr<LogSink<Mutex>> sink() const
+    [[nodiscard]] std::shared_ptr<MemorySink<Mutex>> sink() const
     {
         return sink_;
     }
@@ -139,16 +147,16 @@ public:
     }
 
 private:
-    const std::string name_;
-    std::shared_ptr<LogSink<Mutex>> sink_;
-    std::shared_ptr<spdlog::logger> defaultLogger_;
+    spdlog::level::level_enum prevLevel_ {spdlog::get_level()};
+    std::vector<spdlog::sink_ptr> prevSinks_;
+    std::shared_ptr<MemorySink<Mutex>> sink_;
 };
 
 // Type alias for common usage (thread-safe)
-using TestMtLogInterceptor = LogInterceptor<std::mutex>;
+using LogCaptureMt = LogCapture<std::mutex>;
 
 // Type alias for single-threaded usage (if performance is critical and no mt
 // contention)
-using TestStLogInterceptor = LogInterceptor<spdlog::details::null_mutex>;
+using LogCaptureSt = LogCapture<spdlog::details::null_mutex>;
 
 } // namespace core::utl

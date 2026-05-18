@@ -6,11 +6,11 @@ namespace core::data {
 
 class Unpacker
 {
+public:
     Unpacker(const Unpacker&) = delete;
     Unpacker& operator=(const Unpacker&) = delete;
 
-public:
-    enum class Status
+    enum class Status : uint8_t
     {
         NeedMore,
         HasMore,
