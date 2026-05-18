@@ -44,7 +44,7 @@ public:
     /**
      * @brief Return the last captured message (if any)
      */
-    [[nodiscard]] std::optional<std::string> lastMessage() const
+    [[nodiscard]] std::optional<std::string_view> lastMessage() const
     {
         auto lock = std::lock_guard(mtx_);
         if (messages_.empty())
@@ -75,6 +75,7 @@ public:
 protected:
     void sink_it_(const spdlog::details::log_msg& msg) override
     {
+        auto lock = std::lock_guard(mtx_);
         messages_.emplace_back(msg.payload.data(), msg.payload.size());
     }
 
