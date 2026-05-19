@@ -140,7 +140,7 @@ fs::path data()
     if (ec)
     {
         throw std::system_error(ec,
-                                "Failed to retrieve local application data directory");
+                                "Failed to retrieve application data directory");
     }
 
     return path;
