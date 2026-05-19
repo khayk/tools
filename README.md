@@ -69,6 +69,23 @@ Style rules are in [.clang-format](.clang-format). Requires `clang-format` 17+.
 ./scripts/format.sh
 ```
 
+## Release
+
+Releases are triggered by pushing a version tag. The [release workflow](.github/workflows/release.yml) builds all three platforms, packages the binaries, and creates a GitHub release automatically.
+
+1. Update the version in [CMakeLists.txt](CMakeLists.txt) if needed:
+   ```cmake
+   project(tools VERSION 0.2.0 LANGUAGES CXX)
+   ```
+2. Commit, push to `main`, and wait for CI to go green.
+3. Tag the commit and push the tag:
+   ```bash
+   git tag v0.2.0
+   git push origin v0.2.0
+   ```
+
+The release is published at **https://github.com/khayk/tools/releases**.
+
 ## CI
 
 Every push to `main` and every pull request is tested on three platforms, each in its own workflow:

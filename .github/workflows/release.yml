@@ -1,30 +1,12 @@
 name: Release
 
 on:
-  workflow_dispatch:
+  push:
+    tags: ['v*']
 
 jobs:
-  version:
-    name: Compute version
-    runs-on: ubuntu-latest
-    outputs:
-      tag: ${{ steps.compute.outputs.tag }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: Compute version
-        id: compute
-        run: |
-          BASE=$(grep 'TOOLS_VERSION_BASE' CMakeLists.txt | grep -oP '"[0-9]+\.[0-9]+"' | tr -d '"')
-          COUNT=$(git rev-list HEAD --count)
-          echo "tag=v${BASE}.${COUNT}" >> $GITHUB_OUTPUT
-
   build:
     name: ${{ matrix.name }}
-    needs: version
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -83,26 +65,25 @@ jobs:
       - name: Package (Linux / macOS)
         if: runner.os != 'Windows'
         run: |
-          tar czf tools-${{ needs.version.outputs.tag }}-${{ matrix.name }}.tar.gz \
-            -C staging/bin .
+          tar czf tools-${{ github.ref_name }}-${{ matrix.name }}.tar.gz -C staging/bin .
 
       - name: Package (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           Compress-Archive -Path staging/bin/* `
-            -DestinationPath "tools-${{ needs.version.outputs.tag }}-${{ matrix.name }}.zip"
+            -DestinationPath "tools-${{ github.ref_name }}-${{ matrix.name }}.zip"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tools-${{ needs.version.outputs.tag }}-${{ matrix.name }}
-          path: tools-${{ needs.version.outputs.tag }}-${{ matrix.name }}.*
+          name: tools-${{ github.ref_name }}-${{ matrix.name }}
+          path: tools-${{ github.ref_name }}-${{ matrix.name }}.*
           retention-days: 1
 
   release:
     name: Create GitHub Release
-    needs: [version, build]
+    needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -119,7 +100,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          gh release create ${{ needs.version.outputs.tag }} \
-            --title "Release ${{ needs.version.outputs.tag }}" \
+          gh release create ${{ github.ref_name }} \
+            --title "Release ${{ github.ref_name }}" \
             --generate-notes \
             artifacts/*
