@@ -63,7 +63,7 @@ fs::path cache(std::error_code& ec)
 
 fs::path config(std::error_code& ec)
 {
-    return getKnownFolderPath(FOLDERID_ProgramData, ec);
+    return getKnownFolderPath(FOLDERID_RoamingAppData, ec);
 }
 
 } // namespace core::dirs

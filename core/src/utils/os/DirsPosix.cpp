@@ -29,34 +29,4 @@ fs::path temp(std::error_code& ec)
     return fs::temp_directory_path(ec);
 }
 
-fs::path data(std::error_code& ec)
-{
-    fs::path dir = home(ec);
-    if (!ec)
-    {
-        dir.append(".data");
-    }
-    return dir;
-}
-
-fs::path cache(std::error_code& ec)
-{
-    fs::path dir = home(ec);
-    if (!ec)
-    {
-        dir.append(".cache");
-    }
-    return dir;
-}
-
-fs::path config(std::error_code& ec)
-{
-    fs::path dir = home(ec);
-    if (!ec)
-    {
-        dir.append(".config");
-    }
-    return dir;
-}
-
 } // namespace core::dirs

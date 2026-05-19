@@ -6,30 +6,40 @@ using namespace core::dirs;
 
 namespace {
 
-// Captures platform-specific relationships between the dir functions.
-// Tests use this struct so no #ifdef leaks into individual test cases.
+// Holds the absolute expected paths for each dir function on this platform.
+// Computed once at startup so test cases stay #ifdef-free.
 struct PlatformRelations
 {
-    // Set to the expected subdirectory under home(), or nullopt if unrelated.
-    std::optional<fs::path> dataFromHome;
-    std::optional<fs::path> cacheFromHome;
-    std::optional<fs::path> configFromHome;
+    std::optional<fs::path> expectedData;
+    std::optional<fs::path> expectedCache;
+    std::optional<fs::path> expectedConfig;
     // On Windows, data() and cache() both map to LocalAppData.
     bool dataSameAsCache = false;
 };
 
+PlatformRelations makePlatformRelations()
+{
 #ifdef _WIN32
-constexpr PlatformRelations PLATFORM {
-    .dataSameAsCache = true,
-};
+    return {.dataSameAsCache = true};
 #else
-const PlatformRelations PLATFORM {
-    .dataFromHome   = ".data",
-    .cacheFromHome  = ".cache",
-    .configFromHome = ".config",
-    .dataSameAsCache = false,
-};
+    const auto h = home();
+    #ifdef __APPLE__
+    return {
+        .expectedData   = h / "Library/Application Support",
+        .expectedCache  = h / "Library/Caches",
+        .expectedConfig = h / "Library/Preferences",
+    };
+    #else
+    return {
+        .expectedData   = h / ".local/share",
+        .expectedCache  = h / ".cache",
+        .expectedConfig = h / ".config",
+    };
+    #endif
 #endif
+}
+
+const PlatformRelations PLATFORM = makePlatformRelations();
 
 void checkValidPath(const fs::path& path)
 {
@@ -82,27 +92,27 @@ TEST(UtilsDirsTests, ConfigIsValid)
     EXPECT_EQ(path, config());
 }
 
-TEST(UtilsDirsTests, DataRelativeToHome)
+TEST(UtilsDirsTests, DataExpectedPath)
 {
-    if (PLATFORM.dataFromHome)
+    if (PLATFORM.expectedData)
     {
-        EXPECT_EQ(data(), home() / *PLATFORM.dataFromHome);
+        EXPECT_EQ(data(), *PLATFORM.expectedData);
     }
 }
 
-TEST(UtilsDirsTests, CacheRelativeToHome)
+TEST(UtilsDirsTests, CacheExpectedPath)
 {
-    if (PLATFORM.cacheFromHome)
+    if (PLATFORM.expectedCache)
     {
-        EXPECT_EQ(cache(), home() / *PLATFORM.cacheFromHome);
+        EXPECT_EQ(cache(), *PLATFORM.expectedCache);
     }
 }
 
-TEST(UtilsDirsTests, ConfigRelativeToHome)
+TEST(UtilsDirsTests, ConfigExpectedPath)
 {
-    if (PLATFORM.configFromHome)
+    if (PLATFORM.expectedConfig)
     {
-        EXPECT_EQ(config(), home() / *PLATFORM.configFromHome);
+        EXPECT_EQ(config(), *PLATFORM.expectedConfig);
     }
 }
 
