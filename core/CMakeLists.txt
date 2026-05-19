@@ -23,6 +23,12 @@ file(GLOB UTILS_FILES
     "src/utils/*.h"
 )
 
+if(WIN32)
+    list(APPEND UTILS_FILES src/utils/os/DirsWin32.cpp)
+else()
+    list(APPEND UTILS_FILES src/utils/os/DirsPosix.cpp)
+endif()
+
 # set(SPDLOG_COMPILED_LIB true)
 find_package(OpenSSL REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
