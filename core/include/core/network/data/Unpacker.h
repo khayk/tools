@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <cstdint>
 
 namespace core::data {
 
@@ -24,7 +25,7 @@ public:
     Status status() const noexcept;
 
     void put(std::string_view bytes);
-    Status get(std::string& buf, size_t maxSize = 64 * 1024);
+    Status get(std::string& buf, size_t maxSize = 64ULL * 1024);
 
 private:
     std::string buffer_;
