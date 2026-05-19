@@ -21,6 +21,7 @@ set(TEST_SRCS ${NETWORK_FILES} ${UTILS_FILES} ${PATTERNS_FILES})
 add_executable(${PROJECT_TST} ${TEST_SRCS})
 
 target_link_libraries(${PROJECT_TST} PRIVATE core)
+target_include_directories(${PROJECT_TST} PRIVATE ${PROJECT_SOURCE_DIR}/src)
 
 # # For code coverage
 InstrumentForCoverage(${PROJECT_TST})

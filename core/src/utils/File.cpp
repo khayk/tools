@@ -1,4 +1,5 @@
 #include <core/utils/File.h>
+#include "FileDetail.h"
 #include <core/utils/Dirs.h>
 #include <core/utils/Str.h>
 #include <core/utils/Sys.h>
@@ -301,7 +302,9 @@ void enumFilesRecursive(const fs::path& dir,
     }
 }
 
-void openDirectory(const fs::path& path)
+namespace detail {
+
+std::string buildOpenDirCommand(const fs::path& path)
 {
     std::string spath;
     if (fs::is_regular_file(path))
@@ -319,38 +322,43 @@ void openDirectory(const fs::path& path)
     }
 
 #ifdef _WIN32
-    const std::string command = "explorer \"" + spath + "\"";
+    return "explorer \"" + spath + "\"";
 #elif __APPLE__
-    const std::string command = "open \"" + spath + "\"";
-#elif __linux__
-    const std::string command = "xdg-open \"" + spath + "\"";
+    return "open \"" + spath + "\"";
 #else
-    #error "Unsupported OS"
+    return "xdg-open \"" + spath + "\"";
 #endif
-
-    std::ignore = std::system(command.c_str());
 }
 
-void navigateFile(const fs::path& file)
+std::string buildNavigateFileCommand(const fs::path& file)
 {
     const std::string path = path2s(file);
 
 #ifdef _WIN32
-    const std::string command = "explorer /select,\"" + path + "\"";
+    return "explorer /select,\"" + path + "\"";
 #elif __APPLE__
-    const std::string command = "open -R \"" + path + "\"";
-#elif __linux__
-    constexpr auto pattern = "dbus-send --session --dest=org.freedesktop.FileManager1"
-                             " --type=method_call --print-reply"
-                             " /org/freedesktop/FileManager1"
-                             " org.freedesktop.FileManager1.ShowItems"
-                             " array:string:\"file://{}\" string:\"\"";
-    const std::string command = std::format(pattern, path);
+    return "open -R \"" + path + "\"";
 #else
-    #error "Unsupported OS"
+    constexpr auto pattern =
+        "dbus-send --session --dest=org.freedesktop.FileManager1"
+        " --type=method_call --print-reply"
+        " /org/freedesktop/FileManager1"
+        " org.freedesktop.FileManager1.ShowItems"
+        " array:string:\"file://{}\" string:\"\"";
+    return std::format(pattern, path);
 #endif
+}
 
-    std::ignore = std::system(command.c_str());
+} // namespace detail
+
+void openDirectory(const fs::path& path)
+{
+    std::ignore = std::system(detail::buildOpenDirCommand(path).c_str());
+}
+
+void navigateFile(const fs::path& file)
+{
+    std::ignore = std::system(detail::buildNavigateFileCommand(file).c_str());
 }
 
 } // namespace core::file
