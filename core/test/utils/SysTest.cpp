@@ -1,6 +1,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <core/utils/Sys.h>
+#include <core/utils/LogCapture.h>
+#include <spdlog/spdlog.h>
 
 #include <cerrno>
 
@@ -125,6 +127,26 @@ TEST(UtilsSysTests, ConstructLastErrorMsgWithError)
 
     EXPECT_THAT(msg, HasSubstr("op failed"));
     EXPECT_THAT(msg, HasSubstr(std::to_string(setup.code)));
+}
+
+// ---------------------------------------------------------------------------
+// logError
+// ---------------------------------------------------------------------------
+
+TEST(UtilsSysTests, LogErrorZeroCode)
+{
+    core::utl::LogCaptureMt cap;
+    logError("op failed", 0);
+    EXPECT_TRUE(cap.contains("op failed"));
+}
+
+TEST(UtilsSysTests, LogErrorNonZeroCode)
+{
+    core::utl::LogCaptureMt cap;
+    logError("op failed", static_cast<uint64_t>(ENOENT));
+    EXPECT_TRUE(cap.contains("op failed", spdlog::level::err));
+    EXPECT_TRUE(cap.contains(std::to_string(ENOENT)));
+    EXPECT_TRUE(cap.contains("file"));
 }
 
 // ---------------------------------------------------------------------------
