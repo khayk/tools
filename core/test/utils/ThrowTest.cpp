@@ -11,15 +11,16 @@ using testing::HasSubstr;
 // which would break formatFuncName's parenthesis-based param stripping.
 static std::string captureThrowMessage()
 {
+    std::string result;
     try
     {
         core::throwNotImplemented();
     }
     catch (const std::runtime_error& e)
     {
-        return e.what();
+        result = e.what();
     }
-    return {};
+    return result;
 }
 
 namespace {
