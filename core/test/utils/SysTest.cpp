@@ -18,6 +18,43 @@ using testing::Not;
 namespace {
 
 // ---------------------------------------------------------------------------
+// activeUserName
+// ---------------------------------------------------------------------------
+
+#if defined(_WIN32)
+
+TEST(UtilsSysTests, ActiveUserNameNonEmpty)
+{
+    // On Windows a console session is always assigned, so the name is non-empty.
+    EXPECT_FALSE(activeUserName().empty());
+}
+
+#elif defined(__APPLE__)
+
+TEST(UtilsSysTests, ActiveUserNameNonEmptyOrThrows)
+{
+    // SCDynamicStoreCopyConsoleUser returns nullptr in headless / CI environments,
+    // which causes the implementation to throw. Both outcomes are valid.
+    try
+    {
+        EXPECT_FALSE(activeUserName().empty());
+    }
+    catch (const std::runtime_error&)
+    {
+        GTEST_SKIP() << "No console user active (headless/CI environment)";
+    }
+}
+
+#else // Linux
+
+TEST(UtilsSysTests, ActiveUserNameThrowsNotImplemented)
+{
+    EXPECT_THROW(activeUserName(), std::runtime_error);
+}
+
+#endif
+
+// ---------------------------------------------------------------------------
 // currentProcessPath
 // ---------------------------------------------------------------------------
 
