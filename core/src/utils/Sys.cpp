@@ -2,6 +2,7 @@
 #ifdef _WIN32
     #include <Windows.h>
     #include <WtsApi32.h>
+    #include <psapi.h>
 
     #include <array>
 
@@ -11,7 +12,6 @@
     #include <libproc.h>
     #include <unistd.h>
     #include <array>
-    #include <fstream>
 #else
     #include <sys/types.h>
     #include <sys/stat.h>
@@ -259,8 +259,24 @@ fs::path currentProcessPath()
 size_t processMemoryUsage(uint32_t pid)
 {
 #ifdef _WIN32
-    std::ignore = pid;
-    return 0;
+    const HANDLE hProcess = OpenProcess(
+        PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, static_cast<DWORD>(pid));
+
+    if (hProcess == nullptr)
+    {
+        return 0;
+    }
+
+    PROCESS_MEMORY_COUNTERS pmc {};
+    size_t memory = 0;
+
+    if (GetProcessMemoryInfo(hProcess, &pmc, sizeof(pmc)))
+    {
+        memory = static_cast<size_t>(pmc.WorkingSetSize);
+    }
+
+    CloseHandle(hProcess);
+    return memory;
 #elif __APPLE__
     struct proc_taskinfo info {};
     const int ret =
