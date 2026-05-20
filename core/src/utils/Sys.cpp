@@ -187,6 +187,8 @@ uint32_t currentProcessId() noexcept
 
 #ifdef _WIN32
 
+#elif __APPLE__
+
 #else
 
 std::string getExecutablePathReadlink(int pid)
@@ -259,6 +261,11 @@ size_t processMemoryUsage(uint32_t pid)
 #ifdef _WIN32
     std::ignore = pid;
     return 0;
+#elif __APPLE__
+    struct proc_taskinfo info {};
+    const int ret =
+        proc_pidinfo(static_cast<int>(pid), PROC_PIDTASKINFO, 0, &info, sizeof(info));
+    return ret > 0 ? static_cast<size_t>(info.pti_resident_size) : 0;
 #else
     std::string filename = std::format("/proc/{}/status", pid);
     std::ifstream file(filename, std::ios::in);
