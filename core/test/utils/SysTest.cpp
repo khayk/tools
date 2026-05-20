@@ -6,6 +6,10 @@
 
 #include <cerrno>
 
+#ifdef _WIN32
+    #include <Windows.h>
+#endif
+
 using namespace core::sys;
 using testing::HasSubstr;
 using testing::IsEmpty;
