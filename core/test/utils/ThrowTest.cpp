@@ -6,9 +6,12 @@
 #include <stdexcept>
 
 using testing::HasSubstr;
+using testing::Not;
 
-// Defined at file scope so function_name() does not contain "(anonymous namespace)",
-// which would break formatFuncName's parenthesis-based param stripping.
+// All helpers live at file scope (not inside anonymous namespace) so that
+// source_location::function_name() does not contain "(anonymous namespace)",
+// which would cause formatFuncName to truncate the name to an empty string.
+
 static std::string captureThrowMessage()
 {
     std::string result;
@@ -22,6 +25,66 @@ static std::string captureThrowMessage()
     }
     return result;
 }
+
+// Member of a class template — function_name() contains '<T>' on all major
+// compilers, which exercises the ++depth / --depth template-stripping loop.
+template <typename T>
+struct TypedCapture
+{
+    static std::string capture()
+    {
+        std::string result;
+        try
+        {
+            core::throwNotImplemented();
+        }
+        catch (const std::runtime_error& e)
+        {
+            result = e.what();
+        }
+        return result;
+    }
+};
+
+// Named lowercase namespace — formatFuncName should strip it and return only
+// the function or class name.
+namespace throwtest {
+
+std::string captureFromNs()
+{
+    std::string result;
+    try
+    {
+        core::throwNotImplemented();
+    }
+    catch (const std::runtime_error& e)
+    {
+        result = e.what();
+    }
+    return result;
+}
+
+// Class nested inside a namespace — function_name() yields
+// "throwtest::NestedHelper::capture", so qualifier = "throwtest::NestedHelper"
+// and qualSep != npos, exercising the qualifier.substr(qualSep + 2) branch.
+struct NestedHelper
+{
+    static std::string capture()
+    {
+        std::string result;
+        try
+        {
+            core::throwNotImplemented();
+        }
+        catch (const std::runtime_error& e)
+        {
+            result = e.what();
+        }
+        return result;
+    }
+};
+
+} // namespace throwtest
 
 namespace {
 
@@ -48,8 +111,6 @@ TEST(ThrowTests, MessageHasNotImplementedPrefix)
 
 TEST(ThrowTests, MessageContainsCallerFileName)
 {
-    // Capture the expected filename at the call site so the check is resilient
-    // to file renames without hardcoding the string.
     const auto loc = std::source_location::current();
     const std::string_view fullPath = loc.file_name();
     const auto sep = fullPath.find_last_of("/\\");
@@ -82,8 +143,36 @@ TEST(ThrowTests, MessageContainsLineNumber)
 TEST(ThrowTests, MessageContainsFunctionName)
 {
     // captureThrowMessage is a named free function, so formatFuncName can extract
-    // its name from source_location without being confused by "(anonymous namespace)".
+    // its name without being confused by "(anonymous namespace)".
     EXPECT_THAT(captureThrowMessage(), HasSubstr("captureThrowMessage"));
+}
+
+// ---------------------------------------------------------------------------
+// formatFuncName branch coverage
+// ---------------------------------------------------------------------------
+
+TEST(ThrowTests, TemplateParamsAreStrippedFromFunctionName)
+{
+    // TypedCapture<int>::capture has '<int>' in function_name(), which drives the
+    // ++depth / --depth path inside formatFuncName's template-stripping loop.
+    EXPECT_THAT(TypedCapture<int>::capture(), HasSubstr("TypedCapture"));
+}
+
+TEST(ThrowTests, LowercaseNamespaceQualifierIsStripped)
+{
+    // "throwtest" starts with a lowercase letter, so formatFuncName treats it as
+    // a namespace and returns only the bare function name.
+    const auto msg = throwtest::captureFromNs();
+    EXPECT_THAT(msg, HasSubstr("captureFromNs"));
+    EXPECT_THAT(msg, Not(HasSubstr("throwtest::")));
+}
+
+TEST(ThrowTests, DeepQualifierExtractsImmediateClassComponent)
+{
+    // function_name() = "...throwtest::NestedHelper::capture(...)"
+    // qualifier = "throwtest::NestedHelper", qualSep != npos
+    // → lastQual = "NestedHelper" (uppercase) → "NestedHelper::capture"
+    EXPECT_THAT(throwtest::NestedHelper::capture(), HasSubstr("NestedHelper"));
 }
 
 } // namespace
