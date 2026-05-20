@@ -3,8 +3,6 @@
 #include <psapi.h>
 #include <array>
 
-#pragma comment(lib, "Wtsapi32.lib")
-
 #include <core/utils/Sys.h>
 #include <spdlog/spdlog.h>
 

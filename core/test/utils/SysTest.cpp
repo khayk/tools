@@ -154,6 +154,49 @@ TEST(UtilsSysTests, LogErrorNonZeroCode)
 }
 
 // ---------------------------------------------------------------------------
+// logLastError
+// ---------------------------------------------------------------------------
+
+TEST(UtilsSysTests, LogLastErrorZeroCodeLogsMessage)
+{
+    const auto setup = makeLastErrorSetup();
+    setup.clear();
+    core::utl::LogCaptureMt cap;
+    logLastError("last error op");
+    EXPECT_TRUE(cap.contains("last error op"));
+}
+
+TEST(UtilsSysTests, LogLastErrorNonZeroCodeLogsMessage)
+{
+    const auto setup = makeLastErrorSetup();
+    core::utl::LogCaptureMt cap;
+    setup.set();
+    logLastError("last error op");
+    setup.clear();
+    EXPECT_TRUE(cap.contains("last error op", spdlog::level::err));
+}
+
+TEST(UtilsSysTests, LogLastErrorNonZeroCodeLogsErrorCode)
+{
+    const auto setup = makeLastErrorSetup();
+    core::utl::LogCaptureMt cap;
+    setup.set();
+    logLastError("last error op");
+    setup.clear();
+    EXPECT_TRUE(cap.contains(std::to_string(setup.code)));
+}
+
+TEST(UtilsSysTests, LogLastErrorNonZeroCodeLogsDescription)
+{
+    const auto setup = makeLastErrorSetup();
+    core::utl::LogCaptureMt cap;
+    setup.set();
+    logLastError("last error op");
+    setup.clear();
+    EXPECT_TRUE(cap.contains("file"));
+}
+
+// ---------------------------------------------------------------------------
 // processMemoryUsage / currentProcessMemoryUsage
 // ---------------------------------------------------------------------------
 

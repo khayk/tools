@@ -69,6 +69,10 @@ target_link_libraries(${PROJECT_LIB} PUBLIC
     Boost::iostreams
 )
 
+if(WIN32)
+    target_link_libraries(${PROJECT_LIB} PUBLIC psapi Wtsapi32)
+endif()
+
 if(APPLE)
     target_link_libraries(${PROJECT_LIB} PUBLIC
         "-framework CoreFoundation"
