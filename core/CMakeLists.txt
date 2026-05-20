@@ -25,12 +25,16 @@ file(GLOB UTILS_FILES
 
 if(WIN32)
     list(APPEND UTILS_FILES src/utils/os/DirsWin32.cpp)
+    list(APPEND UTILS_FILES src/utils/os/SysWin32.cpp)
 else()
     list(APPEND UTILS_FILES src/utils/os/DirsPosix.cpp)
+    list(APPEND UTILS_FILES src/utils/os/SysPosix.cpp)
     if(APPLE)
         list(APPEND UTILS_FILES src/utils/os/DirsMacOS.cpp)
+        list(APPEND UTILS_FILES src/utils/os/SysMacOS.cpp)
     else()
         list(APPEND UTILS_FILES src/utils/os/DirsLinux.cpp)
+        list(APPEND UTILS_FILES src/utils/os/SysLinux.cpp)
     endif()
 endif()
 
