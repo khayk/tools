@@ -1,4 +1,5 @@
 #include <unistd.h>
+#include <climits>
 #include <format>
 #include <cerrno>
 #include <cstring>
