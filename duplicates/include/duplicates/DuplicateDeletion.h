@@ -12,7 +12,7 @@
 
 namespace tools::dups {
 
-enum class Purpose : std::int8_t
+enum class Purpose : uint8_t
 {
     Ignored,
     KeepFrom,
@@ -73,7 +73,7 @@ public:
     DeleteFromPaths& deleteFromPaths();
 };
 
-enum class Flow : std::uint8_t
+enum class Flow : uint8_t
 {
     Retry,
     Done,

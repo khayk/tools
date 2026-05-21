@@ -5,7 +5,7 @@
 
 namespace km {
 
-enum class ImageFormat : std::uint8_t
+enum class ImageFormat : uint8_t
 {
     jpg,
     bmp,

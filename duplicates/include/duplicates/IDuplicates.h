@@ -32,7 +32,7 @@ struct Options
     size_t maxSizeBytes {std::numeric_limits<size_t>::max()};
 };
 
-enum class Stage
+enum class Stage : uint8_t
 {
     Prepare,
     Calculate
