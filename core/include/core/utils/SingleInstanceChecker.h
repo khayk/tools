@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <cstdint>
 #include <string>
 
 namespace core {
@@ -9,7 +10,7 @@ class SingleInstanceChecker
 {
     std::wstring appName_;
     std::atomic_bool processAlreadyRunning_ {false};
-    void* mutex_ {nullptr};
+    std::intptr_t mutex_ {0};
 
 public:
     explicit SingleInstanceChecker(std::wstring_view name);

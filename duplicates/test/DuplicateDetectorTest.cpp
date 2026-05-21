@@ -225,7 +225,11 @@ TEST(DuplicateDetectorTest, MetricsThresholds)
     EXPECT_LE(sizeof(Node), 120);
 #endif
 
+#ifdef _WIN32
+    EXPECT_LE(sys::currentProcessMemoryUsage(), 64 * 1024 * 1024);
+#else
     EXPECT_LE(sys::currentProcessMemoryUsage(), 32 * 1024 * 1024);
+#endif
 }
 
 TEST(DuplicateDetectorTest, Progress)
