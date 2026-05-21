@@ -6,38 +6,57 @@ if(WIN32)
     add_compile_definitions(PSAPI_VERSION=1)
 endif()
 
-file(GLOB NETWORK_FILES
-    "src/network/data/*.cpp"
-    "src/network/data/*.h"
-    "src/network/*.cpp"
-    "src/network/*.h"
+set(NETWORK_FILES
+    src/network/data/Packer.cpp
+    src/network/data/StringSource.cpp
+    src/network/data/Unpacker.cpp
+    src/network/TcpClient.cpp
+    src/network/TcpCommunicator.cpp
+    src/network/TcpConnection.cpp
+    src/network/TcpServer.cpp
 )
 
-file(GLOB PATTERNS_FILES
-    "src/patterns/*.cpp"
-    "src/patterns/*.h"
+set(PATTERNS_FILES
+    # header-only, no .cpp sources
 )
 
-file(GLOB UTILS_FILES
-    "src/utils/*.cpp"
-    "src/utils/*.h"
+set(UTILS_FILES
+    src/utils/Crypto.cpp
+    src/utils/Dirs.cpp
+    src/utils/File.cpp
+    src/utils/FileDetail.h
+    src/utils/Log.cpp
+    src/utils/SingleInstanceChecker.cpp
+    src/utils/StopWatch.cpp
+    src/utils/Str.cpp
+    src/utils/Sys.cpp
+    src/utils/Throw.cpp
+    src/utils/Tracer.cpp
 )
 
 if(WIN32)
-    list(APPEND UTILS_FILES src/utils/os/DirsWin32.cpp)
-    list(APPEND UTILS_FILES src/utils/os/SysWin32.cpp)
-    list(APPEND UTILS_FILES src/utils/os/SingleInstanceCheckerWin32.cpp)
+    list(APPEND UTILS_FILES
+        src/utils/os/DirsWin32.cpp
+        src/utils/os/SysWin32.cpp
+        src/utils/os/SingleInstanceCheckerWin32.cpp
+    )
 else()
-    list(APPEND UTILS_FILES src/utils/os/DirsPosix.cpp)
-    list(APPEND UTILS_FILES src/utils/os/SysPosix.cpp)
+    list(APPEND UTILS_FILES
+        src/utils/os/DirsPosix.cpp
+        src/utils/os/SysPosix.cpp
+    )
     if(APPLE)
-        list(APPEND UTILS_FILES src/utils/os/DirsMacOS.cpp)
-        list(APPEND UTILS_FILES src/utils/os/SysMacOS.cpp)
-        list(APPEND UTILS_FILES src/utils/os/SingleInstanceCheckerMacOS.cpp)
+        list(APPEND UTILS_FILES
+            src/utils/os/DirsMacOS.cpp
+            src/utils/os/SysMacOS.cpp
+            src/utils/os/SingleInstanceCheckerMacOS.cpp
+        )
     else()
-        list(APPEND UTILS_FILES src/utils/os/DirsLinux.cpp)
-        list(APPEND UTILS_FILES src/utils/os/SysLinux.cpp)
-        list(APPEND UTILS_FILES src/utils/os/SingleInstanceCheckerLinux.cpp)
+        list(APPEND UTILS_FILES
+            src/utils/os/DirsLinux.cpp
+            src/utils/os/SysLinux.cpp
+            src/utils/os/SingleInstanceCheckerLinux.cpp
+        )
     endif()
 endif()
 

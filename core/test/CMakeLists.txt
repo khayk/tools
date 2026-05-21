@@ -1,20 +1,32 @@
 set(PROJECT_TST core-test)
 
-file(GLOB NETWORK_FILES
-    "network/data/*.cpp"
-    "network/data/*.h"
-    "network/*.cpp"
-    "network/*.h"
+set(NETWORK_FILES
+    network/data/PackerTest.cpp
+    network/data/UnpackerTest.cpp
+    network/TcpClientTest.cpp
+    network/TcpCommunicatorTest.cpp
+    network/TcpConnectionTest.cpp
+    network/TcpServerTest.cpp
 )
 
-file(GLOB UTILS_FILES
-    "utils/*.cpp"
-    "utils/*.h"
+set(UTILS_FILES
+    utils/CryptoTest.cpp
+    utils/DirsTest.cpp
+    utils/FileTest.cpp
+    utils/FmtExtTest.cpp
+    utils/LogTest.cpp
+    utils/NumberTest.cpp
+    utils/SingleInstanceCheckerTest.cpp
+    utils/StopWatchTest.cpp
+    utils/StrTest.cpp
+    utils/SysTest.cpp
+    utils/ThrowTest.cpp
+    utils/TracerTest.cpp
 )
 
-file(GLOB PATTERNS_FILES
-    "patterns/*.cpp"
-    "patterns/*.h"
+set(PATTERNS_FILES
+    patterns/CallbackTest.cpp
+    patterns/ObserverTest.cpp
 )
 
 set(TEST_SRCS ${NETWORK_FILES} ${UTILS_FILES} ${PATTERNS_FILES})
