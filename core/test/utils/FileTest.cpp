@@ -12,7 +12,6 @@ namespace fs = std::filesystem;
 using testing::_;
 using testing::HasSubstr;
 using testing::MockFunction;
-using testing::MatchesRegex;
 using namespace core::file;
 
 namespace {
@@ -185,13 +184,13 @@ TEST(UtilsFileTempPathTests, DefaultPrefix)
 {
     const fs::path p = constructTempPath("", fs::temp_directory_path());
     EXPECT_TRUE(fs::equivalent(p.parent_path(), fs::temp_directory_path()));
-    EXPECT_THAT(p.filename().string(), MatchesRegex("tmp-[0-9]+-[a-z]{6}"));
+    EXPECT_TRUE(std::regex_match(p.filename().string(), std::regex("tmp-[0-9]+-[a-z]{6}")));
 }
 
 TEST(UtilsFileTempPathTests, WithPrefix)
 {
     const fs::path p = constructTempPath("myapp", fs::temp_directory_path());
-    EXPECT_THAT(p.filename().string(), MatchesRegex("myapp-[0-9]+-[a-z]{6}"));
+    EXPECT_TRUE(std::regex_match(p.filename().string(), std::regex("myapp-[0-9]+-[a-z]{6}")));
 }
 
 TEST(UtilsFileTempPathTests, Unique)
