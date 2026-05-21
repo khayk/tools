@@ -17,8 +17,8 @@ using testing::Return;
 namespace tools::dups {
 
 using namespace core;
-using utl::MuteLogger;
 using utl::LogCaptureSt;
+using utl::MuteLogger;
 
 namespace {
 
@@ -146,8 +146,8 @@ TEST_F(DuplicateDeletionTest, DeleteFilesException)
 
     EXPECT_NO_THROW(deleteFiles(strategy, files));
     EXPECT_TRUE(capture.count() > 0);
-    EXPECT_TRUE(capture.contains(
-        "Error 'Deletion error' while deleting file 'file1.txt'"));
+    EXPECT_TRUE(
+        capture.contains("Error 'Deletion error' while deleting file 'file1.txt'"));
 }
 
 

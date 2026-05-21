@@ -70,10 +70,9 @@ TEST(UtilsTest, OutputTreeNestedDirectoriesGetSlash)
     util::outputTree(&f.tree, os);
 
     // dir1 depth 1 — no slash; dir2 depth 2, non-leaf — gets slash
-    const std::string expected =
-        "dir1\n"
-        " dir2/\n"
-        "  file1.txt\n";
+    const std::string expected = "dir1\n"
+                                 " dir2/\n"
+                                 "  file1.txt\n";
     EXPECT_EQ(os.str(), expected);
 }
 

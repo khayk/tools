@@ -142,7 +142,11 @@ public:
         spdlog::set_level(prevLevel_);
     }
 
-    TempDir& tempDir() { return tempDir_; }
+    TempDir& tempDir()
+    {
+        return tempDir_;
+    }
+
 private:
     TempDir tempDir_ {"log-configure"};
     std::vector<spdlog::sink_ptr> prevSinks_;

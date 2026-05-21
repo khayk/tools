@@ -25,14 +25,14 @@ PlatformRelations makePlatformRelations()
     const auto h = home();
     #ifdef __APPLE__
     return {
-        .expectedData   = h / "Library/Application Support",
-        .expectedCache  = h / "Library/Caches",
+        .expectedData = h / "Library/Application Support",
+        .expectedCache = h / "Library/Caches",
         .expectedConfig = h / "Library/Preferences",
     };
     #else
     return {
-        .expectedData   = h / ".local/share",
-        .expectedCache  = h / ".cache",
+        .expectedData = h / ".local/share",
+        .expectedCache = h / ".cache",
         .expectedConfig = h / ".config",
     };
     #endif

@@ -114,8 +114,9 @@ fs::path currentProcessPath()
 
 size_t processMemoryUsage(uint32_t pid)
 {
-    const HANDLE hProcess = OpenProcess(
-        PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, static_cast<DWORD>(pid));
+    const HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
+                                        FALSE,
+                                        static_cast<DWORD>(pid));
 
     if (hProcess == nullptr)
     {

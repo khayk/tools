@@ -184,13 +184,15 @@ TEST(UtilsFileTempPathTests, DefaultPrefix)
 {
     const fs::path p = constructTempPath("", fs::temp_directory_path());
     EXPECT_TRUE(fs::equivalent(p.parent_path(), fs::temp_directory_path()));
-    EXPECT_TRUE(std::regex_match(p.filename().string(), std::regex("tmp-[0-9]+-[a-z]{6}")));
+    EXPECT_TRUE(
+        std::regex_match(p.filename().string(), std::regex("tmp-[0-9]+-[a-z]{6}")));
 }
 
 TEST(UtilsFileTempPathTests, WithPrefix)
 {
     const fs::path p = constructTempPath("myapp", fs::temp_directory_path());
-    EXPECT_TRUE(std::regex_match(p.filename().string(), std::regex("myapp-[0-9]+-[a-z]{6}")));
+    EXPECT_TRUE(
+        std::regex_match(p.filename().string(), std::regex("myapp-[0-9]+-[a-z]{6}")));
 }
 
 TEST(UtilsFileTempPathTests, Unique)
@@ -292,8 +294,7 @@ TEST_F(UtilsFileTests, TempDirCustomDirectory)
 {
     TempDir td("test", TempDir::CreateMode::Auto, testDir_);
     EXPECT_TRUE(fs::is_directory(td.path()));
-    EXPECT_TRUE(td.path().string().starts_with(
-        testDir_.lexically_normal().string()));
+    EXPECT_TRUE(td.path().string().starts_with(testDir_.lexically_normal().string()));
 }
 
 // ---------------------------------------------------------------------------
@@ -303,11 +304,14 @@ TEST_F(UtilsFileTests, TempDirCustomDirectory)
 TEST_F(UtilsFileTests, EnumFilesRecursive_Empty)
 {
     std::vector<fs::path> found;
-    enumFilesRecursive(testDir_, {}, [&](const fs::path& p, const std::error_code& ec) {
-        if (!ec) {
-            found.push_back(p);
-        }
-    });
+    enumFilesRecursive(testDir_,
+                       {},
+                       [&](const fs::path& p, const std::error_code& ec) {
+                           if (!ec)
+                           {
+                               found.push_back(p);
+                           }
+                       });
     EXPECT_TRUE(found.empty());
 }
 
@@ -317,12 +321,15 @@ TEST_F(UtilsFileTests, EnumFilesRecursive_ListsFiles)
     write(testDir_ / "b.txt", "b");
 
     std::vector<fs::path> found;
-    enumFilesRecursive(testDir_, {}, [&](const fs::path& p, const std::error_code& ec) {
-        if (!ec) {
-            found.push_back(p);
-        }
-    });
-    EXPECT_EQ(2u, found.size());
+    enumFilesRecursive(testDir_,
+                       {},
+                       [&](const fs::path& p, const std::error_code& ec) {
+                           if (!ec)
+                           {
+                               found.push_back(p);
+                           }
+                       });
+    EXPECT_EQ(2U, found.size());
 }
 
 TEST_F(UtilsFileTests, EnumFilesRecursive_Recursive)
@@ -332,13 +339,16 @@ TEST_F(UtilsFileTests, EnumFilesRecursive_Recursive)
     write(sub / "c.txt", "c");
 
     std::vector<fs::path> found;
-    enumFilesRecursive(testDir_, {}, [&](const fs::path& p, const std::error_code& ec) {
-        if (!ec) {
-            found.push_back(p);
-        }
-    });
+    enumFilesRecursive(testDir_,
+                       {},
+                       [&](const fs::path& p, const std::error_code& ec) {
+                           if (!ec)
+                           {
+                               found.push_back(p);
+                           }
+                       });
     // sub/ directory + sub/c.txt
-    EXPECT_EQ(2u, found.size());
+    EXPECT_EQ(2U, found.size());
 }
 
 TEST_F(UtilsFileTests, EnumFilesRecursive_ExclusionPattern)
@@ -350,11 +360,12 @@ TEST_F(UtilsFileTests, EnumFilesRecursive_ExclusionPattern)
     enumFilesRecursive(testDir_,
                        {std::regex("\\.log$")},
                        [&](const fs::path& p, const std::error_code& ec) {
-                           if (!ec) {
+                           if (!ec)
+                           {
                                found.push_back(p);
                            }
                        });
-    ASSERT_EQ(1u, found.size());
+    ASSERT_EQ(1U, found.size());
     EXPECT_EQ("a.txt", found[0].filename().string());
 }
 
@@ -364,7 +375,8 @@ TEST(UtilsFileEnumTests, EnumFilesRecursive_NonExistentDir)
     enumFilesRecursive("/non/existent/path",
                        {},
                        [&](const fs::path&, const std::error_code& ec) {
-                           if (ec) {
+                           if (ec)
+                           {
                                gotError = true;
                            }
                        });

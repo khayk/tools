@@ -18,9 +18,9 @@ TEST(ConfigTest, ConstructorAppendsDuplicatesSubdir)
 {
     Config cfg("data", "cache");
 
-    EXPECT_EQ(cfg.dataDir(),  NORM_PATH / "data/duplicates");
+    EXPECT_EQ(cfg.dataDir(), NORM_PATH / "data/duplicates");
     EXPECT_EQ(cfg.cacheDir(), NORM_PATH / "cache/duplicates");
-    EXPECT_EQ(cfg.logDir(),   NORM_PATH / "data/duplicates/logs");
+    EXPECT_EQ(cfg.logDir(), NORM_PATH / "data/duplicates/logs");
 }
 
 TEST(ConfigTest, InitialStateHasEmptyCollectionsAndZeroSizes)
@@ -120,7 +120,6 @@ TEST(ConfigTest, AbsoluteFilePathKeptAsIs)
     cfg.setAllFilesPath("/absolute/all.txt");
     EXPECT_EQ(cfg.allFilesPath(), fs::path("/absolute/all.txt"));
 #endif
-
 }
 
 TEST(ConfigTest, EmptyFilePathRemainsEmpty)
@@ -233,13 +232,13 @@ TEST(ConfigTest, ApplyOverridesReadsTomlValues)
     core::file::TempDir tmp("cfg-test");
     const auto cfgFile = tmp.path() / "test.toml";
     core::file::write(cfgFile,
-        "min_file_size_bytes = 2048\n"
-        "max_file_size_bytes = 999999\n"
-        "dry_run = false\n"
-        "scan_directories = [\"/tmp/scans\"]\n"
-        "exclusion_patterns = [\"pattern\"]\n"
-        "dirs_to_keep_from = []\n"
-        "dirs_to_delete_from = []\n");
+                      "min_file_size_bytes = 2048\n"
+                      "max_file_size_bytes = 999999\n"
+                      "dry_run = false\n"
+                      "scan_directories = [\"/tmp/scans\"]\n"
+                      "exclusion_patterns = [\"pattern\"]\n"
+                      "dirs_to_keep_from = []\n"
+                      "dirs_to_delete_from = []\n");
 
     Config cfg("/data", "/cache");
     core::utl::LogCaptureSt capture;
@@ -250,7 +249,7 @@ TEST(ConfigTest, ApplyOverridesReadsTomlValues)
     EXPECT_TRUE(capture.contains("Overriding config from file:"));
 
     EXPECT_EQ(cfg.minFileSizeBytes(), 2048U);
-    EXPECT_EQ(cfg.maxFileSizeBytes(), 999999U);
+    EXPECT_EQ(cfg.maxFileSizeBytes(), 999'999U);
     EXPECT_FALSE(cfg.dryRun());
     EXPECT_EQ(cfg.scanDirs().size(), 1U);
     EXPECT_EQ(cfg.exclusionPatterns().size(), 1U);
@@ -261,13 +260,13 @@ TEST(ConfigTest, ApplyOverridesReadsDirAndFilePaths)
     core::file::TempDir tmp("cfg-paths-test");
     const auto cfgFile = tmp.path() / "paths.toml";
     core::file::write(cfgFile,
-        "dirs_to_keep_from   = [\"keep/a\"]\n"
-        "dirs_to_delete_from = [\"delete/b\"]\n"
-        "all_files = \"custom_all.txt\"\n"
-        "dup_files = \"custom_dup.txt\"\n"
-        "ign_files = \"custom_ign.txt\"\n"
-        "scan_directories = []\n"
-        "exclusion_patterns = []\n");
+                      "dirs_to_keep_from   = [\"keep/a\"]\n"
+                      "dirs_to_delete_from = [\"delete/b\"]\n"
+                      "all_files = \"custom_all.txt\"\n"
+                      "dup_files = \"custom_dup.txt\"\n"
+                      "ign_files = \"custom_ign.txt\"\n"
+                      "scan_directories = []\n"
+                      "exclusion_patterns = []\n");
 
     Config cfg("/data", "/cache");
     core::utl::LogCaptureSt capture;

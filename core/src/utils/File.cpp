@@ -339,12 +339,11 @@ std::string buildNavigateFileCommand(const fs::path& file)
 #elif __APPLE__
     return "open -R \"" + path + "\"";
 #else
-    constexpr auto pattern =
-        "dbus-send --session --dest=org.freedesktop.FileManager1"
-        " --type=method_call --print-reply"
-        " /org/freedesktop/FileManager1"
-        " org.freedesktop.FileManager1.ShowItems"
-        " array:string:\"file://{}\" string:\"\"";
+    constexpr auto pattern = "dbus-send --session --dest=org.freedesktop.FileManager1"
+                             " --type=method_call --print-reply"
+                             " /org/freedesktop/FileManager1"
+                             " org.freedesktop.FileManager1.ShowItems"
+                             " array:string:\"file://{}\" string:\"\"";
     return std::format(pattern, path);
 #endif
 }

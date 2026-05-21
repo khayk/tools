@@ -105,7 +105,7 @@ TEST_F(NodeTest, LeafsCountForTree)
     EXPECT_EQ(root.leafsCount(), 1);
 
     Node* dir1 = root.addChild(dir1Name);
-    EXPECT_EQ(root.leafsCount(), 1);  // dir1 replaces root as the only leaf
+    EXPECT_EQ(root.leafsCount(), 1); // dir1 replaces root as the only leaf
 
     dir1->addChild(file1Name);
     dir1->addChild(file2Name);
@@ -142,7 +142,7 @@ TEST_F(NodeTest, EnumLeafsConstVisitsOnlyLeaves)
     Node* dir1 = root.addChild(dir1Name);
     dir1->addChild(file1Name);
     dir1->addChild(file2Name);
-    root.addChild(dir2Name);  // leaf sibling of dir1
+    root.addChild(dir2Name); // leaf sibling of dir1
 
     std::vector<const Node*> visited;
     const Node& croot = root;
@@ -203,16 +203,16 @@ TEST_F(NodeTest, EnumNodesNonLeafsVisitedBeforeLeafs)
     });
 
     ASSERT_EQ(isLeafOrder.size(), 5U);
-    EXPECT_FALSE(isLeafOrder.front());  // dir1 visited first (non-leaf)
-    EXPECT_TRUE(isLeafOrder.back());    // file3 visited last (leaf at root level)
+    EXPECT_FALSE(isLeafOrder.front()); // dir1 visited first (non-leaf)
+    EXPECT_TRUE(isLeafOrder.back());   // file3 visited last (leaf at root level)
 }
 
 TEST_F(NodeTest, UpdatePopulatesSizeFromDisk)
 {
     core::file::TempDir tmp("node-update");
 
-    core::file::write(tmp.path() / "a.txt", "hello");   // 5 bytes
-    core::file::write(tmp.path() / "b.txt", "world!");  // 6 bytes
+    core::file::write(tmp.path() / "a.txt", "hello");  // 5 bytes
+    core::file::write(tmp.path() / "b.txt", "world!"); // 6 bytes
 
     // fullPath() skips the root's own name (root has no parent), so a direct
     // child of root contributes its name as the path prefix. Using the tmp
@@ -228,8 +228,8 @@ TEST_F(NodeTest, UpdatePopulatesSizeFromDisk)
 
     root.update();
 
-    EXPECT_EQ(dir->size(), 11U);   // 5 + 6
-    EXPECT_EQ(root.size(), 11U);   // propagated up
+    EXPECT_EQ(dir->size(), 11U); // 5 + 6
+    EXPECT_EQ(root.size(), 11U); // propagated up
 }
 
 } // namespace tools::dups

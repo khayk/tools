@@ -21,7 +21,9 @@ SingleInstanceChecker::SingleInstanceChecker(std::wstring_view name)
 
     if (fd < 0)
     {
-        spdlog::error("Failed to open lock file '{}': {}", lockPath, std::strerror(errno));
+        spdlog::error("Failed to open lock file '{}': {}",
+                      lockPath,
+                      std::strerror(errno));
         processAlreadyRunning_ = true;
         return;
     }

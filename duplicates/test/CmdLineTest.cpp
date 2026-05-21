@@ -46,7 +46,8 @@ TEST_F(SilentConfig, PopulateConfigAppliesDefaultSizes)
 
 TEST_F(SilentConfig, ScanDirOption)
 {
-    auto result = parse({"duplicates", "--scan-dir", "/tmp/a", "--scan-dir", "/tmp/b"});
+    auto result =
+        parse({"duplicates", "--scan-dir", "/tmp/a", "--scan-dir", "/tmp/b"});
     populateConfig(result, cfg);
     EXPECT_EQ(cfg.scanDirs().size(), 2U);
 }
@@ -69,7 +70,7 @@ TEST_F(SilentConfig, MaxSizeOption)
 {
     auto result = parse({"duplicates", "--max-size", "1000000"});
     populateConfig(result, cfg);
-    EXPECT_EQ(cfg.maxFileSizeBytes(), 1000000U);
+    EXPECT_EQ(cfg.maxFileSizeBytes(), 1'000'000U);
 }
 
 TEST_F(SilentConfig, UpdateFreqOption)
@@ -88,7 +89,8 @@ TEST_F(SilentConfig, ExcludeOption)
 
 TEST_F(SilentConfig, KeepAndDeletePathOptions)
 {
-    auto result = parse({"duplicates", "--keep-path", "/keep/a", "--delete-path", "/del/b"});
+    auto result =
+        parse({"duplicates", "--keep-path", "/keep/a", "--delete-path", "/del/b"});
     populateConfig(result, cfg);
     EXPECT_EQ(cfg.dirsToKeepFrom().size(), 1U);
     EXPECT_EQ(cfg.dirsToDeleteFrom().size(), 1U);
