@@ -1,8 +1,8 @@
 #include <kidmon/agent/KidmonAgent.h>
 #include <kidmon/server/KidmonServer.h>
 #include <kidmon/config/Config.h>
-#include <kidmon/common/Console.h>
-#include <kidmon/common/Service.h>
+#include <core/app/Console.h>
+#include <core/app/Service.h>
 #include <kidmon/common/Utils.h>
 #include <BuildInfo.h>
 
@@ -18,6 +18,9 @@
 #include <optional>
 
 using namespace km;
+using core::Console;
+using core::Runnable;
+using core::Service;
 
 namespace {
 

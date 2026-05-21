@@ -1,12 +1,12 @@
 #pragma once
 
-#include <kidmon/common/Runnable.h>
+#include <core/app/Runnable.h>
 #include <memory>
 #include <chrono>
 
 namespace km {
 
-class KidmonAgent : public Runnable
+class KidmonAgent : public core::Runnable
 {
 public:
     struct Config

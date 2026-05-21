@@ -1,5 +1,5 @@
-#include <kidmon/common/Service.h>
-#include <kidmon/common/Runnable.h>
+#include <core/app/Service.h>
+#include <core/app/Runnable.h>
 #include <core/utils/Tracer.h>
 
 #include <Windows.h>
@@ -55,7 +55,7 @@ const char* serviceControlCodeToStr(DWORD controlCode) noexcept
 
 } // namespace
 
-namespace km {
+namespace core {
 
 class Service::Impl
 {
@@ -280,4 +280,4 @@ void Service::shutdown() noexcept
     impl_->shutdown();
 }
 
-} // namespace km
+} // namespace core

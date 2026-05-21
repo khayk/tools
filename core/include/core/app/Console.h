@@ -1,9 +1,9 @@
 #pragma once
 
-#include <kidmon/common/Runnable.h>
+#include <core/app/Runnable.h>
 #include <memory>
 
-namespace km {
+namespace core {
 
 class Console
 {
@@ -19,4 +19,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-} // namespace km
+} // namespace core

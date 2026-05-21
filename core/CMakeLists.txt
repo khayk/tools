@@ -20,6 +20,18 @@ set(PATTERNS_FILES
     # header-only, no .cpp sources
 )
 
+set(APP_FILES
+    src/app/Console.cpp
+)
+
+if(WIN32)
+    list(APPEND APP_FILES src/app/os/ServiceWin32.cpp)
+elseif(APPLE)
+    list(APPEND APP_FILES src/app/os/ServiceMacOS.cpp)
+else()
+    list(APPEND APP_FILES src/app/os/ServiceLinux.cpp)
+endif()
+
 set(UTILS_FILES
     src/utils/Crypto.cpp
     src/utils/Dirs.cpp
@@ -75,7 +87,7 @@ message("OpenSSL library       : ${OPENSSL_LIBRARIES}")
 message("Spdlog include        : ${spdlog_DIR}")
 
 # Source list for the library
-set(LIB_SRCS  ${NETWORK_FILES} ${PATTERNS_FILES} ${UTILS_FILES})
+set(LIB_SRCS  ${NETWORK_FILES} ${PATTERNS_FILES} ${UTILS_FILES} ${APP_FILES})
 add_library(${PROJECT_LIB} STATIC ${LIB_SRCS})
 add_library(${PROJECT_LIB}::${PROJECT_LIB} ALIAS ${PROJECT_LIB})
 

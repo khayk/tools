@@ -1,6 +1,6 @@
 #pragma once
 
-namespace km {
+namespace core {
 
 class Runnable
 {
@@ -11,4 +11,4 @@ public:
     virtual void shutdown() noexcept = 0;
 };
 
-} // namespace km
+} // namespace core

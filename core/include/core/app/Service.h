@@ -1,10 +1,10 @@
 #pragma once
 
-#include <kidmon/common/Runnable.h>
+#include <core/app/Runnable.h>
 #include <memory>
 #include <string>
 
-namespace km {
+namespace core {
 
 class Service
 {
@@ -20,4 +20,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-} // namespace km
+} // namespace core

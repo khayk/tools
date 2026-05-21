@@ -1,4 +1,4 @@
-#include <kidmon/common/Console.h>
+#include <core/app/Console.h>
 
 #include <spdlog/spdlog.h>
 
@@ -12,7 +12,7 @@ void* g_instance {nullptr};
 
 } // namespace
 
-namespace km {
+namespace core {
 
 class Console::Impl
 {
@@ -142,4 +142,4 @@ void Console::shutdown()
     impl_->shutdown();
 }
 
-} // namespace km
+} // namespace core

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <kidmon/common/Runnable.h>
+#include <core/app/Runnable.h>
 
 #include <memory>
 #include <filesystem>
@@ -9,7 +9,7 @@ namespace fs = std::filesystem;
 
 namespace km {
 
-class KidmonServer : public Runnable
+class KidmonServer : public core::Runnable
 {
 public:
     struct Config

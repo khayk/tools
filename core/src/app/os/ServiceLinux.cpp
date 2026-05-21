@@ -1,10 +1,10 @@
-#include <kidmon/common/Service.h>
-#include <kidmon/common/Runnable.h>
+#include <core/app/Service.h>
+#include <core/app/Runnable.h>
 #include <core/utils/Throw.h>
 
 #include <spdlog/spdlog.h>
 
-namespace km {
+namespace core {
 
 class Service::Impl
 {
@@ -75,4 +75,4 @@ void Service::shutdown() noexcept
     impl_->shutdown();
 }
 
-} // namespace km
+} // namespace core
