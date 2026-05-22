@@ -31,6 +31,7 @@ set(PATTERNS_FILES
 
 set(APP_FILES
     app/ConsoleTest.cpp
+    app/ServiceTest.cpp
 )
 
 set(TEST_SRCS ${NETWORK_FILES} ${UTILS_FILES} ${PATTERNS_FILES} ${APP_FILES})
