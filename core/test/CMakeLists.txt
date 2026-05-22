@@ -29,7 +29,11 @@ set(PATTERNS_FILES
     patterns/ObserverTest.cpp
 )
 
-set(TEST_SRCS ${NETWORK_FILES} ${UTILS_FILES} ${PATTERNS_FILES})
+set(APP_FILES
+    app/ConsoleTest.cpp
+)
+
+set(TEST_SRCS ${NETWORK_FILES} ${UTILS_FILES} ${PATTERNS_FILES} ${APP_FILES})
 add_executable(${PROJECT_TST} ${TEST_SRCS})
 
 target_link_libraries(${PROJECT_TST} PRIVATE core)
