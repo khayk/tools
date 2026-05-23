@@ -25,6 +25,11 @@ public:
         freq_ = freq;
     }
 
+    void setStream(std::ostream* os)
+    {
+        os_ = os;
+    }
+
     void update(const DisplayCb& cb)
     {
         if (sw_.elapsed() >= freq_)

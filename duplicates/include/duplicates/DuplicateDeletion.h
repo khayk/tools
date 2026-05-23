@@ -74,7 +74,6 @@ public:
                    DeletionState& state);
 
     const IDeletionStrategy& strategy() const noexcept;
-    const Progress& progress() const noexcept;
     Progress& progress() noexcept;
     StreamIO& io() noexcept;
     IgnoredPaths& ignoredPaths() noexcept;

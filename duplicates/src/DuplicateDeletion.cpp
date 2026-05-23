@@ -421,11 +421,6 @@ const IDeletionStrategy& DeletionContext::strategy() const noexcept
     return strategy_;
 }
 
-const Progress& DeletionContext::progress() const noexcept
-{
-    return progress_;
-}
-
 Progress& DeletionContext::progress() noexcept
 {
     return progress_;

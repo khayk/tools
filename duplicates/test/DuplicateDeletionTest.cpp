@@ -9,6 +9,7 @@
 #include <core/utils/Log.h>
 #include <core/utils/LogCapture.h>
 
+#include <chrono>
 #include <filesystem>
 
 using testing::MockFunction;
@@ -386,6 +387,11 @@ TEST_F(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesInSafeDirs)
 
 TEST_F(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesAllInSafeDirs)
 {
+    // For just one test let progress be alive
+    std::ostringstream oss;
+    progress.setStream(&oss);
+    progress.setFrequency(std::chrono::milliseconds(0));
+
     MockDuplicateGroups groups;
 
     ctx.deleteFromPaths().add(fs::path {"safeDir"});
@@ -410,6 +416,8 @@ TEST_F(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesAllInSafeDirs)
     in.str("1\n1\n");
 
     deleteDuplicates(groups, ctx);
+
+    EXPECT_FALSE(oss.str().empty());
 }
 
 TEST_F(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesSelectively)
