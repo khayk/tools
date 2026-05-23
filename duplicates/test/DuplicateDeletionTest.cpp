@@ -462,6 +462,21 @@ TEST_F(DuplicateDeletionTest, DeletePaths_EmptyList)
     EXPECT_TRUE(log.contains("Path list is empty"));
 }
 
+TEST_F(DuplicateDeletionTest, OpenDirectories_CallsOpenerForUniqueParents)
+{
+    // Three files, two of which share parent "a" — expect opener called for "a" and "b"
+    PathsVec files {"a/f1.txt", "a/f2.txt", "b/f3.txt"};
+    PathsVec opened;
+
+    ctx.setDirOpener([&](const fs::path& dir) { opened.push_back(dir); });
+    EXPECT_CALL(strategy, remove(testing::_)).Times(0);
+
+    in.str("o\nq\n");
+    EXPECT_EQ(deleteInteractively(files, ctx), Flow::Quit);
+
+    EXPECT_THAT(opened, testing::UnorderedElementsAre(fs::path("a"), fs::path("b")));
+}
+
 TEST_F(DuplicateDeletionTest, DeleteDuplicates_SkipsIgnoredFiles)
 {
     MuteLogger mute;

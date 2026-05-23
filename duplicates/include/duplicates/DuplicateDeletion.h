@@ -7,6 +7,8 @@
 #include <duplicates/PathList.h>
 #include <duplicates/Menu.h>
 #include <cstdint>
+#include <functional>
+#include <filesystem>
 
 
 namespace tools::dups {
@@ -21,6 +23,8 @@ enum class Purpose : uint8_t
 using IgnoredPaths = Paths<Purpose::Ignored>;
 using KeepFromPaths = Paths<Purpose::KeepFrom>;
 using DeleteFromPaths = Paths<Purpose::DeleteFrom>;
+
+using DirOpener = std::function<void(const fs::path&)>;
 
 /**
  * @brief Deletes files using the provided deletion strategy.
@@ -53,6 +57,7 @@ class DeletionContext
     Progress& progress_;
     StreamIO& io_;
     DeletionState& state_;
+    DirOpener openDir_;
 
 public:
     /**
@@ -75,6 +80,9 @@ public:
     IgnoredPaths& ignoredPaths() noexcept;
     KeepFromPaths& keepFromPaths() noexcept;
     DeleteFromPaths& deleteFromPaths() noexcept;
+
+    void setDirOpener(DirOpener fn) noexcept;
+    const DirOpener& dirOpener() const noexcept;
 };
 
 enum class Flow : uint8_t

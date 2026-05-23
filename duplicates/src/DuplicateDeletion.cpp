@@ -59,7 +59,7 @@ void menuOption(Menu& menu, size_t count, Action action)
              std::move(action));
 }
 
-void openDirectories(const PathsVec& files)
+void openDirectories(const PathsVec& files, const DirOpener& opener)
 {
     std::unordered_set<fs::path> uniqueDirs;
 
@@ -70,7 +70,7 @@ void openDirectories(const PathsVec& files)
 
     for (const auto& dir : uniqueDirs)
     {
-        core::file::openDirectory(dir);
+        opener(dir);
     }
 }
 
@@ -381,7 +381,7 @@ Flow deleteInteractively(PathsVec& files, DeletionContext& ctx)
     });
 
     menuOption(menu, "Open directories", 'o', [&](UserIO&) {
-        openDirectories(files);
+        openDirectories(files, ctx.dirOpener());
         return Navigation::Continue;
     });
 
@@ -412,6 +412,7 @@ DeletionContext::DeletionContext(const IDeletionStrategy& strategy,
     , progress_ {progress}
     , io_ {io}
     , state_ {state}
+    , openDir_ {core::file::openDirectory}
 {
 }
 
@@ -448,6 +449,16 @@ KeepFromPaths& DeletionContext::keepFromPaths() noexcept
 DeleteFromPaths& DeletionContext::deleteFromPaths() noexcept
 {
     return state_.deleteFrom;
+}
+
+void DeletionContext::setDirOpener(DirOpener fn) noexcept
+{
+    openDir_ = std::move(fn);
+}
+
+const DirOpener& DeletionContext::dirOpener() const noexcept
+{
+    return openDir_;
 }
 
 class GroupProcessor
