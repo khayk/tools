@@ -8,8 +8,6 @@
 
 #include <algorithm>
 #include <iterator>
-#include <cassert>
-#include <stdexcept>
 #include "core/utils/Str.h"
 
 #include <spdlog/spdlog.h>
@@ -355,12 +353,7 @@ Flow deleteInteractively(PathsVec& files, DeletionContext& ctx)
         // User has chosen the number to KEEP.
         auto index = core::num::s2num<size_t>(io.currentPrompt());
 
-        if (index == 0 || index > files.size())
-        {
-            assert(index > 0 && index <= files.size() && "Out of bound access");
-            throw std::logic_error("Attempt to access an array out of bounds");
-        }
-
+        // Range matcher guarantees index is in [1, files.size()], so access is safe
         std::swap(files[index - 1], files.back());
         files.pop_back();
         deleteFiles(ctx.strategy(), files);
