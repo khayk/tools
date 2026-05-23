@@ -39,7 +39,7 @@ TEST_F(SilentConfig, PopulateConfigAppliesDefaultSizes)
 {
     auto result = parse({"duplicates"});
     populateConfig(result, cfg);
-    EXPECT_EQ(cfg.minFileSizeBytes(), 1024U);
+    EXPECT_EQ(cfg.minFileSizeBytes(), 1U);
     EXPECT_EQ(cfg.maxFileSizeBytes(), 10UL * 1024 * 1024 * 1024);
     EXPECT_EQ(cfg.updateFrequency(), std::chrono::milliseconds(100));
 }

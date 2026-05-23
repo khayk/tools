@@ -1,4 +1,3 @@
-
 #include <gtest/gtest.h>
 
 #include <duplicates/DuplicateOperation.h>
@@ -74,14 +73,17 @@ TEST_F(DuplicateOperationTest, DetectDuplicatesSkipsWhenConfigured)
 TEST_F(DuplicateOperationTest, DetectDuplicatesFindsDuplicateGroups)
 {
     DuplicateDetector detector;
+    std::ostringstream oss;
+    Progress prg(&oss, std::chrono::milliseconds(0));
 
     cfg.addScanDir(scanDir);
     writeFiles(scanDir);
 
-    scanDirectories(cfg, detector, progress);
-    detectDuplicates(cfg, detector, progress);
+    scanDirectories(cfg, detector, prg);
+    detectDuplicates(cfg, detector, prg);
 
     EXPECT_EQ(detector.numGroups(), 2);
+    EXPECT_FALSE(oss.str().empty());
 }
 
 TEST_F(DuplicateOperationTest, OutputFilesSkipsWhenPathEmpty)

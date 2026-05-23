@@ -295,7 +295,7 @@ void Config::setDryRun(bool value)
 
 void applyDefaults(Config& cfg)
 {
-    cfg.setMinFileSizeBytes(0);
+    cfg.setMinFileSizeBytes(1UL);
     cfg.setMaxFileSizeBytes(10UL * 1024 * 1024 * 1024);
     cfg.setUpdateFrequency(std::chrono::milliseconds(100));
     cfg.setAllFilesPath("all.txt");

@@ -162,7 +162,7 @@ TEST(ConfigTest, ApplyDefaultsSetsExpectedValues)
 {
     Config cfg("/data", "/cache");
     applyDefaults(cfg);
-    EXPECT_EQ(cfg.minFileSizeBytes(), 1024U);
+    EXPECT_EQ(cfg.minFileSizeBytes(), 1U);
     EXPECT_EQ(cfg.maxFileSizeBytes(), 10UL * 1024 * 1024 * 1024);
     EXPECT_EQ(cfg.updateFrequency(), std::chrono::milliseconds(100));
     EXPECT_FALSE(cfg.allFilesPath().empty());
