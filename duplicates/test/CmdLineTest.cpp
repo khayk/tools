@@ -109,7 +109,7 @@ TEST_F(SilentConfig, CfgFileNonTomlTriggersMetricsReview)
 {
     // Non-.toml cfg-file triggers metricsReview and early return
     core::file::TempDir tmp("dups");
-    core::file::write(tmp.path() / "files.txt", "/a/b\n/c/d\n");
+    core::file::write(tmp.path() / "files.txt", "\"/a/b\"\n/c/d\n");
     const std::string path = (tmp.path() / "files.txt").string();
 
     auto result = parse({"duplicates", "--cfg-file", path.c_str()});
@@ -118,14 +118,19 @@ TEST_F(SilentConfig, CfgFileNonTomlTriggersMetricsReview)
 
 TEST_F(SilentConfig, FilePathOptions)
 {
+    const auto base = fs::temp_directory_path();
+    const auto allPath = (base / "all.txt").string();
+    const auto dupPath = (base / "dup.txt").string();
+    const auto ignPath = (base / "ign.txt").string();
+
     auto result = parse({"duplicates",
-                         "--all-files", "/out/all.txt",
-                         "--dup-files", "/out/dup.txt",
-                         "--ign-files", "/out/ign.txt"});
+                         "--all-files", allPath.c_str(),
+                         "--dup-files", dupPath.c_str(),
+                         "--ign-files", ignPath.c_str()});
     populateConfig(result, cfg);
-    EXPECT_EQ(cfg.allFilesPath(), fs::path("/out/all.txt"));
-    EXPECT_EQ(cfg.dupFilesPath(), fs::path("/out/dup.txt"));
-    EXPECT_EQ(cfg.ignFilesPath(), fs::path("/out/ign.txt"));
+    EXPECT_EQ(cfg.allFilesPath(), base / "all.txt");
+    EXPECT_EQ(cfg.dupFilesPath(), base / "dup.txt");
+    EXPECT_EQ(cfg.ignFilesPath(), base / "ign.txt");
 }
 
 } // namespace tools::dups

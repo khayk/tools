@@ -96,7 +96,6 @@ void populateConfig(const cxxopts::ParseResult& opts, Config& cfg)
     if (opts.contains("cfg-file"))
     {
         cfgFile = opts["cfg-file"].as<std::string>();
-        applyOverrides(cfgFile, cfg);
     }
 
     if (!cfgFile.empty() && cfgFile.extension() != ".toml")
@@ -104,6 +103,10 @@ void populateConfig(const cxxopts::ParseResult& opts, Config& cfg)
         spdlog::info("Measuring resource usage: '{}'", cfgFile);
         metricsReview(cfgFile);
         return;
+    }
+
+    if (!cfgFile.empty()) {
+        applyOverrides(cfgFile, cfg);
     }
 
     if (opts.contains("dry-run"))
