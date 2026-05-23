@@ -406,10 +406,12 @@ Flow deleteInteractively(PathsVec& files, DeletionContext& ctx)
 
 DeletionContext::DeletionContext(const IDeletionStrategy& strategy,
                                Progress& progress,
-                               StreamIO& io)
+                               StreamIO& io,
+                               DeletionState& state)
     : strategy_ {strategy}
     , progress_ {progress}
     , io_ {io}
+    , state_ {state}
 {
 }
 
@@ -435,17 +437,17 @@ StreamIO& DeletionContext::io() noexcept
 
 IgnoredPaths& DeletionContext::ignoredPaths() noexcept
 {
-    return ignored_;
+    return state_.ignored;
 }
 
 KeepFromPaths& DeletionContext::keepFromPaths() noexcept
 {
-    return keepFrom_;
+    return state_.keepFrom;
 }
 
 DeleteFromPaths& DeletionContext::deleteFromPaths() noexcept
 {
-    return deleteFrom_;
+    return state_.deleteFrom;
 }
 
 class GroupProcessor

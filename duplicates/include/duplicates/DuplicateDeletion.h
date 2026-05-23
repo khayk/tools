@@ -32,6 +32,19 @@ void deleteFiles(const IDeletionStrategy& strategy, PathsVec& files);
 
 
 /**
+ * @brief Mutable path lists that evolve during the interactive deletion session.
+ *        Kept separate so PathsPersister can attach to a single, clearly-bounded
+ *        object rather than to individual PathsSet references scattered inside
+ *        DeletionContext.
+ */
+struct DeletionState
+{
+    IgnoredPaths ignored;
+    KeepFromPaths keepFrom;
+    DeleteFromPaths deleteFrom;
+};
+
+/**
  * @brief Context for duplication deletion process
  */
 class DeletionContext
@@ -39,10 +52,7 @@ class DeletionContext
     const IDeletionStrategy& strategy_;
     Progress& progress_;
     StreamIO& io_;
-
-    IgnoredPaths ignored_;
-    KeepFromPaths keepFrom_;
-    DeleteFromPaths deleteFrom_;
+    DeletionState& state_;
 
 public:
     /**
@@ -51,10 +61,12 @@ public:
      * @param strategy The deletion strategy to use
      * @param progress Progress reporter
      * @param io Menu input/output instance
+     * @param state Mutable path lists for the session
      */
     DeletionContext(const IDeletionStrategy& strategy,
                    Progress& progress,
-                   StreamIO& io);
+                   StreamIO& io,
+                   DeletionState& state);
 
     const IDeletionStrategy& strategy() const noexcept;
     const Progress& progress() const noexcept;

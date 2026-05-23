@@ -83,17 +83,16 @@ int main(int argc, const char* argv[])
         // start deletion of the duplicates
         auto strategy = createDeletionStrategy(cfg);
 
-        StreamIO io(std::cout, std::cin);
-        DeletionContext ctx {*strategy, progress, io};
-        PathsPersister persisIgn(ctx.ignoredPaths().paths(),
-                                 cfg.ignFilesPath());
-        PathsPersister persisKeep(ctx.keepFromPaths().paths(),
-                                  cfg.keepFilesPath());
-        PathsPersister persisDel(ctx.deleteFromPaths().paths(),
-                                 cfg.delFilesPath());
+        DeletionState state;
+        PathsPersister persisIgn(state.ignored.paths(), cfg.ignFilesPath());
+        PathsPersister persisKeep(state.keepFrom.paths(), cfg.keepFilesPath());
+        PathsPersister persisDel(state.deleteFrom.paths(), cfg.delFilesPath());
 
-        ctx.keepFromPaths().add(cfg.dirsToKeepFrom());
-        ctx.deleteFromPaths().add(cfg.dirsToDeleteFrom());
+        state.keepFrom.add(cfg.dirsToKeepFrom());
+        state.deleteFrom.add(cfg.dirsToDeleteFrom());
+
+        StreamIO io(std::cout, std::cin);
+        DeletionContext ctx {*strategy, progress, io, state};
 
         deleteDuplicates(detector, ctx);
     }
