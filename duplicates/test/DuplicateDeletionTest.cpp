@@ -379,6 +379,88 @@ TEST_F(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesSelectively)
     deleteDuplicates(groups, cfg);
 }
 
+TEST_F(DuplicateDeletionTest, ViewPaths_EmptyLists)
+{
+    PathsVec files {"file1.txt", "file2.txt"};
+    EXPECT_CALL(strategy, remove(testing::_)).Times(0);
+
+    in.str("v\nq\n");
+    EXPECT_EQ(deleteInteractively(files, cfg), Flow::Quit);
+
+    EXPECT_TRUE(out.str().contains("Path list is empty"));
+}
+
+TEST_F(DuplicateDeletionTest, ViewPaths_WithEntries)
+{
+    PathsVec files {"file1.txt", "file2.txt"};
+    EXPECT_CALL(strategy, remove(testing::_)).Times(0);
+    cfg.keepFromPaths().add(fs::path("keep_dir"));
+
+    in.str("v\nq\n");
+    EXPECT_EQ(deleteInteractively(files, cfg), Flow::Quit);
+
+    EXPECT_TRUE(out.str().contains("keep_dir"));
+    EXPECT_TRUE(out.str().contains("Delete from paths:"));
+}
+
+TEST_F(DuplicateDeletionTest, DisplayPathOptions_Elision)
+{
+    PathsVec files;
+    for (int i = 1; i <= 11; ++i)
+    {
+        files.emplace_back("f" + std::to_string(i) + ".txt");
+    }
+
+    EXPECT_CALL(strategy, remove(testing::_)).Times(10);
+
+    in.str("1\n");
+    EXPECT_EQ(deleteInteractively(files, cfg), Flow::Done);
+
+    EXPECT_TRUE(out.str().contains(": ..."));
+}
+
+TEST_F(DuplicateDeletionTest, EditKeepFromList_AddPath)
+{
+    PathsVec files {"a/file1.txt", "b/file2.txt"};
+    EXPECT_CALL(strategy, remove(testing::_)).Times(0);
+
+    // k=edit keep list, a=add, 1=pick first dir,
+    // b=back from add-menu, b=back from edit-menu, q=quit
+    in.str("k\na\n1\nb\nb\nq\n");
+    deleteInteractively(files, cfg);
+
+    EXPECT_FALSE(cfg.keepFromPaths().empty());
+}
+
+TEST_F(DuplicateDeletionTest, EditKeepFromList_DeletePath)
+{
+    LogCaptureSt log;
+    PathsVec files {"file1.txt", "file2.txt"};
+    EXPECT_CALL(strategy, remove(testing::_)).Times(0);
+    cfg.keepFromPaths().add(fs::path("keep_dir"));
+
+    // k=edit keep list, d=delete from list, 1=remove first, b=back from edit-menu, q=quit
+    in.str("k\nd\n1\nb\nq\n");
+    deleteInteractively(files, cfg);
+
+    EXPECT_TRUE(cfg.keepFromPaths().empty());
+    EXPECT_TRUE(log.contains("Removing item:"));
+}
+
+TEST_F(DuplicateDeletionTest, DeletePaths_EmptyList)
+{
+    LogCaptureSt log;
+    PathsVec files {"file1.txt"};
+    EXPECT_CALL(strategy, remove(testing::_)).Times(0);
+
+    // k=edit keep list, d=delete from empty list (logs + returns),
+    // b=back from edit-menu, q=quit
+    in.str("k\nd\nb\nq\n");
+    deleteInteractively(files, cfg);
+
+    EXPECT_TRUE(log.contains("Path list is empty"));
+}
+
 TEST_F(DuplicateDeletionTest, DeleteDuplicates_SkipsIgnoredFiles)
 {
     MuteLogger mute;
