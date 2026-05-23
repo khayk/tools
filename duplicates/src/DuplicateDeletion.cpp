@@ -177,15 +177,8 @@ Navigation deletePaths(std::string_view listName, Paths& paths, UserIO& io)
     Menu menu(listName);
 
     menuOption(menu, paths.size(), [&](UserIO& io) {
+        // Range matcher guarantees index is in [1, dirs.size()], so access is safe
         auto index = core::num::s2num<size_t>(io.currentPrompt());
-        if (index > dirs.size())
-        {
-            spdlog::info("Attempt to access container with size {} at index {}",
-                         dirs.size(),
-                         index - 1);
-            return Navigation::Back;
-        }
-
         spdlog::info("Removing item: {}", dirs[index - 1]);
         paths.paths().erase(dirs[index - 1]);
         return Navigation::Back;
