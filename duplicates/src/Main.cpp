@@ -84,7 +84,7 @@ int main(int argc, const char* argv[])
         auto strategy = createDeletionStrategy(cfg);
 
         StreamIO io(std::cout, std::cin);
-        DeletionContext ctx {*strategy, std::cout, std::cin, progress, io};
+        DeletionContext ctx {*strategy, progress, io};
         PathsPersister persisIgn(ctx.ignoredPaths().paths(),
                                  cfg.ignFilesPath());
         PathsPersister persisKeep(ctx.keepFromPaths().paths(),

@@ -130,6 +130,11 @@ void StreamIO::printText(std::string_view text)
     out_ << text;
 }
 
+std::ostream& StreamIO::out()
+{
+    return out_;
+}
+
 void StreamIO::printOptions(const Menu& m, bool isChild)
 {
     out_ << std::format("{:-^60s}\n", std::format("> {} <", m.getTitle()));

@@ -7,7 +7,6 @@
 #include <duplicates/PathList.h>
 #include <duplicates/Menu.h>
 #include <cstdint>
-#include <ostream>
 
 
 namespace tools::dups {
@@ -38,8 +37,6 @@ void deleteFiles(const IDeletionStrategy& strategy, PathsVec& files);
 class DeletionContext
 {
     const IDeletionStrategy& strategy_;
-    std::ostream& out_;
-    std::istream& in_;
     Progress& progress_;
     StreamIO& io_;
 
@@ -49,28 +46,23 @@ class DeletionContext
 
 public:
     /**
-     * @brief Construct a new Deletion Config object
+     * @brief Construct a new Deletion Context object
      *
      * @param strategy The deletion strategy to use
-     * @param out Output stream interactive output
-     * @param in Input stream to interact with user
      * @param progress Progress reporter
-     * @param io Menu Input ouput instance
+     * @param io Menu input/output instance
      */
     DeletionContext(const IDeletionStrategy& strategy,
-                   std::ostream& out,
-                   std::istream& in,
                    Progress& progress,
                    StreamIO& io);
 
-    const IDeletionStrategy& strategy() const;
-    StreamIO& io();
-    std::ostream& out();
-    std::istream& in();
-    Progress& progress();
-    IgnoredPaths& ignoredPaths();
-    KeepFromPaths& keepFromPaths();
-    DeleteFromPaths& deleteFromPaths();
+    const IDeletionStrategy& strategy() const noexcept;
+    const Progress& progress() const noexcept;
+    Progress& progress() noexcept;
+    StreamIO& io() noexcept;
+    IgnoredPaths& ignoredPaths() noexcept;
+    KeepFromPaths& keepFromPaths() noexcept;
+    DeleteFromPaths& deleteFromPaths() noexcept;
 };
 
 enum class Flow : uint8_t

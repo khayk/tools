@@ -354,7 +354,7 @@ Flow deleteInteractively(PathsVec& files, DeletionContext& ctx)
         return Flow::Done;
     }
 
-    displayPathOptions(ctx.out(), files);
+    displayPathOptions(ctx.io().out(), files);
 
     Menu menu("Enter a number to keep, or select an action");
 
@@ -394,8 +394,8 @@ Flow deleteInteractively(PathsVec& files, DeletionContext& ctx)
     });
 
     menuOption(menu, "View keep/delete list", 'v', [&](UserIO&) {
-        displayPaths("Keep from paths:", ctx.keepFromPaths(), ctx.out());
-        displayPaths("Delete from paths:", ctx.deleteFromPaths(), ctx.out());
+        displayPaths("Keep from paths:", ctx.keepFromPaths(), ctx.io().out());
+        displayPaths("Delete from paths:", ctx.deleteFromPaths(), ctx.io().out());
         return Navigation::Continue;
     });
 
@@ -405,54 +405,45 @@ Flow deleteInteractively(PathsVec& files, DeletionContext& ctx)
 
 
 DeletionContext::DeletionContext(const IDeletionStrategy& strategy,
-                               std::ostream& out,
-                               std::istream& in,
                                Progress& progress,
                                StreamIO& io)
     : strategy_ {strategy}
-    , out_ {out}
-    , in_ {in}
     , progress_ {progress}
     , io_ {io}
 {
 }
 
-const IDeletionStrategy& DeletionContext::strategy() const
+const IDeletionStrategy& DeletionContext::strategy() const noexcept
 {
     return strategy_;
 }
 
-StreamIO& DeletionContext::io()
-{
-    return io_;
-}
-
-std::ostream& DeletionContext::out()
-{
-    return out_;
-}
-
-std::istream& DeletionContext::in()
-{
-    return in_;
-}
-
-Progress& DeletionContext::progress()
+const Progress& DeletionContext::progress() const noexcept
 {
     return progress_;
 }
 
-IgnoredPaths& DeletionContext::ignoredPaths()
+Progress& DeletionContext::progress() noexcept
+{
+    return progress_;
+}
+
+StreamIO& DeletionContext::io() noexcept
+{
+    return io_;
+}
+
+IgnoredPaths& DeletionContext::ignoredPaths() noexcept
 {
     return ignored_;
 }
 
-KeepFromPaths& DeletionContext::keepFromPaths()
+KeepFromPaths& DeletionContext::keepFromPaths() noexcept
 {
     return keepFrom_;
 }
 
-DeleteFromPaths& DeletionContext::deleteFromPaths()
+DeleteFromPaths& DeletionContext::deleteFromPaths() noexcept
 {
     return deleteFrom_;
 }
@@ -542,8 +533,8 @@ private:
             return Flow::Done;
         }
 
-        ctx_.out() << "Size: " << group.entires.front().size
-                   << " SHA256: " << group.entires.front().sha256 << '\n';
+        ctx_.io().out() << "Size: " << group.entires.front().size
+                        << " SHA256: " << group.entires.front().sha256 << '\n';
 
         std::ranges::sort(selective_);
         return deleteInteractively(selective_, ctx_);

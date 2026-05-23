@@ -85,6 +85,7 @@ class StreamIO : public UserIO
 public:
     StreamIO(std::ostream& out, std::istream& in);
     void printText(std::string_view text) override;
+    std::ostream& out();
 
 protected:
     void printOptions(const Menu& m, bool isChild) override;

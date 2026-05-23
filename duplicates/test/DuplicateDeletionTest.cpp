@@ -67,7 +67,7 @@ protected:
     std::istringstream in;
     Progress progress {nullptr};
     StreamIO sio {out, in};
-    DeletionContext ctx {strategy, out, in, progress, sio};
+    DeletionContext ctx {strategy, progress, sio};
 };
 
 TEST_F(DuplicateDeletionTest, IgnoreFilesModule)
