@@ -3,6 +3,7 @@
 #include <duplicates/CmdLine.h>
 #include <duplicates/Config.h>
 
+#include <core/utils/File.h>
 #include <core/utils/Log.h>
 
 #include <cxxopts.hpp>
@@ -94,6 +95,37 @@ TEST_F(SilentConfig, KeepAndDeletePathOptions)
     populateConfig(result, cfg);
     EXPECT_EQ(cfg.dirsToKeepFrom().size(), 1U);
     EXPECT_EQ(cfg.dirsToDeleteFrom().size(), 1U);
+}
+
+TEST_F(SilentConfig, CfgFileTomlOption)
+{
+    // Explicitly passing --cfg-file with .toml triggers applyOverrides
+    // (file absent → warning is muted by fixture)
+    auto result = parse({"duplicates", "--cfg-file", "custom.toml"});
+    EXPECT_NO_THROW(populateConfig(result, cfg));
+}
+
+TEST_F(SilentConfig, CfgFileNonTomlTriggersMetricsReview)
+{
+    // Non-.toml cfg-file triggers metricsReview and early return
+    core::file::TempDir tmp("dups");
+    core::file::write(tmp.path() / "files.txt", "/a/b\n/c/d\n");
+    const std::string path = (tmp.path() / "files.txt").string();
+
+    auto result = parse({"duplicates", "--cfg-file", path.c_str()});
+    EXPECT_NO_THROW(populateConfig(result, cfg));
+}
+
+TEST_F(SilentConfig, FilePathOptions)
+{
+    auto result = parse({"duplicates",
+                         "--all-files", "/out/all.txt",
+                         "--dup-files", "/out/dup.txt",
+                         "--ign-files", "/out/ign.txt"});
+    populateConfig(result, cfg);
+    EXPECT_EQ(cfg.allFilesPath(), fs::path("/out/all.txt"));
+    EXPECT_EQ(cfg.dupFilesPath(), fs::path("/out/dup.txt"));
+    EXPECT_EQ(cfg.ignFilesPath(), fs::path("/out/ign.txt"));
 }
 
 } // namespace tools::dups
