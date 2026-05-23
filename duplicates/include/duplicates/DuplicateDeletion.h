@@ -33,9 +33,9 @@ void deleteFiles(const IDeletionStrategy& strategy, PathsVec& files);
 
 
 /**
- * @brief Configuration for duplication deletion process
+ * @brief Context for duplication deletion process
  */
-class DeletionConfig
+class DeletionContext
 {
     const IDeletionStrategy& strategy_;
     std::ostream& out_;
@@ -57,7 +57,7 @@ public:
      * @param progress Progress reporter
      * @param io Menu Input ouput instance
      */
-    DeletionConfig(const IDeletionStrategy& strategy,
+    DeletionContext(const IDeletionStrategy& strategy,
                    std::ostream& out,
                    std::istream& in,
                    Progress& progress,
@@ -85,21 +85,21 @@ enum class Flow : uint8_t
  * delete.
  *
  * @param files The vector of file paths to delete.
- * @param cfg Settings for deletion process
+ * @param ctx Context for deletion process
  *
  * @return Done if the operation was successful,
            Retry if the operation need to be retried again
            Quit if the user selected quit
  */
-Flow deleteInteractively(PathsVec& files, DeletionConfig& cfg);
+Flow deleteInteractively(PathsVec& files, DeletionContext& ctx);
 
 
 /**
  * @brief Deletes duplicate files based on the provided config
  *
  * @param duplicates The groups of duplicates
- * @param cfg Settings for deletion process
+ * @param ctx Context for deletion process
  */
-void deleteDuplicates(const IDuplicateGroups& duplicates, DeletionConfig& cfg);
+void deleteDuplicates(const IDuplicateGroups& duplicates, DeletionContext& ctx);
 
 } // namespace tools::dups

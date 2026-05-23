@@ -67,7 +67,7 @@ protected:
     std::istringstream in;
     Progress progress {nullptr};
     StreamIO sio {out, in};
-    DeletionConfig cfg {strategy, out, in, progress, sio};
+    DeletionContext ctx {strategy, out, in, progress, sio};
 };
 
 TEST_F(DuplicateDeletionTest, IgnoreFilesModule)
@@ -164,8 +164,8 @@ TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_KeepSecond)
 
     in.str("2\n"); // Simulate user input to keep the second file
 
-    EXPECT_EQ(deleteInteractively(files, cfg), Flow::Done);
-    EXPECT_TRUE(cfg.ignoredPaths().empty());
+    EXPECT_EQ(deleteInteractively(files, ctx), Flow::Done);
+    EXPECT_TRUE(ctx.ignoredPaths().empty());
     ASSERT_TRUE(files.empty());
     ASSERT_EQ(deleted.size(), 2);
     ASSERT_EQ(deleted[0], "file1.txt");
@@ -178,7 +178,7 @@ TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_KeepPaths_OneMatch)
     PathsVec files {"keep/file1.txt", "file2.txt", "file3.txt"};
     PathsVec deleted;
 
-    cfg.keepFromPaths().add(fs::path {"keep"});
+    ctx.keepFromPaths().add(fs::path {"keep"});
 
     EXPECT_CALL(strategy, remove(testing::_))
         .Times(2)
@@ -188,8 +188,8 @@ TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_KeepPaths_OneMatch)
 
     // No user input should be needed, as keep path will resolve
 
-    EXPECT_EQ(deleteInteractively(files, cfg), Flow::Done);
-    EXPECT_TRUE(cfg.ignoredPaths().empty());
+    EXPECT_EQ(deleteInteractively(files, ctx), Flow::Done);
+    EXPECT_TRUE(ctx.ignoredPaths().empty());
     ASSERT_TRUE(files.empty());
     ASSERT_EQ(deleted.size(), 2);
     ASSERT_EQ(deleted[0], "file3.txt");
@@ -202,7 +202,7 @@ TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_KeepPaths_MultipleMatches
     PathsVec files {"keep/file1.txt", "keep/file2.txt", "file3.txt"};
     PathsVec deleted;
 
-    cfg.keepFromPaths().add(fs::path {"keep"});
+    ctx.keepFromPaths().add(fs::path {"keep"});
 
     EXPECT_CALL(strategy, remove(testing::_))
         .Times(2)
@@ -212,8 +212,8 @@ TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_KeepPaths_MultipleMatches
 
     in.str("3\n"); // User instruct to keep file3.txt
 
-    EXPECT_EQ(deleteInteractively(files, cfg), Flow::Done);
-    EXPECT_TRUE(cfg.ignoredPaths().empty());
+    EXPECT_EQ(deleteInteractively(files, ctx), Flow::Done);
+    EXPECT_TRUE(ctx.ignoredPaths().empty());
     ASSERT_TRUE(files.empty());
     ASSERT_EQ(deleted.size(), 2);
     ASSERT_EQ(deleted[0], "keep/file1.txt");
@@ -235,9 +235,9 @@ TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_ConsecutiveCalls)
 
     in.str("1\n\n"); // Keeps the first file during each call
 
-    EXPECT_EQ(deleteInteractively(files, cfg), Flow::Done);
-    EXPECT_EQ(deleteInteractively(filesCopy, cfg), Flow::Done);
-    EXPECT_TRUE(cfg.ignoredPaths().empty());
+    EXPECT_EQ(deleteInteractively(files, ctx), Flow::Done);
+    EXPECT_EQ(deleteInteractively(filesCopy, ctx), Flow::Done);
+    EXPECT_TRUE(ctx.ignoredPaths().empty());
     ASSERT_TRUE(files.empty());
     ASSERT_TRUE(filesCopy.empty());
 }
@@ -251,12 +251,12 @@ TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_IgnoreGroup)
 
     in.str("i\n"); // Simulate user input to keep the second file
 
-    EXPECT_EQ(deleteInteractively(files, cfg), Flow::Quit);
+    EXPECT_EQ(deleteInteractively(files, ctx), Flow::Quit);
     ASSERT_EQ(files.size(), 3);
-    ASSERT_EQ(cfg.ignoredPaths().size(), 3);
-    EXPECT_TRUE(cfg.ignoredPaths().contains(files[0]));
-    EXPECT_TRUE(cfg.ignoredPaths().contains(files[1]));
-    EXPECT_TRUE(cfg.ignoredPaths().contains(files[2]));
+    ASSERT_EQ(ctx.ignoredPaths().size(), 3);
+    EXPECT_TRUE(ctx.ignoredPaths().contains(files[0]));
+    EXPECT_TRUE(ctx.ignoredPaths().contains(files[1]));
+    EXPECT_TRUE(ctx.ignoredPaths().contains(files[2]));
 }
 
 TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_InterruptDeletion)
@@ -268,9 +268,9 @@ TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_InterruptDeletion)
 
     in.str("q"); // Simulate user input to keep the second file
 
-    EXPECT_EQ(deleteInteractively(files, cfg), Flow::Quit);
+    EXPECT_EQ(deleteInteractively(files, ctx), Flow::Quit);
     ASSERT_EQ(files.size(), 2);
-    ASSERT_EQ(cfg.ignoredPaths().size(), 0);
+    ASSERT_EQ(ctx.ignoredPaths().size(), 0);
 }
 
 TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_InvalidChoice)
@@ -281,9 +281,9 @@ TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_InvalidChoice)
 
     in.str("4\nW\n"); // Invalid choice
 
-    EXPECT_EQ(deleteInteractively(files, cfg), Flow::Quit);
+    EXPECT_EQ(deleteInteractively(files, ctx), Flow::Quit);
     ASSERT_EQ(files.size(), 1);
-    ASSERT_TRUE(cfg.ignoredPaths().empty());
+    ASSERT_TRUE(ctx.ignoredPaths().empty());
     EXPECT_TRUE(!in); // input should be fully consumed
 }
 
@@ -294,9 +294,9 @@ TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_BadStream)
 
     EXPECT_CALL(strategy, remove(testing::_)).Times(0);
 
-    EXPECT_EQ(deleteInteractively(files, cfg), Flow::Quit);
+    EXPECT_EQ(deleteInteractively(files, ctx), Flow::Quit);
     ASSERT_EQ(files.size(), 1);
-    ASSERT_TRUE(cfg.ignoredPaths().empty());
+    ASSERT_TRUE(ctx.ignoredPaths().empty());
 }
 
 
@@ -304,7 +304,7 @@ TEST_F(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesInSafeDirs)
 {
     MockDuplicateGroups groups;
 
-    cfg.deleteFromPaths().add(fs::path {"safeDir"});
+    ctx.deleteFromPaths().add(fs::path {"safeDir"});
 
     // Two groups, each with two files in safeDir
     std::vector<PathsVec> groupVec {
@@ -321,14 +321,14 @@ TEST_F(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesInSafeDirs)
     EXPECT_CALL(strategy, remove(fs::path("safeDir/file2.txt"))).Times(1);
     EXPECT_CALL(strategy, remove(fs::path("safeDir/file4.txt"))).Times(1);
 
-    deleteDuplicates(groups, cfg);
+    deleteDuplicates(groups, ctx);
 }
 
 TEST_F(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesAllInSafeDirs)
 {
     MockDuplicateGroups groups;
 
-    cfg.deleteFromPaths().add(fs::path {"safeDir"});
+    ctx.deleteFromPaths().add(fs::path {"safeDir"});
 
     // Two groups, each with two files in safeDir
     std::vector<PathsVec> groupVec {
@@ -349,7 +349,7 @@ TEST_F(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesAllInSafeDirs)
     // delete from
     in.str("1\n1\n");
 
-    deleteDuplicates(groups, cfg);
+    deleteDuplicates(groups, ctx);
 }
 
 TEST_F(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesSelectively)
@@ -376,7 +376,7 @@ TEST_F(DuplicateDeletionTest, DeleteDuplicates_ExpectedFilesSelectively)
     // in other words we keep second file (i.e. orig file), that's why we specify 2,2
     in.str("2\n2\n");
 
-    deleteDuplicates(groups, cfg);
+    deleteDuplicates(groups, ctx);
 }
 
 TEST_F(DuplicateDeletionTest, ViewPaths_EmptyLists)
@@ -385,7 +385,7 @@ TEST_F(DuplicateDeletionTest, ViewPaths_EmptyLists)
     EXPECT_CALL(strategy, remove(testing::_)).Times(0);
 
     in.str("v\nq\n");
-    EXPECT_EQ(deleteInteractively(files, cfg), Flow::Quit);
+    EXPECT_EQ(deleteInteractively(files, ctx), Flow::Quit);
 
     EXPECT_TRUE(out.str().contains("Path list is empty"));
 }
@@ -394,10 +394,10 @@ TEST_F(DuplicateDeletionTest, ViewPaths_WithEntries)
 {
     PathsVec files {"file1.txt", "file2.txt"};
     EXPECT_CALL(strategy, remove(testing::_)).Times(0);
-    cfg.keepFromPaths().add(fs::path("keep_dir"));
+    ctx.keepFromPaths().add(fs::path("keep_dir"));
 
     in.str("v\nq\n");
-    EXPECT_EQ(deleteInteractively(files, cfg), Flow::Quit);
+    EXPECT_EQ(deleteInteractively(files, ctx), Flow::Quit);
 
     EXPECT_TRUE(out.str().contains("keep_dir"));
     EXPECT_TRUE(out.str().contains("Delete from paths:"));
@@ -414,7 +414,7 @@ TEST_F(DuplicateDeletionTest, DisplayPathOptions_Elision)
     EXPECT_CALL(strategy, remove(testing::_)).Times(10);
 
     in.str("1\n");
-    EXPECT_EQ(deleteInteractively(files, cfg), Flow::Done);
+    EXPECT_EQ(deleteInteractively(files, ctx), Flow::Done);
 
     EXPECT_TRUE(out.str().contains(": ..."));
 }
@@ -427,9 +427,9 @@ TEST_F(DuplicateDeletionTest, EditKeepFromList_AddPath)
     // k=edit keep list, a=add, 1=pick first dir,
     // b=back from add-menu, b=back from edit-menu, q=quit
     in.str("k\na\n1\nb\nb\nq\n");
-    deleteInteractively(files, cfg);
+    deleteInteractively(files, ctx);
 
-    EXPECT_FALSE(cfg.keepFromPaths().empty());
+    EXPECT_FALSE(ctx.keepFromPaths().empty());
 }
 
 TEST_F(DuplicateDeletionTest, EditKeepFromList_DeletePath)
@@ -437,13 +437,13 @@ TEST_F(DuplicateDeletionTest, EditKeepFromList_DeletePath)
     LogCaptureSt log;
     PathsVec files {"file1.txt", "file2.txt"};
     EXPECT_CALL(strategy, remove(testing::_)).Times(0);
-    cfg.keepFromPaths().add(fs::path("keep_dir"));
+    ctx.keepFromPaths().add(fs::path("keep_dir"));
 
     // k=edit keep list, d=delete from list, 1=remove first, b=back from edit-menu, q=quit
     in.str("k\nd\n1\nb\nq\n");
-    deleteInteractively(files, cfg);
+    deleteInteractively(files, ctx);
 
-    EXPECT_TRUE(cfg.keepFromPaths().empty());
+    EXPECT_TRUE(ctx.keepFromPaths().empty());
     EXPECT_TRUE(log.contains("Removing item:"));
 }
 
@@ -456,7 +456,7 @@ TEST_F(DuplicateDeletionTest, DeletePaths_EmptyList)
     // k=edit keep list, d=delete from empty list (logs + returns),
     // b=back from edit-menu, q=quit
     in.str("k\nd\nb\nq\n");
-    deleteInteractively(files, cfg);
+    deleteInteractively(files, ctx);
 
     EXPECT_TRUE(log.contains("Path list is empty"));
 }
@@ -467,8 +467,8 @@ TEST_F(DuplicateDeletionTest, DeleteDuplicates_SkipsIgnoredFiles)
     MockDuplicateGroups groups;
 
     // Mark file2.txt as ignored
-    cfg.ignoredPaths().add(fs::path("safeDir/file2.txt"));
-    cfg.deleteFromPaths().add(fs::path {"safeDir"});
+    ctx.ignoredPaths().add(fs::path("safeDir/file2.txt"));
+    ctx.deleteFromPaths().add(fs::path {"safeDir"});
 
     std::vector<PathsVec> groupVec = {
         {fs::path("OrigDir/file1.txt"), fs::path("safeDir/file2.txt")}};
@@ -482,7 +482,7 @@ TEST_F(DuplicateDeletionTest, DeleteDuplicates_SkipsIgnoredFiles)
     // called
     EXPECT_CALL(strategy, remove(testing::_)).Times(0);
 
-    deleteDuplicates(groups, cfg);
+    deleteDuplicates(groups, ctx);
 }
 
 } // namespace tools::dups

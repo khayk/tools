@@ -336,10 +336,10 @@ bool isDuplicateNamingPattern(const IDeletionStrategy& strategy, PathsVec& files
     return true;
 }
 
-Flow deleteInteractively(PathsVec& files, DeletionConfig& cfg)
+Flow deleteInteractively(PathsVec& files, DeletionContext& ctx)
 {
     // Try automatic resolution first
-    if (deduceTheOneToKeep(cfg.strategy(), files, cfg.keepFromPaths()))
+    if (deduceTheOneToKeep(ctx.strategy(), files, ctx.keepFromPaths()))
     {
         return Flow::Done;
     }
@@ -349,12 +349,12 @@ Flow deleteInteractively(PathsVec& files, DeletionConfig& cfg)
     // @todo:hayk - if pattern emerges that tells we need to run various checks based
     // on different conditions, we might use template method design pattern to delegate
     // the decision to user defined logic
-    if (isDuplicateNamingPattern(cfg.strategy(), files))
+    if (isDuplicateNamingPattern(ctx.strategy(), files))
     {
         return Flow::Done;
     }
 
-    displayPathOptions(cfg.out(), files);
+    displayPathOptions(ctx.out(), files);
 
     Menu menu("Enter a number to keep, or select an action");
 
@@ -370,13 +370,13 @@ Flow deleteInteractively(PathsVec& files, DeletionConfig& cfg)
 
         std::swap(files[index - 1], files.back());
         files.pop_back();
-        deleteFiles(cfg.strategy(), files);
+        deleteFiles(ctx.strategy(), files);
         return Navigation::Done;
     });
 
     menuOption(menu, "Ignore", 'i', [&](UserIO&) {
         spdlog::info("Ignoring group...");
-        cfg.ignoredPaths().add(files);
+        ctx.ignoredPaths().add(files);
         return Navigation::Continue;
     });
 
@@ -386,25 +386,25 @@ Flow deleteInteractively(PathsVec& files, DeletionConfig& cfg)
     });
 
     menuOption(menu, "Edit keep-from list", 'k', [&](UserIO& io) {
-        return editConfig(files, "keep-from list", cfg.keepFromPaths(), io);
+        return editConfig(files, "keep-from list", ctx.keepFromPaths(), io);
     });
 
     menuOption(menu, "Edit delete-from list", 'd', [&](UserIO& io) {
-        return editConfig(files, "delete-from list", cfg.deleteFromPaths(), io);
+        return editConfig(files, "delete-from list", ctx.deleteFromPaths(), io);
     });
 
     menuOption(menu, "View keep/delete list", 'v', [&](UserIO&) {
-        displayPaths("Keep from paths:", cfg.keepFromPaths(), cfg.out());
-        displayPaths("Delete from paths:", cfg.deleteFromPaths(), cfg.out());
+        displayPaths("Keep from paths:", ctx.keepFromPaths(), ctx.out());
+        displayPaths("Delete from paths:", ctx.deleteFromPaths(), ctx.out());
         return Navigation::Continue;
     });
 
-    auto navigation = cfg.io().run(menu, false);
+    auto navigation = ctx.io().run(menu, false);
     return navigation == Navigation::Quit ? Flow::Quit : Flow::Done;
 }
 
 
-DeletionConfig::DeletionConfig(const IDeletionStrategy& strategy,
+DeletionContext::DeletionContext(const IDeletionStrategy& strategy,
                                std::ostream& out,
                                std::istream& in,
                                Progress& progress,
@@ -417,56 +417,56 @@ DeletionConfig::DeletionConfig(const IDeletionStrategy& strategy,
 {
 }
 
-const IDeletionStrategy& DeletionConfig::strategy() const
+const IDeletionStrategy& DeletionContext::strategy() const
 {
     return strategy_;
 }
 
-StreamIO& DeletionConfig::io()
+StreamIO& DeletionContext::io()
 {
     return io_;
 }
 
-std::ostream& DeletionConfig::out()
+std::ostream& DeletionContext::out()
 {
     return out_;
 }
 
-std::istream& DeletionConfig::in()
+std::istream& DeletionContext::in()
 {
     return in_;
 }
 
-Progress& DeletionConfig::progress()
+Progress& DeletionContext::progress()
 {
     return progress_;
 }
 
-IgnoredPaths& DeletionConfig::ignoredPaths()
+IgnoredPaths& DeletionContext::ignoredPaths()
 {
     return ignored_;
 }
 
-KeepFromPaths& DeletionConfig::keepFromPaths()
+KeepFromPaths& DeletionContext::keepFromPaths()
 {
     return keepFrom_;
 }
 
-DeleteFromPaths& DeletionConfig::deleteFromPaths()
+DeleteFromPaths& DeletionContext::deleteFromPaths()
 {
     return deleteFrom_;
 }
 
 class GroupProcessor
 {
-    DeletionConfig& cfg_;
+    DeletionContext& ctx_;
     bool sensitiveToExternalEvents_ = false;
     PathsVec autoDelete_;
     PathsVec selective_;
 
 public:
-    GroupProcessor(DeletionConfig& dcfg)
-        : cfg_(dcfg)
+    GroupProcessor(DeletionContext& ctx)
+        : ctx_(ctx)
     {
     }
 
@@ -492,7 +492,7 @@ public:
             {
                 // Delete the "unwanted" ones immediately, keeping the "selective" ones
                 // for review
-                deleteFiles(cfg_.strategy(), autoDelete_);
+                deleteFiles(ctx_.strategy(), autoDelete_);
             }
 
             flow = handleReview(group);
@@ -504,7 +504,7 @@ public:
 private:
     void updateProgress(size_t current, size_t total)
     {
-        cfg_.progress().update([&](auto& os) {
+        ctx_.progress().update([&](auto& os) {
             os << "Processing group " << current << " of " << total << '\n';
         });
     }
@@ -519,12 +519,12 @@ private:
             {
                 continue;
             }
-            if (cfg_.ignoredPaths().contains(e.file))
+            if (ctx_.ignoredPaths().contains(e.file))
             {
                 continue;
             }
 
-            if (findPath(cfg_.deleteFromPaths().paths(), e.file.parent_path()))
+            if (findPath(ctx_.deleteFromPaths().paths(), e.file.parent_path()))
             {
                 autoDelete_.push_back(e.file);
             }
@@ -542,18 +542,18 @@ private:
             return Flow::Done;
         }
 
-        cfg_.out() << "Size: " << group.entires.front().size
+        ctx_.out() << "Size: " << group.entires.front().size
                    << " SHA256: " << group.entires.front().sha256 << '\n';
 
         std::ranges::sort(selective_);
-        return deleteInteractively(selective_, cfg_);
+        return deleteInteractively(selective_, ctx_);
     }
 };
 
 // The main function is now very clean
-void deleteDuplicates(const IDuplicateGroups& duplicates, DeletionConfig& cfg)
+void deleteDuplicates(const IDuplicateGroups& duplicates, DeletionContext& ctx)
 {
-    GroupProcessor processor {cfg};
+    GroupProcessor processor {ctx};
     size_t total = duplicates.numGroups();
 
     duplicates.enumGroups([&, i = 0ULL](const DupGroup& group) mutable {

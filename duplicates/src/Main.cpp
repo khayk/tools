@@ -84,18 +84,18 @@ int main(int argc, const char* argv[])
         auto strategy = createDeletionStrategy(cfg);
 
         StreamIO io(std::cout, std::cin);
-        DeletionConfig deletionCfg {*strategy, std::cout, std::cin, progress, io};
-        PathsPersister persisIgn(deletionCfg.ignoredPaths().paths(),
+        DeletionContext ctx {*strategy, std::cout, std::cin, progress, io};
+        PathsPersister persisIgn(ctx.ignoredPaths().paths(),
                                  cfg.ignFilesPath());
-        PathsPersister persisKeep(deletionCfg.keepFromPaths().paths(),
+        PathsPersister persisKeep(ctx.keepFromPaths().paths(),
                                   cfg.keepFilesPath());
-        PathsPersister persisDel(deletionCfg.deleteFromPaths().paths(),
+        PathsPersister persisDel(ctx.deleteFromPaths().paths(),
                                  cfg.delFilesPath());
 
-        deletionCfg.keepFromPaths().add(cfg.dirsToKeepFrom());
-        deletionCfg.deleteFromPaths().add(cfg.dirsToDeleteFrom());
+        ctx.keepFromPaths().add(cfg.dirsToKeepFrom());
+        ctx.deleteFromPaths().add(cfg.dirsToDeleteFrom());
 
-        deleteDuplicates(detector, deletionCfg);
+        deleteDuplicates(detector, ctx);
     }
     catch (const std::system_error& se)
     {
