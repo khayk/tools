@@ -3,15 +3,21 @@ project(duplicates)
 set(PROJECT_LIB "${PROJECT_NAME}")
 set(PROJECT_APP "${PROJECT_NAME}-app")
 
-file(GLOB LIB_SRCS
-   "src/*.h"
-   "src/*.cpp"
+set(LIB_SRCS
+    src/CmdLine.cpp
+    src/Config.cpp
+    src/DeletionStrategy.cpp
+    src/DuplicateDeletion.cpp
+    src/DuplicateDetector.cpp
+    src/DuplicateOperation.cpp
+    src/Menu.cpp
+    src/Node.cpp
+    src/PathList.cpp
+    src/Utils.cpp
 )
 
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(tomlplusplus CONFIG REQUIRED)
-
-list(FILTER LIB_SRCS EXCLUDE REGEX ".*Main.cpp")
 
 # Adding a library project
 add_library(${PROJECT_LIB} ${LIB_SRCS})

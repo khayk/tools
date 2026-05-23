@@ -1,7 +1,15 @@
 set(PROJECT_TST "duplicates-test")
 
-file(GLOB TEST_SRCS
-   "*.cpp"
+set(TEST_SRCS
+    CmdLineTest.cpp
+    ConfigTest.cpp
+    DeletionStrategyTest.cpp
+    DuplicateDeletionTest.cpp
+    DuplicateDetectorTest.cpp
+    DuplicateOperationTest.cpp
+    MenuTest.cpp
+    NodeTest.cpp
+    UtilsTest.cpp
 )
 
 add_executable(${PROJECT_TST} ${TEST_SRCS})

@@ -35,7 +35,7 @@ void outputFiles(const fs::path& allFiles, const DuplicateDetector& detector);
  * @param progress The Progress instance to get updates during the operation
  */
 void detectDuplicates(const Config& cfg,
-                      DuplicateDetector& detector,
+                      IDuplicateDetector& detector,
                       Progress& progress);
 
 /**
@@ -44,7 +44,7 @@ void detectDuplicates(const Config& cfg,
  * @param reportPath The path to the file where to report duplicates
  * @param detector The DuplicateDetector instance containing detected duplicates
  */
-void reportDuplicates(const fs::path& reportPath, const DuplicateDetector& detector);
+void reportDuplicates(const fs::path& reportPath, const IDuplicateGroups& detector);
 
 
 } // namespace tools::dups

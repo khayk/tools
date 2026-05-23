@@ -52,7 +52,7 @@ void scanDirectories(const Config& cfg,
 
 
 void detectDuplicates(const Config& cfg,
-                      DuplicateDetector& detector,
+                      IDuplicateDetector& detector,
                       Progress& progress)
 {
     if (cfg.skipDetection())
@@ -101,7 +101,7 @@ void outputFiles(const fs::path& allFiles, const DuplicateDetector& detector)
     spdlog::info("Dumped {} files", detector.numFiles());
 }
 
-void reportDuplicates(const fs::path& reportPath, const DuplicateDetector& detector)
+void reportDuplicates(const fs::path& reportPath, const IDuplicateGroups& detector)
 {
     std::ofstream out(reportPath, std::ios::out | std::ios::binary);
     size_t totalFiles = 0;
