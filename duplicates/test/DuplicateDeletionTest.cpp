@@ -222,6 +222,65 @@ TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_KeepPaths_MultipleMatches
 }
 
 
+TEST_F(DuplicateDeletionTest, IsDuplicateNamingPattern_NumberedSuffix_KeepsOriginal)
+{
+    // file.txt is the original; (1) and (2) copies must be deleted automatically
+    PathsVec files {"file.txt", "file (1).txt", "file (2).txt"};
+
+    EXPECT_CALL(strategy, remove(fs::path("file (1).txt"))).Times(1);
+    EXPECT_CALL(strategy, remove(fs::path("file (2).txt"))).Times(1);
+
+    EXPECT_EQ(deleteInteractively(files, ctx), Flow::Done);
+    EXPECT_TRUE(files.empty());
+}
+
+TEST_F(DuplicateDeletionTest, IsDuplicateNamingPattern_OriginalNotFirst_KeepsOriginal)
+{
+    // Original (shortest stem) is in the middle; function must still identify it
+    PathsVec files {"file (1).txt", "file.txt", "file (2).txt"};
+
+    EXPECT_CALL(strategy, remove(fs::path("file (1).txt"))).Times(1);
+    EXPECT_CALL(strategy, remove(fs::path("file (2).txt"))).Times(1);
+
+    EXPECT_EQ(deleteInteractively(files, ctx), Flow::Done);
+    EXPECT_TRUE(files.empty());
+}
+
+TEST_F(DuplicateDeletionTest, IsDuplicateNamingPattern_UnderscoreCopySuffix_KeepsOriginal)
+{
+    // _copy suffix must be recognised and the copy deleted
+    PathsVec files {"document.txt", "document_copy.txt"};
+
+    EXPECT_CALL(strategy, remove(fs::path("document_copy.txt"))).Times(1);
+
+    EXPECT_EQ(deleteInteractively(files, ctx), Flow::Done);
+    EXPECT_TRUE(files.empty());
+}
+
+TEST_F(DuplicateDeletionTest, IsDuplicateNamingPattern_CopySuffix_KeepsOriginal)
+{
+    // bare "copy" suffix (no underscore) must also be recognised
+    PathsVec files {"file.txt", "filecopy.txt"};
+
+    EXPECT_CALL(strategy, remove(fs::path("filecopy.txt"))).Times(1);
+
+    EXPECT_EQ(deleteInteractively(files, ctx), Flow::Done);
+    EXPECT_TRUE(files.empty());
+}
+
+TEST_F(DuplicateDeletionTest, IsDuplicateNamingPattern_UnrelatedNames_FallsThrough)
+{
+    // Different base names — pattern not recognised, interactive menu shown instead
+    MuteLogger mute;
+    PathsVec files {"file1.txt", "file2.txt"};
+
+    EXPECT_CALL(strategy, remove(testing::_)).Times(0);
+
+    in.str("q\n");
+    EXPECT_EQ(deleteInteractively(files, ctx), Flow::Quit);
+    EXPECT_EQ(files.size(), 2);
+}
+
 TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_ConsecutiveCalls)
 {
     PathsVec files {"file1.txt", "file2.txt", "file3.txt"};
