@@ -5,6 +5,7 @@
 #include <core/utils/File.h>
 #include <core/utils/Crypto.h>
 #include <core/utils/Log.h>
+#include <core/utils/LogCapture.h>
 #include <memory>
 #include <array>
 
@@ -12,6 +13,7 @@ namespace tools::dups {
 
 using namespace core;
 using utl::MuteLogger;
+using utl::LogCaptureSt;
 
 TEST(DeletionStrategyTest, PermanentDelete)
 {
@@ -52,6 +54,9 @@ TEST(DeletionStrategyTest, BackupAndDelete)
         strategy->remove(file);
         EXPECT_FALSE(fs::exists(file));
 
+        // Should be no-op, as the file already deleted
+        strategy->remove(file);
+
         const auto parentPath = files.front().parent_path();
         const auto hash = crypto::md5(parentPath.string());
 
@@ -70,6 +75,21 @@ TEST(DeletionStrategyTest, BackupAndDelete)
             ++it;
             return true;
         });
+}
+
+TEST(DeletionStrategyTest, DryRunDelete)
+{
+    LogCaptureSt log;
+    file::TempDir data("dups");
+    DryRunDelete strategy;
+
+    const fs::path file = data.path() / "test.txt";
+    file::write(file, "test content");
+
+    EXPECT_TRUE(fs::exists(file));
+    strategy.remove(file);
+    EXPECT_TRUE(fs::exists(file));
+    EXPECT_TRUE(log.contains("Would delete: "));
 }
 
 } // namespace tools::dups
