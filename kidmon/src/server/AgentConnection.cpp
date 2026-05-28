@@ -10,6 +10,15 @@
 #include <spdlog/spdlog.h>
 
 namespace km {
+namespace {
+
+auto defAuthHandler = [](AgentConnection* conn, bool)
+{
+    spdlog::info("Default auth handler is called: {}", fmt::ptr(conn));
+    return false;
+};
+
+} // namespace
 
 AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
                                  DataHandler& dataHandler,
@@ -19,6 +28,7 @@ AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
     , authHandler_(authHandler)
     , dataHandler_(dataHandler)
     , comm_(*this)
+    , authCb_(defAuthHandler)
 {
     comm_.onMsg([this](const std::string& msg) {
         try
@@ -132,7 +142,7 @@ void AgentConnection::transitionTo(const State newState) noexcept
     }
     catch (const std::exception& e)
     {
-        spdlog::error("Exception inside transitionTo: ", e.what());
+        spdlog::error("Exception inside transitionTo: {}", e.what());
     }
 
     currentState_ = newState;
