@@ -10,7 +10,7 @@ namespace km {
 
 class AgentManager
 {
-    AgentConnection* authAgentConn_ {nullptr};
+    std::weak_ptr<AgentConnection> authAgentConn_;
 
 public:
     AgentManager(AuthorizationHandler& authHandler,

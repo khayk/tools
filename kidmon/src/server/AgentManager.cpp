@@ -27,18 +27,19 @@ AgentManager::AgentManager(AuthorizationHandler& authHandler,
                                                       std::move(socket),
                                                       peerDropTimeout);
 
-        conn->onAuth([this](AgentConnection* conn, bool auth) {
-            if (authAgentConn_ == nullptr && auth)
+        std::weak_ptr<AgentConnection> weakConn = conn;
+        conn->onAuth([this, weakConn](AgentConnection* conn, bool auth) {
+            if (authAgentConn_.expired() && auth)
             {
                 spdlog::info("Agent successfully authorized: {}", fmt::ptr(conn));
-                authAgentConn_ = conn;
+                authAgentConn_ = weakConn;
                 return true;
             }
 
-            if (authAgentConn_ == conn && !auth)
+            if (authAgentConn_.lock().get() == conn && !auth)
             {
                 spdlog::info("Authorized agent disconnected: {}", fmt::ptr(conn));
-                authAgentConn_ = nullptr;
+                authAgentConn_.reset();
                 return true;
             }
 
@@ -68,7 +69,7 @@ AgentManager::AgentManager(AuthorizationHandler& authHandler,
 
 bool AgentManager::hasAuthorizedAgent() const
 {
-    return authAgentConn_ != nullptr;
+    return !authAgentConn_.expired();
 }
 
 } // namespace km

@@ -66,7 +66,9 @@ int main(int argc, char* argv[])
         opts.add_options()
             ("t,token", "Authorization token for agent", cxxopts::value<std::string>()->default_value(""))
             ("a,agent", "Run as an agent", cxxopts::value<bool>()->default_value("false"))
-            ("p,passive", "Run server in a passive mode", cxxopts::value<bool>()->default_value("false"));
+            ("p,passive", "Run server in a passive mode", cxxopts::value<bool>()->default_value("false"))
+            ("h,help", "Print usage");
+
         // clang-format on
 
         auto result = opts.parse(argc, argv);
