@@ -66,7 +66,7 @@ AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
         }
         catch (const std::exception& ex)
         {
-            spdlog::error("Excepting in request handling, details: {}", ex.what());
+            spdlog::error("Exception in request handling, details: {}", ex.what());
             transitionTo(State::Disconnected);
             close();
         }
