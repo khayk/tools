@@ -100,7 +100,10 @@ generate_plist() {
 $(build_program_arguments)
 
     <key>KeepAlive</key>
-    <true/>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
 
     <key>RunAtLoad</key>
     <true/>
