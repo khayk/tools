@@ -1,16 +1,17 @@
 #include <kidmon/data/Messages.h>
 #include <core/utils/Str.h>
-#include <core/utils/Sys.h>
 
 #include <nlohmann/json.hpp>
 
 namespace km::msgs {
 
-void buildAuthMsg(std::string_view authToken, nlohmann::ordered_json& js)
+void buildAuthMsg(std::string_view authToken,
+                  std::string_view username,
+                  nlohmann::ordered_json& js)
 {
     js = {{"name", "auth"},
           {"message",
-           {{"username", core::str::ws2s(core::sys::activeUserName())},
+           {{"username", username},
             {"token", authToken}}}};
 }
 
@@ -18,7 +19,7 @@ void buildDataMsg(const Entry& entry, nlohmann::ordered_json& js)
 {
     js["name"] = "data";
     auto& msgJs = js["message"];
-    msgJs["username"] = core::str::ws2s(core::sys::activeUserName());
+    msgJs["username"] = entry.username;
     toJson(entry, msgJs["entry"]);
 }
 

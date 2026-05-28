@@ -4,7 +4,10 @@
 
 namespace km::msgs {
 
-void buildAuthMsg(std::string_view authToken, nlohmann::ordered_json& js);
+void buildAuthMsg(std::string_view authToken,
+                  std::string_view username,
+                  nlohmann::ordered_json& js);
+
 void buildDataMsg(const Entry& entry, nlohmann::ordered_json& js);
 
 void buildResponse(int status,

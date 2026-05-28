@@ -9,6 +9,7 @@
 #include <core/utils/Crypto.h>
 #include <core/network/TcpClient.h>
 #include <core/network/TcpCommunicator.h>
+#include <core/utils/Sys.h>
 
 #include <nlohmann/json.hpp>
 #include <boost/asio.hpp>
@@ -229,7 +230,8 @@ class KidmonAgent::Impl
 
             // Initiate authorization
             nlohmann::ordered_json js;
-            msgs::buildAuthMsg(cfg_.authToken, js);
+            const auto username = core::str::ws2s(core::sys::activeUserName());
+            msgs::buildAuthMsg(cfg_.authToken, username, js);
             const auto authMsg = js.dump();
             spdlog::debug("Sending auth message: {}", authMsg);
             comm_->sendAsync(authMsg);
@@ -325,6 +327,7 @@ class KidmonAgent::Impl
                 }
             }
 
+            entry.username = core::str::ws2s(core::sys::activeUserName());
             nlohmann::ordered_json js;
             msgs::buildDataMsg(entry, js);
             const auto dataMsg = js.dump();
