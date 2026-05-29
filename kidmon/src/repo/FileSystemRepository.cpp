@@ -1,5 +1,6 @@
 #include <kidmon/repo/FileSystemRepository.h>
 #include <kidmon/common/Utils.h>
+#include <kidmon/data/Constants.h>
 
 #include <core/utils/File.h>
 #include <core/utils/Str.h>
@@ -154,28 +155,29 @@ void readEntries(const std::string& username, const fs::path& file, const EntryC
 
         try
         {
-            auto& proc = json["proc"];
-            entry.processInfo.processPath = proc["path"].get<std::string>();
-            entry.processInfo.sha256 = proc["sha256"].get<std::string>();
+            auto& proc = json[constants::PROC_INFO];
+            entry.processInfo.processPath = proc[constants::PROC_PATH].get<std::string>();
+            entry.processInfo.sha256 = proc[constants::PROC_SHA].get<std::string>();
 
-            auto& wnd = json["wnd"];
-            entry.windowInfo.title = wnd["title"].get<std::string>();
+            auto& wnd = json[constants::WND_INFO];
+            entry.windowInfo.title = wnd[constants::WND_TITLE].get<std::string>();
 
-            const Point leftTop(getAs<int>(wnd["lt"][0]), getAs<int>(wnd["lt"][1]));
-            const Dimensions dimensions(getAs<uint32_t>(wnd["wh"][0]),
-                                        getAs<uint32_t>(wnd["wh"][1]));
+            const Point leftTop(getAs<int>(wnd[constants::WND_LEFT_TOP][0]),
+                                getAs<int>(wnd[constants::WND_LEFT_TOP][1]));
+            const Dimensions dimensions(getAs<uint32_t>(wnd[constants::WND_DIMENSIONS][0]),
+                                        getAs<uint32_t>(wnd[constants::WND_DIMENSIONS][1]));
             entry.windowInfo.placement = Rect(leftTop, dimensions);
 
-            auto& img = wnd["img"];
-            entry.windowInfo.image.name = img["name"].get<std::string>();
-            entry.windowInfo.image.bytes = img["bytes"].get<std::string>();
-            entry.windowInfo.image.encoded = img["encoded"].get<bool>();
+            auto& img = wnd[constants::WND_IMG];
+            entry.windowInfo.image.name = img[constants::WND_IMG_NAME].get<std::string>();
+            entry.windowInfo.image.bytes = img[constants::WND_IMG_BYTES].get<std::string>();
+            entry.windowInfo.image.encoded = img[constants::WND_IMG_ENCODED].get<bool>();
 
-            const auto& ts = json["ts"];
+            const auto& ts = json[constants::TIMESTAMP];
             entry.timestamp.capture =
-                TimePoint(std::chrono::milliseconds(getAs<long long>(ts["when"])));
+                TimePoint(std::chrono::milliseconds(getAs<long long>(ts[constants::TIMESTAMP_WHEN])));
             entry.timestamp.duration =
-                std::chrono::milliseconds(getAs<long long>(ts["dur"]));
+                std::chrono::milliseconds(getAs<long long>(ts[constants::TIMESTAMP_DUR]));
         }
         catch (const std::exception&)
         {
