@@ -3,6 +3,8 @@
 #include "Point.h"
 #include "Dimensions.h"
 
+#include <ostream>
+
 namespace km {
 
 class Rect
@@ -36,5 +38,11 @@ public:
 
     bool operator==(const Rect&) const = default;
 };
+
+inline std::ostream& operator<<(std::ostream& os, const Rect& rc)
+{
+    os << '[' << rc.leftTop() << ", " << rc.rightBottom() << ']';
+    return os;
+}
 
 } // namespace km

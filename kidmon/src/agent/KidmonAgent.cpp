@@ -143,18 +143,6 @@ private:
 
 } // namespace
 
-std::ostream& operator<<(std::ostream& os, const Point& pt)
-{
-    os << '(' << pt.x() << ", " << pt.y() << ')';
-    return os;
-}
-
-std::ostream& operator<<(std::ostream& os, const Rect& rc)
-{
-    os << '[' << rc.leftTop() << ", " << rc.rightBottom() << ']';
-    return os;
-}
-
 class KidmonAgent::Impl
 {
     using work_guard = net::executor_work_guard<net::io_context::executor_type>;

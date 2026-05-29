@@ -1,5 +1,7 @@
 #pragma once
 
+#include <ostream>
+
 namespace km {
 
 class Point
@@ -33,6 +35,12 @@ inline Point operator+(const Point& lhs, const Point& rhs)
 inline Point operator-(const Point& lhs, const Point& rhs)
 {
     return {lhs.x() - rhs.x(), lhs.y() - rhs.y()};
+}
+
+inline std::ostream& operator<<(std::ostream& os, const Point& pt)
+{
+    os << '(' << pt.x() << ", " << pt.y() << ')';
+    return os;
 }
 
 } // namespace km
