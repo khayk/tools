@@ -347,33 +347,47 @@ void applyOverrides(const fs::path& cfgFile, Config& cfg)
 
     auto config = toml::parse_file(cfgFile.string());
 
-    config["exclusion_patterns"].as_array()->for_each([&cfg](const auto& value) {
-        if constexpr (toml::is_string<decltype(value)>)
-        {
-            cfg.addExclusionPattern(std::string(value.value_or(""sv)));
-        }
-    });
+    // Each array key is optional; as_array() returns null when it is absent, so
+    // a key must be guarded before iterating to avoid dereferencing nullptr.
+    if (const auto* arr = config["exclusion_patterns"].as_array())
+    {
+        arr->for_each([&cfg](const auto& value) {
+            if constexpr (toml::is_string<decltype(value)>)
+            {
+                cfg.addExclusionPattern(std::string(value.value_or(""sv)));
+            }
+        });
+    }
 
-    config["scan_directories"].as_array()->for_each([&cfg](const auto& value) {
-        if constexpr (toml::is_string<decltype(value)>)
-        {
-            cfg.addScanDir(value.value_or(""sv));
-        }
-    });
+    if (const auto* arr = config["scan_directories"].as_array())
+    {
+        arr->for_each([&cfg](const auto& value) {
+            if constexpr (toml::is_string<decltype(value)>)
+            {
+                cfg.addScanDir(value.value_or(""sv));
+            }
+        });
+    }
 
-    config["dirs_to_keep_from"].as_array()->for_each([&cfg](const auto& value) {
-        if constexpr (toml::is_string<decltype(value)>)
-        {
-            cfg.addDirToKeepFrom(value.value_or(""sv));
-        }
-    });
+    if (const auto* arr = config["dirs_to_keep_from"].as_array())
+    {
+        arr->for_each([&cfg](const auto& value) {
+            if constexpr (toml::is_string<decltype(value)>)
+            {
+                cfg.addDirToKeepFrom(value.value_or(""sv));
+            }
+        });
+    }
 
-    config["dirs_to_delete_from"].as_array()->for_each([&cfg](const auto& value) {
-        if constexpr (toml::is_string<decltype(value)>)
-        {
-            cfg.addDirToDeleteFrom(value.value_or(""sv));
-        }
-    });
+    if (const auto* arr = config["dirs_to_delete_from"].as_array())
+    {
+        arr->for_each([&cfg](const auto& value) {
+            if constexpr (toml::is_string<decltype(value)>)
+            {
+                cfg.addDirToDeleteFrom(value.value_or(""sv));
+            }
+        });
+    }
 
     cfg.setMinFileSizeBytes(
         config["min_file_size_bytes"].value_or(cfg.minFileSizeBytes()));

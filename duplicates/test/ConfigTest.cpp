@@ -287,6 +287,29 @@ TEST(ConfigTest, ApplyOverridesReadsDirAndFilePaths)
     EXPECT_EQ(cfg.ignFilesPath(), cfg.dataDir() / "custom_ign.txt");
 }
 
+TEST(ConfigTest, ApplyOverridesHandlesMinimalFileWithoutArrays)
+{
+    // A hand-written minimal config that omits every array key. Each
+    // config[...].as_array() returns null for these, so dereferencing it
+    // unconditionally would crash. The override must simply leave the
+    // corresponding collections untouched.
+    core::file::TempDir tmp("cfg-minimal-test");
+    const auto cfgFile = tmp.path() / "minimal.toml";
+    core::file::write(cfgFile, "min_file_size_bytes = 4096\n");
+
+    Config cfg("/data", "/cache");
+    core::utl::LogCaptureSt capture;
+
+    applyDefaults(cfg);
+    EXPECT_NO_THROW(applyOverrides(cfgFile, cfg));
+
+    EXPECT_EQ(cfg.minFileSizeBytes(), 4096U);
+    EXPECT_TRUE(cfg.scanDirs().empty());
+    EXPECT_TRUE(cfg.dirsToKeepFrom().empty());
+    EXPECT_TRUE(cfg.dirsToDeleteFrom().empty());
+    EXPECT_TRUE(cfg.exclusionPatterns().empty());
+}
+
 // ─── logConfig ───────────────────────────────────────────────────────────────
 
 TEST(ConfigTest, LogConfigEmitsExpectedFields)
