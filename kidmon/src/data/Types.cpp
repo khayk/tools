@@ -12,23 +12,21 @@ void toJson(const ProcessInfo& pi, nlohmann::ordered_json& js)
     js[constants::PROC_SHA] = pi.sha256;
 }
 
-void toJson(const Image& image, nlohmann::ordered_json& js)
+void toJson(const Image& image, nlohmann::ordered_json& js, bool includeBytes)
 {
-    js = {
-        {constants::WND_IMG_NAME, image.name},
-        {constants::WND_IMG_BYTES, image.bytes},
-        {constants::WND_IMG_ENCODED, image.encoded},
-    };
+    js[constants::WND_IMG_NAME] = image.name;
+    js[constants::WND_IMG_BYTES] = includeBytes ? image.bytes : std::string{};
+    js[constants::WND_IMG_ENCODED] = image.encoded;
 }
 
-void toJson(const WindowInfo& wi, nlohmann::ordered_json& js)
+void toJson(const WindowInfo& wi, nlohmann::ordered_json& js, bool includeImageBytes)
 {
     js[constants::WND_TITLE] = wi.title;
     js[constants::WND_LEFT_TOP] = {wi.placement.leftTop().x(),
                                    wi.placement.leftTop().y()};
     js[constants::WND_DIMENSIONS] = {wi.placement.width(), wi.placement.height()};
 
-    toJson(wi.image, js[constants::WND_IMG]);
+    toJson(wi.image, js[constants::WND_IMG], includeImageBytes);
 }
 
 void toJson(const Timestamp& ts, nlohmann::ordered_json& js)
@@ -41,10 +39,10 @@ void toJson(const Timestamp& ts, nlohmann::ordered_json& js)
     js[constants::TIMESTAMP_DUR] = ts.duration.count();
 }
 
-void toJson(const Entry& entry, nlohmann::ordered_json& js)
+void toJson(const Entry& entry, nlohmann::ordered_json& js, bool includeImageBytes)
 {
     toJson(entry.processInfo, js[constants::PROC_INFO]);
-    toJson(entry.windowInfo, js[constants::WND_INFO]);
+    toJson(entry.windowInfo, js[constants::WND_INFO], includeImageBytes);
     toJson(entry.timestamp, js[constants::TIMESTAMP]);
 }
 

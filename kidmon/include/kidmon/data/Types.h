@@ -58,10 +58,10 @@ struct Entry
 };
 
 void toJson(const ProcessInfo& pi, nlohmann::ordered_json& js);
-void toJson(const WindowInfo& wi, nlohmann::ordered_json& js);
-void toJson(const Image& image, nlohmann::ordered_json& js);
+void toJson(const WindowInfo& wi, nlohmann::ordered_json& js, bool includeImageBytes = true);
+void toJson(const Image& image, nlohmann::ordered_json& js, bool includeBytes = true);
 void toJson(const Timestamp& ts, nlohmann::ordered_json& js);
-void toJson(const Entry& entry, nlohmann::ordered_json& js);
+void toJson(const Entry& entry, nlohmann::ordered_json& js, bool includeImageBytes = true);
 
 void fromJson(const nlohmann::json& js, ProcessInfo& pi);
 void fromJson(const nlohmann::json& js, WindowInfo& wi);

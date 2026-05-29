@@ -273,9 +273,7 @@ public:
         const auto rawFile = userDirs.rawDir / rawName;
 
         nlohmann::ordered_json js;
-        Entry tmp = entry;
-        tmp.windowInfo.image.bytes.clear();
-        toJson(tmp, js);
+        toJson(entry, js, false);
         file::append(rawFile, js.dump().append(1, '\n'));
     }
 
