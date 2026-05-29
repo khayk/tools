@@ -9,6 +9,8 @@
 #include <filesystem>
 #include <regex>
 #include <algorithm>
+#include <format>
+#include <stdexcept>
 
 using namespace std::literals;
 using std::chrono::milliseconds;
@@ -345,7 +347,23 @@ void applyOverrides(const fs::path& cfgFile, Config& cfg)
 
     spdlog::info("Overriding config from file: {}", cfgFile);
 
-    auto config = toml::parse_file(cfgFile.string());
+    toml::table config;
+    try
+    {
+        config = toml::parse_file(cfgFile.string());
+    }
+    catch (const toml::parse_error& e)
+    {
+        const auto& pos = e.source().begin;
+        spdlog::error("Invalid TOML in config file '{}': {} (line {}, column {})",
+                      cfgFile,
+                      e.description(),
+                      pos.line,
+                      pos.column);
+        throw std::runtime_error(
+            std::format("Failed to parse config file: {}",
+                        core::file::path2s(cfgFile)));
+    }
 
     // Each array key is optional; as_array() returns null when it is absent, so
     // a key must be guarded before iterating to avoid dereferencing nullptr.

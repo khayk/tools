@@ -310,6 +310,22 @@ TEST(ConfigTest, ApplyOverridesHandlesMinimalFileWithoutArrays)
     EXPECT_TRUE(cfg.exclusionPatterns().empty());
 }
 
+TEST(ConfigTest, ApplyOverridesReportsMalformedToml)
+{
+    // A syntactically broken line (missing '='). The override must fail loudly
+    // with an actionable message rather than aborting with a terse parser error.
+    core::file::TempDir tmp("cfg-bad-test");
+    const auto cfgFile = tmp.path() / "bad.toml";
+    core::file::write(cfgFile, "min_file_size_bytes 1024\n");
+
+    Config cfg("/data", "/cache");
+    core::utl::LogCaptureSt capture;
+
+    applyDefaults(cfg);
+    EXPECT_THROW(applyOverrides(cfgFile, cfg), std::exception);
+    EXPECT_TRUE(capture.contains("Invalid TOML in config file"));
+}
+
 // ─── logConfig ───────────────────────────────────────────────────────────────
 
 TEST(ConfigTest, LogConfigEmitsExpectedFields)
