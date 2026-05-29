@@ -6,6 +6,7 @@
 #include <core/utils/Str.h>
 
 #include <format>
+#include <vector>
 #include <nlohmann/json.hpp>
 #include <glaze/glaze.hpp>
 
@@ -302,15 +303,18 @@ public:
 
         const auto userDir = dirs_.getUserDir(filter.username()).lexically_normal();
 
+        std::vector<int> years;
         for (const auto& it : fs::directory_iterator(userDir))
         {
-            if (!it.is_directory())
+            if (it.is_directory())
             {
-                continue;
+                years.push_back(std::stoi(it.path().filename().string()));
             }
+        }
+        std::ranges::sort(years);
 
-            const int year = std::stoi(it.path().filename().string());
-
+        for (const int year : years)
+        {
             if (!queryRawDataDir(filter, cb, dirs_, year))
             {
                 return;
