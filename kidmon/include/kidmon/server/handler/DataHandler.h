@@ -21,7 +21,7 @@ namespace km {
 class DataHandler : public MsgHandler
 {
     IRepository& repo_;
-    std::string buffer_;
+    std::string buffer_; // reused across calls to retain Base64 decode capacity
 
 public:
     explicit DataHandler(IRepository& repo);
