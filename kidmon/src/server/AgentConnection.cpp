@@ -39,23 +39,23 @@ AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
             nlohmann::json answer;
             std::string error;
 
+            bool handled = false;
             if (currentState_ == State::Authorized)
             {
-                dataHandler_.handle(payload, answer, error);
+                handled = dataHandler_.handle(payload, answer, error);
             }
-            else if (authHandler_.handle(payload, answer, error))
+            else
             {
-                transitionTo(State::Authorized);
+                handled = authHandler_.handle(payload, answer, error);
+                if (handled && error.empty())
+                {
+                    transitionTo(State::Authorized);
+                }
             }
 
-            if (!error.empty())
+            if (!handled)
             {
-                spdlog::error("Request handling failed, details: {}", error);
-
-                // This means unknown or bad message
-                transitionTo(State::Disconnected);
-                close();
-                return;
+                error = "Unexpected message";
             }
 
             nlohmann::ordered_json js;
@@ -63,6 +63,13 @@ AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
             const auto res = js.dump();
             spdlog::debug("Server sent: {} bytes", res.size());
             comm_.sendAsync(res);
+
+            if (!error.empty())
+            {
+                spdlog::error("Request handling failed, details: {}", error);
+                transitionTo(State::Disconnected);
+                close();
+            }
         }
         catch (const std::exception& ex)
         {
@@ -88,6 +95,14 @@ AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
     onTimeout([this](const ErrorCode& ec) {
         std::ignore = ec;
         spdlog::trace("No data from agent: {}", fmt::ptr(this));
+
+        if (currentState_ == State::Connected)
+        {
+            spdlog::info("Dropping unauthenticated connection: {}", fmt::ptr(this));
+            transitionTo(State::Disconnected);
+            close();
+            return;
+        }
 
         const auto activeUsername = core::str::ws2s(core::sys::activeUserName());
 

@@ -110,6 +110,7 @@ void Connection::close()
             errorCb_(ec);
         }
 
+        spdlog::info("Cancelling timer for connection: {}", fmt::ptr(this));
         timer_.cancel();
     }
 
@@ -148,12 +149,7 @@ void Connection::handleTimeout(const ErrorCode& ec)
 {
     if (!ec)
     {
-        auto self {shared_from_this()};
 
-        timer_.expires_after(timeout_);
-        timer_.async_wait([this, self](const ErrorCode& ec) {
-            handleTimeout(ec);
-        });
 
         timeoutCb_(ec);
     }
