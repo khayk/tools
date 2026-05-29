@@ -15,12 +15,28 @@
 namespace tools::dups {
 namespace {
 
+// Returns true if `path` is `base` itself or nested below it. Comparison is done
+// component-by-component (via lexically_relative), so a sibling directory that
+// merely shares a textual prefix - e.g. "backup_keep" against a base of "backup" -
+// is correctly rejected. A plain substring test would wrongly accept it.
+bool isWithin(const fs::path& base, const fs::path& path)
+{
+    if (base.empty())
+    {
+        return false;
+    }
+
+    const auto rel = path.lexically_relative(base);
+
+    // Empty means the relation could not be expressed (e.g. unrelated roots);
+    // a leading ".." means `path` sits outside `base`.
+    return !rel.empty() && *rel.begin() != "..";
+}
+
 bool findPath(const PathsSet& delDirs, const fs::path& path)
 {
-    const auto& pathStr = path.native();
-
-    return std::ranges::any_of(delDirs, [&pathStr](const auto& deleteDir) {
-        return pathStr.find(deleteDir.native(), 0) != std::string::npos;
+    return std::ranges::any_of(delDirs, [&path](const auto& deleteDir) {
+        return isWithin(deleteDir, path);
     });
 };
 

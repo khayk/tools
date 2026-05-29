@@ -544,6 +544,33 @@ TEST_F(DuplicateDeletionTest, OpenDirectories_CallsOpenerForUniqueParents)
     EXPECT_THAT(opened, testing::UnorderedElementsAre(fs::path("a"), fs::path("b")));
 }
 
+TEST_F(DuplicateDeletionTest, DeleteFrom_DoesNotMatchSiblingPrefixDirectory)
+{
+    MuteLogger mute;
+    MockDuplicateGroups groups;
+
+    // Delete-from dir is "backup". "backup_keep" is a *sibling* directory that
+    // merely shares the same textual prefix; it is NOT nested inside "backup"
+    // and its contents must be protected from automatic deletion.
+    ctx.deleteFromPaths().add(fs::path {"backup"});
+
+    std::vector<PathsVec> groupVec {
+        {fs::path("backup_keep/file1.txt"), fs::path("origDir/file2.txt")}};
+
+    EXPECT_CALL(groups, numGroups()).Times(1);
+    EXPECT_CALL(groups, enumGroups(testing::_))
+        .WillOnce([&groupVec](const DupGroupCallback& cb) {
+            emulateDupGroups(groupVec, cb);
+        });
+
+    // Neither file lives inside "backup", so nothing may be auto-deleted. Both
+    // files are selective and the user is prompted; we quit without deleting.
+    EXPECT_CALL(strategy, remove(testing::_)).Times(0);
+
+    in.str("q\n");
+    deleteDuplicates(groups, ctx);
+}
+
 TEST_F(DuplicateDeletionTest, DeleteDuplicates_SkipsIgnoredFiles)
 {
     MuteLogger mute;
