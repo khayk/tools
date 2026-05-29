@@ -82,6 +82,8 @@ public:
 class AgentMsgHandler
 {
 public:
+    enum class State : uint8_t { WaitingAuth, Authorized };
+
     using AuthCb = std::function<void(bool)>;
     using MsgCb = std::function<void(const nlohmann::ordered_json&)>;
     using ErrCb = std::function<void(int, const std::string&)>;
@@ -97,16 +99,24 @@ public:
             jsu::get(js, "status", status);
             jsu::get(js, "error", error, status != 0);
 
-            if (!authReported_)
+            switch (state_)
             {
+            case State::WaitingAuth:
+            {
+                if (status != 0)
+                {
+                    errCb_(status, error);
+                    break;
+                }
                 nlohmann::json answer;
                 jsu::get(js, "answer", answer);
                 authCb_(answer["authorized"].get<bool>());
-                authReported_ = true;
+                state_ = State::Authorized;
+                break;
             }
-            else
-            {
+            case State::Authorized:
                 msgCb_(js);
+                break;
             }
 
             return true;
@@ -135,7 +145,7 @@ public:
     }
 
 private:
-    bool authReported_ {false};
+    State state_ {State::WaitingAuth};
     AuthCb authCb_;
     MsgCb msgCb_;
     ErrCb errCb_;
