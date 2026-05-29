@@ -106,13 +106,7 @@ public:
         //  fs::create_directories(dirs.weeklyDir);
         fs::create_directories(dirs.rawDir);
 
-        auto [it, ok] = dirs_.emplace(key, std::move(dirs));
-
-        if (!ok)
-        {
-            static ReportDirs s_dirs;
-            return s_dirs;
-        }
+        auto [it, _] = dirs_.emplace(key, std::move(dirs));
 
         return it->second;
     }
