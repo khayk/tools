@@ -60,6 +60,15 @@ TEST_F(SilentConfig, DryRunOption)
     EXPECT_TRUE(cfg.dryRun());
 }
 
+TEST_F(SilentConfig, DryRunDefaultsToRealDeletionWithoutFlag)
+{
+    // Without an explicit --dry-run, the authoritative default (false) must hold.
+    // Guards against the CLI default silently driving (and flipping) the value.
+    auto result = parse({"duplicates"});
+    populateConfig(result, cfg);
+    EXPECT_FALSE(cfg.dryRun());
+}
+
 TEST_F(SilentConfig, MinSizeOption)
 {
     auto result = parse({"duplicates", "--min-size", "4096"});

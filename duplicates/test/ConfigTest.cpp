@@ -33,7 +33,7 @@ TEST(ConfigTest, InitialStateHasEmptyCollectionsAndZeroSizes)
     EXPECT_EQ(cfg.minFileSizeBytes(), 0U);
     EXPECT_EQ(cfg.maxFileSizeBytes(), 0U);
     EXPECT_FALSE(cfg.skipDetection());
-    EXPECT_TRUE(cfg.dryRun());
+    EXPECT_FALSE(cfg.dryRun());
 }
 
 // ─── scan dirs ───────────────────────────────────────────────────────────────
@@ -168,6 +168,7 @@ TEST(ConfigTest, ApplyDefaultsSetsExpectedValues)
     EXPECT_FALSE(cfg.allFilesPath().empty());
     EXPECT_FALSE(cfg.dupFilesPath().empty());
     EXPECT_FALSE(cfg.ignFilesPath().empty());
+    EXPECT_FALSE(cfg.dryRun());
 }
 
 // ─── missing path setters / getters ──────────────────────────────────────────

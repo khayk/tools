@@ -87,7 +87,7 @@ private:
     size_t maxFileSizeBytes_ {};
     std::chrono::milliseconds updateFrequency_ {};
     bool skipDetection_ {false};
-    bool dryRun_ {true};
+    bool dryRun_ {false};
 };
 
 void logConfig(const Config& cfg);

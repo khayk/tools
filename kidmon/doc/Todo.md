@@ -2,57 +2,19 @@
 
 ## Open Issues
 
-* Add version to the app
-* Slightly alter project organization to be something like this (Claude comms)
+* Performance — the gap vs. real dedup tools
+No parallel hashing. Detection is fully single-threaded (DuplicateDetector.cpp:126-177). Hashing is the dominant cost and is embarrassingly parallel across same-size buckets. On a large photo/video corpus this is the difference between minutes and seconds. This is the single biggest performance limitation.
 
-and consider this
-
-```
-repo/
-├── libs/
-│   ├── core/
-│   ├── network/
-│   └── serialization/
-├── apps/
-│   ├── server/
-│   └── client/
-└── tests/
-    └── integration/
-```
-
-* I guess this is a reasonable restructuring proposal for kidmon
-```
-apps/kidmon/
-├── CMakeLists.txt
-├── src/
-│   ├── Main.cpp                # parses --mode, dispatches
-│   ├── common/
-│   │   ├── AppBase.cpp         # shared: logging, config, signal handling
-│   │   └── AppBase.h
-│   ├── service/
-│   │   ├── ServiceApp.cpp      # watchdog, data storage, TCP server
-│   │   ├── AgentManager.cpp    # spawn/monitor/respawn agent process
-│   │   └── handler/
-│   │       ├── AuthorizationHandler.cpp
-│   │       └── DataHandler.cpp
-│   ├── agent/
-│   │    ├── AgentApp.cpp        # collection loop, sends data to service
-│   │    ├── Collector.cpp
-│   │    └── os/
-│   │        ├── linux/
-│   │        ├── mac/
-│   │        └── win/
-│   └── internal/           # testable logic lives here
-└── tests/
-    ├── CMakeLists.txt
-    ├
-tests/
-├── integration
-```
+No partial/progressive hashing. Same-size files go straight to a full SHA-256 of the entire file. Production dedupers hash the first ~4–64 KB first and only full-hash the survivors. With many same-size-but-different files (extremely common for media), you're reading entire multi-GB files needlessly. SHA-256 is also overkill for a candidate check — a fast non-crypto hash (xxHash/BLAKE3) for screening, with full compare/crypto only on collision, would be much faster.
 
 ## In Progress
 
-*
+Code quality / maintainability
+detect() carries an awkward dual-container reconciliation. DuplicateDetector.cpp:111-200 It builds ordered (a vector copy of dups_) purely for smoother progress, mutates it, then has to rebuild a surviving set to sync deletions back into dups_, and then enumGroups re-derives groups from dups_+grps_ via a visit set. grps_ is already keyed by hash and holds exactly the groups — iterating dups_ (keyed by size) to rediscover them is redundant and fragile. This function would benefit from being decomposed and from a single source of truth for groups.
+
+Hidden benchmark mode in the CLI. CmdLine.cpp:101-106: passing --cfg-file something.txt (any non-.toml extension) silently reinterprets it as a file list, runs metricsReview, and exits. A user who points at the wrong config gets a confusing no-op. That's a debug feature leaking into the production path — it should be an explicit hidden flag.
+
+Manual recursion in enumFilesRecursive and Node traversals risks stack overflow on pathological depth; iterative + explicit stack is safer for a tool pointed at arbitrary filesystems.
 
 ## Done
 
@@ -64,3 +26,6 @@ tests/
         * kidmon-server-2024-08-08.log
 * Server and agent should have their own config
 * Figure out why u8'*' tests are failing on linux
+* Add version to the app
+* Range matcher loop bug in metricsReview (CmdLine.cpp:22-29): the quote-stripping while tests line.size() (constant) instead of sv.size(); on an all-quotes input sv.front() is UB. Debug-path only, but it's a real bug.
+* Config has two sources of truth for dry_run. The member defaults to true (Config.h:90), applyDefaults never sets it, the CLI default is false, and the README says false. It currently works only because cxxopts' default_value makes contains("dry-run") true. Remove the CLI default and the safety behavior silently flips. Pick one authoritative default.

@@ -81,7 +81,7 @@ void defineOptions(cxxopts::Options& opts)
             cxxopts::value<std::string>()->default_value("ignored.txt"))
 
         ("dry-run", "Emulate deletion instead of performing it",
-            cxxopts::value<bool>()->default_value("false"))
+            cxxopts::value<bool>())
 
         ("h,help", "Print usage");
     // clang-format on

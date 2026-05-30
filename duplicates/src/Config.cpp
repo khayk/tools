@@ -305,6 +305,7 @@ void applyDefaults(Config& cfg)
     cfg.setKeepFilesPath("keep.txt");
     cfg.setDelFilesPath("delete.txt");
     cfg.setDupFilesPath("duplicates.txt");
+    cfg.setDryRun(false);
 }
 
 void logConfig(const Config& cfg)
