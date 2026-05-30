@@ -56,7 +56,8 @@ int main(int argc, const char* argv[])
 
         if (result.contains("help"))
         {
-            std::cout << opts.help() << '\n';
+            // Show only the default group, keeping hidden debug options out.
+            std::cout << opts.help({""}) << '\n';
             return 0;
         }
 
@@ -68,6 +69,12 @@ int main(int argc, const char* argv[])
         trace.emplace("",
                       std::format("{:-^80s}", "> START <"),
                       std::format("{:-^80s}\n", "> END <"));
+
+        if (runMetricsReview(result))
+        {
+            return 0;
+        }
+
         populateConfig(result, cfg);
         logConfig(cfg);
 

@@ -20,4 +20,16 @@ void defineOptions(cxxopts::Options& opts);
  */
 void populateConfig(const cxxopts::ParseResult& opts, Config& cfg);
 
+/**
+ * @brief Run the hidden benchmark/metrics review if requested
+ *
+ * When the hidden --metrics-file option is supplied, loads the listed paths
+ * into a detector and logs resource usage, then signals the caller to exit.
+ * This is a debug-only feature kept out of the normal scan/delete pipeline.
+ *
+ * @param opts Parsed and ready to use command line options
+ * @return true if the metrics review ran (caller should exit), false otherwise
+ */
+bool runMetricsReview(const cxxopts::ParseResult& opts);
+
 } // namespace tools::dups

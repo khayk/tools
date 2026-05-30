@@ -114,15 +114,22 @@ TEST_F(SilentConfig, CfgFileTomlOption)
     EXPECT_NO_THROW(populateConfig(result, cfg));
 }
 
-TEST_F(SilentConfig, CfgFileNonTomlTriggersMetricsReview)
+TEST_F(SilentConfig, MetricsFileFlagTriggersReview)
 {
-    // Non-.toml cfg-file triggers metricsReview and early return
+    // The hidden --metrics-file flag loads the listed paths and reports usage,
+    // signalling the caller to exit.
     core::file::TempDir tmp("dups");
     core::file::write(tmp.path() / "files.txt", "\"/a/b\"\n/c/d\n");
     const std::string path = (tmp.path() / "files.txt").string();
 
-    auto result = parse({"duplicates", "--cfg-file", path.c_str()});
-    EXPECT_NO_THROW(populateConfig(result, cfg));
+    auto result = parse({"duplicates", "--metrics-file", path.c_str()});
+    EXPECT_TRUE(runMetricsReview(result));
+}
+
+TEST_F(SilentConfig, NoMetricsFileSkipsReview)
+{
+    auto result = parse({"duplicates"});
+    EXPECT_FALSE(runMetricsReview(result));
 }
 
 TEST_F(SilentConfig, FilePathOptions)

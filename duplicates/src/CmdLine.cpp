@@ -84,7 +84,26 @@ void defineOptions(cxxopts::Options& opts)
             cxxopts::value<bool>())
 
         ("h,help", "Print usage");
+
+    // Hidden debug-only options, kept out of --help (see Main.cpp).
+    opts.add_options("hidden")
+        ("metrics-file", "Load the listed paths and report resource usage",
+            cxxopts::value<std::string>());
     // clang-format on
+}
+
+
+bool runMetricsReview(const cxxopts::ParseResult& opts)
+{
+    if (!opts.contains("metrics-file"))
+    {
+        return false;
+    }
+
+    const fs::path file = opts["metrics-file"].as<std::string>();
+    spdlog::info("Measuring resource usage: '{}'", file);
+    metricsReview(file);
+    return true;
 }
 
 
@@ -96,13 +115,6 @@ void populateConfig(const cxxopts::ParseResult& opts, Config& cfg)
     if (opts.contains("cfg-file"))
     {
         cfgFile = opts["cfg-file"].as<std::string>();
-    }
-
-    if (!cfgFile.empty() && cfgFile.extension() != ".toml")
-    {
-        spdlog::info("Measuring resource usage: '{}'", cfgFile);
-        metricsReview(cfgFile);
-        return;
     }
 
     if (!cfgFile.empty())
