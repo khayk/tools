@@ -105,20 +105,12 @@ void reportDuplicates(const fs::path& reportPath, const IDuplicateGroups& detect
 {
     std::ofstream out(reportPath, std::ios::out | std::ios::binary);
     size_t totalFiles = 0;
-    size_t largestFileSize = 0;
-
-    // Precalculations to produce nice output
-    detector.enumGroups([&largestFileSize, &totalFiles](const DupGroup& group) {
-        totalFiles += group.entires.size();
-        largestFileSize = std::max(largestFileSize, group.entires.front().size);
-        return true;
-    });
-
     const auto separator = '|';
     std::ostringstream oss;
     std::vector<std::string> sortedLines;
 
-    detector.enumGroups([&out, &oss, &sortedLines](const DupGroup& group) {
+    detector.enumGroups([&out, &oss, &sortedLines, &totalFiles](const DupGroup& group) {
+        totalFiles += group.entires.size();
         sortedLines.clear();
 
         for (const auto& e : group.entires)
