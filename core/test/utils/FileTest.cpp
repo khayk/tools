@@ -408,6 +408,45 @@ TEST(UtilsFileDetailTests, BuildOpenDirCommand_InvalidPathThrows)
                  std::runtime_error);
 }
 
+// ---------------------------------------------------------------------------
+// fileId
+// ---------------------------------------------------------------------------
+
+TEST_F(UtilsFileTests, FileId_HardLinksShareIdentity)
+{
+    const fs::path original = testDir_ / "original.bin";
+    const fs::path link = testDir_ / "hardlink.bin";
+    write(original, "content");
+    fs::create_hard_link(original, link);
+
+    const auto idOriginal = fileId(original);
+    const auto idLink = fileId(link);
+
+    ASSERT_TRUE(idOriginal.has_value());
+    ASSERT_TRUE(idLink.has_value());
+    EXPECT_EQ(*idOriginal, *idLink);
+}
+
+TEST_F(UtilsFileTests, FileId_DistinctFilesHaveDistinctIdentity)
+{
+    const fs::path a = testDir_ / "a.bin";
+    const fs::path b = testDir_ / "b.bin";
+    write(a, "same bytes");
+    write(b, "same bytes"); // identical content, but a separate physical file
+
+    const auto idA = fileId(a);
+    const auto idB = fileId(b);
+
+    ASSERT_TRUE(idA.has_value());
+    ASSERT_TRUE(idB.has_value());
+    EXPECT_NE(*idA, *idB);
+}
+
+TEST_F(UtilsFileTests, FileId_MissingPathReturnsNullopt)
+{
+    EXPECT_FALSE(fileId(testDir_ / "does-not-exist.bin").has_value());
+}
+
 TEST_F(UtilsFileTests, BuildNavigateFileCommand_ContainsPath)
 {
     const fs::path file = testDir_ / "test.txt";

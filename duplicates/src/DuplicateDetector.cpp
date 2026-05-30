@@ -1,5 +1,6 @@
 #include <duplicates/DuplicateDetector.h>
 #include <duplicates/Utils.h>
+#include <core/utils/File.h>
 #include <spdlog/spdlog.h>
 #include <algorithm>
 #include <system_error>
@@ -198,6 +199,32 @@ void DuplicateDetector::detect(const Options& opts, const ProgressCallback& cb)
             grps_[node->sha256()].push_back(node);
         }
     }
+
+    collapseHardLinks();
+}
+
+void DuplicateDetector::collapseHardLinks()
+{
+    // Hard links to the same physical file (same device + inode) share storage,
+    // so "deleting" one reclaims nothing and only confuses the user. Within each
+    // group keep a single representative per physical file, then drop any group
+    // left with fewer than two distinct files - it is no longer a duplicate.
+    std::erase_if(grps_, [](auto& kv) {
+        Nodes& nodes = kv.second;
+        std::unordered_set<core::file::FileId> seen;
+
+        auto last = std::remove_if(nodes.begin(), nodes.end(), [&](const Node* node) {
+            const auto id = core::file::fileId(node->fullPath());
+            if (!id)
+            {
+                return false; // identity unknown: keep, treat as distinct
+            }
+            return !seen.insert(*id).second;
+        });
+        nodes.erase(last, nodes.end());
+
+        return nodes.size() < 2;
+    });
 }
 
 void DuplicateDetector::reset()

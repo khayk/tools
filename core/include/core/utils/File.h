@@ -5,6 +5,8 @@
 #include <system_error>
 #include <functional>
 #include <regex>
+#include <optional>
+#include <cstdint>
 
 namespace fs = std::filesystem;
 
@@ -159,6 +161,33 @@ void enumFilesRecursive(const fs::path& dir,
                         const PathCallback& cb);
 
 /**
+ * @brief Physical identity of a file on a filesystem (device + inode). Two paths
+ *        with the same FileId are hard links to the same underlying file: they
+ *        share storage and identical content.
+ */
+struct FileId
+{
+    uint64_t device {};
+    uint64_t inode {};
+
+    bool operator==(const FileId&) const noexcept = default;
+};
+
+/**
+ * @brief Returns the physical identity of the file at @p path.
+ *
+ * Unlike std::filesystem::equivalent (which only answers "are these two paths the
+ * same file?" pairwise), this exposes a hashable identity, so collapsing N paths
+ * to their distinct physical files is O(N) instead of O(N^2) comparisons.
+ *
+ * @param path The file to inspect
+ * @return The (device, inode) identity, or std::nullopt if it could not be
+ *         determined (e.g. the path does not exist or is inaccessible)
+ */
+std::optional<FileId> fileId(const fs::path& path);
+
+
+/**
  * @brief Open the directory with the default file navigator. If the input is a regular
  *        file the parent directory will be navigated.
  *
@@ -174,3 +203,13 @@ void openDirectory(const fs::path& path);
 void navigateFile(const fs::path& file);
 
 } // namespace core::file
+
+template <>
+struct std::hash<core::file::FileId>
+{
+    size_t operator()(const core::file::FileId& id) const noexcept
+    {
+        return std::hash<uint64_t> {}(id.device) ^
+               (std::hash<uint64_t> {}(id.inode) << 1U);
+    }
+};

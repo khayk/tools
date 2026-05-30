@@ -37,6 +37,10 @@ private:
     using MapByHash = std::unordered_map<std::string_view, Nodes>;
     using PathTable = std::unordered_set<fs::path>;
 
+    // Collapses hard links (paths sharing a device+inode) to a single
+    // representative per group, dropping groups left with fewer than two files.
+    void collapseHardLinks();
+
     PathTable names_;
     NodePtr root_;
     MapBySize dups_;

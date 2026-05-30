@@ -202,6 +202,68 @@ TEST(DuplicateDetectorTest, DetectDuplicates)
 }
 
 
+TEST(DuplicateDetectorTest, HardLinksAreNotReportedAsDuplicates)
+{
+    file::TempDir data("dups-hardlink");
+    const auto original = data.path() / "original.bin";
+    const auto link = data.path() / "hardlink.bin";
+
+    file::write(original, "identical content");
+    fs::create_hard_link(original, link);
+
+    DuplicateDetector dd;
+    dd.addFile(original);
+    dd.addFile(link);
+    dd.detect(Options {}, defaultProgressCallback);
+
+    // Two paths, one physical file: nothing to offer for deletion.
+    EXPECT_EQ(dd.numGroups(), 0U);
+
+    size_t groups = 0;
+    dd.enumGroups([&groups](const DupGroup&) {
+        ++groups;
+        return true;
+    });
+    EXPECT_EQ(groups, 0U);
+}
+
+TEST(DuplicateDetectorTest, HardLinkCollapsedButRealDuplicateKept)
+{
+    file::TempDir data("dups-hardlink-mix");
+    const auto a = data.path() / "a.bin";
+    const auto b = data.path() / "b.bin";         // genuine separate copy of a
+    const auto link = data.path() / "a-link.bin"; // hard link to a
+
+    file::write(a, "same bytes");
+    file::write(b, "same bytes");
+    fs::create_hard_link(a, link);
+
+    DuplicateDetector dd;
+    dd.addFile(a);
+    dd.addFile(b);
+    dd.addFile(link);
+    dd.detect(Options {}, defaultProgressCallback);
+
+    ASSERT_EQ(dd.numGroups(), 1U);
+
+    std::vector<fs::path> reported;
+    dd.enumGroups([&reported](const DupGroup& grp) {
+        for (const auto& e : grp.entires)
+        {
+            reported.push_back(e.file);
+        }
+        return true;
+    });
+
+    // One representative of the {a, a-link} pair plus b => exactly two files.
+    ASSERT_EQ(reported.size(), 2U);
+    EXPECT_NE(std::ranges::find(reported, b), reported.end());
+
+    const bool hasA = std::ranges::find(reported, a) != reported.end();
+    const bool hasLink = std::ranges::find(reported, link) != reported.end();
+    EXPECT_FALSE(hasA && hasLink); // the two hard links must not both appear
+}
+
 TEST(DuplicateDetectorTest, MetricsThresholds)
 {
     constexpr size_t numFiles = 50'000;

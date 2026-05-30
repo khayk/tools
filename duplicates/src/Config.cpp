@@ -360,9 +360,8 @@ void applyOverrides(const fs::path& cfgFile, Config& cfg)
                       e.description(),
                       pos.line,
                       pos.column);
-        throw std::runtime_error(
-            std::format("Failed to parse config file: {}",
-                        core::file::path2s(cfgFile)));
+        throw std::runtime_error(std::format("Failed to parse config file: {}",
+                                             core::file::path2s(cfgFile)));
     }
 
     // Each array key is optional; as_array() returns null when it is absent, so

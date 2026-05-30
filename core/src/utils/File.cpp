@@ -16,6 +16,18 @@
 #include <stdexcept>
 #include <utility>
 
+#ifdef _WIN32
+    #ifndef WIN32_LEAN_AND_MEAN
+        #define WIN32_LEAN_AND_MEAN
+    #endif
+    #ifndef NOMINMAX
+        #define NOMINMAX
+    #endif
+    #include <windows.h>
+#else
+    #include <sys/stat.h>
+#endif
+
 namespace core::file {
 
 bool open(const fs::path& file,
@@ -349,6 +361,45 @@ std::string buildNavigateFileCommand(const fs::path& file)
 }
 
 } // namespace detail
+
+std::optional<FileId> fileId(const fs::path& path)
+{
+#ifdef _WIN32
+    HANDLE handle =
+        ::CreateFileW(path.c_str(),
+                      0,
+                      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                      nullptr,
+                      OPEN_EXISTING,
+                      FILE_FLAG_BACKUP_SEMANTICS,
+                      nullptr);
+    if (handle == INVALID_HANDLE_VALUE)
+    {
+        return std::nullopt;
+    }
+
+    BY_HANDLE_FILE_INFORMATION info {};
+    const bool ok = ::GetFileInformationByHandle(handle, &info);
+    ::CloseHandle(handle);
+
+    if (!ok)
+    {
+        return std::nullopt;
+    }
+
+    return FileId {
+        static_cast<uint64_t>(info.dwVolumeSerialNumber),
+        (static_cast<uint64_t>(info.nFileIndexHigh) << 32) | info.nFileIndexLow};
+#else
+    struct stat st {};
+    if (::stat(path.c_str(), &st) != 0)
+    {
+        return std::nullopt;
+    }
+
+    return FileId {static_cast<uint64_t>(st.st_dev), static_cast<uint64_t>(st.st_ino)};
+#endif
+}
 
 void openDirectory(const fs::path& path)
 {
