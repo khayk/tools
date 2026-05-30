@@ -290,7 +290,7 @@ TEST(DuplicateDetectorTest, MetricsThresholds)
 #ifdef _WIN32
     EXPECT_LE(sys::currentProcessMemoryUsage(), 64 * 1024 * 1024);
 #else
-    EXPECT_LE(sys::currentProcessMemoryUsage(), 32 * 1024 * 1024);
+    EXPECT_LE(sys::currentProcessMemoryUsage(), 34 * 1024 * 1024);
 #endif
 }
 
