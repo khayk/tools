@@ -480,7 +480,7 @@ public:
 
         while (flow == Flow::Retry)
         {
-            categorizeFiles(group.entires);
+            categorizeFiles(group.entries);
 
             // Safety: If every file is in a "DeleteFrom" path, we must treat them
             // as selective to avoid deleting the entire group by accident.
@@ -543,8 +543,8 @@ private:
             return Flow::Done;
         }
 
-        ctx_.io().out() << "Size: " << group.entires.front().size
-                        << " SHA256: " << group.entires.front().sha256 << '\n';
+        ctx_.io().out() << "Size: " << group.entries.front().size
+                        << " SHA256: " << group.entries.front().sha256 << '\n';
 
         std::ranges::sort(selective_);
         return deleteInteractively(selective_, ctx_);

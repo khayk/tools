@@ -110,10 +110,10 @@ void reportDuplicates(const fs::path& reportPath, const IDuplicateGroups& detect
     std::vector<std::string> sortedLines;
 
     detector.enumGroups([&out, &oss, &sortedLines, &totalFiles](const DupGroup& group) {
-        totalFiles += group.entires.size();
+        totalFiles += group.entries.size();
         sortedLines.clear();
 
-        for (const auto& e : group.entires)
+        for (const auto& e : group.entries)
         {
             oss.str("");
             oss << group.groupId << separator

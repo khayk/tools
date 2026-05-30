@@ -52,7 +52,7 @@ void emulateDupGroups(const std::vector<PathsVec>& groupVec,
         }
 
         group.groupId = 0; // doesn't matter while emulating
-        group.entires = entries;
+        group.entries = entries;
 
         cb(group);
     }

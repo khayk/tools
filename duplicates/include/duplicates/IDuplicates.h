@@ -23,7 +23,7 @@ struct DupEntry
 struct DupGroup
 {
     size_t groupId {};
-    std::vector<DupEntry> entires;
+    std::vector<DupEntry> entries;
 };
 
 struct Options

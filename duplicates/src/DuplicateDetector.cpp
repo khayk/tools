@@ -263,7 +263,7 @@ void DuplicateDetector::enumGroups(const DupGroupCallback& cb) const
         for (const auto& sha : visit)
         {
             group.groupId = ++duplicates;
-            group.entires.clear();
+            group.entries.clear();
 
             const auto it = grps_.find(sha);
             if (it == grps_.end())
@@ -274,8 +274,8 @@ void DuplicateDetector::enumGroups(const DupGroupCallback& cb) const
             const Nodes& nodesInGroup = it->second;
             for (const auto* i : nodesInGroup)
             {
-                group.entires.emplace_back();
-                DupEntry& e = group.entires.back();
+                group.entries.emplace_back();
+                DupEntry& e = group.entries.back();
 
                 i->fullPath(e.file);
                 e.size = i->size();

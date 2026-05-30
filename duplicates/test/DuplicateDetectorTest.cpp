@@ -186,8 +186,8 @@ TEST(DuplicateDetectorTest, DetectDuplicates)
     EXPECT_CALL(dupCb, Call(testing::_))
         .Times(3)
         .WillRepeatedly([&lastGroupSize](const DupGroup& grp) {
-            ASSERT_GE(grp.entires.size(), 2);
-            const auto& first = grp.entires.front();
+            ASSERT_GE(grp.entries.size(), 2);
+            const auto& first = grp.entries.front();
 
             // Large entries enumerated first
             EXPECT_LE(first.size, lastGroupSize);
@@ -248,7 +248,7 @@ TEST(DuplicateDetectorTest, HardLinkCollapsedButRealDuplicateKept)
 
     std::vector<fs::path> reported;
     dd.enumGroups([&reported](const DupGroup& grp) {
-        for (const auto& e : grp.entires)
+        for (const auto& e : grp.entries)
         {
             reported.push_back(e.file);
         }
