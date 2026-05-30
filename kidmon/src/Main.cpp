@@ -7,10 +7,12 @@
 #include <BuildInfo.h>
 
 #include <core/utils/Str.h>
+#include <core/utils/FmtExt.h>
 #include <core/utils/Sys.h>
 #include <core/utils/Log.h>
 #include <core/utils/SingleInstanceChecker.h>
 #include <core/utils/Tracer.h>
+#include <spdlog/spdlog.h>
 
 #include <cxxopts.hpp>
 
@@ -105,6 +107,7 @@ int main(int argc, char* argv[])
         core::utl::logBuildInfo(BuildInfo::Version,
                                 BuildInfo::CommitSHA,
                                 BuildInfo::Timestamp);
+        spdlog::trace("Logs file: {}", appConf.logsDir / appConf.logFilename);
         spdlog::debug("Active username: {}",
                       core::str::ws2s(core::sys::activeUserName()));
 

@@ -9,6 +9,7 @@
 #include <core/network/TcpServer.h>
 #include <core/utils/Str.h>
 #include <core/utils/Sys.h>
+#include <core/utils/FmtExt.h>
 
 #include <spdlog/spdlog.h>
 #include <boost/asio.hpp>
@@ -54,6 +55,8 @@ public:
         , launcher_(api_->createProcessLauncher())
         , spawnAgent_(cfg.spawnAgent)
     {
+        spdlog::trace("Report dir: {}", cfg.reportsDir);
+
         authHandler_.setToken(cfg.authToken);
         agentMngr_ = std::make_unique<AgentManager>(authHandler_,
                                                     dataHandler_,
