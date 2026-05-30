@@ -18,12 +18,12 @@ void metricsReview(const fs::path& file)
     core::file::readLines(file, [&detector](const std::string& line) {
         std::string_view sv = line;
 
-        while (line.size() >= 2 && sv.front() == '"')
+        // Strip surrounding double quotes (paths may be dumped quoted). Guard on
+        // sv.size() - not line.size() - so the view never empties under
+        // front()/back().
+        while (sv.size() >= 2 && sv.front() == '"' && sv.back() == '"')
         {
             sv.remove_prefix(1);
-        }
-        while (line.size() >= 2 && sv.back() == '"')
-        {
             sv.remove_suffix(1);
         }
 
@@ -105,7 +105,8 @@ void populateConfig(const cxxopts::ParseResult& opts, Config& cfg)
         return;
     }
 
-    if (!cfgFile.empty()) {
+    if (!cfgFile.empty())
+    {
         applyOverrides(cfgFile, cfg);
     }
 
