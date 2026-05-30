@@ -21,7 +21,7 @@ void scanDirectories(const Config& cfg,
         const auto srcDir = fs::path(scanDir).lexically_normal();
         spdlog::info("Scanning directory: '{}'", srcDir);
 
-        core::file::enumFilesRecursive(
+        core::file::enumPathsRecursive(
             srcDir,
             cfg.exclusionPatterns(),
             [numFiles = 0, &detector, &progress](const auto& p,

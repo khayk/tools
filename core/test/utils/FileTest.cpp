@@ -298,13 +298,13 @@ TEST_F(UtilsFileTests, TempDirCustomDirectory)
 }
 
 // ---------------------------------------------------------------------------
-// enumFilesRecursive
+// enumPathsRecursive
 // ---------------------------------------------------------------------------
 
 TEST_F(UtilsFileTests, EnumFilesRecursive_Empty)
 {
     std::vector<fs::path> found;
-    enumFilesRecursive(testDir_,
+    enumPathsRecursive(testDir_,
                        {},
                        [&](const fs::path& p, const std::error_code& ec) {
                            if (!ec)
@@ -321,7 +321,7 @@ TEST_F(UtilsFileTests, EnumFilesRecursive_ListsFiles)
     write(testDir_ / "b.txt", "b");
 
     std::vector<fs::path> found;
-    enumFilesRecursive(testDir_,
+    enumPathsRecursive(testDir_,
                        {},
                        [&](const fs::path& p, const std::error_code& ec) {
                            if (!ec)
@@ -339,7 +339,7 @@ TEST_F(UtilsFileTests, EnumFilesRecursive_Recursive)
     write(sub / "c.txt", "c");
 
     std::vector<fs::path> found;
-    enumFilesRecursive(testDir_,
+    enumPathsRecursive(testDir_,
                        {},
                        [&](const fs::path& p, const std::error_code& ec) {
                            if (!ec)
@@ -357,7 +357,7 @@ TEST_F(UtilsFileTests, EnumFilesRecursive_ExclusionPattern)
     write(testDir_ / "b.log", "b");
 
     std::vector<fs::path> found;
-    enumFilesRecursive(testDir_,
+    enumPathsRecursive(testDir_,
                        {std::regex("\\.log$")},
                        [&](const fs::path& p, const std::error_code& ec) {
                            if (!ec)
@@ -372,7 +372,7 @@ TEST_F(UtilsFileTests, EnumFilesRecursive_ExclusionPattern)
 TEST(UtilsFileEnumTests, EnumFilesRecursive_NonExistentDir)
 {
     bool gotError = false;
-    enumFilesRecursive("/non/existent/path",
+    enumPathsRecursive("/non/existent/path",
                        {},
                        [&](const fs::path&, const std::error_code& ec) {
                            if (ec)

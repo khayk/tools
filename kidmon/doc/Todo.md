@@ -12,9 +12,7 @@ No partial/progressive hashing. Same-size files go straight to a full SHA-256 of
 Code quality / maintainability
 detect() carries an awkward dual-container reconciliation. DuplicateDetector.cpp:111-200 It builds ordered (a vector copy of dups_) purely for smoother progress, mutates it, then has to rebuild a surviving set to sync deletions back into dups_, and then enumGroups re-derives groups from dups_+grps_ via a visit set. grps_ is already keyed by hash and holds exactly the groups — iterating dups_ (keyed by size) to rediscover them is redundant and fragile. This function would benefit from being decomposed and from a single source of truth for groups.
 
-
-
-Manual recursion in enumFilesRecursive and Node traversals risks stack overflow on pathological depth; iterative + explicit stack is safer for a tool pointed at arbitrary filesystems.
+Manual recursion in enumPathsRecursive and Node traversals risks stack overflow on pathological depth; iterative + explicit stack is safer for a tool pointed at arbitrary filesystems.
 
 ## Done
 

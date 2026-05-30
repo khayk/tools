@@ -275,28 +275,27 @@ bool shouldExclude(const fs::path& path, const std::vector<std::regex>& rules)
 }
 
 
-void enumFilesRecursive(const fs::path& dir,
+void enumPathsRecursive(const fs::path& dir,
                         const std::vector<std::regex>& exclusionPatterns,
                         const PathCallback& cb)
 {
     try
     {
-        std::error_code ec {};
-
         for (const auto& entry : fs::directory_iterator(dir))
         {
+            std::error_code ec {};
             const auto& currentPath = entry.path();
 
             if (shouldExclude(currentPath, exclusionPatterns) ||
-                is_symlink(currentPath))
+                is_symlink(currentPath, ec))
             {
                 continue; // Skip to the next entry
             }
 
-            if (fs::is_directory(currentPath))
+            if (fs::is_directory(currentPath, ec))
             {
                 cb(currentPath, ec);
-                enumFilesRecursive(currentPath, exclusionPatterns, cb);
+                enumPathsRecursive(currentPath, exclusionPatterns, cb);
             }
             else
             {
