@@ -438,13 +438,12 @@ int main(int argc, char* argv[])
         AppConfig conf;
         conf.logFilename = "kidmon-reports.log";
         core::utl::configureLogger(conf.logsDir, conf.logFilename);
-        core::utl::logBuildInfo(BuildInfo::Version,
-                                BuildInfo::CommitSHA,
-                                BuildInfo::Timestamp);
-
         trace.emplace("",
                       std::format("{:-^80s}", "> START <"),
                       std::format("{:-^80s}\n", "> END <"));
+        core::utl::logBuildInfo(BuildInfo::Version,
+                                BuildInfo::CommitSHA,
+                                BuildInfo::Timestamp);
 
         const auto result = opts.parse(argc, argv);
 

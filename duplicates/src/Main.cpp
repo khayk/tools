@@ -63,12 +63,12 @@ int main(int argc, const char* argv[])
 
         Config cfg(core::dirs::config(), core::dirs::cache());
         configureLogger(cfg.logDir(), cfg.logFilename());
+        trace.emplace("",
+            std::format("{:-^80s}", "> START <"),
+            std::format("{:-^80s}\n", "> END <"));
         core::utl::logBuildInfo(BuildInfo::Version,
                                 BuildInfo::CommitSHA,
                                 BuildInfo::Timestamp);
-        trace.emplace("",
-                      std::format("{:-^80s}", "> START <"),
-                      std::format("{:-^80s}\n", "> END <"));
 
         if (runMetricsReview(result))
         {
