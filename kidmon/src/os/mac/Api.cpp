@@ -8,11 +8,35 @@
 #include <spdlog/spdlog.h>
 #include <CoreGraphics/CoreGraphics.h>
 
+#include <mutex>
 #include <vector>
 
 using namespace km;
 
 namespace {
+
+// kCGWindowName is only populated when the process holds Screen Recording
+// permission (macOS 10.15+). Without it, CGWindowListCopyWindowInfo still
+// returns geometry and owner info, but the title comes back empty.
+void ensureScreenRecordingAccess()
+{
+    static std::once_flag once;
+    std::call_once(once, [] {
+        if (CGPreflightScreenCaptureAccess())
+        {
+            return; // already granted
+        }
+        // Triggers the system prompt and adds this binary to
+        // System Settings -> Privacy & Security -> Screen Recording.
+        // The agent must be restarted after granting before titles appear.
+        if (!CGRequestScreenCaptureAccess())
+        {
+            spdlog::warn("Screen Recording permission not granted; window "
+                         "titles will be empty until it is enabled and the "
+                         "agent is restarted.");
+        }
+    });
+}
 
 std::string cfStringToString(CFStringRef ref)
 {
@@ -49,6 +73,8 @@ ApiPtr ApiFactory::create()
 
 WindowPtr ApiImpl::foregroundWindow()
 {
+    ensureScreenRecordingAccess();
+
     CFArrayRef rawList = CGWindowListCopyWindowInfo(
         kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements,
         kCGNullWindowID);
