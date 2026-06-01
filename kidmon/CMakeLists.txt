@@ -109,13 +109,16 @@ if(WIN32)
     set(APP_BINARY "$<TARGET_FILE:${PROJECT_APP}>")
     set(APP_MANIFEST "${CMAKE_CURRENT_SOURCE_DIR}/src/os/win/manifest/app.manifest")
 
+    # mt.exe requires each option and its value to be a SINGLE token
+    # (-inputresource:VALUE, no space). With VERBATIM, every argument on its own
+    # line becomes a separate token, so the option and path must be joined.
     add_custom_command(
         TARGET  ${PROJECT_APP}
         POST_BUILD
         COMMAND mt.exe
-            -manifest        "${APP_MANIFEST}"
-            -inputresource:  "${APP_BINARY};\#1"
-            -outputresource: "${APP_BINARY};\#1"
+            -manifest "${APP_MANIFEST}"
+            "-inputresource:${APP_BINARY};#1"
+            "-outputresource:${APP_BINARY};#1"
         COMMENT "Embedding DPI-aware manifest..."
         VERBATIM
     )
