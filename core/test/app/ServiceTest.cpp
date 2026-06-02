@@ -2,12 +2,14 @@
 #include <gmock/gmock.h>
 #include <core/app/Service.h>
 #include <core/utils/LogCapture.h>
+#include <core/utils/Log.h>
 
 #include <csignal>
 
 using core::Service;
 using core::Runnable;
 using core::utl::LogCaptureSt;
+using core::utl::MuteLogger;
 
 namespace {
 
@@ -47,6 +49,7 @@ TEST(ServiceTests, DestructorDoesNotCallShutdown)
     auto runnable = std::make_shared<MockRunnable>();
     EXPECT_CALL(*runnable, shutdown()).Times(0);
 
+    MuteLogger mute;
     Service service(runnable, "test");
 }
 
@@ -59,12 +62,14 @@ TEST(ServiceTests, ShutdownDelegatesToRunnable)
     auto runnable = std::make_shared<MockRunnable>();
     EXPECT_CALL(*runnable, shutdown()).Times(1);
 
+    MuteLogger mute;
     Service service(runnable, "test");
     service.shutdown();
 }
 
 TEST(ServiceTests, ShutdownDoesNothingWhenRunnableExpired)
 {
+    MuteLogger mute;
     std::unique_ptr<Service> service;
     {
         auto runnable = std::make_shared<MockRunnable>();
@@ -110,6 +115,7 @@ TEST(ServiceTests, RunDelegatesToRunnable)
     EXPECT_CALL(*runnable, run()).Times(1);
     EXPECT_CALL(*runnable, shutdown()).Times(0);
 
+    MuteLogger mute;
     Service service(runnable, "test");
     service.run();
 }
@@ -129,6 +135,7 @@ TEST(ServiceTests, RunLogsServiceNameOnStartAndStop)
 
 TEST(ServiceTests, RunDoesNothingWhenRunnableExpired)
 {
+    MuteLogger mute;
     std::unique_ptr<Service> service;
     {
         auto runnable = std::make_shared<MockRunnable>();
@@ -153,6 +160,7 @@ TEST(ServiceTests, SigtermCallsShutdown)
         .WillOnce([&]() { std::raise(SIGTERM); });
     EXPECT_CALL(*runnable, shutdown()).Times(1);
 
+    MuteLogger mute;
     Service service(runnable, "test");
     service.run();
 }
@@ -165,6 +173,7 @@ TEST(ServiceTests, SigintCallsShutdown)
         .WillOnce([&]() { std::raise(SIGINT); });
     EXPECT_CALL(*runnable, shutdown()).Times(1);
 
+    MuteLogger mute;
     Service service(runnable, "test");
     service.run();
 }

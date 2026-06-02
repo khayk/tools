@@ -2,12 +2,14 @@
 #include <gmock/gmock.h>
 #include <core/app/Console.h>
 #include <core/utils/LogCapture.h>
+#include <core/utils/Log.h>
 
 #include <csignal>
 
 using core::Console;
 using core::Runnable;
 using core::utl::LogCaptureSt;
+using core::utl::MuteLogger;
 
 namespace {
 
@@ -52,6 +54,7 @@ TEST(ConsoleTests, DuplicateInstanceThrows)
     auto runnable = std::make_shared<MockRunnable>();
     EXPECT_CALL(*runnable, shutdown()).Times(1);
 
+    MuteLogger mute;
     Console first(runnable);
     EXPECT_THROW({ Console second(runnable); }, std::runtime_error);
 }
@@ -61,6 +64,7 @@ TEST(ConsoleTests, AfterDestructionNewInstanceCanBeCreated)
     auto runnable = std::make_shared<MockRunnable>();
     EXPECT_CALL(*runnable, shutdown()).Times(2);
 
+    MuteLogger mute;
     { Console first(runnable); }
     EXPECT_NO_THROW({ Console second(runnable); });
 }
@@ -75,6 +79,7 @@ TEST(ConsoleTests, RunDelegatesToRunnable)
     EXPECT_CALL(*runnable, run()).Times(1);
     EXPECT_CALL(*runnable, shutdown()).Times(1); // destructor
 
+    MuteLogger mute;
     Console console(runnable);
     console.run();
 }
@@ -84,6 +89,7 @@ TEST(ConsoleTests, ShutdownDelegatesToRunnable)
     auto runnable = std::make_shared<MockRunnable>();
     EXPECT_CALL(*runnable, shutdown()).Times(1);
 
+    MuteLogger mute;
     Console console(runnable);
     console.shutdown();
     // ~Impl() calls shutdown() again, but stopped_ is true so it's a no-op
@@ -94,6 +100,7 @@ TEST(ConsoleTests, ShutdownIsIdempotent)
     auto runnable = std::make_shared<MockRunnable>();
     EXPECT_CALL(*runnable, shutdown()).Times(1);
 
+    MuteLogger mute;
     Console console(runnable);
     console.shutdown();
     console.shutdown(); // second call must not reach the runnable
@@ -101,6 +108,7 @@ TEST(ConsoleTests, ShutdownIsIdempotent)
 
 TEST(ConsoleTests, RunDoesNothingWhenRunnableExpired)
 {
+    MuteLogger mute;
     std::unique_ptr<Console> console;
     {
         auto runnable = std::make_shared<MockRunnable>();
@@ -123,6 +131,7 @@ TEST(ConsoleTests, SigintCallsShutdown)
     auto runnable = std::make_shared<MockRunnable>();
     EXPECT_CALL(*runnable, shutdown()).Times(1);
 
+    MuteLogger mute;
     Console console(runnable);
     std::raise(SIGINT);
     // stopped_ is now true; ~Impl() shutdown() is a no-op
