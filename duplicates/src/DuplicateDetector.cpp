@@ -59,10 +59,9 @@ size_t DuplicateDetector::numGroups() const noexcept
 
 void DuplicateDetector::detect(const Options& opts, const ProgressCallback& cb)
 {
-    dups_.clear();
     grps_.clear();
 
-    size_t totalFiles = numFiles();
+    const size_t totalFiles = numFiles();
 
     if (totalFiles == 0)
     {
@@ -73,134 +72,101 @@ void DuplicateDetector::detect(const Options& opts, const ProgressCallback& cb)
         cb(Stage::Prepare, node, ++i * 100 / totalFiles);
     });
 
-    root_->enumLeafs([&opts, this](Node* node) {
+    // dups_ is a transient size index: files of differing size can never be
+    // duplicates, so size grouping cheaply narrows down the hashing candidates.
+    // It is intentionally local - grps_ is the single source of truth for groups.
+    MapBySize bySize = groupBySize(opts);
+
+    size_t outstandingSize = 0;
+    pruneUniqueSizes(bySize, outstandingSize);
+
+    buildHashGroups(bySize, outstandingSize, cb);
+
+    collapseHardLinks();
+}
+
+DuplicateDetector::MapBySize DuplicateDetector::groupBySize(const Options& opts) const
+{
+    MapBySize bySize;
+
+    root_->enumLeafs([&opts, &bySize](Node* node) {
         if (node->size() < opts.minSizeBytes || node->size() > opts.maxSizeBytes)
         {
             return;
         }
 
-        auto it = dups_.find(node->size());
-
-        if (it == dups_.end())
-        {
-            dups_.emplace(node->size(), Nodes {node});
-        }
-        else
-        {
-            it->second.push_back(node);
-        }
+        bySize[node->size()].push_back(node);
     });
 
-    // Files with unique size can be quickly excluded
-    size_t numUniqueFiles = 0;
-    size_t outstandingSize = 0;
+    return bySize;
+}
 
-    std::erase_if(dups_, [&numUniqueFiles, &outstandingSize](const auto& vt) {
+void DuplicateDetector::pruneUniqueSizes(MapBySize& bySize, size_t& outstandingSize)
+{
+    // Files with a unique size can be quickly excluded
+    std::erase_if(bySize, [&outstandingSize](const auto& vt) {
         const Nodes& nodes = vt.second;
         if (nodes.size() < 2)
         {
-            ++numUniqueFiles;
             return true;
         }
         outstandingSize += nodes.size() * nodes[0]->size();
         return false;
     });
+}
 
-    totalFiles -= numUniqueFiles;
-    size_t processedSize = 0;
+void DuplicateDetector::buildHashGroups(const MapBySize& bySize,
+                                        size_t outstandingSize,
+                                        const ProgressCallback& cb)
+{
+    // Process the lightest size groups first (weight = size * count) so the
+    // Stage::Calculate progress advances smoothly instead of in uneven jumps.
+    std::vector<const Nodes*> ordered;
+    ordered.reserve(bySize.size());
 
-    std::vector<std::pair<size_t, Nodes>> ordered;
-
-    for (auto& [sz, nodes] : dups_)
+    for (const auto& [sz, nodes] : bySize)
     {
-        ordered.emplace_back(sz, nodes);
+        ordered.push_back(&nodes);
     }
 
-    // Weight based soring to have a smooter progress during detection
-    std::ranges::sort(ordered, [](const auto& a, const auto& b) {
-        return (a.first * a.second.size()) < (b.first * b.second.size());
+    std::ranges::sort(ordered, [](const Nodes* a, const Nodes* b) {
+        return (a->front()->size() * a->size()) < (b->front()->size() * b->size());
     });
 
-    std::unordered_map<std::string, Nodes> hashes;
+    // Keyed by content hash; the string_view borrows each Node's cached sha256_,
+    // whose lifetime outlives detection.
+    std::unordered_map<std::string_view, Nodes> hashes;
     std::string sha256;
+    size_t processedSize = 0;
 
-    std::erase_if(
-        ordered,
-        [&cb, &processedSize, &hashes, &sha256, outstandingSize](auto& vt) mutable {
-            hashes.clear();
-            sha256.clear();
+    for (const Nodes* group : ordered)
+    {
+        hashes.clear();
 
-            // Here we have files with the same size
-            Nodes& nodes = vt.second;
-            for (const auto* node : nodes)
+        // Here we have files with the same size
+        for (const auto* node : *group)
+        {
+            if (!tryGetSha256(node, sha256))
             {
-                if (!tryGetSha256(node, sha256))
-                {
-                    continue;
-                }
-
-                auto it = hashes.find(sha256);
-                processedSize += node->size();
-                const auto percent = processedSize * 100 / outstandingSize;
-                cb(Stage::Calculate, node, percent);
-
-                if (it == hashes.end())
-                {
-                    hashes.emplace(sha256, Nodes {node});
-                }
-                else
-                {
-                    it->second.push_back(node);
-                }
+                continue;
             }
 
-            // Remove all unique items
-            std::erase_if(hashes, [](const auto& vt) {
-                return vt.second.size() < 2;
-            });
+            processedSize += node->size();
+            cb(Stage::Calculate, node, processedSize * 100 / outstandingSize);
 
-            if (hashes.empty())
+            hashes[node->sha256()].push_back(node);
+        }
+
+        // A hash shared by two or more files is a real duplicate group; record
+        // it straight into grps_ and discard the unique remainder.
+        for (auto& [sha, nodes] : hashes)
+        {
+            if (nodes.size() >= 2)
             {
-                // Instruct to remove the current Node object
-                return true;
+                grps_.emplace(sha, std::move(nodes));
             }
-
-            // Remove files with unique hashes
-            auto it = std::remove_if(std::begin(nodes),
-                                     std::end(nodes),
-                                     [&hashes](const Node* const node) {
-                                         return !hashes.contains(node->sha256());
-                                     });
-
-            nodes.erase(it, nodes.end());
-
-            return false;
-        });
-
-    if (ordered.size() != dups_.size())
-    {
-        // Build a set of sizes that survived in ordered
-        std::unordered_set<size_t> surviving;
-        for (const auto& [sz, nodes] : ordered)
-        {
-            surviving.insert(sz);
-        }
-
-        // Remove from dups_ any size group not in ordered
-        std::erase_if(dups_, [&surviving](const auto& pair) {
-            return !surviving.contains(pair.first);
-        });
-    }
-
-    for (const auto& [sz, nodes] : dups_)
-    {
-        for (const auto* node : nodes)
-        {
-            grps_[node->sha256()].push_back(node);
         }
     }
-
-    collapseHardLinks();
 }
 
 void DuplicateDetector::collapseHardLinks()
@@ -230,7 +196,6 @@ void DuplicateDetector::collapseHardLinks()
 void DuplicateDetector::reset()
 {
     grps_.clear();
-    dups_.clear();
     names_.clear();
     names_.emplace();
     root_ = std::make_unique<Node>(&(*names_.begin()));
@@ -248,45 +213,42 @@ void DuplicateDetector::enumFiles(const FileCallback& cb) const
 
 void DuplicateDetector::enumGroups(const DupGroupCallback& cb) const
 {
+    // grps_ is hash-keyed and therefore unordered; present the groups with the
+    // largest files first, the order callers rely on.
+    std::vector<const Nodes*> ordered;
+    ordered.reserve(grps_.size());
+
+    for (const auto& [sha, nodes] : grps_)
+    {
+        ordered.push_back(&nodes);
+    }
+
+    std::ranges::sort(ordered, [](const Nodes* a, const Nodes* b) {
+        return a->front()->size() > b->front()->size();
+    });
+
     DupGroup group;
     size_t duplicates = 0;
-    std::unordered_set<std::string_view> visit;
 
-    for (const auto& [sz, nodes] : dups_)
+    for (const Nodes* nodes : ordered)
     {
-        visit.clear();
-        for (const auto* i : nodes)
+        group.groupId = ++duplicates;
+        group.entries.clear();
+
+        for (const auto* i : *nodes)
         {
-            visit.insert(i->sha256());
+            group.entries.emplace_back();
+            DupEntry& e = group.entries.back();
+
+            i->fullPath(e.file);
+            e.size = i->size();
+            e.sha256 = i->sha256();
         }
 
-        for (const auto& sha : visit)
+        // Stop enumeration if the callback returns false
+        if (!cb(group))
         {
-            group.groupId = ++duplicates;
-            group.entries.clear();
-
-            const auto it = grps_.find(sha);
-            if (it == grps_.end())
-            {
-                continue;
-            }
-
-            const Nodes& nodesInGroup = it->second;
-            for (const auto* i : nodesInGroup)
-            {
-                group.entries.emplace_back();
-                DupEntry& e = group.entries.back();
-
-                i->fullPath(e.file);
-                e.size = i->size();
-                e.sha256 = i->sha256();
-            }
-
-            // Stop enumeration if the callback returns false
-            if (!cb(group))
-            {
-                return;
-            }
+            return;
         }
     }
 }
