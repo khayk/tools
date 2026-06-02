@@ -264,6 +264,63 @@ TEST(DuplicateDetectorTest, HardLinkCollapsedButRealDuplicateKept)
     EXPECT_FALSE(hasA && hasLink); // the two hard links must not both appear
 }
 
+TEST(DuplicateDetectorTest, ProgressiveHashingSeparatesSameSizeFiles)
+{
+    file::TempDir data("dups-progressive");
+
+    // Mirrors PREFIX_BYTES, the screening prefix length in DuplicateDetector.
+    constexpr size_t prefix = size_t {16} * 1024;
+    constexpr size_t tail = size_t {8} * 1024;
+    const std::string common(prefix, 'A');
+
+    // All six files share one size, so they land in the same size bucket and
+    // travel the full screen-then-confirm path together.
+    const auto write = [&](std::string_view name, const std::string& body) {
+        const auto p = data.path() / name;
+        file::write(p, body);
+        return p;
+    };
+
+    // True duplicates: identical well beyond the screening prefix.
+    const std::string dupBody = common + std::string(tail, 'B');
+    const auto dupA = write("dupA.bin", dupBody);
+    const auto dupB = write("dupB.bin", dupBody);
+
+    // Same size and same prefix, differing only in the tail: the cheap prefix
+    // pass cannot tell them apart - only the full hash must.
+    const auto tailA = write("tailA.bin", common + std::string(tail, 'X'));
+    const auto tailB = write("tailB.bin", common + std::string(tail, 'Y'));
+
+    // Same size, differing within the screening prefix: excluded by stage A.
+    const auto headA =
+        write("headA.bin", std::string(prefix, 'P') + std::string(tail, 'B'));
+    const auto headB =
+        write("headB.bin", std::string(prefix, 'Q') + std::string(tail, 'B'));
+
+    DuplicateDetector dd;
+    for (const auto& p : {dupA, dupB, tailA, tailB, headA, headB})
+    {
+        dd.addFile(p);
+    }
+    dd.detect(Options {}, defaultProgressCallback);
+
+    // Only the genuinely identical pair survives both stages.
+    ASSERT_EQ(dd.numGroups(), 1U);
+
+    std::vector<fs::path> reported;
+    dd.enumGroups([&reported](const DupGroup& grp) {
+        for (const auto& e : grp.entries)
+        {
+            reported.push_back(e.file);
+        }
+        return true;
+    });
+
+    ASSERT_EQ(reported.size(), 2U);
+    EXPECT_NE(std::ranges::find(reported, dupA), reported.end());
+    EXPECT_NE(std::ranges::find(reported, dupB), reported.end());
+}
+
 TEST(DuplicateDetectorTest, MetricsThresholds)
 {
     constexpr size_t numFiles = 50'000;

@@ -81,6 +81,11 @@ const std::string& Node::sha256() const
     return sha256_;
 }
 
+std::string Node::prefixSha256(size_t maxBytes) const
+{
+    return core::crypto::fileSha256(fullPath(), maxBytes);
+}
+
 void Node::fullPath(fs::path& path) const
 {
     path.clear();

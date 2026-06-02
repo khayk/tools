@@ -1,12 +1,25 @@
 #include <duplicates/DuplicateDetector.h>
 #include <duplicates/Utils.h>
 #include <core/utils/File.h>
+#include <core/utils/Parallel.h>
 #include <spdlog/spdlog.h>
 #include <algorithm>
+#include <atomic>
+#include <mutex>
+#include <string>
 #include <system_error>
+#include <vector>
 
 namespace tools::dups {
 namespace {
+
+// Same underlying type as DuplicateDetector::Nodes; usable from free helpers.
+using NodeVec = std::vector<const Node*>;
+
+// Bytes hashed by the screening pass. Distinct files almost always differ
+// within their first few kilobytes, so a prefix hash rules them out before any
+// full read.
+constexpr std::size_t PREFIX_BYTES = std::size_t {16} * 1024;
 
 bool tryGetSha256(const Node* node, std::string& sha256)
 {
@@ -26,6 +39,93 @@ bool tryGetSha256(const Node* node, std::string& sha256)
 
     return false;
 }
+
+bool tryGetPrefixSha256(const Node* node, std::string& sha256)
+{
+    try
+    {
+        sha256 = node->prefixSha256(PREFIX_BYTES);
+        return true;
+    }
+    catch (const std::system_error& se)
+    {
+        spdlog::error("std::system_error: {}", se.what());
+    }
+    catch (const std::exception& e)
+    {
+        spdlog::error("std::exception: {}", e.what());
+    }
+
+    return false;
+}
+
+// Splits each input bucket into sub-buckets that agree on hashFn, dropping any
+// sub-bucket left with fewer than two files. The expensive hashing runs in
+// parallel across every candidate; the regrouping afterwards is cheap and
+// serial. Each input bucket is assumed to already share a single file size, so
+// a hash match can only mean identical content.
+//
+// hashFn(node, out) returns true and fills `out` on success, or false to drop
+// the node. progressFn(node) runs once per hashed node and must be thread-safe.
+template <typename HashFn, typename ProgressFn>
+std::vector<NodeVec> refineByHash(const std::vector<NodeVec>& buckets,
+                                  HashFn hashFn,
+                                  ProgressFn progressFn)
+{
+    // Flatten candidates, remembering which bucket each came from. Buckets are
+    // emitted contiguously, so the regrouping below can walk them in one pass.
+    NodeVec cand;
+    std::vector<std::size_t> bucketOf;
+    for (std::size_t b = 0; b < buckets.size(); ++b)
+    {
+        for (const Node* node : buckets[b])
+        {
+            cand.push_back(node);
+            bucketOf.push_back(b);
+        }
+    }
+
+    std::vector<std::string> digests(cand.size());
+    std::vector<char> ok(cand.size(), 0);
+
+    core::parallelFor(cand.size(), [&](std::size_t i) {
+        if (hashFn(cand[i], digests[i]))
+        {
+            ok[i] = 1;
+        }
+        progressFn(cand[i]);
+    });
+
+    std::vector<NodeVec> refined;
+    std::unordered_map<std::string_view, NodeVec> sub;
+
+    std::size_t i = 0;
+    while (i < cand.size())
+    {
+        const std::size_t b = bucketOf[i];
+        sub.clear();
+
+        for (; i < cand.size() && bucketOf[i] == b; ++i)
+        {
+            if (ok[i])
+            {
+                // The key borrows digests[i], stable until this function returns.
+                sub[digests[i]].push_back(cand[i]);
+            }
+        }
+
+        for (auto& [digest, nodes] : sub)
+        {
+            if (nodes.size() >= 2)
+            {
+                refined.push_back(std::move(nodes));
+            }
+        }
+    }
+
+    return refined;
+}
+
 } // namespace
 
 const ProgressCallback& defaultProgressCallback =
@@ -72,7 +172,7 @@ void DuplicateDetector::detect(const Options& opts, const ProgressCallback& cb)
         cb(Stage::Prepare, node, ++i * 100 / totalFiles);
     });
 
-    // dups_ is a transient size index: files of differing size can never be
+    // bySize is a transient size index: files of differing size can never be
     // duplicates, so size grouping cheaply narrows down the hashing candidates.
     // It is intentionally local - grps_ is the single source of truth for groups.
     MapBySize bySize = groupBySize(opts);
@@ -119,53 +219,49 @@ void DuplicateDetector::buildHashGroups(const MapBySize& bySize,
                                         size_t outstandingSize,
                                         const ProgressCallback& cb)
 {
-    // Process the lightest size groups first (weight = size * count) so the
-    // Stage::Calculate progress advances smoothly instead of in uneven jumps.
-    std::vector<const Nodes*> ordered;
-    ordered.reserve(bySize.size());
-
+    // Seed the buckets with the size groups: each already holds >= 2 files that
+    // share one common size.
+    std::vector<Nodes> buckets;
+    buckets.reserve(bySize.size());
     for (const auto& [sz, nodes] : bySize)
     {
-        ordered.push_back(&nodes);
+        buckets.push_back(nodes);
     }
 
-    std::ranges::sort(ordered, [](const Nodes* a, const Nodes* b) {
-        return (a->front()->size() * a->size()) < (b->front()->size() * b->size());
+    // Progress is reported from worker threads, so serialise the callback and
+    // accumulate hashed bytes atomically. outstandingSize is the combined full
+    // size of all candidates; the screening pass reads only a prefix of each, so
+    // the running percentage is clamped to 100.
+    std::atomic<size_t> processed {0};
+    std::mutex cbMutex;
+    auto report = [&](const Node* node, size_t bytes) {
+        const size_t done =
+            processed.fetch_add(bytes, std::memory_order_relaxed) + bytes;
+        const size_t percent =
+            outstandingSize != 0 ? std::min<size_t>(done * 100 / outstandingSize, 100)
+                                 : 100;
+        const std::scoped_lock lock(cbMutex);
+        cb(Stage::Calculate, node, percent);
+    };
+
+    // Stage A: cheap prefix screening. Files that differ within their first
+    // PREFIX_BYTES are ruled out here without ever being read in full - the
+    // decisive win for large media that merely share a size.
+    buckets = refineByHash(buckets, tryGetPrefixSha256, [&](const Node* node) {
+        report(node, std::min<size_t>(node->size(), PREFIX_BYTES));
     });
 
-    // Keyed by content hash; the string_view borrows each Node's cached sha256_,
-    // whose lifetime outlives detection.
-    std::unordered_map<std::string_view, Nodes> hashes;
-    std::string sha256;
-    size_t processedSize = 0;
+    // Stage B: authoritative full-file SHA-256 on the survivors. tryGetSha256
+    // also warms each node's cached hash, which enumGroups() reuses.
+    buckets = refineByHash(buckets, tryGetSha256, [&](const Node* node) {
+        report(node, node->size());
+    });
 
-    for (const Nodes* group : ordered)
+    // Every surviving bucket is a confirmed duplicate group, keyed by its now
+    // cached full hash (a string_view into the front node's stable sha256_).
+    for (auto& bucket : buckets)
     {
-        hashes.clear();
-
-        // Here we have files with the same size
-        for (const auto* node : *group)
-        {
-            if (!tryGetSha256(node, sha256))
-            {
-                continue;
-            }
-
-            processedSize += node->size();
-            cb(Stage::Calculate, node, processedSize * 100 / outstandingSize);
-
-            hashes[node->sha256()].push_back(node);
-        }
-
-        // A hash shared by two or more files is a real duplicate group; record
-        // it straight into grps_ and discard the unique remainder.
-        for (auto& [sha, nodes] : hashes)
-        {
-            if (nodes.size() >= 2)
-            {
-                grps_.emplace(sha, std::move(nodes));
-            }
-        }
+        grps_.emplace(bucket.front()->sha256(), std::move(bucket));
     }
 }
 

@@ -29,6 +29,15 @@ public:
     uint16_t depth() const noexcept;
     const std::string& sha256() const;
 
+    /**
+     * @brief SHA-256 over at most the first @p maxBytes of the file.
+     *
+     * A cheap screening hash computed without reading the whole file. Unlike
+     * sha256() the result is not cached, since the prefix length is a caller
+     * policy rather than a property of the node.
+     */
+    std::string prefixSha256(size_t maxBytes) const;
+
     fs::path fullPath() const;
     void fullPath(fs::path& path) const;
 

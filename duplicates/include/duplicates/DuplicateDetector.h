@@ -47,8 +47,11 @@ private:
     // used to drive Stage::Calculate progress.
     static void pruneUniqueSizes(MapBySize& bySize, size_t& outstandingSize);
 
-    // Hashes each surviving size group and records the content-identical files
-    // directly into grps_, the single source of truth for duplicate groups.
+    // Confirms duplicates among the same-size candidates and records each
+    // content-identical set into grps_, the single source of truth for groups.
+    // Hashing runs in parallel across files in two passes: a cheap prefix screen
+    // that avoids fully reading files differing early, then an authoritative
+    // full-file SHA-256 on the survivors.
     void buildHashGroups(const MapBySize& bySize,
                          size_t outstandingSize,
                          const ProgressCallback& cb);
