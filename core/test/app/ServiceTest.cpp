@@ -190,6 +190,7 @@ TEST(ServiceTests, RunThrowsNotImplemented)
     EXPECT_CALL(*runnable, run()).Times(0);
     EXPECT_CALL(*runnable, shutdown()).Times(0);
 
+    MuteLogger mute;
     Service service(runnable, "test");
     EXPECT_THROW(service.run(), std::runtime_error);
 }

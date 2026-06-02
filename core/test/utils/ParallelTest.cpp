@@ -40,7 +40,8 @@ TEST(UtilsParallelTests, ConcurrentWorkAggregatesCorrectly)
 {
     constexpr std::size_t count = 100'000;
     std::vector<std::size_t> values(count);
-    std::ranges::iota(values, std::size_t {0});
+    // std::ranges::iota is C++23 and missing from Apple Clang's libc++.
+    std::iota(values.begin(), values.end(), std::size_t {0}); // NOLINT(modernize-use-ranges)
 
     std::atomic<std::size_t> sum {0};
     parallelFor(count, [&](std::size_t i) {
