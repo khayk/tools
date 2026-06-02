@@ -2,6 +2,7 @@
 
 #include <string>
 #include <filesystem>
+#include <cstdint>
 
 namespace fs = std::filesystem;
 
@@ -47,6 +48,22 @@ std::string md5(std::string_view data);
  * @return SHA256 of the file.
  */
 std::string fileSha256(const fs::path& file);
+
+
+/**
+ * @brief Calculate SHA256 over at most the first @p maxBytes bytes of the file.
+ *
+ * Useful as a cheap screening hash: differing files usually differ within their
+ * first few kilobytes, so a prefix hash rules them out without reading the whole
+ * (potentially multi-gigabyte) file. For files no larger than @p maxBytes the
+ * result equals fileSha256(file).
+ *
+ * @param file     The path to the file.
+ * @param maxBytes Maximum number of leading bytes to hash.
+ *
+ * @return SHA256 of the leading @p maxBytes bytes of the file.
+ */
+std::string fileSha256(const fs::path& file, std::uintmax_t maxBytes);
 
 
 /**

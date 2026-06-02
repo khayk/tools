@@ -11,6 +11,8 @@
 #include <span>
 #include <format>
 #include <utility>
+#include <limits>
+#include <algorithm>
 
 
 namespace core::crypto {
@@ -103,7 +105,7 @@ std::string md5(std::string_view data)
     return out;
 }
 
-std::string fileSha256(const fs::path& file)
+std::string fileSha256(const fs::path& file, std::uintmax_t maxBytes)
 {
     std::ifstream in(file, std::ios::in | std::ios::binary);
 
@@ -126,15 +128,24 @@ std::string fileSha256(const fs::path& file)
     const EVP_MD* md = EVP_get_digestbyname("sha256");
     EVP_DigestInit_ex(ctx.get(), md, nullptr);
 
-    while (in)
+    std::uintmax_t remaining = maxBytes;
+    while (in && remaining > 0)
     {
-        in.read(buffer.data(), bufferSize);
-        if (!EVP_DigestUpdate(ctx.get(),
-                              buffer.data(),
-                              static_cast<size_t>(in.gcount())))
+        const auto want = static_cast<std::streamsize>(
+            std::min<std::uintmax_t>(remaining, bufferSize));
+        in.read(buffer.data(), want);
+
+        const auto got = static_cast<std::size_t>(in.gcount());
+        if (got == 0)
+        {
+            break;
+        }
+
+        if (!EVP_DigestUpdate(ctx.get(), buffer.data(), got))
         {
             throw std::runtime_error("Digest update failed");
         }
+        remaining -= got;
     }
 
     uint32_t mdLen = 0;
@@ -145,6 +156,11 @@ std::string fileSha256(const fs::path& file)
     hexadecimal(std::span(hash.data(), mdLen), out);
 
     return out;
+}
+
+std::string fileSha256(const fs::path& file)
+{
+    return fileSha256(file, std::numeric_limits<std::uintmax_t>::max());
 }
 
 void encodeBase64(std::string_view byteSeq, std::string& base64Seq)

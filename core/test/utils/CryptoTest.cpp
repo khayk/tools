@@ -68,6 +68,28 @@ TEST(UtilsCryptoTests, FileSha256)
 }
 
 
+TEST(UtilsCryptoTests, FileSha256Prefix)
+{
+    const fs::path filename = "dummy-prefix.txt";
+    file::write(filename, std::string("01234567"));
+
+    // Hashing the whole file via the byte-limited overload matches the plain one.
+    EXPECT_EQ(fileSha256(filename, 8), fileSha256(filename));
+
+    // A limit beyond the file size still hashes only the available bytes.
+    EXPECT_EQ(fileSha256(filename, 1024), fileSha256(filename));
+
+    // Hashing a prefix equals hashing that prefix as standalone data.
+    EXPECT_EQ(fileSha256(filename, 4), sha256("0123"));
+    EXPECT_EQ(fileSha256(filename, 1), sha256("0"));
+
+    // A zero limit hashes nothing - the empty-input digest.
+    EXPECT_EQ(fileSha256(filename, 0), sha256(""));
+
+    fs::remove(filename);
+}
+
+
 TEST(UtilsCryptoTests, CheckEncodeDecode64)
 {
     // Holds byte representation of data and its base64 encoding
