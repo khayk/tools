@@ -11,8 +11,7 @@ No parallel hashing. Detection is fully single-threaded (DuplicateDetector.cpp:1
 
 ## In Progress
 
-
-
+*
 
 ## Done
 

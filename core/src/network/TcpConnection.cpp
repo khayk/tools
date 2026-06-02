@@ -110,7 +110,7 @@ void Connection::close()
             errorCb_(ec);
         }
 
-        spdlog::info("Cancelling timer for connection: {}", fmt::ptr(this));
+        spdlog::trace("Cancelling timer for connection: {}", fmt::ptr(this));
         timer_.cancel();
     }
 
