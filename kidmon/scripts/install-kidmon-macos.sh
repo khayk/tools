@@ -43,6 +43,16 @@ done
 
 # ---- validate --------------------------------------------------------------
 
+# Accept either the .app bundle or the bare executable. Launching the inner
+# executable of the signed bundle lets macOS attribute TCC (Screen Recording)
+# permission to the bundle's identity rather than to launchd.
+if [[ -d "$BINARY_PATH" && "$BINARY_PATH" == *.app ]]; then
+    APP_NAME="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' \
+        "$BINARY_PATH/Contents/Info.plist" 2>/dev/null || true)"
+    [[ -z "$APP_NAME" ]] && APP_NAME="$(basename "$BINARY_PATH" .app)"
+    BINARY_PATH="$BINARY_PATH/Contents/MacOS/$APP_NAME"
+fi
+
 if [[ ! -f "$BINARY_PATH" ]]; then
     echo "error: binary not found: $BINARY_PATH"
     exit 1

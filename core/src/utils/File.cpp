@@ -279,37 +279,39 @@ void enumPathsRecursive(const fs::path& dir,
                         const std::vector<std::regex>& exclusionPatterns,
                         const PathCallback& cb)
 {
-    try
+    std::error_code ec {};
+    fs::recursive_directory_iterator it(dir,
+                                        fs::directory_options::skip_permission_denied,
+                                        ec);
+    if (ec)
     {
-        for (const auto& entry : fs::directory_iterator(dir))
+        cb(dir, ec);
+        return;
+    }
+
+    const fs::recursive_directory_iterator end;
+
+    while (it != end)
+    {
+        const auto& currentPath = it->path();
+        std::error_code statusEc {};
+
+        if (shouldExclude(currentPath, exclusionPatterns) || it->is_symlink(statusEc))
         {
-            std::error_code ec {};
-            const auto& currentPath = entry.path();
-
-            if (shouldExclude(currentPath, exclusionPatterns) ||
-                is_symlink(currentPath, ec))
-            {
-                continue; // Skip to the next entry
-            }
-
-            if (fs::is_directory(currentPath, ec))
-            {
-                cb(currentPath, ec);
-                enumPathsRecursive(currentPath, exclusionPatterns, cb);
-            }
-            else
-            {
-                cb(currentPath, ec);
-            }
+            // Skip the entry and, if it is a directory, do not descend into it.
+            it.disable_recursion_pending();
         }
-    }
-    catch (const std::system_error& error)
-    {
-        cb(dir, error.code());
-    }
-    catch (const std::exception&)
-    {
-        cb(dir, std::make_error_code(std::errc::no_such_file_or_directory));
+        else
+        {
+            cb(currentPath, statusEc);
+        }
+
+        it.increment(ec);
+        if (ec)
+        {
+            cb(currentPath, ec);
+            return;
+        }
     }
 }
 
