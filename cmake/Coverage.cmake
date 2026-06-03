@@ -57,7 +57,11 @@ function(InstrumentForCoverage target)
       if (CMAKE_BUILD_TYPE STREQUAL Debug)
          target_compile_options(
             ${target}
-            PRIVATE --coverage -fno-inline
+            # -fprofile-update=atomic makes gcov counter increments atomic.
+            # Required because tests exercise multi-threaded code (parallel
+            # hashing); without it concurrent counter updates race and lcov
+            # reports "Unexpected negative count" errors.
+            PRIVATE --coverage -fno-inline -fprofile-update=atomic
                   # -fno-inline-small-functions
                   # -fno-default-inline
          )
