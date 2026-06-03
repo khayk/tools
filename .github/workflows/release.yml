@@ -44,17 +44,14 @@ jobs:
           New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" `
             -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force
 
-      - name: Setup vcpkg
-        uses: lukka/run-vcpkg@v11.6
-        with:
-          vcpkgGitCommitId: '66c0373dc7fca549e5803087b9487edfe3aca0a1'
-
       - name: Setup MSVC environment
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Configure
-        run: cmake --preset ${{ matrix.configure_preset }}
+      - name: Setup vcpkg and configure
+        uses: ./.github/actions/vcpkg-configure
+        with:
+          preset: ${{ matrix.configure_preset }}
 
       - name: Build
         run: cmake --build ${{ matrix.build_dir }} --parallel

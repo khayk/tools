@@ -24,16 +24,13 @@ jobs:
             -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force
         shell: pwsh
 
-      - name: Setup vcpkg
-        uses: lukka/run-vcpkg@v11.6
-        with:
-          vcpkgGitCommitId: '66c0373dc7fca549e5803087b9487edfe3aca0a1'
-
       - name: Setup MSVC environment
         uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Configure
-        run: cmake --preset vcpkg-msvc-debug
+      - name: Setup vcpkg and configure
+        uses: ./.github/actions/vcpkg-configure
+        with:
+          preset: vcpkg-msvc-debug
 
       - name: Build
         run: cmake --build build/msvc-debug --parallel

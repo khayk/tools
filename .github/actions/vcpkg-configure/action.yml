@@ -1,0 +1,54 @@
+name: "Setup vcpkg and configure"
+description: >
+  Sets up vcpkg with binary caching to the GitHub Actions cache, then runs the
+  CMake configure step with retries so a transient dependency-download failure
+  retries instead of failing the whole job.
+
+inputs:
+  preset:
+    description: "CMake configure preset to run."
+    required: true
+  vcpkg-commit:
+    description: "vcpkg baseline commit to pin."
+    required: false
+    default: "66c0373dc7fca549e5803087b9487edfe3aca0a1"
+  attempts:
+    description: "Number of configure attempts before giving up."
+    required: false
+    default: "3"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Enable vcpkg binary caching
+      # Cache built vcpkg packages in the GitHub Actions cache so dependencies
+      # are restored as binaries instead of rebuilt from source every run. The
+      # ACTIONS_* tokens are only visible to actions, so re-export them as job
+      # env vars for vcpkg's x-gha provider to consume.
+      uses: actions/github-script@v7
+      with:
+        script: |
+          core.exportVariable('VCPKG_BINARY_SOURCES', 'clear;x-gha,readwrite');
+          core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+          core.exportVariable('ACTIONS_RESULTS_URL', process.env.ACTIONS_RESULTS_URL || '');
+          core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11.6
+      with:
+        vcpkgGitCommitId: ${{ inputs.vcpkg-commit }}
+
+    - name: Configure
+      shell: bash
+      run: |
+        # vcpkg resumes from cache, so a transient download failure just needs
+        # another attempt rather than failing the whole job.
+        attempts="${{ inputs.attempts }}"
+        for attempt in $(seq 1 "$attempts"); do
+          echo "::group::Configure attempt $attempt/$attempts"
+          cmake --preset "${{ inputs.preset }}" && { echo "::endgroup::"; exit 0; }
+          echo "::endgroup::"
+          echo "Configure attempt $attempt failed; retrying in $((attempt * 15))s..."
+          sleep $((attempt * 15))
+        done
+        echo "Configure failed after $attempts attempts"; exit 1
