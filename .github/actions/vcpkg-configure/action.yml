@@ -20,11 +20,13 @@ inputs:
 runs:
   using: "composite"
   steps:
-    # Point vcpkg's default (files) binary cache at a fixed directory and
-    # persist it across runs with actions/cache, so dependencies are restored
-    # as prebuilt binaries instead of rebuilt from source every run. This
-    # replaces vcpkg's removed 'x-gha' backend; no NuGet feed required.
-    - name: Prepare vcpkg binary cache directory
+    # Use a files binary cache in a fixed directory and persist it across runs
+    # with actions/cache, so dependencies are restored as prebuilt binaries
+    # instead of rebuilt from source every run. Set VCPKG_BINARY_SOURCES
+    # explicitly (rather than rely on the default) so there is no ambiguity that
+    # vcpkg reads AND writes this exact dir. Replaces vcpkg's removed 'x-gha'
+    # backend; no NuGet feed required.
+    - name: Configure vcpkg binary cache
       uses: actions/github-script@v7
       with:
         script: |
@@ -32,15 +34,19 @@ runs:
           const path = require('path');
           const dir = path.join(process.env.RUNNER_TEMP, 'vcpkg-binary-cache');
           fs.mkdirSync(dir, { recursive: true });
-          core.exportVariable('VCPKG_DEFAULT_BINARY_CACHE', dir);
+          core.exportVariable('VCPKG_BINARY_SOURCES', `clear;files,${dir},readwrite`);
 
     - name: Cache vcpkg binary archives
       uses: actions/cache@v4
       with:
         path: ${{ runner.temp }}/vcpkg-binary-cache
-        # Rebuilt deps depend on the OS, the vcpkg baseline, and the manifest.
-        key: vcpkg-${{ runner.os }}-${{ inputs.vcpkg-commit }}-${{ hashFiles('vcpkg.json') }}
+        # The run id makes every key unique, so actions/cache always saves a
+        # fresh archive (a stable key would hit on every run and never re-save,
+        # freezing the cache). restore-keys then prefix-matches the most recent
+        # previous cache, so the dir keeps accumulating built packages.
+        key: vcpkg-${{ runner.os }}-${{ inputs.vcpkg-commit }}-${{ hashFiles('vcpkg.json') }}-${{ github.run_id }}
         restore-keys: |
+          vcpkg-${{ runner.os }}-${{ inputs.vcpkg-commit }}-${{ hashFiles('vcpkg.json') }}-
           vcpkg-${{ runner.os }}-${{ inputs.vcpkg-commit }}-
 
     - name: Setup vcpkg
