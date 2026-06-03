@@ -20,29 +20,43 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Enable vcpkg binary caching
-      # Cache built vcpkg packages in the GitHub Actions cache so dependencies
-      # are restored as binaries instead of rebuilt from source every run. The
-      # ACTIONS_* tokens are only visible to actions, so re-export them as job
-      # env vars for vcpkg's x-gha provider to consume.
+    # Point vcpkg's default (files) binary cache at a fixed directory and
+    # persist it across runs with actions/cache, so dependencies are restored
+    # as prebuilt binaries instead of rebuilt from source every run. This
+    # replaces vcpkg's removed 'x-gha' backend; no NuGet feed required.
+    - name: Prepare vcpkg binary cache directory
       uses: actions/github-script@v7
       with:
         script: |
-          core.exportVariable('VCPKG_BINARY_SOURCES', 'clear;x-gha,readwrite');
-          core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
-          core.exportVariable('ACTIONS_RESULTS_URL', process.env.ACTIONS_RESULTS_URL || '');
-          core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+          const fs = require('fs');
+          const path = require('path');
+          const dir = path.join(process.env.RUNNER_TEMP, 'vcpkg-binary-cache');
+          fs.mkdirSync(dir, { recursive: true });
+          core.exportVariable('VCPKG_DEFAULT_BINARY_CACHE', dir);
+
+    - name: Cache vcpkg binary archives
+      uses: actions/cache@v4
+      with:
+        path: ${{ runner.temp }}/vcpkg-binary-cache
+        # Rebuilt deps depend on the OS, the vcpkg baseline, and the manifest.
+        key: vcpkg-${{ runner.os }}-${{ inputs.vcpkg-commit }}-${{ hashFiles('vcpkg.json') }}
+        restore-keys: |
+          vcpkg-${{ runner.os }}-${{ inputs.vcpkg-commit }}-
 
     - name: Setup vcpkg
       uses: lukka/run-vcpkg@v11.6
       with:
         vcpkgGitCommitId: ${{ inputs.vcpkg-commit }}
 
+    # Configure runs in each platform's native shell. Bash on Linux/macOS; on
+    # Windows the MSVC setup exports a Windows-format PATH (C:\a;C:\b) that Git
+    # Bash mangles by splitting on ':' (hiding ninja/cl), so use pwsh there -
+    # the same shell the Windows build/test steps already run under. vcpkg
+    # resumes from cache, so a transient download failure just needs a retry.
     - name: Configure
+      if: runner.os != 'Windows'
       shell: bash
       run: |
-        # vcpkg resumes from cache, so a transient download failure just needs
-        # another attempt rather than failing the whole job.
         attempts="${{ inputs.attempts }}"
         for attempt in $(seq 1 "$attempts"); do
           echo "::group::Configure attempt $attempt/$attempts"
@@ -52,3 +66,26 @@ runs:
           sleep $((attempt * 15))
         done
         echo "Configure failed after $attempts attempts"; exit 1
+
+    - name: Configure
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        # Don't let cmake's non-zero exit throw a terminating error: we inspect
+        # $LASTEXITCODE ourselves so the loop can retry instead of aborting.
+        $ErrorActionPreference = 'Continue'
+        $PSNativeCommandUseErrorActionPreference = $false
+
+        $attempts = [int]'${{ inputs.attempts }}'
+        for ($i = 1; $i -le $attempts; $i++) {
+          Write-Host "::group::Configure attempt $i/$attempts"
+          cmake --preset '${{ inputs.preset }}'
+          $code = $LASTEXITCODE
+          Write-Host "::endgroup::"
+          if ($code -eq 0) { exit 0 }
+          $delay = $i * 15
+          Write-Host "Configure attempt $i failed; retrying in ${delay}s..."
+          Start-Sleep -Seconds $delay
+        }
+        Write-Host "Configure failed after $attempts attempts"
+        exit 1
