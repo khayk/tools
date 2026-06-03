@@ -4,10 +4,7 @@
 
 ## Open Issues
 
-* Performance — the gap vs. real dedup tools
-No parallel hashing. Detection is fully single-threaded (DuplicateDetector.cpp:126-177). Hashing is the dominant cost and is embarrassingly parallel across same-size buckets. On a large photo/video corpus this is the difference between minutes and seconds. This is the single biggest performance limitation.
-
-* No partial/progressive hashing. Same-size files go straight to a full SHA-256 of the entire file. Production dedupers hash the first ~4–64 KB first and only full-hash the survivors. With many same-size-but-different files (extremely common for media), you're reading entire multi-GB files needlessly. SHA-256 is also overkill for a candidate check — a fast non-crypto hash (xxHash/BLAKE3) for screening, with full compare/crypto only on collision, would be much faster.
+*
 
 ## In Progress
 
@@ -30,3 +27,6 @@ No parallel hashing. Detection is fully single-threaded (DuplicateDetector.cpp:1
 * Manual recursion in enumPathsRecursive and Node traversals risks stack overflow on pathological depth; iterative + explicit stack is safer for a tool pointed at arbitrary filesystems.
 * Code quality / maintainability
     * detect() carries an awkward dual-container reconciliation. DuplicateDetector.cpp:111-200 It builds ordered (a vector copy of dups_) purely for smoother progress, mutates it, then has to rebuild a surviving set to sync deletions back into dups_, and then enumGroups re-derives groups from dups_+grps_ via a visit set. grps_ is already keyed by hash and holds exactly the groups — iterating dups_ (keyed by size) to rediscover them is redundant and fragile. This function would benefit from being decomposed and from a single source of truth for groups.
+* Performance — the gap vs. real dedup tools
+    * No parallel hashing. Detection is fully single-threaded (DuplicateDetector.cpp:126-177). Hashing is the dominant cost and is embarrassingly parallel across same-size buckets. On a large photo/video corpus this is the difference between minutes and seconds. This is the single biggest performance limitation.
+    * No partial/progressive hashing. Same-size files go straight to a full SHA-256 of the entire file. Production dedupers hash the first ~4–64 KB first and only full-hash the survivors. With many same-size-but-different files (extremely common for media), you're reading entire multi-GB files needlessly. SHA-256 is also overkill for a candidate check — a fast non-crypto hash (xxHash/BLAKE3) for screening, with full compare/crypto only on collision, would be much faster.
