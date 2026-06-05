@@ -98,6 +98,11 @@
             "jobs": 12
         },
         {
+            "name": "vcpkg-msvc-debug",
+            "configurePreset": "vcpkg-msvc-debug",
+            "jobs": 12
+        },
+        {
             "name": "vcpkg-msvc-release",
             "configurePreset": "vcpkg-msvc-release",
             "jobs": 12
