@@ -4,6 +4,7 @@
 #include <kidmon/repo/FileSystemRepository.h>
 #include <core/utils/File.h>
 
+#include <array>
 #include <format>
 #include <unordered_set>
 
@@ -230,6 +231,48 @@ TEST(FileSystemRepositoryTest, QueryEntriesMultipleUsers)
     EXPECT_EQ(numEntriesPerUser * numUsers, entriesEnumerated);
 }
 
+
+TEST(FileSystemRepositoryTest, RejectsSnapshotPathTraversal)
+{
+    file::TempDir reportsDir("kdmn-tst");
+    FileSystemRepository repo(reportsDir.path());
+
+    // An agent is not trusted to pick where its snapshot lands. Names that try
+    // to escape the snapshots directory must be rejected, and nothing may be
+    // written outside reportsDir.
+    const std::array<std::string, 5> evilNames = {
+        "../escape.jpg",
+        "../../escape.jpg",
+        "sub/escape.jpg",
+        "/tmp/escape.jpg",
+        ".."};
+
+    for (const auto& name : evilNames)
+    {
+        const Entry entry = sampleEntry("john",
+                                        sampleProcInfo(),
+                                        sampleWndInfo("title",
+                                                      sampleRect(),
+                                                      sampleImage(name, "payload")));
+        EXPECT_THROW(repo.add(entry), std::exception) << "name: " << name;
+    }
+
+    // The parent of reportsDir must remain clean (no escaped artifacts).
+    EXPECT_FALSE(fs::exists(reportsDir.path().parent_path() / "escape.jpg"));
+}
+
+TEST(FileSystemRepositoryTest, AcceptsPlainSnapshotName)
+{
+    file::TempDir reportsDir("kdmn-tst");
+    FileSystemRepository repo(reportsDir.path());
+
+    const Entry entry =
+        sampleEntry("john",
+                    sampleProcInfo(),
+                    sampleWndInfo("title", sampleRect(), sampleImage("ok.jpg", "payload")));
+
+    EXPECT_NO_THROW(repo.add(entry));
+}
 
 TEST(FileSystemRepositoryTest, QueryLogic)
 {

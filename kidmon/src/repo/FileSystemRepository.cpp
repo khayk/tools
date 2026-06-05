@@ -113,6 +113,25 @@ public:
 };
 
 
+// Snapshot file names arrive from the (potentially untrusted) agent and are
+// joined onto snapshotsDir to form the write path. Reject anything that is not
+// a plain, single-component file name so a peer cannot escape the directory via
+// path separators, parent references or absolute paths (path traversal).
+void validateSnapshotName(const std::string& name)
+{
+    const fs::path p(name);
+
+    const bool illegal = name.empty() || name == "." || name == ".." ||
+                         p.filename() != p || p.has_root_path() ||
+                         name.contains('/') || name.contains('\\');
+
+    if (illegal)
+    {
+        throw std::runtime_error(
+            std::format("Illegal snapshot file name: '{}'", name));
+    }
+}
+
 std::string buildRawFilename(const TimePoint tp)
 {
     const auto tt = SystemClock::to_time_t(tp);
@@ -259,6 +278,7 @@ public:
 
         if (!bytes.empty())
         {
+            validateSnapshotName(entry.windowInfo.image.name);
             const auto imagePath = userDirs.snapshotsDir / entry.windowInfo.image.name;
             file::write(imagePath, bytes.data(), bytes.size());
         }

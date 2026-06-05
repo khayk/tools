@@ -3,10 +3,27 @@
 #include <string>
 #include <filesystem>
 #include <cstdint>
+#include <span>
 
 namespace fs = std::filesystem;
 
 namespace core::crypto {
+
+/**
+ * @brief Fill @p out with cryptographically secure random bytes.
+ *
+ * Backed by the platform CSPRNG (OpenSSL RAND_bytes). Suitable for generating
+ * secrets such as authorization tokens, unlike std::rand.
+ *
+ * @param out  Destination buffer; exactly out.size() bytes are written.
+ * @throws std::runtime_error if the CSPRNG fails to produce randomness.
+ */
+void randomBytes(std::span<unsigned char> out);
+
+/**
+ * @brief Convenience overload returning @p count secure random bytes.
+ */
+std::string randomBytes(size_t count);
 
 /**
  * @brief Calculate SHA256 on the given data.
