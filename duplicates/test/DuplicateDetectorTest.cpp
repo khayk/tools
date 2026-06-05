@@ -323,6 +323,8 @@ TEST(DuplicateDetectorTest, ProgressiveHashingSeparatesSameSizeFiles)
 
 TEST(DuplicateDetectorTest, MetricsThresholds)
 {
+    const auto startMem = sys::currentProcessMemoryUsage();
+
     constexpr size_t numFiles = 50'000;
     constexpr size_t filesPerLevel = 10;
     constexpr size_t dirsPerLevel = 2;
@@ -344,10 +346,11 @@ TEST(DuplicateDetectorTest, MetricsThresholds)
     EXPECT_LE(sizeof(Node), 120);
 #endif
 
+    const auto endMem = sys::currentProcessMemoryUsage();
 #ifdef _WIN32
-    EXPECT_LE(sys::currentProcessMemoryUsage(), 64 * 1024 * 1024);
+    EXPECT_LE(endMem - startMem, 64 * 1024 * 1024);
 #else
-    EXPECT_LE(sys::currentProcessMemoryUsage(), 34 * 1024 * 1024);
+    EXPECT_LE(endMem - startMem, 34 * 1024 * 1024);
 #endif
 }
 
