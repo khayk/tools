@@ -2,6 +2,7 @@
 #include <kidmon/server/handler/AuthorizationHandler.h>
 #include <kidmon/server/handler/DataHandler.h>
 #include <kidmon/repo/FileSystemRepository.h>
+#include <kidmon/repo/AsyncRepository.h>
 #include <kidmon/server/AgentManager.h>
 #include <kidmon/os/Api.h>
 #include <kidmon/common/Utils.h>
@@ -27,6 +28,11 @@ class KidmonServer::Impl
 
     AuthorizationHandler authHandler_;
     FileSystemRepository repo_;
+    // Decorates repo_ so blocking disk writes run on a worker thread instead of
+    // the asio event-loop thread. Declared after repo_ and before dataHandler_
+    // so it is constructed after its target and destroyed before it: the worker
+    // flushes pending writes into repo_ while repo_ is still alive.
+    AsyncRepository asyncRepo_;
     DataHandler dataHandler_;
 
     std::unique_ptr<AgentManager> agentMngr_;
@@ -47,7 +53,8 @@ class KidmonServer::Impl
 public:
     explicit Impl(const Config& cfg)
         : repo_(cfg.reportsDir)
-        , dataHandler_(repo_)
+        , asyncRepo_(repo_)
+        , dataHandler_(asyncRepo_)
         , svr_(ioc_)
         , timer_(ioc_)
         , workGuard_(ioc_.get_executor())
@@ -111,8 +118,7 @@ public:
 
                 // Pass the token via the environment, not argv, so it is not
                 // visible to other users in the process list.
-                const Env env = {
-                    {std::string(constants::ENV_AUTH_TOKEN), token}};
+                const Env env = {{std::string(constants::ENV_AUTH_TOKEN), token}};
                 authHandler_.setToken(token);
 
                 launcher_->launch(core::sys::currentProcessPath(), args, env);
