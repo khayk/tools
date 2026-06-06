@@ -8,6 +8,33 @@ using namespace km;
 
 namespace {
 
+TEST(MessagesTest, HeartbeatRoundTrips)
+{
+    nlohmann::ordered_json js;
+    msgs::buildHeartbeat(12'345, 12'300, js);
+
+    EXPECT_TRUE(msgs::isHeartbeatMsg(js));
+    EXPECT_FALSE(msgs::isDataMsg(js));
+    EXPECT_FALSE(msgs::isAuthMsg(js));
+
+    const auto& msg = js["message"];
+    EXPECT_EQ(msg["up_time_ms"].get<int64_t>(), 12'345);
+    EXPECT_EQ(msg["last_activity_time_ms"].get<int64_t>(), 12'300);
+}
+
+TEST(MessagesTest, MessageTypePredicatesAreDistinct)
+{
+    nlohmann::ordered_json data;
+    msgs::buildDataMsg(Entry {}, data);
+    EXPECT_TRUE(msgs::isDataMsg(data));
+    EXPECT_FALSE(msgs::isHeartbeatMsg(data));
+
+    nlohmann::ordered_json auth;
+    msgs::buildAuthMsg("token", "user", auth);
+    EXPECT_TRUE(msgs::isAuthMsg(auth));
+    EXPECT_FALSE(msgs::isHeartbeatMsg(auth));
+}
+
 TEST(MessagesTest, ResponseSuccessHasZeroStatusAndNoError)
 {
     nlohmann::json answer;

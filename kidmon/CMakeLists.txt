@@ -83,7 +83,13 @@ if(APPLE)
     target_link_libraries(${PROJECT_LIB} PRIVATE
         "-framework CoreGraphics"
         "-framework ImageIO"
+        "-framework IOKit"
     )
+endif()
+
+if(WIN32)
+    # PowrProf provides CallNtPowerInformation (display-sleep assertion query).
+    target_link_libraries(${PROJECT_LIB} PRIVATE PowrProf)
 endif()
 
 # target_link_libraries(${PROJECT_LIB} PRIVATE

@@ -183,6 +183,38 @@ Log files are written next to the data directory:
 - Server: `kidmon-server-YYYY-MM-DD.log`
 - Agent: `kidmon-agent-<username>-YYYY-MM-DD.log`
 
+## Idle detection
+
+A child often leaves a window in the foreground while away from the keyboard. To
+avoid counting that as active time, the agent classifies each cycle as active or
+away:
+
+- **Active**: the agent sends a `data` message — the window is recorded and its
+  `duration` counts toward time-on-task.
+- **Away**: the agent sends a `heartbeat` instead. Nothing is recorded, so idle
+  time never inflates the figures. The heartbeat keeps the TCP connection alive,
+  so the server does not drop the agent for inactivity while the user is away.
+
+A cycle counts as **away** only when **both**:
+
+1. there has been no keyboard/mouse input for longer than the threshold
+   (`Config::idleThreshold`, default 60s), **and**
+2. no application is holding a display-sleep assertion.
+
+The second condition keeps **passive activity counted** — watching a movie or
+being in a video call produces no input, but the media app keeps the display
+awake, so the user is correctly treated as present rather than away.
+
+Detection is platform-specific:
+
+| Signal | Windows | macOS | Linux |
+|---|---|---|---|
+| Input idle | `GetLastInputInfo` | `CGEventSourceSecondsSinceLastEventType` | not implemented (always active) |
+| Display awake | `CallNtPowerInformation` (`ES_DISPLAY_REQUIRED`) | IOKit `IOPMCopyAssertionsStatus` | not implemented (always active) |
+
+On Linux both are unimplemented (the user is always treated as active),
+consistent with the not-yet-implemented Linux window backend.
+
 ## Message protocol
 
 Agent and server communicate over TCP using JSON messages serialized with [glaze](https://github.com/stephenberry/glaze).
@@ -196,3 +228,8 @@ Agent and server communicate over TCP using JSON messages serialized with [glaze
 // Server → Agent
 {"status": 0, "error": "", "answer": {}}
 ```
+
+`up_time_ms` is the agent's process uptime; `last_activity_time_ms` is the epoch
+timestamp (ms) of the last detected user input. Every agent message is answered
+with a status response: `status` is `0` on success and non-zero on failure (with
+a human-readable `error`).

@@ -10,6 +10,7 @@
 #include <core/network/TcpClient.h>
 #include <core/network/TcpCommunicator.h>
 #include <core/utils/Sys.h>
+#include <core/utils/StopWatch.h>
 
 #include <nlohmann/json.hpp>
 #include <boost/asio.hpp>
@@ -185,6 +186,7 @@ class KidmonAgent::Impl
     work_guard workGuard_;
     std::chrono::milliseconds timeout_;
     time_point nextCaptureTime_;
+    const StopWatch upTime_;
     core::tcp::Client tcpClient_;
 
     ApiPtr api_;
@@ -266,6 +268,24 @@ class KidmonAgent::Impl
         tcpClient_.connect(opts);
     }
 
+    // Send a heartbeat in place of an activity entry. Keeps the connection
+    // alive while the user is away without inflating time-on-task figures.
+    void sendHeartbeat(std::chrono::milliseconds idle)
+    {
+        using std::chrono::duration_cast;
+        using std::chrono::milliseconds;
+
+        const auto nowEpoch =
+            duration_cast<milliseconds>(SystemClock::now().time_since_epoch());
+        const auto lastActivity = nowEpoch - idle;
+
+        nlohmann::ordered_json js;
+        msgs::buildHeartbeat(upTime_.elapsed().count(), lastActivity.count(), js);
+        const auto hb = js.dump();
+        spdlog::debug("User idle for {} ms; sending heartbeat", idle.count());
+        comm_->sendAsync(hb);
+    }
+
     void collectData()
     {
         timer_.expires_after(timeout_);
@@ -275,6 +295,20 @@ class KidmonAgent::Impl
 
         try
         {
+            // While the user is away, do not record activity (it would count the
+            // same window for hours). Send a heartbeat instead so the server
+            // keeps the connection and knows we are still alive.
+            //
+            // "Away" means no keyboard/mouse input past the threshold AND nothing
+            // is holding the display awake. The latter keeps passive activity
+            // (watching a movie, a video call) counted even with no input.
+            const auto idle = api_->idleTime();
+            if (idle >= cfg_.idleThreshold && !api_->displaySleepPrevented())
+            {
+                sendHeartbeat(idle);
+                return;
+            }
+
             stats_.incrementEvents();
 
             Entry entry;

@@ -41,7 +41,17 @@ AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
             bool handled = false;
             if (currentState_ == State::Authorized)
             {
-                handled = dataHandler_.handle(payload, answer, error);
+                if (msgs::isHeartbeatMsg(payload))
+                {
+                    // Keep-alive only: the agent sends these while the user is
+                    // idle. Nothing to persist -- receiving it already reset the
+                    // peer-drop timer, which is the whole point.
+                    handled = true;
+                }
+                else
+                {
+                    handled = dataHandler_.handle(payload, answer, error);
+                }
             }
             else
             {

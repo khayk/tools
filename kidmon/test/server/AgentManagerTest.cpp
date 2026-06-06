@@ -67,7 +67,7 @@ TEST(AgentManagerTest, SecondConcurrentAgentIsRejected)
     AgentManager mngr(authHandler, dataHandler, svr, 60s);
 
     Server::Options sopts;
-    sopts.port = 51123; // distinct from a possibly-running server (51097)
+    sopts.port = 51'123; // distinct from a possibly-running server (51097)
     svr.listen(sopts);
 
     const std::string username = core::str::ws2s(core::sys::activeUserName());
@@ -158,4 +158,86 @@ TEST(AgentManagerTest, SecondConcurrentAgentIsRejected)
     // and/or dropped, but it must not be treated as an authorized agent.
     EXPECT_FALSE(c2.authorized.value_or(false));
     EXPECT_TRUE(c2.disconnected || c2.authorized == std::optional<bool>(false));
+}
+
+// A heartbeat from an authorized agent must be accepted (keep-alive), not routed
+// to the data handler -- otherwise it fails and the server drops the connection.
+TEST(AgentManagerTest, HeartbeatFromAuthorizedAgentKeepsConnection)
+{
+    core::file::TempDir reportsDir("kdmn-tst");
+    MuteLogger mute;
+
+    IoContext ioc;
+    Server svr(ioc);
+
+    const std::string token = "secret-token";
+    AuthorizationHandler authHandler;
+    authHandler.setToken(token);
+
+    FileSystemRepository repo(reportsDir.path());
+    DataHandler dataHandler(repo);
+
+    AgentManager mngr(authHandler, dataHandler, svr, 60s);
+
+    Server::Options sopts;
+    sopts.port = 51'124;
+    svr.listen(sopts);
+
+    const std::string username = core::str::ws2s(core::sys::activeUserName());
+    const std::string authMsg = [&] {
+        nlohmann::ordered_json js;
+        msgs::buildAuthMsg(token, username, js);
+        return js.dump();
+    }();
+    const std::string heartbeatMsg = [] {
+        nlohmann::ordered_json js;
+        msgs::buildHeartbeat(1000, 900, js);
+        return js.dump();
+    }();
+
+    ClientState c(ioc);
+    bool heartbeatSent = false;
+    int responses = 0;
+
+    c.client.onConnect([&](Connection& conn) {
+        c.comm = std::make_unique<Communicator>(conn);
+        c.comm->onMsg([&](const std::string&) {
+            ++responses;
+            // First response acknowledges auth; reply with a heartbeat. The
+            // second response acknowledges that heartbeat -- we are done.
+            if (!heartbeatSent)
+            {
+                heartbeatSent = true;
+                c.comm->sendAsync(heartbeatMsg);
+            }
+            else
+            {
+                ioc.stop();
+            }
+        });
+        conn.onDisconnect([&]() {
+            c.disconnected = true;
+            ioc.stop();
+        });
+        conn.onError([&](const ErrorCode&) {
+            c.disconnected = true;
+            ioc.stop();
+        });
+        c.comm->start();
+        c.comm->sendAsync(authMsg);
+    });
+    c.client.onError([&](const ErrorCode&) {
+        c.disconnected = true;
+        ioc.stop();
+    });
+
+    c.client.connect({"127.0.0.1", sopts.port});
+    ioc.run_for(3s);
+
+    // The heartbeat was acknowledged, the connection survived, and the agent is
+    // still the authorized one.
+    EXPECT_TRUE(heartbeatSent);
+    EXPECT_GE(responses, 2);
+    EXPECT_FALSE(c.disconnected);
+    EXPECT_TRUE(mngr.hasAuthorizedAgent());
 }

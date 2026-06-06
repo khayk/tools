@@ -7,6 +7,7 @@
 
 #include <spdlog/spdlog.h>
 #include <CoreGraphics/CoreGraphics.h>
+#include <IOKit/pwr_mgt/IOPMLib.h>
 
 #include <mutex>
 #include <vector>
@@ -162,4 +163,55 @@ WindowPtr ApiImpl::foregroundWindow()
 ProcessLauncherPtr ApiImpl::createProcessLauncher()
 {
     return std::make_unique<ProcessLauncherImpl>();
+}
+
+std::chrono::milliseconds ApiImpl::idleTime()
+{
+    // Seconds since the last HID (keyboard/mouse) event across the system.
+    const double seconds =
+        CGEventSourceSecondsSinceLastEventType(kCGEventSourceStateHIDSystemState,
+                                               kCGAnyInputEventType);
+
+    if (seconds < 0.0)
+    {
+        return std::chrono::milliseconds::zero();
+    }
+
+    return std::chrono::milliseconds(static_cast<int64_t>(seconds * 1000.0));
+}
+
+bool ApiImpl::displaySleepPrevented()
+{
+    CFDictionaryRef raw = nullptr;
+    if (IOPMCopyAssertionsStatus(&raw) != kIOReturnSuccess || raw == nullptr)
+    {
+        return false;
+    }
+
+    std::unique_ptr<std::remove_pointer_t<CFDictionaryRef>, decltype(&CFRelease)>
+        status(raw, CFRelease);
+
+    // IOPMCopyAssertionsStatus returns aggregate counts keyed by assertion type.
+    // A non-zero count for a display-sleep-preventing type means some app is
+    // keeping the screen awake (e.g. a video player during playback).
+    const auto held = [&](CFStringRef type) {
+        const auto* value = CFDictionaryGetValue(status.get(), type);
+        if (!value || CFGetTypeID(value) != CFNumberGetTypeID())
+        {
+            return false;
+        }
+
+        int32_t count = 0;
+        if (!CFNumberGetValue(static_cast<CFNumberRef>(value),
+                              kCFNumberSInt32Type,
+                              &count))
+        {
+            return false;
+        }
+
+        return count > 0;
+    };
+
+    return held(kIOPMAssertionTypePreventUserIdleDisplaySleep) ||
+           held(kIOPMAssertionTypeNoDisplaySleep);
 }
