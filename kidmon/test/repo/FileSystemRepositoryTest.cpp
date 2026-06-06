@@ -324,3 +324,70 @@ TEST(FileSystemRepositoryTest, QueryLogic)
         EXPECT_EQ(expectedPath, entries.back().processInfo.processPath);
     }
 }
+
+TEST(FileSystemRepositoryTest, QuerySkipsMalformedEntryLines)
+{
+    file::TempDir reportsDir("kdmn-tst");
+    FileSystemRepository repo(reportsDir.path());
+
+    const auto* username = "user-x";
+    Entry e;
+    e.timestamp.capture = SystemClock::now();
+    e.username = username;
+    e.processInfo.processPath = "proc-0";
+    repo.add(e);
+
+    // Locate the raw data file and append a line that is valid JSON but lacks
+    // the expected fields. It parses, then entry extraction throws -- the path
+    // that previously emitted a default-constructed (zero) entry.
+    fs::path rawFile;
+    for (const auto& it : fs::recursive_directory_iterator(reportsDir.path()))
+    {
+        if (it.is_regular_file() && it.path().extension() == ".dat")
+        {
+            rawFile = it.path();
+            break;
+        }
+    }
+    ASSERT_FALSE(rawFile.empty());
+    file::append(rawFile, std::string("{}\n"));
+
+    // A default-bounded filter would surface the bogus zero entry (its epoch
+    // timestamp falls inside [min, max]); only the one valid entry must appear.
+    std::vector<Entry> entries;
+    repo.queryEntries(Filter(username), [&entries](const Entry& entry) {
+        entries.push_back(entry);
+        return true;
+    });
+
+    ASSERT_EQ(1U, entries.size());
+    EXPECT_EQ(fs::path("proc-0"), entries.front().processInfo.processPath);
+}
+
+TEST(FileSystemRepositoryTest, QueryIgnoresNonYearDirectories)
+{
+    file::TempDir reportsDir("kdmn-tst");
+    FileSystemRepository repo(reportsDir.path());
+
+    const auto* username = "user-x";
+    Entry e;
+    e.timestamp.capture = SystemClock::now();
+    e.username = username;
+    e.processInfo.processPath = "proc-0";
+    repo.add(e);
+
+    // A stray non-numeric folder next to the YYYY directories must be skipped,
+    // not abort the whole query (std::stoi would have thrown).
+    const auto userDir = reportsDir.path() / username;
+    fs::create_directories(userDir / "not-a-year");
+
+    std::vector<Entry> entries;
+    EXPECT_NO_THROW(
+        repo.queryEntries(Filter(username), [&entries](const Entry& entry) {
+            entries.push_back(entry);
+            return true;
+        }));
+
+    ASSERT_EQ(1U, entries.size());
+    EXPECT_EQ(fs::path("proc-0"), entries.front().processInfo.processPath);
+}

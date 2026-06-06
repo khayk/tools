@@ -4,11 +4,14 @@
 
 #include <core/utils/File.h>
 #include <core/utils/Str.h>
+#include <core/utils/FmtExt.h>
 
 #include <format>
 #include <vector>
 #include <nlohmann/json.hpp>
 #include <glaze/glaze.hpp>
+#include "core/utils/Number.h"
+#include <spdlog/spdlog.h>
 
 using namespace core;
 
@@ -160,8 +163,9 @@ void readEntries(const std::string& username, const fs::path& file, const EntryC
 
     entry.username = username;
 
-    file::readLines(file, [&cb, &entry, &json](const std::string& line) {
+    file::readLines(file, [&cb, &entry, &json, &file](const std::string& line) {
         const auto sv = str::trim(line);
+        json.reset();
         if (glz::read_json(json, sv))
         {
             return true;
@@ -193,9 +197,12 @@ void readEntries(const std::string& username, const fs::path& file, const EntryC
             entry.timestamp.duration =
                 std::chrono::milliseconds(getAs<long long>(ts[constants::TIMESTAMP_DUR]));
         }
-        catch (const std::exception&)
+        catch (const std::exception& ex)
         {
-            entry = Entry();
+            // A malformed line must not surface as a default-constructed entry
+            // in the results; skip it (keep reading subsequent lines) instead.
+            spdlog::warn("Skipping malformed entry in {}: {}", file, ex.what());
+            return true;
         }
 
         return cb(entry);
@@ -318,9 +325,21 @@ public:
         std::vector<int> years;
         for (const auto& it : fs::directory_iterator(userDir))
         {
-            if (it.is_directory())
+            if (!it.is_directory())
             {
-                years.push_back(std::stoi(it.path().filename().string()));
+                continue;
+            }
+
+            // Only YYYY directories are valid here; a stray non-numeric folder
+            // must be skipped, not abort the whole query (std::stoi would throw).
+            const auto year = core::num::s2num<int>(it.path().filename().string(), 0);
+            if (year > 0)
+            {
+                years.push_back(year);
+            }
+            else
+            {
+                spdlog::warn("Skipping non-year directory: {}", it.path());
             }
         }
         std::ranges::sort(years);
