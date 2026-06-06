@@ -11,11 +11,65 @@
 
 #include <spdlog/spdlog.h>
 
+#include <cwchar>
+#include <vector>
+
 #pragma comment(lib, "Userenv.lib")
 #pragma comment(lib, "Wtsapi32.lib")
 
 using namespace core;
 namespace {
+
+// Produce a CREATE_UNICODE_ENVIRONMENT block (double-null terminated) from an
+// existing environment block, appending the extra variables and dropping any
+// inherited entry they override. Lets us inject secrets (e.g. the auth token)
+// into the child's environment instead of putting them on its command line.
+std::vector<wchar_t> mergeEnvBlock(const wchar_t* base, const km::Env& env)
+{
+    std::vector<std::wstring> extra;
+    std::vector<std::wstring> extraKeys;
+    extra.reserve(env.size());
+    extraKeys.reserve(env.size());
+    for (const auto& [k, v] : env)
+    {
+        extra.push_back(str::s2ws(k) + L"=" + str::s2ws(v));
+        extraKeys.push_back(str::s2ws(k));
+    }
+
+    const auto overridden = [&extraKeys](const wchar_t* entry, size_t len) {
+        const wchar_t* eq = static_cast<const wchar_t*>(wmemchr(entry, L'=', len));
+        const size_t keyLen = eq ? static_cast<size_t>(eq - entry) : len;
+        for (const auto& key : extraKeys)
+        {
+            // Windows environment variable names are case-insensitive.
+            if (key.size() == keyLen && _wcsnicmp(key.c_str(), entry, keyLen) == 0)
+            {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    std::vector<wchar_t> out;
+    for (const wchar_t* p = base; p != nullptr && *p != L'\0';)
+    {
+        const size_t len = wcslen(p);
+        if (!overridden(p, len))
+        {
+            out.insert(out.end(), p, p + len + 1); // include the null terminator
+        }
+        p += len + 1;
+    }
+
+    for (const auto& e : extra)
+    {
+        out.insert(out.end(), e.c_str(), e.c_str() + e.size() + 1);
+    }
+
+    out.push_back(L'\0'); // final block terminator
+    return out;
+}
+
 
 struct HandleCloser
 {
@@ -100,7 +154,9 @@ HandleUPtr activeUserMaxAllowedToken()
 }
 
 
-bool directLaunch(const fs::path& exec, const std::vector<std::string>& args)
+bool directLaunch(const fs::path& exec,
+                  const km::Args& args,
+                  const km::Env& env)
 {
     STARTUPINFOW startupInfo {};
     PROCESS_INFORMATION processInfo;
@@ -110,7 +166,23 @@ bool directLaunch(const fs::path& exec, const std::vector<std::string>& args)
 
     startupInfo.dwFlags = STARTF_FORCEOFFFEEDBACK;
     const DWORD creationFlags =
-        GetConsoleWindow() ? CREATE_NEW_CONSOLE : CREATE_NO_WINDOW;
+        (GetConsoleWindow() ? CREATE_NEW_CONSOLE : CREATE_NO_WINDOW) |
+        CREATE_UNICODE_ENVIRONMENT;
+
+    // Inherit the current environment, plus any injected variables. RAII frees
+    // the source block on every exit path, including if the merge below throws.
+    LPWCH baseEnv = GetEnvironmentStringsW();
+    const auto envStringsDeleter = [](LPWCH p) noexcept {
+        if (p != nullptr)
+        {
+            FreeEnvironmentStringsW(p);
+        }
+    };
+    const std::unique_ptr<wchar_t, decltype(envStringsDeleter)> baseEnvGuard(
+        baseEnv,
+        envStringsDeleter);
+
+    std::vector<wchar_t> envBlock = mergeEnvBlock(baseEnv, env);
 
     std::wstring cl {};
     for (const auto& e : args)
@@ -127,7 +199,7 @@ bool directLaunch(const fs::path& exec, const std::vector<std::string>& args)
                                        nullptr,
                                        false,
                                        creationFlags,
-                                       nullptr,
+                                       envBlock.data(),
                                        nullptr,
                                        &startupInfo,
                                        &processInfo);
@@ -145,7 +217,8 @@ bool directLaunch(const fs::path& exec, const std::vector<std::string>& args)
 
 
 bool interactiveLaunch(const fs::path& exec,
-                       const std::vector<std::string>& args,
+                       const km::Args& args,
+                       const km::Env& env,
                        HandleUPtr token)
 {
     ScopedTrace tracer {__FUNCTION__};
@@ -161,11 +234,17 @@ bool interactiveLaunch(const fs::path& exec,
         return false;
     }
 
-    const auto envBlockDeleter = [](auto* envPtr) noexcept {
+    // RAII so the user's environment block is freed on every exit path,
+    // including if the merge below throws (mergeEnvBlock allocates).
+    const auto envBlockDeleter = [](void* envPtr) noexcept {
         DestroyEnvironmentBlock(envPtr);
     };
-    const std::unique_ptr<void, decltype(envBlockDeleter)> envBlock(ptr,
-                                                                    envBlockDeleter);
+    const std::unique_ptr<void, decltype(envBlockDeleter)> userEnv(ptr,
+                                                                   envBlockDeleter);
+
+    // Merge the injected variables into a private copy passed to the child.
+    std::vector<wchar_t> envBlock =
+        mergeEnvBlock(static_cast<const wchar_t*>(ptr), env);
 
     DWORD creationFlags = NORMAL_PRIORITY_CLASS | CREATE_UNICODE_ENVIRONMENT;
     std::wstring name = L"winsta0\\default";
@@ -196,7 +275,7 @@ bool interactiveLaunch(const fs::path& exec,
                                           nullptr,
                                           FALSE,
                                           creationFlags,
-                                          envBlock.get(),
+                                          envBlock.data(),
                                           nullptr,
                                           &startupInfo,
                                           &processInfo);
@@ -216,14 +295,15 @@ bool interactiveLaunch(const fs::path& exec,
 
 
 bool ProcessLauncherImpl::launch(const fs::path& exec,
-                                 const std::vector<std::string>& args)
+                                 const km::Args& args,
+                                 const km::Env& env)
 {
     auto token = activeUserMaxAllowedToken();
 
     if (token)
     {
-        return interactiveLaunch(exec, args, std::move(token));
+        return interactiveLaunch(exec, args, env, std::move(token));
     }
 
-    return directLaunch(exec, args);
+    return directLaunch(exec, args, env);
 }

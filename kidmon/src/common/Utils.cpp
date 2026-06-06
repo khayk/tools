@@ -1,30 +1,47 @@
 #include <kidmon/common/Utils.h>
-#include <core/utils/Str.h>
+#include <core/utils/Crypto.h>
 
-#include <spdlog/spdlog.h>
-#include <algorithm>
+#include <array>
+#include <format>
+#include <stdexcept>
 #include <ctime>
 
 namespace km::utl {
 
 std::string generateToken(const size_t length)
 {
-    // This initialization happens ONLY on the very first function call
-    static const bool isSeeded = []() {
-        std::srand(static_cast<unsigned int>(std::time(nullptr)));
-        return true;
-    }();
-    std::ignore = isSeeded;
+    constexpr std::string_view charset = "0123456789"
+                                         "abcdefghijklmnopqrstuvwxyz"
+                                         "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-    const auto randomChar = []() -> char {
-        constexpr std::string_view charset = "0123456789"
-                                             "abcdefghijklmnopqrstuvwxyz"
-                                             "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        return charset[static_cast<unsigned long>(rand()) % charset.size()];
-    };
+    // Reject random bytes at or above the largest multiple of the alphabet size
+    // that fits in a byte, so every character is drawn uniformly (no modulo
+    // bias). For a 62-char alphabet this discards bytes 248..255.
+    constexpr unsigned int limit =
+        256U - (256U % static_cast<unsigned int>(charset.size()));
 
-    std::string token(length, 0);
-    std::generate_n(token.begin(), length, randomChar);
+    std::string token;
+    token.reserve(length);
+
+    // Draw secure random bytes in batches to amortize CSPRNG calls, mapping the
+    // accepted ones onto the alphabet until the requested length is reached.
+    std::array<unsigned char, 64> buf {};
+    while (token.size() < length)
+    {
+        core::crypto::randomBytes(buf);
+
+        for (const unsigned char byte : buf)
+        {
+            if (byte < limit)
+            {
+                token.push_back(charset[byte % charset.size()]);
+                if (token.size() == length)
+                {
+                    break;
+                }
+            }
+        }
+    }
 
     return token;
 }

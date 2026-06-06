@@ -5,5 +5,7 @@
 class ProcessLauncherImpl : public km::ProcessLauncher
 {
 public:
-    bool launch(const fs::path& exec, const std::vector<std::string>& args) override;
+    bool launch(const fs::path& exec,
+                const km::Args& args,
+                const km::Env& env) override;
 };

@@ -46,13 +46,42 @@ kidmon --agent --token <auth-token>
 
 Connects to a running server and begins monitoring. The token must match what the server expects.
 
+The token may also be supplied via the `KIDMON_TOKEN` environment variable
+instead of `--token` (see [Authorization token](#authorization-token) below).
+An explicit `--token` takes precedence when both are present.
+
 ### Options
 
 | Flag | Default | Description |
 |---|---|---|
 | `-a, --agent` | `false` | Run as agent instead of server |
-| `-t, --token <string>` | `""` | Authorization token (required for agent) |
+| `-t, --token <string>` | `""` | Authorization token. Falls back to `$KIDMON_TOKEN` when omitted |
 | `-p, --passive` | `false` | Start server without spawning an agent |
+
+### Authorization token
+
+The server and agent share a token that authorizes the agent's data channel
+(see [Message protocol](#message-protocol)).
+
+When the server spawns the agent automatically, it generates a fresh random
+token and passes it to the agent through the **`KIDMON_TOKEN` environment
+variable** — *not* as a command-line argument. This keeps the secret out of the
+process list (`ps`, Task Manager, `/proc/<pid>/cmdline`), where it would
+otherwise be readable by other users on the machine. The agent reads
+`KIDMON_TOKEN` once and clears it from its own environment immediately.
+
+For manual runs you can still pass the token explicitly:
+
+```bash
+# equivalent ways to give the agent its token
+kidmon --agent --token <auth-token>
+KIDMON_TOKEN=<auth-token> kidmon --agent
+```
+
+> The token only protects the loopback channel against *other local users*; a
+> process running as the **same user** as the agent can still read it from
+> process memory. Hardening the channel against same-user tampering (peer-uid /
+> code-identity checks) is tracked separately.
 
 ## Data storage
 

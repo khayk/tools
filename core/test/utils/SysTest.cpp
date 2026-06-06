@@ -47,9 +47,18 @@ TEST(UtilsSysTests, ActiveUserNameNonEmptyOrThrows)
 
 #else // Linux
 
-TEST(UtilsSysTests, ActiveUserNameThrowsNotImplemented)
+TEST(UtilsSysTests, ActiveUserNameNonEmptyOrThrows)
 {
-    EXPECT_THROW(activeUserName(), std::runtime_error);
+    // Resolved from /etc/passwd or the USER/LOGNAME env vars. In an unnamed
+    // environment (no passwd entry and no env) the implementation throws.
+    try
+    {
+        EXPECT_FALSE(activeUserName().empty());
+    }
+    catch (const std::runtime_error&)
+    {
+        GTEST_SKIP() << "No resolvable user name in this environment";
+    }
 }
 
 #endif
@@ -137,6 +146,7 @@ struct LastErrorSetup
 
 LastErrorSetup makeLastErrorSetup()
 {
+    // clang-format off
 #ifdef _WIN32
     return {
         .code  = ERROR_FILE_NOT_FOUND,
@@ -150,6 +160,7 @@ LastErrorSetup makeLastErrorSetup()
         .clear = [] { errno = 0; },
     };
 #endif
+    // clang-format on
 }
 
 TEST(UtilsSysTests, ConstructLastErrorMsgZeroCode)

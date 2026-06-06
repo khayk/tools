@@ -4,10 +4,22 @@
 #include <core/network/data/StringSource.h>
 
 #include <array>
+#include <cstring>
 
 using namespace core::data;
 
 namespace {
+
+// Build a raw wire frame: an 8-byte host-endian length prefix (as Packer
+// writes) followed by the body. Lets a test declare an arbitrary length
+// independently of the body actually supplied.
+std::string frame(size_t declaredSize, std::string_view body)
+{
+    std::string out(sizeof(size_t), '\0');
+    std::memcpy(out.data(), &declaredSize, sizeof(declaredSize));
+    out.append(body);
+    return out;
+}
 
 class EmulateLargeSource : public ISource
 {
@@ -168,26 +180,72 @@ TEST(UnpackerTest, UnpackBatchData)
 
 TEST(UnpackerTest, UnpackData_1Gb)
 {
-    EmulateLargeSource ls(1024ull * 1024 * 1024);
+    EmulateLargeSource ls(1024ULL * 1024 * 1024);
     Packer packer(ls);
-    Unpacker unpacker;
+    // Raise the frame cap above the 1 GiB payload this test streams.
+    Unpacker unpacker(2ULL * 1024 * 1024 * 1024);
 
-    std::string packed;
-    std::string unpacked;
+    std::string buf;
+    std::string out;
     bool first = true;
 
-    while (packer.get(packed))
+    while (packer.get(buf))
     {
-        unpacker.put(packed);
-        unpacker.get(unpacked);
+        unpacker.put(buf);
+        unpacker.get(out);
 
         if (!first)
         {
-            EXPECT_EQ(packed, unpacked);
+            ASSERT_EQ(buf, out);
         }
 
         first = false;
-        packed.clear();
-        unpacked.clear();
+        buf.clear();
+        out.clear();
     }
+}
+
+
+TEST(UnpackerTest, RejectsOversizedFrameHeader)
+{
+    Unpacker unpacker(1024); // 1 KiB cap
+    std::string buf;
+
+    // Header declares 4 KiB, exceeding the cap. No body is even supplied: the
+    // header alone must be rejected, before any large buffer is accumulated.
+    unpacker.put(frame(4096, ""));
+    EXPECT_EQ(unpacker.status(), Unpacker::Status::Invalid);
+    EXPECT_EQ(unpacker.get(buf), Unpacker::Status::NeedMore);
+    EXPECT_TRUE(buf.empty());
+
+    // Further input is ignored — no unbounded growth after rejection.
+    unpacker.put(std::string(100'000, 'x'));
+    EXPECT_EQ(unpacker.status(), Unpacker::Status::Invalid);
+    EXPECT_EQ(unpacker.get(buf), Unpacker::Status::NeedMore);
+    EXPECT_TRUE(buf.empty());
+}
+
+
+TEST(UnpackerTest, AcceptsFrameAtMaxSize)
+{
+    Unpacker unpacker(8); // cap exactly at the body size
+    std::string buf;
+
+    unpacker.put(frame(8, "ABCDEFGH"));
+    EXPECT_EQ(unpacker.status(), Unpacker::Status::HasMore);
+    EXPECT_EQ(unpacker.size(), 8U);
+    EXPECT_EQ(unpacker.get(buf), Unpacker::Status::Ready);
+    EXPECT_EQ(buf, "ABCDEFGH");
+}
+
+
+TEST(UnpackerTest, RejectsFrameOneOverMaxSize)
+{
+    Unpacker unpacker(8);
+    std::string buf;
+
+    unpacker.put(frame(9, "ABCDEFGHI"));
+    EXPECT_EQ(unpacker.status(), Unpacker::Status::Invalid);
+    EXPECT_EQ(unpacker.get(buf), Unpacker::Status::NeedMore);
+    EXPECT_TRUE(buf.empty());
 }

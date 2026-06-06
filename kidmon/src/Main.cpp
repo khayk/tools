@@ -1,6 +1,7 @@
 #include <kidmon/agent/KidmonAgent.h>
 #include <kidmon/server/KidmonServer.h>
 #include <kidmon/config/Config.h>
+#include <kidmon/data/Constants.h>
 #include <core/app/Console.h>
 #include <core/app/Service.h>
 #include <kidmon/common/Utils.h>
@@ -16,6 +17,7 @@
 
 #include <cxxopts.hpp>
 
+#include <cstdlib>
 #include <iostream>
 #include <optional>
 
@@ -51,6 +53,37 @@ void constructAttribs(const bool agent, std::wstring& uniqueName, fs::path& logF
 
     logFile.concat(date);
     logFile.concat(".log");
+}
+
+// Read an environment variable and immediately remove it from the process
+// environment so the secret does not linger in this process (e.g. readable via
+// /proc/self/environ). Returns an empty string if the variable is unset.
+std::string readAndClearEnv(const char* name)
+{
+    std::string value;
+
+#ifdef _WIN32
+    // std::getenv triggers C4996 on MSVC; _dupenv_s is the recommended,
+    // bounds-checked replacement (allocates a copy the caller must free).
+    char* v = nullptr;
+    size_t len = 0;
+    if (_dupenv_s(&v, &len, name) == 0 && v != nullptr)
+    {
+        value = v;
+    }
+    free(v);
+
+    _putenv_s(name, "");
+#else
+    if (const char* v = std::getenv(name))
+    {
+        value = v;
+    }
+
+    ::unsetenv(name);
+#endif
+
+    return value;
 }
 
 } // namespace
@@ -118,6 +151,15 @@ int main(int argc, char* argv[])
         {
             KidmonAgent::Config conf;
             conf.authToken = token;
+
+            // The server delivers the token out of band via the environment so
+            // it is not exposed on the agent's command line. An explicit
+            // --token (manual runs) takes precedence when provided.
+            if (conf.authToken.empty())
+            {
+                conf.authToken =
+                    readAndClearEnv(std::string(constants::ENV_AUTH_TOKEN).c_str());
+            }
 
             app = std::make_shared<KidmonAgent>(conf);
         }

@@ -22,4 +22,9 @@ constexpr std::string_view TIMESTAMP = "ts";
 constexpr std::string_view TIMESTAMP_WHEN = "when";
 constexpr std::string_view TIMESTAMP_DUR = "dur";
 
+// Environment variable carrying the agent authorization token from the server
+// to the spawned agent. Passed via the environment (not argv) so the secret is
+// not visible to other users in the process list.
+constexpr std::string_view ENV_AUTH_TOKEN = "KIDMON_TOKEN";
+
 } // namespace km::constants

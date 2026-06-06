@@ -4,9 +4,11 @@
 #include <openssl/evp.h>
 #include <openssl/sha.h>
 #include <openssl/md5.h>
+#include <openssl/rand.h>
 
 #include <fstream>
 #include <cassert>
+#include <stdexcept>
 #include <array>
 #include <span>
 #include <format>
@@ -39,6 +41,28 @@ void hexadecimal(std::span<unsigned char> hash, std::string& out)
     }
 }
 } // namespace
+
+void randomBytes(std::span<unsigned char> out)
+{
+    if (out.empty())
+    {
+        return;
+    }
+
+    if (RAND_bytes(out.data(), static_cast<int>(out.size())) != 1)
+    {
+        throw std::runtime_error(
+            "RAND_bytes failed to generate cryptographically secure random data");
+    }
+}
+
+std::string randomBytes(size_t count)
+{
+    std::string buf(count, '\0');
+    randomBytes(std::span(reinterpret_cast<unsigned char*>(buf.data()), buf.size()));
+
+    return buf;
+}
 
 void sha256(const std::string_view data, std::string& out)
 {

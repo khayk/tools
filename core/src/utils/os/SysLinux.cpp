@@ -1,5 +1,7 @@
 #include <unistd.h>
+#include <pwd.h>
 #include <climits>
+#include <cstdlib>
 #include <format>
 #include <cerrno>
 #include <cstring>
@@ -9,7 +11,7 @@
 #include <stdexcept>
 
 #include <core/utils/Sys.h>
-#include <core/utils/Throw.h>
+#include <core/utils/Str.h>
 
 namespace {
 
@@ -48,7 +50,37 @@ namespace core::sys {
 
 std::wstring activeUserName()
 {
-    core::throwNotImplemented();
+    // Resolve the login name of the user owning this process. getpwuid_r on the
+    // real UID is the most reliable source; fall back to the common environment
+    // variables when /etc/passwd lookup is unavailable (e.g. minimal containers).
+    const uid_t uid = getuid();
+
+    long bufSize = sysconf(_SC_GETPW_R_SIZE_MAX);
+    if (bufSize <= 0)
+    {
+        bufSize = 16'384; // generous default when the limit is indeterminate
+    }
+
+    std::vector<char> buffer(static_cast<size_t>(bufSize));
+    passwd pwd {};
+    passwd* result = nullptr;
+
+    if (getpwuid_r(uid, &pwd, buffer.data(), buffer.size(), &result) == 0 &&
+        result != nullptr && (pwd.pw_name != nullptr) && (pwd.pw_name[0] != '\0'))
+    {
+        return core::str::s2ws(std::string_view(pwd.pw_name));
+    }
+
+    for (const char* var : {"USER", "LOGNAME"})
+    {
+        if (const char* name = std::getenv(var);
+            (name != nullptr) && (name[0] != '\0'))
+        {
+            return core::str::s2ws(std::string_view(name));
+        }
+    }
+
+    throw std::runtime_error("Unable to determine active user name");
 }
 
 fs::path currentProcessPath()

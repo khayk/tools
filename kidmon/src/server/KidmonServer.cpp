@@ -5,6 +5,7 @@
 #include <kidmon/server/AgentManager.h>
 #include <kidmon/os/Api.h>
 #include <kidmon/common/Utils.h>
+#include <kidmon/data/Constants.h>
 
 #include <core/network/TcpServer.h>
 #include <core/utils/Str.h>
@@ -106,10 +107,15 @@ public:
             if (spawnAgent_ && !agentRunning())
             {
                 const auto token = utl::generateToken(16);
-                const std::vector<std::string> args = {"--token", token, "--agent"};
+                const Args args = {"--agent"};
+
+                // Pass the token via the environment, not argv, so it is not
+                // visible to other users in the process list.
+                const Env env = {
+                    {std::string(constants::ENV_AUTH_TOKEN), token}};
                 authHandler_.setToken(token);
 
-                launcher_->launch(core::sys::currentProcessPath(), args);
+                launcher_->launch(core::sys::currentProcessPath(), args, env);
             }
         }
         catch (const std::exception& e)

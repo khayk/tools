@@ -92,6 +92,17 @@ private:
             }
         }
 
+        if (unpacker_.status() == data::Unpacker::Status::Invalid)
+        {
+            // Peer declared an oversized frame; drop it rather than buffer an
+            // attacker-controlled amount of data.
+            if (conn_)
+            {
+                conn_->close();
+            }
+            return;
+        }
+
         conn_->read();
     }
 
