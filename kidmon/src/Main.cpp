@@ -61,14 +61,25 @@ void constructAttribs(const bool agent, std::wstring& uniqueName, fs::path& logF
 std::string readAndClearEnv(const char* name)
 {
     std::string value;
+
+#ifdef _WIN32
+    // std::getenv triggers C4996 on MSVC; _dupenv_s is the recommended,
+    // bounds-checked replacement (allocates a copy the caller must free).
+    char* v = nullptr;
+    size_t len = 0;
+    if (_dupenv_s(&v, &len, name) == 0 && v != nullptr)
+    {
+        value = v;
+    }
+    free(v);
+
+    _putenv_s(name, "");
+#else
     if (const char* v = std::getenv(name))
     {
         value = v;
     }
 
-#ifdef _WIN32
-    _putenv_s(name, "");
-#else
     ::unsetenv(name);
 #endif
 
