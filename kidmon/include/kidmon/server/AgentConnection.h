@@ -42,7 +42,14 @@ private:
     core::tcp::Communicator comm_;
     AuthorizationCb authCb_;
 
-    void transitionTo(State newState) noexcept;
+    /**
+     * @brief Advance the connection state machine.
+     *
+     * @return false if the transition was vetoed (e.g. the manager already has
+     *         an authorized agent, so this connection must not become
+     *         Authorized); true otherwise.
+     */
+    bool transitionTo(State newState) noexcept;
 };
 
 } // namespace km

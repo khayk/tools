@@ -5,11 +5,13 @@
 #include <core/utils/Tracer.h>
 
 #include <SystemConfiguration/SystemConfiguration.h>
+#include <crt_externs.h> // _NSGetEnviron
 #include <pwd.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
 #include <spdlog/spdlog.h>
+#include <algorithm>
 
 namespace {
 
@@ -31,7 +33,7 @@ struct Argv
     std::vector<char*> ptrs;
 };
 
-Argv buildArgv(const fs::path& exec, const std::vector<std::string>& args)
+Argv buildArgv(const fs::path& exec, const km::Args& args)
 {
     Argv result;
     result.strings.reserve(args.size() + 1);
@@ -51,10 +53,57 @@ Argv buildArgv(const fs::path& exec, const std::vector<std::string>& args)
     return result;
 }
 
+// Build the child's environment: inherit the current process environment, then
+// append the extra variables (dropping any inherited entry they override). Built
+// in the parent so execve in the (grand)child only touches async-signal-safe
+// calls.
+Argv buildEnvp(const km::Env& env)
+{
+    Argv result;
+
+    const auto overridden = [&env](std::string_view key) {
+        return std::ranges::any_of(env, [&key](const auto& pair) {
+            return pair.first == key;
+        });
+    };
+
+    for (char** ep = *_NSGetEnviron(); ep != nullptr && *ep != nullptr; ++ep)
+    {
+        std::string entry(*ep);
+        const auto eq = entry.find('=');
+        const std::string_view key =
+            eq == std::string::npos ? std::string_view(entry)
+                                    : std::string_view(entry).substr(0, eq);
+        if (!overridden(key))
+        {
+            result.strings.push_back(std::move(entry));
+        }
+    }
+
+    for (const auto& [k, v] : env)
+    {
+        result.strings.push_back(k);
+        result.strings.back().append("=");
+        result.strings.back().append(v);
+    }
+
+    result.ptrs.reserve(result.strings.size() + 1);
+    for (auto& s : result.strings)
+    {
+        result.ptrs.push_back(s.data());
+    }
+    result.ptrs.push_back(nullptr);
+
+    return result;
+}
+
 // Double-fork so the grandchild is adopted by launchd (no zombie).
-bool forkAndExec(const fs::path& exec, const std::vector<std::string>& args)
+bool forkAndExec(const fs::path& exec,
+                 const km::Args& args,
+                 const km::Env& env)
 {
     auto argv = buildArgv(exec, args);
+    auto envp = buildEnvp(env);
 
     const pid_t child = fork();
     if (child < 0)
@@ -71,7 +120,7 @@ bool forkAndExec(const fs::path& exec, const std::vector<std::string>& args)
             _exit(grandchild > 0 ? 0 : 1);
         }
 
-        execv(exec.c_str(), argv.ptrs.data());
+        execve(exec.c_str(), argv.ptrs.data(), envp.ptrs.data());
         _exit(1);
     }
 
@@ -79,14 +128,17 @@ bool forkAndExec(const fs::path& exec, const std::vector<std::string>& args)
     return true;
 }
 
-bool directLaunch(const fs::path& exec, const std::vector<std::string>& args)
+bool directLaunch(const fs::path& exec,
+                  const km::Args& args,
+                  const km::Env& env)
 {
     spdlog::trace("Executing command: {}", exec.string());
-    return forkAndExec(exec, args);
+    return forkAndExec(exec, args, env);
 }
 
 bool interactiveLaunch(const fs::path& exec,
-                       const std::vector<std::string>& args,
+                       const km::Args& args,
+                       const km::Env& env,
                        uid_t uid)
 {
     ScopedTrace tracer {__FUNCTION__};
@@ -100,6 +152,7 @@ bool interactiveLaunch(const fs::path& exec,
 
     const gid_t gid = pw->pw_gid;
     auto argv = buildArgv(exec, args);
+    auto envp = buildEnvp(env);
 
     spdlog::trace("Executing command: {} as uid={}", exec.string(), uid);
 
@@ -123,7 +176,7 @@ bool interactiveLaunch(const fs::path& exec,
             _exit(1);
         }
 
-        execv(exec.c_str(), argv.ptrs.data());
+        execve(exec.c_str(), argv.ptrs.data(), envp.ptrs.data());
         _exit(1);
     }
 
@@ -135,14 +188,15 @@ bool interactiveLaunch(const fs::path& exec,
 
 
 bool ProcessLauncherImpl::launch(const fs::path& exec,
-                                 const std::vector<std::string>& args)
+                                 const km::Args& args,
+                                 const km::Env& env)
 {
     const uid_t uid = activeConsoleUserUid();
 
     if (uid != static_cast<uid_t>(-1))
     {
-        return interactiveLaunch(exec, args, uid);
+        return interactiveLaunch(exec, args, env, uid);
     }
 
-    return directLaunch(exec, args);
+    return directLaunch(exec, args, env);
 }

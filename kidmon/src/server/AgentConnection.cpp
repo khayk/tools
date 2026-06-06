@@ -47,9 +47,12 @@ AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
             else
             {
                 handled = authHandler_.handle(payload, answer, error);
-                if (handled && error.empty())
+                if (handled && error.empty() && !transitionTo(State::Authorized))
                 {
-                    transitionTo(State::Authorized);
+                    // Token was valid but another agent is already authorized;
+                    // refuse this connection instead of letting it inject data.
+                    answer["authorized"] = false;
+                    error = "An authorized agent already exists";
                 }
             }
 
@@ -139,15 +142,19 @@ core::tcp::Communicator& AgentConnection::communicator()
     return comm_;
 }
 
-void AgentConnection::transitionTo(const State newState) noexcept
+bool AgentConnection::transitionTo(const State newState) noexcept
 {
     try
     {
-        if (currentState_ == State::Connected)
+        if (currentState_ == State::Connected && newState == State::Authorized)
         {
-            if (newState == State::Authorized)
+            // The manager vetoes a second concurrent agent. Honor the veto: if
+            // it refuses, stay unauthorized so this connection can never reach
+            // the data path (prevents token-replay data injection while a
+            // legitimate agent is already connected).
+            if (!authCb_(this, true))
             {
-                authCb_(this, true);
+                return false;
             }
         }
         else if (currentState_ == State::Authorized)
@@ -161,6 +168,7 @@ void AgentConnection::transitionTo(const State newState) noexcept
     }
 
     currentState_ = newState;
+    return true;
 }
 
 } // namespace km
