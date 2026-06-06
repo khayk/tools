@@ -29,6 +29,11 @@ AsyncRepository::~AsyncRepository()
         stop_ = true;
     }
     cv_.notify_one();
+
+    if (worker_.joinable())
+    {
+        worker_.join();
+    }
 }
 
 void AsyncRepository::add(const Entry& entry)
