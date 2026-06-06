@@ -2,7 +2,7 @@
 #include <core/utils/Throw.h>
 
 bool ProcessLauncherImpl::launch(const fs::path& exec,
-                                 const Args& args,
+                                 const km::Args& args,
                                  const km::Env& env)
 {
     core::throwNotImplemented();
