@@ -17,6 +17,8 @@
 #include <boost/asio.hpp>
 #include <nlohmann/json.hpp>
 
+#include <optional>
+
 namespace net = boost::asio;
 
 namespace km {
@@ -45,9 +47,28 @@ class KidmonServer::Impl
     ProcessLauncherPtr launcher_;
     bool spawnAgent_;
 
+    // When set, an agent was spawned at this time but has not yet authorized.
+    // Used to suppress re-spawning during a slow agent start (see healthCheck).
+    // Only ever touched on the asio thread, so it needs no synchronization.
+    std::optional<time_point> spawnedAt_;
+
+    // How long to wait for a freshly spawned agent to connect and authorize
+    // before assuming it failed and spawning a replacement. Comfortably exceeds
+    // peerDropTimeout (activityCheckInterval + 2s) so a connected-but-unauthed
+    // agent is dropped by the server before we ever consider re-spawning.
+    std::chrono::milliseconds spawnGracePeriod_;
+
     [[nodiscard]] bool agentRunning() const
     {
         return agentMngr_->hasAuthorizedAgent();
+    }
+
+    // True while a previously spawned agent is still within its startup grace
+    // window, i.e. we should not spawn another one yet.
+    [[nodiscard]] bool spawnPending() const
+    {
+        return spawnedAt_.has_value() &&
+               (time_point::clock::now() - *spawnedAt_) < spawnGracePeriod_;
     }
 
 public:
@@ -62,6 +83,7 @@ public:
         , api_(ApiFactory::create())
         , launcher_(api_->createProcessLauncher())
         , spawnAgent_(cfg.spawnAgent)
+        , spawnGracePeriod_(cfg.activityCheckInterval * 5)
     {
         spdlog::trace("Report dir: {}", cfg.reportsDir);
 
@@ -111,8 +133,19 @@ public:
         {
             spdlog::trace("healthCheck");
 
-            if (spawnAgent_ && !agentRunning())
+            if (agentRunning())
             {
+                // An agent is established; clear any pending-spawn marker so that
+                // if it later dies we respawn promptly instead of waiting out a
+                // stale grace window.
+                spawnedAt_.reset();
+            }
+            else if (spawnAgent_ && !spawnPending())
+            {
+                // No authorized agent and none currently starting up. Spawn one
+                // and remember when, so the next ticks don't spawn duplicates
+                // (each with a fresh token that would invalidate the previous
+                // agent's) while this one is still authorizing.
                 const auto token = utl::generateToken(16);
                 const Args args = {"--agent"};
 
@@ -122,6 +155,7 @@ public:
                 authHandler_.setToken(token);
 
                 launcher_->launch(core::sys::currentProcessPath(), args, env);
+                spawnedAt_ = time_point::clock::now();
             }
         }
         catch (const std::exception& e)
