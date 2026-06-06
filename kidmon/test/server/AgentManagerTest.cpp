@@ -12,10 +12,10 @@
 #include <core/utils/File.h>
 #include <core/utils/Str.h>
 #include <core/utils/Sys.h>
+#include <core/utils/Log.h>
 
 #include <nlohmann/json.hpp>
 
-#include <chrono>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -23,6 +23,7 @@
 using namespace km;
 using namespace core::tcp;
 using namespace std::chrono_literals;
+using core::utl::MuteLogger;
 
 namespace {
 
@@ -49,6 +50,7 @@ struct ClientState
 TEST(AgentManagerTest, SecondConcurrentAgentIsRejected)
 {
     core::file::TempDir reportsDir("kdmn-tst");
+    MuteLogger mute;
 
     IoContext ioc;
     Server svr(ioc);

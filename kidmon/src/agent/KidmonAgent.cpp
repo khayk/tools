@@ -82,7 +82,11 @@ public:
 class AgentMsgHandler
 {
 public:
-    enum class State : uint8_t { WaitingAuth, Authorized };
+    enum class State : uint8_t
+    {
+        WaitingAuth,
+        Authorized
+    };
 
     using AuthCb = std::function<void(bool)>;
     using MsgCb = std::function<void(const nlohmann::ordered_json&)>;
@@ -101,22 +105,36 @@ public:
 
             switch (state_)
             {
-            case State::WaitingAuth:
-            {
-                if (status != 0)
+                case State::WaitingAuth:
                 {
-                    errCb_(status, error);
+                    if (status != 0)
+                    {
+                        // Server rejected authorization (e.g. bad token, or an
+                        // agent is already connected). Surface the reason, then fail
+                        // authorization so shutdown is driven deterministically here
+                        // rather than depending on the server closing the socket.
+                        spdlog::error("Authorization rejected - status: {}, error: {}",
+                                      status,
+                                      error);
+                        authCb_(false);
+                        break;
+                    }
+                    nlohmann::json answer;
+                    jsu::get(js, "answer", answer, false);
+                    authCb_(answer.value("authorized", false));
+                    state_ = State::Authorized;
                     break;
                 }
-                nlohmann::json answer;
-                jsu::get(js, "answer", answer);
-                authCb_(answer["authorized"].get<bool>());
-                state_ = State::Authorized;
-                break;
-            }
-            case State::Authorized:
-                msgCb_(js);
-                break;
+                case State::Authorized:
+                    if (status != 0)
+                    {
+                        errCb_(status, error);
+                    }
+                    else
+                    {
+                        msgCb_(js);
+                    }
+                    break;
             }
 
             return true;

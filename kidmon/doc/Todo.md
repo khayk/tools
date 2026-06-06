@@ -4,28 +4,12 @@
 
 ## Open Issues
 
-### Critical — security (this is a surveillance daemon; treat it like one)
-
-These matter precisely because the tool can be installed as a **root `daemon`** (per the README) and captures screen contents and window titles.
-
-
-**C5 — No transport protection beyond "it's localhost."** Screenshots (base64) and window titles cross the loopback socket in cleartext, and _any_ local process can open port 51097. The only gate is the token from C2/C3. The trust model is effectively "any local process that can run `ps`." That may be acceptable for a single-user kid's machine — but it should be a documented, deliberate decision, not an accident. Constant-time token compare ([AuthorizationHandler](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/src/server/handler/AuthorizationHandler.cpp#L56) uses `!=`) is a minor footnote next to C3.
-
----
-
 ### Major — correctness & "documented but not implemented"
 
-**M1 — Disk I/O runs on the event-loop thread.** `DataHandler::handle` → `repo_.add` → `file::append` / `file::write` are **blocking** filesystem calls executed directly on the single asio thread ([DataHandler.cpp:49](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/src/server/handler/DataHandler.cpp#L49)). Every screenshot write stalls all networking and the health-check timer. Offload persistence to a worker / `post()` to a separate strand+thread, or at minimum a writer queue.
 
 **M2 — The heartbeat protocol is documented but does not exist.** The README and [Docs.md](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/doc/Docs.md) specify a `heartbeat` message with `up_time_ms` / `last_activity_time_ms`, and `GetLastInputInfo` is referenced — but `grep` finds **zero** heartbeat code in the agent. The agent never sends one. Worse, the implied feature — **idle/away detection** — is the thing a "kid activity monitor" most needs: without it, the agent records the same foreground window for hours while the child is away from the keyboard, inflating every "time spent" number. This is a product-level gap, not just a missing message.
 
 **M3 — There is no config file, despite claims otherwise.** [Todo.md](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/doc/Todo.md) marks "Server and agent should have their own config" as _Done_, and CLAUDE.md says config is JSON — but [Config.cpp](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/src/config/Config.cpp) only computes directories, [Main.cpp](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/src/Main.cpp) never loads a file, and `takeSnapshots` / `calcSha` / intervals are hardcoded defaults that nothing ever sets. Snapshots and SHA are effectively dead-off. Either implement loading or stop claiming it.
-
-**M4 — Spawn race in the health check.** [healthCheck](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/src/server/KidmonServer.cpp#L106) fires every 2s and spawns an agent whenever `!hasAuthorizedAgent()`. Between spawning agent #1 (token T1) and that agent finishing auth, the next tick sees "no authorized agent," spawns agent #2 with token T2, and **overwrites the server token to T2** — now agent #1 can never authenticate. On any slow start you get agent churn / duplicate processes. There's no "spawn pending" state. Track an outstanding-spawn timestamp and don't re-spawn within a grace window.
-
-**M5 — Malformed disk lines are silently turned into bogus entries.** In [readEntries](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/src/repo/FileSystemRepository.cpp#L177), a parse exception does `entry = Entry()` and then **still falls through to `cb(entry)`**, feeding a default-constructed entry into the query results. It should `return true` (skip) on failure, not emit a zero entry. Relatedly, [queryEntries](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/src/repo/FileSystemRepository.cpp#L303) does `std::stoi(filename)` on every subdirectory — a single stray non-numeric directory throws and aborts the whole query.
-
-**M6 — `buildResponse` never reports failure status.** [AgentConnection](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/src/server/AgentConnection.cpp#L62) always sends `buildResponse(0, ...)` — status 0 even on auth failure (it conveys failure only through `answer.authorized=false`, then closes). The documented `{"status":N,"error":...}` non-zero path is never produced, and the agent's `WaitingAuth` branch keys off `status != 0` that the server never sends. The protocol contract and the implementation disagree.
 
 ---
 
@@ -93,7 +77,13 @@ The current flow (agent samples → JSON-over-TCP → server validates → block
     * No parallel hashing. Detection is fully single-threaded (DuplicateDetector.cpp:126-177). Hashing is the dominant cost and is embarrassingly parallel across same-size buckets. On a large photo/video corpus this is the difference between minutes and seconds. This is the single biggest performance limitation.
     * No partial/progressive hashing. Same-size files go straight to a full SHA-256 of the entire file. Production dedupers hash the first ~4–64 KB first and only full-hash the survivors. With many same-size-but-different files (extremely common for media), you're reading entire multi-GB files needlessly. SHA-256 is also overkill for a candidate check — a fast non-crypto hash (xxHash/BLAKE3) for screening, with full compare/crypto only on collision, would be much faster.
   
-### Kidmon issues
+## Kidmon issues
+
+### Critical — security (this is a surveillance daemon; treat it like one)
+
+These matter precisely because the tool can be installed as a **root `daemon`** (per the README) and captures screen contents and window titles.
+
+---
 
 **C1 — Path traversal → arbitrary file write, potentially as root.** In [FileSystemRepository::add](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/src/repo/FileSystemRepository.cpp#L262) the snapshot is written to `snapshotsDir / entry.windowInfo.image.name`, and `image.name` comes straight off the wire ([DataHandler](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/src/server/handler/DataHandler.cpp#L38) → `fromJson`). The server never validates it. A client that sets `image.name = "../../../../etc/cron.d/x"` and arbitrary bytes gets an arbitrary file write with the server's privileges. The username path component is checked against the active user, but the image filename is not. **Sanitize to a basename and reject any name containing separators or `..`.**
 
@@ -102,3 +92,12 @@ The current flow (agent samples → JSON-over-TCP → server validates → block
 **C3 — The token is passed on the command line.** [healthCheck](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/src/server/KidmonServer.cpp#L109) launches the agent with `--token <token>`. On every OS, command-line arguments are world-readable from the process table (`ps -ef`, Task Manager, `/proc/<pid>/cmdline`). **Any local user can read the token and impersonate the agent** — connect to the loopback port, pass the token, and inject fabricated entries (or trigger C1). For a local-trust protocol, pass the token via an inherited pipe / stdin / env-scrubbed channel, not argv.
 
 **C4 — Unbounded frame length → trivial local DoS / OOM.** [Unpacker::readSize](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/core/src/network/data/Unpacker.cpp#L62) does `rem_ = *reinterpret_cast<size_t*>(buffer_.data())` with no upper bound, and `put` appends incoming bytes into an ever-growing buffer. A local client sends a huge length prefix and the server grows memory until it dies. (Also: that `reinterpret_cast` is an unaligned, host-endian read — UB-adjacent, and non-portable, though both ends are local.) Add a sane max-frame cap and reject oversized headers.
+### Major — correctness & "documented but not implemented"
+
+**M1 — Disk I/O runs on the event-loop thread.** `DataHandler::handle` → `repo_.add` → `file::append` / `file::write` are **blocking** filesystem calls executed directly on the single asio thread ([DataHandler.cpp:49](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/src/server/handler/DataHandler.cpp#L49)). Every screenshot write stalls all networking and the health-check timer. Offload persistence to a worker / `post()` to a separate strand+thread, or at minimum a writer queue.
+
+**M4 — Spawn race in the health check.** [healthCheck](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/src/server/KidmonServer.cpp#L106) fires every 2s and spawns an agent whenever `!hasAuthorizedAgent()`. Between spawning agent #1 (token T1) and that agent finishing auth, the next tick sees "no authorized agent," spawns agent #2 with token T2, and **overwrites the server token to T2** — now agent #1 can never authenticate. On any slow start you get agent churn / duplicate processes. There's no "spawn pending" state. Track an outstanding-spawn timestamp and don't re-spawn within a grace window.
+
+**M6 — `buildResponse` never reports failure status.** [AgentConnection](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/src/server/AgentConnection.cpp#L62) always sends `buildResponse(0, ...)` — status 0 even on auth failure (it conveys failure only through `answer.authorized=false`, then closes). The documented `{"status":N,"error":...}` non-zero path is never produced, and the agent's `WaitingAuth` branch keys off `status != 0` that the server never sends. The protocol contract and the implementation disagree.
+
+**M5 — Malformed disk lines are silently turned into bogus entries.** In [readEntries](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/src/repo/FileSystemRepository.cpp#L177), a parse exception does `entry = Entry()` and then **still falls through to `cb(entry)`**, feeding a default-constructed entry into the query results. It should `return true` (skip) on failure, not emit a zero entry. Relatedly, [queryEntries](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/src/repo/FileSystemRepository.cpp#L303) does `std::stoi(filename)` on every subdirectory — a single stray non-numeric directory throws and aborts the whole query.
