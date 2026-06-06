@@ -12,8 +12,7 @@
 namespace km {
 namespace {
 
-auto defAuthHandler = [](AgentConnection* conn, bool)
-{
+auto defAuthHandler = [](AgentConnection* conn, bool) {
     spdlog::info("Default auth handler is called: {}", fmt::ptr(conn));
     return false;
 };
@@ -61,8 +60,13 @@ AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
                 error = "Unexpected message";
             }
 
+            // Honor the protocol contract: status 0 means the request was
+            // handled, non-zero signals failure and carries the reason in
+            // "error". Previously this always sent status 0, so the agent's
+            // failure branch (which keys off status != 0) never fired.
             nlohmann::ordered_json js;
-            msgs::buildResponse(0, answer, js);
+            const int status = error.empty() ? 0 : 1;
+            msgs::buildResponse(status, error, answer, js);
             const auto res = js.dump();
             spdlog::debug("Server sent: {} bytes", res.size());
             comm_.sendAsync(res);
