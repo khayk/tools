@@ -219,7 +219,13 @@ consistent with the not-yet-implemented Linux window backend.
 
 ## Message protocol
 
-Agent and server communicate over TCP using JSON messages serialized with [glaze](https://github.com/stephenberry/glaze).
+Agent and server communicate over TCP using JSON messages serialized with
+[nlohmann/json](https://github.com/nlohmann/json). The same `toJson`/`fromJson`
+functions encode the `Entry` payload on the wire and persist it to the raw data
+files. Persisted entries are read back with [glaze](https://github.com/stephenberry/glaze),
+whose compile-time reflection makes the report read path fast; its on-disk
+schema is keyed on the same `km::constants` strings as the writer, so the two
+cannot drift.
 
 ```json
 // Agent → Server

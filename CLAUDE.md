@@ -87,7 +87,7 @@ Server and agent communicate over TCP on port **51097** using token-based author
 1. **Server**: listens → accepts connection → waits for auth message → routes data messages via `MsgHandler`
 2. **Agent**: connects → sends `{username, token}` auth → collects window/process data periodically → sends heartbeat → reconnects on disconnect
 
-Platform-specific implementations live in `kidmon/src/os/` (Windows/macOS/Linux). Message serialization uses the `glaze` library. Entry data is persisted via a repository pattern (`FileSystemRepository`).
+Platform-specific implementations live in `kidmon/src/os/` (Windows/macOS/Linux). Messages are serialized as JSON with `nlohmann/json` (`toJson`/`fromJson` in `data/Types.cpp`), keyed on the `km::constants` strings. Entry data is persisted via a repository pattern (`FileSystemRepository`); the raw-file read path uses `glaze`'s compile-time reflection for speed, reading into DTOs keyed on those same constants.
 
 ### Namespaces
 

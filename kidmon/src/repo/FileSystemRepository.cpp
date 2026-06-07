@@ -6,6 +6,8 @@
 #include <core/utils/Str.h>
 #include <core/utils/FmtExt.h>
 
+#include "RawEntryDto.h"
+
 #include <format>
 #include <vector>
 #include <nlohmann/json.hpp>
@@ -149,62 +151,37 @@ std::string buildRawFilename(const TimePoint tp)
     return std::format("raw-{:03}-{:02}{:02}.dat", day, tm.tm_mon + 1, tm.tm_mday);
 }
 
-template <typename T>
-T getAs(const glz::generic& js)
-{
-    const auto value = js.get<double>();
-    return static_cast<T>(value);
-}
-
 void readEntries(const std::string& username, const fs::path& file, const EntryCb& cb)
 {
+    detail::EntryDto dto;
     Entry entry;
-    glz::generic json {};
-
     entry.username = username;
 
-    file::readLines(file, [&cb, &entry, &json, &file](const std::string& line) {
+    file::readLines(file, [&cb, &dto, &entry, &file](const std::string& line) {
         const auto sv = str::trim(line);
-        json.reset();
-        if (glz::read_json(json, sv))
+        if (sv.empty())
         {
             return true;
         }
 
-        try
-        {
-            auto& proc = json[constants::PROC_INFO];
-            entry.processInfo.processPath = proc[constants::PROC_PATH].get<std::string>();
-            entry.processInfo.sha256 = proc[constants::PROC_SHA].get<std::string>();
-
-            auto& wnd = json[constants::WND_INFO];
-            entry.windowInfo.title = wnd[constants::WND_TITLE].get<std::string>();
-
-            const Point leftTop(getAs<int>(wnd[constants::WND_LEFT_TOP][0]),
-                                getAs<int>(wnd[constants::WND_LEFT_TOP][1]));
-            const Dimensions dimensions(getAs<uint32_t>(wnd[constants::WND_DIMENSIONS][0]),
-                                        getAs<uint32_t>(wnd[constants::WND_DIMENSIONS][1]));
-            entry.windowInfo.placement = Rect(leftTop, dimensions);
-
-            auto& img = wnd[constants::WND_IMG];
-            entry.windowInfo.image.name = img[constants::WND_IMG_NAME].get<std::string>();
-            entry.windowInfo.image.bytes = img[constants::WND_IMG_BYTES].get<std::string>();
-            entry.windowInfo.image.encoded = img[constants::WND_IMG_ENCODED].get<bool>();
-
-            const auto& ts = json[constants::TIMESTAMP];
-            entry.timestamp.capture =
-                TimePoint(std::chrono::milliseconds(getAs<long long>(ts[constants::TIMESTAMP_WHEN])));
-            entry.timestamp.duration =
-                std::chrono::milliseconds(getAs<long long>(ts[constants::TIMESTAMP_DUR]));
-        }
-        catch (const std::exception& ex)
+        // sv is a view into the (possibly trailing-trimmed) line, so it is not
+        // guaranteed null-terminated. Tolerate extra/unknown keys for forward
+        // compatibility, but reject a line missing required fields so a partial
+        // record is skipped rather than surfacing as a default-valued entry.
+        constexpr glz::opts opts {.null_terminated = false,
+                                  .error_on_unknown_keys = false,
+                                  .error_on_missing_keys = true};
+        if (const auto ec = glz::read<opts>(dto, sv))
         {
             // A malformed line must not surface as a default-constructed entry
             // in the results; skip it (keep reading subsequent lines) instead.
-            spdlog::warn("Skipping malformed entry in {}: {}", file, ex.what());
+            spdlog::warn("Skipping malformed entry in {}: {}",
+                         file,
+                         glz::format_error(ec, sv));
             return true;
         }
 
+        detail::toEntry(dto, entry);
         return cb(entry);
     });
 }
