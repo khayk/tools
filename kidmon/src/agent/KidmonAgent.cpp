@@ -180,6 +180,10 @@ class KidmonAgent::Impl
 
     Config cfg_;
 
+    // The active user does not change for the lifetime of the agent process, so
+    // resolve it once and reuse it for the auth handshake and every data message.
+    const std::string username_ = core::str::ws2s(core::sys::activeUserName());
+
     CachedFileSha256 shaCache_;
     net::io_context ioc_;
     net::steady_timer timer_;
@@ -248,8 +252,7 @@ class KidmonAgent::Impl
 
             // Initiate authorization
             nlohmann::ordered_json js;
-            const auto username = core::str::ws2s(core::sys::activeUserName());
-            msgs::buildAuthMsg(cfg_.authToken, username, js);
+            msgs::buildAuthMsg(cfg_.authToken, username_, js);
             const auto authMsg = js.dump();
             spdlog::debug("Sending auth message: {}", authMsg);
             comm_->sendAsync(authMsg);
@@ -324,11 +327,6 @@ class KidmonAgent::Impl
             spdlog::trace("collectData");
             spdlog::debug("id: {}, title: {}", window->id(), window->title());
 
-            Rect rc = window->boundingRect();
-
-            std::ostringstream oss;
-            oss << rc;
-
             entry.windowInfo.placement = window->boundingRect();
             entry.windowInfo.title = window->title();
             entry.processInfo.processPath = window->ownerProcessPath();
@@ -349,6 +347,8 @@ class KidmonAgent::Impl
             entry.timestamp.capture = SystemClock::now();
             entry.timestamp.duration = timeout_;
 
+            std::ostringstream oss;
+            oss << entry.windowInfo.placement;
             spdlog::debug("Foreground wnd: {}", oss.str());
             spdlog::debug("Executable: {}", entry.processInfo.processPath);
 
@@ -378,7 +378,7 @@ class KidmonAgent::Impl
                 }
             }
 
-            entry.username = core::str::ws2s(core::sys::activeUserName());
+            entry.username = username_;
             nlohmann::ordered_json js;
             msgs::buildDataMsg(entry, js);
             const auto dataMsg = js.dump();

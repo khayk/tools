@@ -15,8 +15,6 @@
 
 **D1 — Two JSON libraries, three parse paths for one type.** `Entry` is **written** with nlohmann ([Types.cpp toJson](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/src/data/Types.cpp)), **read off the wire** with nlohmann `fromJson`, and **read off disk** with glaze in [readEntries](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/src/repo/FileSystemRepository.cpp#L137) — a hand-rolled third extraction keyed on `constants::`. Three representations of the same schema that must be kept in lockstep by hand; they _will_ drift. Pick one library and one serialization function. (The glaze dependency exists almost entirely to power this redundant read path.)
 
-**D3 — Wasted work every sample cycle.** [collectData](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/src/agent/KidmonAgent.cpp#L276) builds an `ostringstream` of the rect and calls `activeUserName()` twice per tick — all unconditionally, even though the rect string only feeds a `debug` log. Guard debug-only formatting; compute the username once.
-
 **D4 — Base64-in-JSON for image bytes over the wire.** Screenshots are base64-encoded ([agent](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/src/agent/KidmonAgent.cpp#L321)) then embedded in a JSON line — ~33% inflation plus JSON escaping, then decoded server-side. (Credit: the _disk_ format correctly excludes the bytes via `includeImageBytes=false` and writes the image separately.) For binary payloads, a separate binary frame beats base64-in-JSON.
 
 **D5 — Magic port `51097` and intervals duplicated** across `KidmonServer::Config`, `KidmonAgent::Config`, and docs. One source of truth.
@@ -103,3 +101,5 @@ These matter precisely because the tool can be installed as a **root `daemon`** 
 ### Design / maintainability
 
 **D2 — `file(GLOB)` for sources.** [CMakeLists.txt](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/CMakeLists.txt#L6) globs sources (and globs a non-existent `src/geometry/`), so adding a file doesn't trigger reconfigure — the canonical CMake anti-pattern. The test [GLOB_RECURSE](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/test/CMakeLists.txt#L3) then _also_ lists `common/*` `repo/*` redundantly (recurse already covers them). List sources explicitly.
+
+**D3 — Wasted work every sample cycle.** [collectData](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/src/agent/KidmonAgent.cpp#L276) builds an `ostringstream` of the rect and calls `activeUserName()` twice per tick — all unconditionally, even though the rect string only feeds a `debug` log. Guard debug-only formatting; compute the username once.
