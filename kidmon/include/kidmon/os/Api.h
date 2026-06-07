@@ -27,17 +27,19 @@ public:
     virtual std::chrono::milliseconds idleTime() = 0;
 
     /**
-     * @brief Whether some application is currently preventing the display from
-     *        sleeping (a power assertion / execution-state request).
+     * @brief Whether the display is currently powered on (awake).
      *
-     * Media players hold such an assertion while playing, so this is our proxy
-     * for "the user is present but passive" (watching a movie / video call with
-     * no keyboard or mouse input). When true, the user is treated as active even
-     * though @ref idleTime keeps growing, so passive screen time is not lost.
+     * Used as a presence signal for "the user is present but passive" (reading,
+     * watching a movie, a video call) with no keyboard or mouse input. While the
+     * screen is on, the user is treated as active even though @ref idleTime keeps
+     * growing, so passive screen time is not lost; once the display sleeps (the
+     * user walked away long enough for the OS display-sleep timeout to fire) the
+     * time stops counting.
      *
-     * Returns false on platforms that cannot determine it.
+     * Returns true on platforms that cannot determine it (the user is then always
+     * treated as present whenever there is a session).
      */
-    virtual bool displaySleepPrevented() = 0;
+    virtual bool displayOn() = 0;
 };
 
 using ApiPtr = std::unique_ptr<Api>;

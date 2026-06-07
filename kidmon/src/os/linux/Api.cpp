@@ -34,9 +34,10 @@ std::chrono::milliseconds ApiImpl::idleTime()
     return std::chrono::milliseconds::zero();
 }
 
-bool ApiImpl::displaySleepPrevented()
+bool ApiImpl::displayOn()
 {
-    // Not implemented for Linux yet (would query an idle-inhibit protocol). The
-    // user is already always treated as active here, so this is moot for now.
-    return false;
+    // Not implemented for Linux yet (would query the display power state / an
+    // idle-inhibit protocol). Reporting the display as on keeps the user always
+    // treated as present, matching the not-yet-implemented idleTime above.
+    return true;
 }

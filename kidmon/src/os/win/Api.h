@@ -6,5 +6,5 @@ public:
     km::WindowPtr foregroundWindow() override;
     km::ProcessLauncherPtr createProcessLauncher() override;
     std::chrono::milliseconds idleTime() override;
-    bool displaySleepPrevented() override;
+    bool displayOn() override;
 };

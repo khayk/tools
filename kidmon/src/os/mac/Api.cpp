@@ -7,7 +7,6 @@
 
 #include <spdlog/spdlog.h>
 #include <CoreGraphics/CoreGraphics.h>
-#include <IOKit/pwr_mgt/IOPMLib.h>
 
 #include <mutex>
 #include <vector>
@@ -180,38 +179,11 @@ std::chrono::milliseconds ApiImpl::idleTime()
     return std::chrono::milliseconds(static_cast<int64_t>(seconds * 1000.0));
 }
 
-bool ApiImpl::displaySleepPrevented()
+bool ApiImpl::displayOn()
 {
-    CFDictionaryRef raw = nullptr;
-    if (IOPMCopyAssertionsStatus(&raw) != kIOReturnSuccess || raw == nullptr)
-    {
-        return false;
-    }
-
-    std::unique_ptr<std::remove_pointer_t<CFDictionaryRef>, decltype(&CFRelease)>
-        status(raw, CFRelease);
-
-    // IOPMCopyAssertionsStatus returns aggregate counts keyed by assertion type.
-    // A non-zero count for a display-sleep-preventing type means some app is
-    // keeping the screen awake (e.g. a video player during playback).
-    const auto held = [&](CFStringRef type) {
-        const auto* value = CFDictionaryGetValue(status.get(), type);
-        if (!value || CFGetTypeID(value) != CFNumberGetTypeID())
-        {
-            return false;
-        }
-
-        int32_t count = 0;
-        if (!CFNumberGetValue(static_cast<CFNumberRef>(value),
-                              kCFNumberSInt32Type,
-                              &count))
-        {
-            return false;
-        }
-
-        return count > 0;
-    };
-
-    return held(kIOPMAssertionTypePreventUserIdleDisplaySleep) ||
-           held(kIOPMAssertionTypeNoDisplaySleep);
+    // True while the main display's framebuffer is lit. Goes false once the
+    // screen blanks -- either the OS display-sleep timeout firing after the user
+    // walked away, or the screen being locked/asleep. An app keeping the screen
+    // awake during playback (a video player) naturally keeps this true.
+    return CGDisplayIsAsleep(CGMainDisplayID()) == 0;
 }

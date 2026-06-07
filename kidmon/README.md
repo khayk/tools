@@ -199,18 +199,20 @@ A cycle counts as **away** only when **both**:
 
 1. there has been no keyboard/mouse input for longer than the threshold
    (`Config::idleThreshold`, default 60s), **and**
-2. no application is holding a display-sleep assertion.
+2. the display has gone to sleep.
 
-The second condition keeps **passive activity counted** — watching a movie or
-being in a video call produces no input, but the media app keeps the display
-awake, so the user is correctly treated as present rather than away.
+The second condition keeps **passive presence counted** — reading, watching a
+movie or being in a video call produces no input, but the screen stays on, so
+the user is correctly treated as present rather than away. Once the user truly
+walks off and the OS display-sleep timeout blanks the screen, time stops
+counting.
 
 Detection is platform-specific:
 
 | Signal | Windows | macOS | Linux |
 |---|---|---|---|
 | Input idle | `GetLastInputInfo` | `CGEventSourceSecondsSinceLastEventType` | not implemented (always active) |
-| Display awake | `CallNtPowerInformation` (`ES_DISPLAY_REQUIRED`) | IOKit `IOPMCopyAssertionsStatus` | not implemented (always active) |
+| Display on | `CallNtPowerInformation` (`ES_DISPLAY_REQUIRED`, best-effort) | `CGDisplayIsAsleep` | not implemented (always on) |
 
 On Linux both are unimplemented (the user is always treated as active),
 consistent with the not-yet-implemented Linux window backend.

@@ -299,11 +299,12 @@ class KidmonAgent::Impl
             // same window for hours). Send a heartbeat instead so the server
             // keeps the connection and knows we are still alive.
             //
-            // "Away" means no keyboard/mouse input past the threshold AND nothing
-            // is holding the display awake. The latter keeps passive activity
-            // (watching a movie, a video call) counted even with no input.
+            // "Away" means no keyboard/mouse input past the threshold AND the
+            // display has gone to sleep. Keeping the screen-on case active counts
+            // passive presence (reading, watching a movie, a video call) even with
+            // no input, until the OS display-sleep timeout fires once truly away.
             const auto idle = api_->idleTime();
-            if (idle >= cfg_.idleThreshold && !api_->displaySleepPrevented())
+            if (idle >= cfg_.idleThreshold && !api_->displayOn())
             {
                 sendHeartbeat(idle);
                 return;
