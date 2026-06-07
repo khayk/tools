@@ -390,11 +390,9 @@ void handleQueryUser(const IRepository& repo,
     std::ostringstream oss;
     queryCondition->write(oss);
     spdlog::info("Query condition: {}", oss.str());
-    size_t numEntries = 0;
 
     repo.queryEntries(queryFilter,
-                      [&queryVisualizer, &queryCondition, &transform, &numEntries](Entry& entry) {
-                          ++numEntries;
+                      [&queryVisualizer, &queryCondition, &transform](Entry& entry) {
                           transform->apply(entry);
                           queryVisualizer.update(entry);
 
@@ -405,8 +403,6 @@ void handleQueryUser(const IRepository& repo,
 
                           return true;
                       });
-
-    spdlog::info("Total processed entries: {}", numEntries);
 }
 
 } // namespace

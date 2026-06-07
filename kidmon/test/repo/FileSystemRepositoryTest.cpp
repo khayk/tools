@@ -3,6 +3,7 @@
 
 #include <kidmon/repo/FileSystemRepository.h>
 #include <core/utils/File.h>
+#include <core/utils/Log.h>
 
 #include <array>
 #include <format>
@@ -12,6 +13,7 @@ using namespace km;
 using namespace std::chrono_literals;
 using testing::_;
 using testing::Return;
+using core::utl::MuteLogger;
 
 namespace {
 
@@ -152,6 +154,7 @@ TEST(FileSystemRepositoryTest, AddEntriesOneUser)
 
 TEST(FileSystemRepositoryTest, QueryEntriesMultipleUsers)
 {
+    MuteLogger mute;
     file::TempDir reportsDir("kdmn-tst");
     MockRepo repo(reportsDir.path());
 
@@ -276,6 +279,7 @@ TEST(FileSystemRepositoryTest, AcceptsPlainSnapshotName)
 
 TEST(FileSystemRepositoryTest, QueryLogic)
 {
+    MuteLogger mute;
     file::TempDir reportsDir("kdmn-tst");
     FileSystemRepository repo(reportsDir.path());
 
@@ -327,6 +331,7 @@ TEST(FileSystemRepositoryTest, QueryLogic)
 
 TEST(FileSystemRepositoryTest, QuerySkipsMalformedEntryLines)
 {
+    MuteLogger mute;
     file::TempDir reportsDir("kdmn-tst");
     FileSystemRepository repo(reportsDir.path());
 
@@ -366,6 +371,7 @@ TEST(FileSystemRepositoryTest, QuerySkipsMalformedEntryLines)
 
 TEST(FileSystemRepositoryTest, QueryIgnoresNonYearDirectories)
 {
+    MuteLogger mute;
     file::TempDir reportsDir("kdmn-tst");
     FileSystemRepository repo(reportsDir.path());
 

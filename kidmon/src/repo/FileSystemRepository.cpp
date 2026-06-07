@@ -9,7 +9,9 @@
 #include <core/utils/StopWatch.h>
 
 #include "RawEntryDto.h"
+#include "RawFileRange.h"
 
+#include <algorithm>
 #include <format>
 #include <vector>
 #include <nlohmann/json.hpp>
@@ -197,12 +199,11 @@ bool queryRawDataDir(const Filter& filter,
 
     spdlog::info("Reading data for year: {}", year);
 
-    if ((yearTo != 0 && yearTo < year) || (yearFrom != 0 && year < yearFrom))
+    if (!detail::yearInRange(year, yearFrom, yearTo))
     {
         return true;
     }
 
-    bool keepGoing = true;
     const auto fnFrom = buildRawFilename(filter.from());
     const auto fnTo = buildRawFilename(filter.to());
     const auto& dataDirs = dirs_.dataDirs(filter.username(), year);
@@ -210,25 +211,37 @@ bool queryRawDataDir(const Filter& filter,
 
     spdlog::info("Directory selected for scanning: {}", rawDir);
 
+    // directory_iterator yields entries in an unspecified order, but a callback
+    // may stop the query early and expects to see entries oldest-first. Collect
+    // the in-range day files and sort them so the visit order is deterministic
+    // and chronological (file names sort chronologically within a year).
+    std::vector<fs::path> files;
     for (const auto& it : fs::directory_iterator(rawDir))
     {
-        const auto fn = it.path().filename();
-
-        if ((yearFrom == year && fn < fnFrom) || (yearTo == year && fn > fnTo))
+        if (!it.is_regular_file())
         {
             continue;
         }
 
-        if ((yearFrom == yearTo) &&
-            ((!fnFrom.empty() && fn < fnFrom) || (!fnTo.empty() && fn > fnTo) ||
-             !keepGoing || !it.is_regular_file()))
+        const auto fn = it.path().filename().string();
+        if (detail::rawFileInRange(fn, year, yearFrom, fnFrom, yearTo, fnTo))
         {
-            continue;
+            files.push_back(it.path());
+        }
+    }
+    std::ranges::sort(files);
+
+    bool keepGoing = true;
+    for (const auto& file : files)
+    {
+        if (!keepGoing)
+        {
+            break;
         }
 
         StopWatch timer;
         readEntries(filter.username(),
-                    it.path(),
+                    file,
                     [&keepGoing, &cb, &filter](Entry& entry) {
                         if (entry.timestamp.capture >= filter.from() &&
                             entry.timestamp.capture <= filter.to())
@@ -238,7 +251,9 @@ bool queryRawDataDir(const Filter& filter,
 
                         return keepGoing;
                     });
-        spdlog::debug("File: '{}' is processed in {}", it.path().filename(), str::humanizeDuration(timer.elapsed()));
+        spdlog::debug("File: '{}' is processed in {}",
+                      file.filename(),
+                      str::humanizeDuration(timer.elapsed()));
     }
 
     return keepGoing;
