@@ -253,7 +253,11 @@ std::string humanizeDuration(std::chrono::milliseconds ms, int units)
     }
 
     std::string out = oss.str();
-    if (!out.empty() && out.back() == ' ')
+    if (out.empty())
+    {
+        out = "0ms";
+    }
+    else if (out.back() == ' ')
     {
         out.pop_back();
     }

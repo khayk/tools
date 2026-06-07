@@ -15,6 +15,7 @@
 #include <core/utils/File.h>
 #include <core/utils/StopWatch.h>
 #include <core/utils/Tracer.h>
+#include <spdlog/spdlog.h>
 
 #include <cstddef>
 #include <cxxopts.hpp>
@@ -389,9 +390,11 @@ void handleQueryUser(const IRepository& repo,
     std::ostringstream oss;
     queryCondition->write(oss);
     spdlog::info("Query condition: {}", oss.str());
+    size_t numEntries = 0;
 
     repo.queryEntries(queryFilter,
-                      [&queryVisualizer, &queryCondition, &transform](Entry& entry) {
+                      [&queryVisualizer, &queryCondition, &transform, &numEntries](Entry& entry) {
+                          ++numEntries;
                           transform->apply(entry);
                           queryVisualizer.update(entry);
 
@@ -402,6 +405,8 @@ void handleQueryUser(const IRepository& repo,
 
                           return true;
                       });
+
+    spdlog::info("Total processed entries: {}", numEntries);
 }
 
 } // namespace

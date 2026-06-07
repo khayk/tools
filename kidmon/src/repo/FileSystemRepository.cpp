@@ -5,6 +5,8 @@
 #include <core/utils/File.h>
 #include <core/utils/Str.h>
 #include <core/utils/FmtExt.h>
+#include <core/utils/Number.h>
+#include <core/utils/StopWatch.h>
 
 #include "RawEntryDto.h"
 
@@ -12,7 +14,6 @@
 #include <vector>
 #include <nlohmann/json.hpp>
 #include <glaze/glaze.hpp>
-#include "core/utils/Number.h"
 #include <spdlog/spdlog.h>
 
 using namespace core;
@@ -194,6 +195,8 @@ bool queryRawDataDir(const Filter& filter,
     const int yearFrom = yearFromTimePoint(filter.from(), false);
     const int yearTo = yearFromTimePoint(filter.to(), false);
 
+    spdlog::info("Reading data for year: {}", year);
+
     if ((yearTo != 0 && yearTo < year) || (yearFrom != 0 && year < yearFrom))
     {
         return true;
@@ -204,6 +207,8 @@ bool queryRawDataDir(const Filter& filter,
     const auto fnTo = buildRawFilename(filter.to());
     const auto& dataDirs = dirs_.dataDirs(filter.username(), year);
     const fs::path& rawDir = dataDirs.rawDir;
+
+    spdlog::info("Directory selected for scanning: {}", rawDir);
 
     for (const auto& it : fs::directory_iterator(rawDir))
     {
@@ -221,6 +226,7 @@ bool queryRawDataDir(const Filter& filter,
             continue;
         }
 
+        StopWatch timer;
         readEntries(filter.username(),
                     it.path(),
                     [&keepGoing, &cb, &filter](Entry& entry) {
@@ -232,6 +238,7 @@ bool queryRawDataDir(const Filter& filter,
 
                         return keepGoing;
                     });
+        spdlog::debug("File: '{}' is processed in {}", it.path().filename(), str::humanizeDuration(timer.elapsed()));
     }
 
     return keepGoing;

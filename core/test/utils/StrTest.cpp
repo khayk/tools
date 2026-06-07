@@ -197,6 +197,7 @@ TEST(UtilsStrTests, HumanizeDuration)
 {
     using namespace std::chrono_literals;
 
+    EXPECT_EQ("0ms", humanizeDuration(0ms));
     EXPECT_EQ("123ms", humanizeDuration(123ms));
     EXPECT_EQ("1s", humanizeDuration(1000ms));
     EXPECT_EQ("1s 549ms", humanizeDuration(1549ms));
