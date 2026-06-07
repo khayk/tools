@@ -10,9 +10,7 @@ void buildAuthMsg(std::string_view authToken,
                   nlohmann::ordered_json& js)
 {
     js = {{"name", "auth"},
-          {"message",
-           {{"username", username},
-            {"token", authToken}}}};
+          {"message", {{"username", username}, {"token", authToken}}}};
 }
 
 void buildDataMsg(const Entry& entry, nlohmann::ordered_json& js)
@@ -21,6 +19,15 @@ void buildDataMsg(const Entry& entry, nlohmann::ordered_json& js)
     auto& msgJs = js["message"];
     msgJs["username"] = entry.username;
     toJson(entry, msgJs["entry"]);
+}
+
+void buildHeartbeat(int64_t upTimeMs,
+                    int64_t lastActivityMs,
+                    nlohmann::ordered_json& js)
+{
+    js = {{"name", "heartbeat"},
+          {"message",
+           {{"up_time_ms", upTimeMs}, {"last_activity_time_ms", lastActivityMs}}}};
 }
 
 void buildResponse(int status,
@@ -49,13 +56,19 @@ void buildResponse(int status,
 bool isAuthMsg(const nlohmann::ordered_json& js)
 {
     const auto nit = js.find("name");
-    return !(nit == js.end() || (*nit).get<std::string>() != "auth");
+    return nit != js.end() && (*nit).get<std::string>() == "auth";
 }
 
 bool isDataMsg(const nlohmann::ordered_json& js)
 {
     const auto nit = js.find("name");
-    return !(nit == js.end() || (*nit).get<std::string>() != "data");
+    return nit != js.end() && (*nit).get<std::string>() == "data";
+}
+
+bool isHeartbeatMsg(const nlohmann::ordered_json& js)
+{
+    const auto nit = js.find("name");
+    return nit != js.end() && (*nit).get<std::string>() == "heartbeat";
 }
 
 } // namespace km::msgs

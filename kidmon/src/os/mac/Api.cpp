@@ -163,3 +163,27 @@ ProcessLauncherPtr ApiImpl::createProcessLauncher()
 {
     return std::make_unique<ProcessLauncherImpl>();
 }
+
+std::chrono::milliseconds ApiImpl::idleTime()
+{
+    // Seconds since the last HID (keyboard/mouse) event across the system.
+    const double seconds =
+        CGEventSourceSecondsSinceLastEventType(kCGEventSourceStateHIDSystemState,
+                                               kCGAnyInputEventType);
+
+    if (seconds < 0.0)
+    {
+        return std::chrono::milliseconds::zero();
+    }
+
+    return std::chrono::milliseconds(static_cast<int64_t>(seconds * 1000.0));
+}
+
+bool ApiImpl::displayOn()
+{
+    // True while the main display's framebuffer is lit. Goes false once the
+    // screen blanks -- either the OS display-sleep timeout firing after the user
+    // walked away, or the screen being locked/asleep. An app keeping the screen
+    // awake during playback (a video player) naturally keeps this true.
+    return CGDisplayIsAsleep(CGMainDisplayID()) == 0;
+}
