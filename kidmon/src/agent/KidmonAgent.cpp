@@ -3,6 +3,7 @@
 #include <kidmon/data/Messages.h>
 #include <kidmon/data/Helpers.h>
 #include <kidmon/common/Utils.h>
+#include <kidmon/common/Defaults.h>
 
 #include <core/utils/FmtExt.h>
 #include <core/utils/Str.h>
@@ -434,6 +435,16 @@ public:
         ioc_.stop();
     }
 };
+
+KidmonAgent::Config::Config()
+    : activityCheckInterval {defaults::ACTIVITY_CHECK_INTERVAL}
+    , snapshotInterval {defaults::SNAPSHOT_INTERVAL}
+    , idleThreshold {defaults::IDLE_THRESHOLD}
+    , takeSnapshots {false}
+    , calcSha {false}
+    , serverPort {defaults::SERVER_PORT}
+{
+}
 
 KidmonAgent::KidmonAgent(Config cfg)
     : impl_(std::make_unique<Impl>(std::move(cfg)))

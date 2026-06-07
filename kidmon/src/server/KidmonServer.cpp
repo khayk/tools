@@ -6,6 +6,7 @@
 #include <kidmon/server/AgentManager.h>
 #include <kidmon/os/Api.h>
 #include <kidmon/common/Utils.h>
+#include <kidmon/common/Defaults.h>
 #include <kidmon/data/Constants.h>
 
 #include <core/network/TcpServer.h>
@@ -167,6 +168,10 @@ public:
 
 KidmonServer::Config::Config(const fs::path& appDataDir)
     : reportsDir {appDataDir / "reports"}
+    , activityCheckInterval {defaults::ACTIVITY_CHECK_INTERVAL}
+    , peerDropTimeout {activityCheckInterval + defaults::PEER_DROP_GRACE}
+    , listenPort {defaults::SERVER_PORT}
+    , spawnAgent {true}
 {
 }
 

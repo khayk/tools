@@ -14,7 +14,7 @@ Distributed process and window activity monitor. A single binary that runs as ei
                            FileSystemRepository
 ```
 
-- The **server** listens on port 51097, spawns an agent process, and persists incoming activity data to disk.
+- The **server** listens on port 51097, spawns an agent process, and persists incoming activity data to disk. The port and the sampling/timeout intervals are defined once in [`Defaults.h`](include/kidmon/common/Defaults.h) (`km::defaults`); the `51097` here mirrors that constant.
 - The **agent** connects to the server, authenticates with a token, then continuously samples the active window and process, and sends the data as structured JSON messages.
 - When the agent disconnects, the server respawns it.
 

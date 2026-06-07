@@ -4,6 +4,9 @@
 
 #include <memory>
 #include <filesystem>
+#include <chrono>
+#include <cstdint>
+#include <string>
 
 namespace fs = std::filesystem;
 
@@ -14,17 +17,18 @@ class KidmonServer : public core::Runnable
 public:
     struct Config
     {
+        // Defaults are assigned in the constructor (see KidmonServer.cpp);
+        // reportsDir is derived from appDataDir.
         Config(const fs::path& appDataDir);
 
         fs::path reportsDir;
         std::string authToken;
 
-        std::chrono::milliseconds activityCheckInterval {2000};
-        std::chrono::milliseconds peerDropTimeout {activityCheckInterval.count() +
-                                                   2000};
+        std::chrono::milliseconds activityCheckInterval;
+        std::chrono::milliseconds peerDropTimeout;
 
-        uint16_t listenPort {51'097};
-        bool spawnAgent {true};
+        uint16_t listenPort {};
+        bool spawnAgent {};
     };
 
     explicit KidmonServer(const Config& cfg);
