@@ -3,53 +3,57 @@ project(kidmon)
 set(PROJECT_LIB "${PROJECT_NAME}")
 set(PROJECT_APP "${PROJECT_NAME}-app")
 
-file(GLOB LIB_SRCS
-   "src/*.h"
-   "src/*.cpp"
-   "src/agent/*.cpp"
-   "src/agent/*.h"
-   "src/common/*.cpp"
-   "src/common/*.h"
-   "src/config/*.cpp"
-   "src/config/*.h"
-   "src/data/*.cpp"
-   "src/data/*.h"
-   "src/geometry/*.cpp"
-   "src/geometry/*.h"
-   "src/os/*.cpp"
-   "src/os/*.h"
-   "src/repo/*.cpp"
-   "src/repo/*.h"
-   "src/server/*.cpp"
-   "src/server/*.h"
-   "src/server/handler/*.cpp"
-   "src/server/handler/*.h"
+# Sources are listed explicitly (not globbed) so adding/removing a file is a
+# CMakeLists edit that reliably triggers a reconfigure. Main.cpp is built into
+# the app target below, not the library.
+set(LIB_SRCS
+   src/agent/KidmonAgent.cpp
+   src/common/Enums.cpp
+   src/common/Utils.cpp
+   src/config/Config.cpp
+   src/data/Messages.cpp
+   src/data/Types.cpp
+   src/repo/AsyncRepository.cpp
+   src/repo/FileSystemRepository.cpp
+   src/server/AgentConnection.cpp
+   src/server/AgentManager.cpp
+   src/server/KidmonServer.cpp
+   src/server/handler/AuthorizationHandler.cpp
+   src/server/handler/DataHandler.cpp
 )
 
 if(WIN32)
    # Windows
-   file(GLOB OS_WIN
-      "src/os/win/*.h"
-      "src/os/win/*.cpp"
+   list(APPEND LIB_SRCS
+      src/os/win/Api.cpp
+      src/os/win/Api.h
+      src/os/win/GuiUtils.h
+      src/os/win/ProcessLauncher.cpp
+      src/os/win/ProcessLauncher.h
+      src/os/win/Window.cpp
+      src/os/win/Window.h
    )
-   list(APPEND LIB_SRCS ${OS_WIN})
 elseif (APPLE)
     # macOS
-    file(GLOB OS_MAC
-        "src/os/mac/*.h"
-        "src/os/mac/*.cpp"
+    list(APPEND LIB_SRCS
+       src/os/mac/Api.cpp
+       src/os/mac/Api.h
+       src/os/mac/ProcessLauncher.cpp
+       src/os/mac/ProcessLauncher.h
+       src/os/mac/Window.cpp
+       src/os/mac/Window.h
     )
-    list(APPEND LIB_SRCS ${OS_MAC})
 elseif(UNIX)
    # Linux, BSD, Solaris, Minix
-   file(GLOB OS_LINUX
-      "src/os/linux/*.h"
-      "src/os/linux/*.cpp"
+   list(APPEND LIB_SRCS
+      src/os/linux/Api.cpp
+      src/os/linux/Api.h
+      src/os/linux/ProcessLauncher.cpp
+      src/os/linux/ProcessLauncher.h
+      src/os/linux/Window.cpp
+      src/os/linux/Window.h
    )
-   list(APPEND LIB_SRCS ${OS_LINUX})
 endif()
-
-list(FILTER LIB_SRCS EXCLUDE REGEX ".*Main.cpp")
 
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(cxxopts CONFIG REQUIRED)

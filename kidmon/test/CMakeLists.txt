@@ -1,9 +1,13 @@
 set(PROJECT_TST kidmon-test)
 
-file(GLOB_RECURSE TEST_SRCS
-   "*.cpp"
-   "common/*.cpp"
-   "repo/*.cpp"
+set(TEST_SRCS
+   common/TracerTest.cpp
+   common/UtilsTest.cpp
+   data/MessagesTest.cpp
+   os/ApiTest.cpp
+   repo/AsyncRepositoryTest.cpp
+   repo/FileSystemRepositoryTest.cpp
+   server/AgentManagerTest.cpp
 )
 
 add_executable(${PROJECT_TST} ${TEST_SRCS})
