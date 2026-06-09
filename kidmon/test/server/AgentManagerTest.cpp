@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include "support/Helpers.h"
+
 #include <kidmon/server/AgentManager.h>
 #include <kidmon/server/handler/AuthorizationHandler.h>
 #include <kidmon/server/handler/DataHandler.h>
@@ -10,8 +12,6 @@
 #include <core/network/TcpClient.h>
 #include <core/network/TcpCommunicator.h>
 #include <core/utils/File.h>
-#include <core/utils/Str.h>
-#include <core/utils/Sys.h>
 #include <core/utils/Log.h>
 
 #include <nlohmann/json.hpp>
@@ -21,8 +21,8 @@
 #include <optional>
 
 using namespace km;
+using namespace km::test;
 using namespace core::tcp;
-using namespace std::chrono_literals;
 using core::utl::MuteLogger;
 
 namespace {
@@ -70,12 +70,8 @@ TEST(AgentManagerTest, SecondConcurrentAgentIsRejected)
     sopts.port = 51'123; // distinct from a possibly-running server (51097)
     svr.listen(sopts);
 
-    const std::string username = core::str::ws2s(core::sys::activeUserName());
-    const std::string authMsg = [&] {
-        nlohmann::ordered_json js;
-        msgs::buildAuthMsg(token, username, js);
-        return js.dump();
-    }();
+    const std::string username = activeUser();
+    const std::string authMsg = makeAuthMsg(token, username);
 
     ClientState c1(ioc);
     ClientState c2(ioc);
@@ -88,21 +84,6 @@ TEST(AgentManagerTest, SecondConcurrentAgentIsRejected)
         {
             ioc.stop();
         }
-    };
-
-    const auto parseAuthorized = [](const std::string& msg) -> std::optional<bool> {
-        try
-        {
-            const auto js = nlohmann::json::parse(msg);
-            if (js.contains("answer") && js["answer"].contains("authorized"))
-            {
-                return js["answer"]["authorized"].get<bool>();
-            }
-        }
-        catch (const std::exception&)
-        {
-        }
-        return std::nullopt;
     };
 
     const Client::Options copts {"127.0.0.1", sopts.port};
@@ -183,12 +164,8 @@ TEST(AgentManagerTest, HeartbeatFromAuthorizedAgentKeepsConnection)
     sopts.port = 51'124;
     svr.listen(sopts);
 
-    const std::string username = core::str::ws2s(core::sys::activeUserName());
-    const std::string authMsg = [&] {
-        nlohmann::ordered_json js;
-        msgs::buildAuthMsg(token, username, js);
-        return js.dump();
-    }();
+    const std::string username = activeUser();
+    const std::string authMsg = makeAuthMsg(token, username);
     const std::string heartbeatMsg = [] {
         nlohmann::ordered_json js;
         msgs::buildHeartbeat(1000, 900, js);
