@@ -6,26 +6,7 @@
 
 ### Major — correctness & "documented but not implemented"
 
-
 **M3 — There is no config file, despite claims otherwise.** [Todo.md](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/doc/Todo.md) marks "Server and agent should have their own config" as _Done_, and CLAUDE.md says config is JSON — but [Config.cpp](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/src/config/Config.cpp) only computes directories, [Main.cpp](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/src/Main.cpp) never loads a file, and `takeSnapshots` / `calcSha` / intervals are hardcoded defaults that nothing ever sets. Snapshots and SHA are effectively dead-off. Either implement loading or stop claiming it.
-
----
-
-### Design / maintainability
-
-
----
-
-### Recommended priority order
-
-|Pri|Item|Why|
-|---|---|---|
-|**P0**|C1 path traversal; C2 CSPRNG token; C4 frame cap|Active vulnerabilities in a possibly-root daemon|
-|**P0**|C3 token off the command line|The auth gate is currently bypassable by any local user|
-|**P1**|M1 off-thread disk I/O; M4 spawn race; M5 bogus-entry bug|Stability/correctness of the running system|
-|**P1**|M2 idle detection + heartbeat|Without it the core metric (time-on-task) is wrong|
-|**P2**|M3 real config; D1 single serialization path; M6 protocol/status consistency|Removes "documented but fake" surfaces and drift risk|
-|**P3**|D2 CMake globs; D3 wasted work; D6 docs cleanup; D5 magic numbers|Hygiene|
 
 ---
 
@@ -61,8 +42,6 @@ The current flow (agent samples → JSON-over-TCP → server validates → block
 * Performance — the gap vs. real dedup tools
     * No parallel hashing. Detection is fully single-threaded (DuplicateDetector.cpp:126-177). Hashing is the dominant cost and is embarrassingly parallel across same-size buckets. On a large photo/video corpus this is the difference between minutes and seconds. This is the single biggest performance limitation.
     * No partial/progressive hashing. Same-size files go straight to a full SHA-256 of the entire file. Production dedupers hash the first ~4–64 KB first and only full-hash the survivors. With many same-size-but-different files (extremely common for media), you're reading entire multi-GB files needlessly. SHA-256 is also overkill for a candidate check — a fast non-crypto hash (xxHash/BLAKE3) for screening, with full compare/crypto only on collision, would be much faster.
-  
-## Kidmon issues
 
 ### Critical — security (this is a surveillance daemon; treat it like one)
 
@@ -99,4 +78,4 @@ These matter precisely because the tool can be installed as a **root `daemon`** 
 
 **D5 — Magic port `51097` and intervals duplicated** across `KidmonServer::Config`, `KidmonAgent::Config`, and docs. One source of truth.
 
-**D7 — `queryRawDataDir` filename-range logic is hard to follow and likely buggy at year boundaries** ([FileSystemRepository.cpp:186](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/src/repo/FileSystemRepository.cpp#L186)) — overlapping conditions with `keepGoing` folded into the directory-iterator filter, and the directory is iterated unsorted while the logic assumes ordering. Decompose and unit-test the boundary cases explicitly.
+* D7 — `queryRawDataDir` filename-range logic decomposed and unit-tested. The boundary checks now live in pure helpers (`yearInRange` / `rawFileInRange` in `src/repo/RawFileRange.h`) with explicit year-boundary tests (`test/repo/RawFileRangeTest.cpp`). Fixed alongside: the multi-year path previously skipped the `is_regular_file()` check and the early-stop (`keepGoing`) check, and iterated the directory unsorted while stop-early callbacks assume chronological order — files are now collected, range-filtered, and sorted before reading.

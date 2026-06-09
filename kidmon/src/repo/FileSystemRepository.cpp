@@ -240,17 +240,15 @@ bool queryRawDataDir(const Filter& filter,
         }
 
         StopWatch timer;
-        readEntries(filter.username(),
-                    file,
-                    [&keepGoing, &cb, &filter](Entry& entry) {
-                        if (entry.timestamp.capture >= filter.from() &&
-                            entry.timestamp.capture <= filter.to())
-                        {
-                            keepGoing = cb(entry);
-                        }
+        readEntries(filter.username(), file, [&keepGoing, &cb, &filter](Entry& entry) {
+            if (entry.timestamp.capture >= filter.from() &&
+                entry.timestamp.capture <= filter.to())
+            {
+                keepGoing = cb(entry);
+            }
 
-                        return keepGoing;
-                    });
+            return keepGoing;
+        });
         spdlog::debug("File: '{}' is processed in {}",
                       file.filename(),
                       str::humanizeDuration(timer.elapsed()));
