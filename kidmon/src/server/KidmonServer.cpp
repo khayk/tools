@@ -132,8 +132,9 @@ public:
 
         try
         {
-            spdlog::trace("healthCheck");
-
+            // No per-tick logging: in steady state the check does nothing, so
+            // tracing every tick is pure noise. Only the actions below (spawning
+            // an agent) are worth a line.
             if (agentRunning())
             {
                 // An agent is established; clear any pending-spawn marker so that
@@ -155,6 +156,7 @@ public:
                 const Env env = {{std::string(constants::ENV_AUTH_TOKEN), token}};
                 authHandler_.setToken(token);
 
+                spdlog::info("No authorized agent; spawning one");
                 launcher_->launch(core::sys::currentProcessPath(), args, env);
                 spawnedAt_ = time_point::clock::now();
             }

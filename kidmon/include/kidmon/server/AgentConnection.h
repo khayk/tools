@@ -43,6 +43,13 @@ private:
     AuthorizationCb authCb_;
 
     /**
+     * @brief Handle one inbound message: parse, route to the auth/data handler,
+     *        and reply. Heartbeats are acknowledged without logging or
+     *        persisting anything.
+     */
+    void onMessage(const std::string& msg);
+
+    /**
      * @brief Advance the connection state machine.
      *
      * @return false if the transition was vetoed (e.g. the manager already has

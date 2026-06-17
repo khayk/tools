@@ -30,70 +30,7 @@ AgentConnection::AgentConnection(AuthorizationHandler& authHandler,
     , authCb_(defAuthHandler)
 {
     comm_.onMsg([this](const std::string& msg) {
-        try
-        {
-            spdlog::debug("Server rcvd: {} bytes", msg.size());
-
-            const auto payload = nlohmann::json::parse(msg);
-            nlohmann::json answer;
-            std::string error;
-
-            bool handled = false;
-            if (currentState_ == State::Authorized)
-            {
-                if (msgs::isHeartbeatMsg(payload))
-                {
-                    // Keep-alive only: the agent sends these while the user is
-                    // idle. Nothing to persist -- receiving it already reset the
-                    // peer-drop timer, which is the whole point.
-                    handled = true;
-                }
-                else
-                {
-                    handled = dataHandler_.handle(payload, answer, error);
-                }
-            }
-            else
-            {
-                handled = authHandler_.handle(payload, answer, error);
-                if (handled && error.empty() && !transitionTo(State::Authorized))
-                {
-                    // Token was valid but another agent is already authorized;
-                    // refuse this connection instead of letting it inject data.
-                    answer["authorized"] = false;
-                    error = "An authorized agent already exists";
-                }
-            }
-
-            if (!handled)
-            {
-                error = "Unexpected message";
-            }
-
-            // Honor the protocol contract: status 0 means the request was
-            // handled, non-zero signals failure and carries the reason in
-            // "error". Previously this always sent status 0, so the agent's
-            // failure branch (which keys off status != 0) never fired.
-            nlohmann::ordered_json js;
-            const int status = error.empty() ? 0 : 1;
-            msgs::buildResponse(status, error, answer, js);
-            const auto res = js.dump();
-            spdlog::debug("Server sent: {} bytes", res.size());
-            comm_.sendAsync(res);
-
-            if (!error.empty())
-            {
-                spdlog::error("Request handling failed, details: {}", error);
-                transitionTo(State::Disconnected);
-                close();
-            }
-        }
-        catch (const std::exception& ex)
-        {
-            spdlog::error("Exception in request handling, details: {}", ex.what());
-            transitionTo(State::Disconnected);
-            close();
-        }
+        onMessage(msg);
     });
 
     onError([this](const ErrorCode& ec) {
@@ -139,6 +76,86 @@ AgentConnection::~AgentConnection()
 {
     spdlog::info("Dropped: {}", fmt::ptr(this));
     transitionTo(State::Disconnected);
+}
+
+void AgentConnection::onMessage(const std::string& msg)
+{
+    try
+    {
+        const auto payload = nlohmann::json::parse(msg);
+        nlohmann::json answer;
+        std::string error;
+
+        // Heartbeats arrive on the agent's keep-alive cadence and carry no
+        // data; logging their byte counts only floods the log in steady state.
+        // Skip the rcvd/sent lines for them and keep them for real traffic,
+        // which is the only case worth tracing.
+        bool handled = false;
+        bool heartbeat = false;
+        if (currentState_ == State::Authorized)
+        {
+            if (msgs::isHeartbeatMsg(payload))
+            {
+                // Keep-alive only: the agent sends these while the user is idle.
+                // Nothing to persist -- receiving it already reset the peer-drop
+                // timer, which is the whole point.
+                handled = true;
+                heartbeat = true;
+            }
+            else
+            {
+                handled = dataHandler_.handle(payload, answer, error);
+            }
+        }
+        else
+        {
+            handled = authHandler_.handle(payload, answer, error);
+            if (handled && error.empty() && !transitionTo(State::Authorized))
+            {
+                // Token was valid but another agent is already authorized;
+                // refuse this connection instead of letting it inject data.
+                answer["authorized"] = false;
+                error = "An authorized agent already exists";
+            }
+        }
+
+        if (!heartbeat)
+        {
+            spdlog::debug("Server rcvd: {} bytes", msg.size());
+        }
+
+        if (!handled)
+        {
+            error = "Unexpected message";
+        }
+
+        // Honor the protocol contract: status 0 means the request was handled,
+        // non-zero signals failure and carries the reason in "error".
+        // Previously this always sent status 0, so the agent's failure branch
+        // (which keys off status != 0) never fired.
+        nlohmann::ordered_json js;
+        const int status = error.empty() ? 0 : 1;
+        msgs::buildResponse(status, error, answer, js);
+        const auto res = js.dump();
+        if (!heartbeat)
+        {
+            spdlog::debug("Server sent: {} bytes", res.size());
+        }
+        comm_.sendAsync(res);
+
+        if (!error.empty())
+        {
+            spdlog::error("Request handling failed, details: {}", error);
+            transitionTo(State::Disconnected);
+            close();
+        }
+    }
+    catch (const std::exception& ex)
+    {
+        spdlog::error("Exception in request handling, details: {}", ex.what());
+        transitionTo(State::Disconnected);
+        close();
+    }
 }
 
 void AgentConnection::onAuth(AuthorizationCb authCb)

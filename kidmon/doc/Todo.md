@@ -1,22 +1,16 @@
 # Todo
 
 * Troubleshoot why the kidmon-reports workings so slow (a small amount of data is processed during ~300ms)
+* Each run of the server/agent needs to create it's own log file, with unique name and an intuitive pattern.
+* Probably agent logs better to live in `logs/agent` folder and servers logs in `logs/server`. The same thing for kidmon reports: `logs/reports`.
+* Unit test for kidmon before I start adding more functionality
+* Statistics about number of messages or any relevant info, at the end of app or periodically
+* Way to communicate with server, to tell her display stats
+* Create new log file for each run
 
 ## Open Issues
 
-### Major — correctness & "documented but not implemented"
 
-**M3 — There is no config file, despite claims otherwise.** [Todo.md](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/doc/Todo.md) marks "Server and agent should have their own config" as _Done_, and CLAUDE.md says config is JSON — but [Config.cpp](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/src/config/Config.cpp) only computes directories, [Main.cpp](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/src/Main.cpp) never loads a file, and `takeSnapshots` / `calcSha` / intervals are hardcoded defaults that nothing ever sets. Snapshots and SHA are effectively dead-off. Either implement loading or stop claiming it.
-
----
-
-### If I were redesigning the data path
-
-The current flow (agent samples → JSON-over-TCP → server validates → blocking append to per-day raw `.dat`, separate image files) is reasonable for a prototype but has the wrong center of gravity. I'd:
-
-1. **Move idle detection into the agent** and emit _interval_ records (window X focused from t0–t1, active vs idle) instead of point samples — smaller, and directly answers "how long."
-2. **Persist via a writer thread / queue** so the network loop never blocks on disk, and consider **SQLite** (already half-scaffolded in the CMake comments) instead of hand-rolled per-day text + directory-scan queries — your `queryRawDataDir` complexity is re-implementing an index that SQLite gives for free, and kidmon-reports being "slow" (the open Todo item) is a symptom of scanning flat files.
-3. **One schema, one codec** (D1), validated and bounded at the trust boundary (C1/C4).
 
 ## In Progress
 
@@ -79,3 +73,14 @@ These matter precisely because the tool can be installed as a **root `daemon`** 
 **D5 — Magic port `51097` and intervals duplicated** across `KidmonServer::Config`, `KidmonAgent::Config`, and docs. One source of truth.
 
 * D7 — `queryRawDataDir` filename-range logic decomposed and unit-tested. The boundary checks now live in pure helpers (`yearInRange` / `rawFileInRange` in `src/repo/RawFileRange.h`) with explicit year-boundary tests (`test/repo/RawFileRangeTest.cpp`). Fixed alongside: the multi-year path previously skipped the `is_regular_file()` check and the early-stop (`keepGoing`) check, and iterated the directory unsorted while stop-early callbacks assume chronological order — files are now collected, range-filtered, and sorted before reading.
+* Server produces these logs every 2 seconds. What would you suggest to reduce the noise and make it more userful
+    ```
+    [2026-06-09 23:23:54.165][1327322][T]  healthCheck
+    [2026-06-09 23:23:54.255][1327322][D]  Server rcvd: 344 bytes
+    [2026-06-09 23:23:54.256][1327322][D]  Server sent: 12 bytes
+    [2026-06-09 23:23:56.166][1327322][T]  healthCheck
+    ```
+
+### Postponed
+
+**M3 — There is no config file, despite claims otherwise.** [Todo.md](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/doc/Todo.md) marks "Server and agent should have their own config" as _Done_, and CLAUDE.md says config is JSON — but [Config.cpp](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/src/config/Config.cpp) only computes directories, [Main.cpp](vscode-webview://1gb5lhr0m94kasl6evhkc8d1ki7u850arsrvkfgpjgp7a5sr2v4t/kidmon/src/Main.cpp) never loads a file, and `takeSnapshots` / `calcSha` / intervals are hardcoded defaults that nothing ever sets. Snapshots and SHA are effectively dead-off. Either implement loading or stop claiming it.
