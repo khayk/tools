@@ -38,6 +38,8 @@ elseif (APPLE)
     list(APPEND LIB_SRCS
        src/os/mac/Api.cpp
        src/os/mac/Api.h
+       src/os/mac/AppPath.cpp
+       src/os/mac/AppPath.h
        src/os/mac/ProcessLauncher.cpp
        src/os/mac/ProcessLauncher.h
        src/os/mac/Window.cpp
@@ -87,6 +89,8 @@ if(APPLE)
     target_link_libraries(${PROJECT_LIB} PRIVATE
         "-framework CoreGraphics"
         "-framework ImageIO"
+        # LaunchServices, for locating an application by its bundle identifier.
+        "-framework CoreServices"
     )
 endif()
 

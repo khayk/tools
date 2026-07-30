@@ -13,6 +13,7 @@ ubuild/
 .vs/
 .vscode/
 out/
+graphify-out/
 
 # Prerequisites
 *.d

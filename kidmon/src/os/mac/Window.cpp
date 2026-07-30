@@ -1,4 +1,5 @@
 #include "Window.h"
+#include "AppPath.h"
 
 #include <kidmon/geometry/Dimensions.h>
 #include <kidmon/geometry/Point.h>
@@ -40,7 +41,9 @@ fs::path WindowImpl::ownerProcessPath() const
     std::array<char, PROC_PIDPATHINFO_MAXSIZE> buf {};
     if (proc_pidpath(static_cast<pid_t>(pid_), buf.data(), buf.size()) > 0)
     {
-        return {buf.data()};
+        // The kernel does not always hand back the name the application is
+        // installed under, see resolveRealAppPath.
+        return resolveRealAppPath(fs::path(buf.data()));
     }
     return {};
 }
