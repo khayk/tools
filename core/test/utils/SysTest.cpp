@@ -269,4 +269,19 @@ TEST(UtilsSysTests, ProcessMemoryUsageInvalidPid)
     EXPECT_NO_THROW(processMemoryUsage(0xFFFFFFFFU));
 }
 
+// ---------------------------------------------------------------------------
+// currentProcessPeakMemoryUsage
+// ---------------------------------------------------------------------------
+
+TEST(UtilsSysTests, CurrentProcessPeakMemoryUsageNonZero)
+{
+    EXPECT_GT(currentProcessPeakMemoryUsage(), 0);
+}
+
+TEST(UtilsSysTests, CurrentProcessPeakMemoryUsageAtLeastCurrent)
+{
+    // The peak can never be smaller than the currently resident memory.
+    EXPECT_GE(currentProcessPeakMemoryUsage(), currentProcessMemoryUsage());
+}
+
 } // namespace

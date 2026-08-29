@@ -1,5 +1,6 @@
 #include <SystemConfiguration/SystemConfiguration.h>
 #include <libproc.h>
+#include <sys/resource.h>
 #include <unistd.h>
 #include <array>
 #include <stdexcept>
@@ -44,6 +45,14 @@ size_t processMemoryUsage(uint32_t pid)
     const int ret =
         proc_pidinfo(static_cast<int>(pid), PROC_PIDTASKINFO, 0, &info, sizeof(info));
     return ret > 0 ? static_cast<size_t>(info.pti_resident_size) : 0;
+}
+
+size_t currentProcessPeakMemoryUsage()
+{
+    // ru_maxrss is already expressed in bytes on macOS (unlike Linux, where it's kB).
+    struct rusage usage {};
+    return getrusage(RUSAGE_SELF, &usage) == 0 ? static_cast<size_t>(usage.ru_maxrss)
+                                               : 0;
 }
 
 } // namespace core::sys

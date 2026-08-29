@@ -10,6 +10,13 @@
 
 ## Open Issues
 
+### Reuse vcpkg toolchain, but optimized WITH debug symbols
+cmake -B build/profiling -S . \
+  --toolchain "$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" \
+  -G Ninja \
+  -DCMAKE_BUILD_TYPE=RelWithDebInfo
+cmake --build build/profiling --target kidmon-reports-app -j8
+
 
 
 ## In Progress

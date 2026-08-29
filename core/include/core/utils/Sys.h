@@ -48,4 +48,12 @@ size_t processMemoryUsage(uint32_t pid);
  */
 size_t currentProcessMemoryUsage();
 
+/**
+ * @brief Returns the peak (high-water mark) number of bytes ever occupied by the
+ *        current process since it started
+ *
+ * @return Peak allocated memory in bytes
+ */
+size_t currentProcessPeakMemoryUsage();
+
 } // namespace core::sys

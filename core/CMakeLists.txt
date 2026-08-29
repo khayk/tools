@@ -38,6 +38,7 @@ set(UTILS_FILES
     src/utils/File.cpp
     src/utils/FileDetail.h
     src/utils/Log.cpp
+    src/utils/MemoryMonitor.cpp
     src/utils/SingleInstanceChecker.cpp
     src/utils/StopWatch.cpp
     src/utils/Str.cpp

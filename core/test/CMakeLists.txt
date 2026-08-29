@@ -15,6 +15,7 @@ set(UTILS_FILES
     utils/FileTest.cpp
     utils/FmtExtTest.cpp
     utils/LogTest.cpp
+    utils/MemoryMonitorTest.cpp
     utils/NumberTest.cpp
     utils/ParallelTest.cpp
     utils/SingleInstanceCheckerTest.cpp

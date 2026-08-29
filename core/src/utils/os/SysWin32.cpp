@@ -135,4 +135,16 @@ size_t processMemoryUsage(uint32_t pid)
     return memory;
 }
 
+size_t currentProcessPeakMemoryUsage()
+{
+    PROCESS_MEMORY_COUNTERS pmc {};
+
+    if (GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc)))
+    {
+        return static_cast<size_t>(pmc.PeakWorkingSetSize);
+    }
+
+    return 0;
+}
+
 } // namespace core::sys

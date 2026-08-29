@@ -44,6 +44,34 @@ std::string getExecutablePathReadlink(int pid)
     return std::string {buffer.data(), static_cast<size_t>(count)};
 }
 
+// Reads a single "Key:    <value> kB" line from /proc/<pid>/status and returns
+// the value converted to bytes, or 0 if the field could not be found.
+size_t readStatusFieldBytes(int pid, std::string_view field)
+{
+    const std::string filename = std::format("/proc/{}/status", pid);
+    std::ifstream file(filename, std::ios::in);
+
+    if (!file.is_open())
+    {
+        return 0;
+    }
+
+    std::string line;
+    size_t valueKb = 0;
+    while (getline(file, line))
+    {
+        if (line.starts_with(field))
+        {
+            std::istringstream iss(line);
+            std::string label;
+            iss >> label >> valueKb;
+            break;
+        }
+    }
+
+    return valueKb * 1024;
+}
+
 } // namespace
 
 namespace core::sys {
@@ -90,28 +118,13 @@ fs::path currentProcessPath()
 
 size_t processMemoryUsage(uint32_t pid)
 {
-    const std::string filename = std::format("/proc/{}/status", pid);
-    std::ifstream file(filename, std::ios::in);
+    return readStatusFieldBytes(static_cast<int>(pid), "VmRSS:");
+}
 
-    if (!file.is_open())
-    {
-        return 0;
-    }
-
-    std::string line;
-    size_t memory = 0;
-    while (getline(file, line))
-    {
-        if (line.starts_with("VmRSS:"))
-        {
-            std::istringstream iss(line);
-            std::string label;
-            iss >> label >> memory;
-            break;
-        }
-    }
-
-    return memory * 1024;
+size_t currentProcessPeakMemoryUsage()
+{
+    // VmHWM is the "high water mark" — the peak resident set size ever reached.
+    return readStatusFieldBytes(getpid(), "VmHWM:");
 }
 
 } // namespace core::sys
