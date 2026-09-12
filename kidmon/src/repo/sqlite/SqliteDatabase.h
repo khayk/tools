@@ -5,6 +5,7 @@
 #include <sqlite3.h>
 
 #include <cstdint>
+#include <memory>
 #include <string_view>
 
 namespace km::sqlite {
@@ -22,12 +23,6 @@ class Database
 {
 public:
     explicit Database(const fs::path& file);
-    ~Database();
-
-    Database(const Database&) = delete;
-    Database& operator=(const Database&) = delete;
-    Database(Database&& other) noexcept;
-    Database& operator=(Database&& other) noexcept;
 
     /// Runs statements with no parameters and no result rows (DDL, PRAGMAs).
     void exec(std::string_view sql) const;
@@ -38,7 +33,15 @@ public:
     [[nodiscard]] std::int64_t lastInsertRowId() const noexcept;
 
 private:
-    sqlite3* db_ {nullptr};
+    struct Closer
+    {
+        void operator()(sqlite3* db) const noexcept
+        {
+            sqlite3_close_v2(db);
+        }
+    };
+
+    std::unique_ptr<sqlite3, Closer> db_;
 };
 
 } // namespace km::sqlite

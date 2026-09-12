@@ -5,7 +5,6 @@
 
 #include <format>
 #include <stdexcept>
-#include <utility>
 
 namespace km::sqlite {
 
@@ -25,45 +24,20 @@ Database::Database(const fs::path& file)
     // does not permit concurrent use from two threads at once.
     const int flags =
         SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX;
-    if (sqlite3_open_v2(core::file::path2s(file).c_str(), &db_, flags, nullptr) !=
-        SQLITE_OK)
-    {
-        const std::string msg = std::format("Unable to open sqlite database '{}': {}",
-                                            core::file::path2s(file),
-                                            db_ != nullptr ? sqlite3_errmsg(db_) : "");
-        if (db_ != nullptr)
-        {
-            sqlite3_close_v2(db_);
-            db_ = nullptr;
-        }
-        throw std::runtime_error(msg);
-    }
-}
 
-Database::~Database()
-{
-    if (db_ != nullptr)
-    {
-        sqlite3_close_v2(db_);
-    }
-}
+    sqlite3* raw = nullptr;
+    const int rc =
+        sqlite3_open_v2(core::file::path2s(file).c_str(), &raw, flags, nullptr);
+    // sqlite may allocate a connection object even on failure; take ownership
+    // unconditionally so it gets closed either way (via ~Database on throw).
+    db_.reset(raw);
 
-Database::Database(Database&& other) noexcept
-    : db_(std::exchange(other.db_, nullptr))
-{
-}
-
-Database& Database::operator=(Database&& other) noexcept
-{
-    if (this != &other)
+    if (rc != SQLITE_OK)
     {
-        if (db_ != nullptr)
-        {
-            sqlite3_close_v2(db_);
-        }
-        db_ = std::exchange(other.db_, nullptr);
+        throwSqliteError(db_.get(),
+                         std::format("Unable to open sqlite database '{}'",
+                                     core::file::path2s(file)));
     }
-    return *this;
 }
 
 void Database::exec(std::string_view sql) const
@@ -72,7 +46,7 @@ void Database::exec(std::string_view sql) const
     // sqlite3_exec requires a null-terminated string; std::string_view is not
     // guaranteed to be, so materialize one.
     const std::string owned(sql);
-    if (sqlite3_exec(db_, owned.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK)
+    if (sqlite3_exec(db_.get(), owned.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK)
     {
         const std::string msg = std::format("Failed to execute sql '{}': {}",
                                             owned,
@@ -85,20 +59,20 @@ void Database::exec(std::string_view sql) const
 Statement Database::prepare(std::string_view sql) const
 {
     sqlite3_stmt* stmt = nullptr;
-    if (sqlite3_prepare_v2(db_,
+    if (sqlite3_prepare_v2(db_.get(),
                            sql.data(),
                            static_cast<int>(sql.size()),
                            &stmt,
                            nullptr) != SQLITE_OK)
     {
-        throwSqliteError(db_, std::format("Failed to prepare sql '{}'", sql));
+        throwSqliteError(db_.get(), std::format("Failed to prepare sql '{}'", sql));
     }
     return Statement(stmt);
 }
 
 std::int64_t Database::lastInsertRowId() const noexcept
 {
-    return sqlite3_last_insert_rowid(db_);
+    return sqlite3_last_insert_rowid(db_.get());
 }
 
 } // namespace km::sqlite

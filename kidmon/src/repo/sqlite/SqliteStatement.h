@@ -3,6 +3,7 @@
 #include <sqlite3.h>
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <string_view>
 
@@ -20,12 +21,6 @@ class Statement
 public:
     Statement() = default;
     explicit Statement(sqlite3_stmt* stmt) noexcept;
-    ~Statement();
-
-    Statement(const Statement&) = delete;
-    Statement& operator=(const Statement&) = delete;
-    Statement(Statement&& other) noexcept;
-    Statement& operator=(Statement&& other) noexcept;
 
     Statement& bindInt64(int index, std::int64_t value);
     Statement& bindText(int index, std::string_view value);
@@ -47,11 +42,17 @@ public:
     [[nodiscard]] bool columnIsNull(int index) const;
 
 private:
-    // Finalizes whatever this instance currently owns (if anything) and takes
-    // ownership of `stmt` instead. Used by the move operations.
-    void finalizeAndTake(sqlite3_stmt* stmt) noexcept;
+    // unique_ptr makes ownership explicit and copy non-constructible/movable
+    // "for free" -- no hand-written destructor or move operations needed.
+    struct Finalizer
+    {
+        void operator()(sqlite3_stmt* stmt) const noexcept
+        {
+            sqlite3_finalize(stmt);
+        }
+    };
 
-    sqlite3_stmt* stmt_ {nullptr};
+    std::unique_ptr<sqlite3_stmt, Finalizer> stmt_;
 };
 
 } // namespace km::sqlite
