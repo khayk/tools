@@ -13,10 +13,13 @@
 #include <atomic>
 #include <chrono>
 #include <functional>
+#include <initializer_list>
+#include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <thread>
+#include <vector>
 
 // Shared helpers for the agent/server IPC tests: message (de)serialization,
 // the active-user lookup the auth handshake depends on, and a small harness for
@@ -127,6 +130,56 @@ inline void pumpUntil(IoContext& ioc,
     {
         ioc.run_for(50ms);
     }
+}
+
+// A core::tcp::Connection stays alive as long as it has a pending async
+// operation, regardless of whether the object that wired up its callbacks
+// (a fake server/agent, a handler, ...) is still around. If that owning
+// object is destroyed first, the connection -- and the "this"-capturing
+// callbacks it holds -- outlive it, and get invoked with a dangling pointer
+// once ioc is torn down and abandons whatever is still pending.
+//
+// Call this (while the owning object and ioc are both still alive, typically
+// right before the end of a test) to force-close the given connections and
+// run their abort completions immediately, so any lingering shared_ptr<Connection>
+// is released -- and its callbacks fired -- deterministically, here and now.
+inline void closeConnections(
+    IoContext& ioc,
+    const std::vector<std::weak_ptr<core::tcp::Connection>>& conns)
+{
+    for (const auto& weak : conns)
+    {
+        if (auto conn = weak.lock())
+        {
+            conn->close();
+        }
+    }
+
+    // Most callers reach here after ioc.stop() (e.g. from a completion
+    // handler that decided the test is done), which leaves ioc "stopped":
+    // poll() would otherwise return immediately without running anything.
+    // A single poll() may only unwind one step of a cancellation chain (e.g.
+    // the read completes, but a still-pending timer wait needs a separate
+    // pass), so keep polling -- restarting as needed -- until nothing is
+    // left to run.
+    for (int i = 0; i < 8; ++i)
+    {
+        if (ioc.stopped())
+        {
+            ioc.restart();
+        }
+        if (ioc.poll() == 0)
+        {
+            break;
+        }
+    }
+}
+
+inline void closeConnections(
+    IoContext& ioc,
+    std::initializer_list<std::weak_ptr<core::tcp::Connection>> conns)
+{
+    closeConnections(ioc, std::vector<std::weak_ptr<core::tcp::Connection>>(conns));
 }
 
 } // namespace km::test

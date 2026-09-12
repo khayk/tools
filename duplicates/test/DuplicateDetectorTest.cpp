@@ -23,6 +23,22 @@ using namespace core;
 namespace tools::dups {
 namespace {
 
+// AddressSanitizer wraps every allocation with redzones and defers frees into
+// a quarantine, inflating RSS well past what a plain allocator would use for
+// the same workload -- so the tight memory budget below isn't meaningful
+// under ASan and would fail regardless of real efficiency.
+#if defined(__SANITIZE_ADDRESS__)
+constexpr bool kAsanEnabled = true;
+#elif defined(__has_feature)
+    #if __has_feature(address_sanitizer)
+constexpr bool kAsanEnabled = true;
+    #else
+constexpr bool kAsanEnabled = false;
+    #endif
+#else
+constexpr bool kAsanEnabled = false;
+#endif
+
 using GenFileCb = std::function<void(const fs::path&)>;
 void generateFiles(size_t numFiles,
                    size_t filesPerLevel,
@@ -347,11 +363,14 @@ TEST(DuplicateDetectorTest, MetricsThresholds)
 #endif
 
     const auto endMem = sys::currentProcessMemoryUsage();
+    if (!kAsanEnabled)
+    {
 #ifdef _WIN32
-    EXPECT_LE(endMem - startMem, 64 * 1024 * 1024);
+        EXPECT_LE(endMem - startMem, 64 * 1024 * 1024);
 #else
-    EXPECT_LE(endMem - startMem, 34 * 1024 * 1024);
+        EXPECT_LE(endMem - startMem, 34 * 1024 * 1024);
 #endif
+    }
 }
 
 TEST(DuplicateDetectorTest, Progress)
