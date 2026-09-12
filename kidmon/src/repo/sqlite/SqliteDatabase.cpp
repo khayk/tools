@@ -48,11 +48,10 @@ void Database::exec(std::string_view sql) const
     const std::string owned(sql);
     if (sqlite3_exec(db_.get(), owned.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK)
     {
-        const std::string msg = std::format("Failed to execute sql '{}': {}",
+        std::unique_ptr<char, decltype(&sqlite3_free)> msg(errMsg, sqlite3_free);
+        throw std::runtime_error(std::format("Failed to execute sql '{}': {}",
                                             owned,
-                                            errMsg != nullptr ? errMsg : "");
-        sqlite3_free(errMsg);
-        throw std::runtime_error(msg);
+                                            errMsg != nullptr ? errMsg : ""));
     }
 }
 
