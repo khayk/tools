@@ -8,7 +8,10 @@ set(TEST_SRCS
    os/ApiTest.cpp
    repo/AsyncRepositoryTest.cpp
    repo/FileSystemRepositoryTest.cpp
+   repo/MultiRepositoryTest.cpp
    repo/RawFileRangeTest.cpp
+   repo/RepositoryMigratorTest.cpp
+   repo/SqliteRepositoryTest.cpp
    server/AgentManagerTest.cpp
    server/KidmonServerTest.cpp
 )

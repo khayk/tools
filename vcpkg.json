@@ -10,6 +10,7 @@
     "openssl",
     "spdlog",
     "pkgconf",
+    "sqlite3",
     "tomlplusplus"
   ]
 }
