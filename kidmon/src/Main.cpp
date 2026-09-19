@@ -128,7 +128,7 @@ int main(int argc, char* argv[])
         }
 
         AppConfig appConf;
-        appConf.logFilename = logFile;
+        appConf.logFilename = std::move(logFile);
 
         // Configure logger as soon as possible
         core::utl::configureLogger(appConf.logsDir, appConf.logFilename);
