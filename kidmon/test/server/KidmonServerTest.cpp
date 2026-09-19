@@ -42,6 +42,9 @@ public:
         cfg.spawnAgent = false;
         // Keep the health-check timer quiet; with spawnAgent=false it is a no-op.
         cfg.activityCheckInterval = 1s;
+        // These tests assert against persistedEntryCount(), which reads the
+        // filesystem layout directly -- no need to also stand up a sqlite db.
+        cfg.repoBackend = RepositoryBackend::FileSystem;
 
         server_ = std::make_unique<KidmonServer>(cfg);
         runner_.emplace(*server_);
@@ -91,6 +94,7 @@ struct FakeAgent
 
     Client client;
     std::unique_ptr<Communicator> comm;
+    std::weak_ptr<Connection> conn;
     std::optional<bool> authorized;
     int responses {0};
     bool disconnected {false};
@@ -115,6 +119,7 @@ TEST(KidmonServerTest, AcceptsAuthorizedAgentAndPersistsData)
     bool dataSent = false;
 
     agent.client.onConnect([&](Connection& conn) {
+        agent.conn = conn.weak_from_this();
         agent.comm = std::make_unique<Communicator>(conn);
         agent.comm->onMsg([&](const std::string& msg) {
             ++agent.responses;
@@ -157,6 +162,10 @@ TEST(KidmonServerTest, AcceptsAuthorizedAgentAndPersistsData)
     // Destroy the server so the async write is flushed, then assert it landed.
     server.stop();
     EXPECT_EQ(server.persistedEntryCount(), 1U);
+
+    // Force-close and drain now, while agent is still alive, instead of
+    // leaving it for ioc's destructor. See closeConnections() for why.
+    closeConnections(ioc, {agent.conn});
 }
 
 // An agent presenting the wrong token must not be authorized and must not be
@@ -174,6 +183,7 @@ TEST(KidmonServerTest, RejectsAgentWithInvalidToken)
     FakeAgent agent(ioc);
 
     agent.client.onConnect([&](Connection& conn) {
+        agent.conn = conn.weak_from_this();
         agent.comm = std::make_unique<Communicator>(conn);
         agent.comm->onMsg([&](const std::string& msg) {
             ++agent.responses;
@@ -204,4 +214,8 @@ TEST(KidmonServerTest, RejectsAgentWithInvalidToken)
 
     server.stop();
     EXPECT_EQ(server.persistedEntryCount(), 0U);
+
+    // Force-close and drain now, while agent is still alive, instead of
+    // leaving it for ioc's destructor. See closeConnections() for why.
+    closeConnections(ioc, {agent.conn});
 }

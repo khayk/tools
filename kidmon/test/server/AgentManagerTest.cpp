@@ -37,6 +37,7 @@ struct ClientState
 
     Client client;
     std::unique_ptr<Communicator> comm;
+    std::weak_ptr<Connection> conn;
     std::optional<bool> authorized; // answer.authorized from the server response
     bool gotResponse {false};
     bool disconnected {false};
@@ -88,8 +89,18 @@ TEST(AgentManagerTest, SecondConcurrentAgentIsRejected)
 
     const Client::Options copts {"127.0.0.1", sopts.port};
 
+    // Tracks connections svr accepts, so they can be force-closed below --
+    // otherwise they outlive mngr/svr (kept alive by their own pending read),
+    // and firing their callbacks against a dangling mngr/svr crashes at
+    // ioc's teardown. See closeConnections() for the full story.
+    std::vector<std::weak_ptr<Connection>> serverConns;
+    svr.onConnection([&](Connection& conn) {
+        serverConns.push_back(conn.weak_from_this());
+    });
+
     const auto wire = [&](ClientState& c, const std::function<void()>& afterMsg) {
         c.client.onConnect([&, afterMsg](Connection& conn) {
+            c.conn = conn.weak_from_this();
             c.comm = std::make_unique<Communicator>(conn);
             c.comm->onMsg([&, afterMsg](const std::string& msg) {
                 c.gotResponse = true;
@@ -139,6 +150,11 @@ TEST(AgentManagerTest, SecondConcurrentAgentIsRejected)
     // and/or dropped, but it must not be treated as an authorized agent.
     EXPECT_FALSE(c2.authorized.value_or(false));
     EXPECT_TRUE(c2.disconnected || c2.authorized == std::optional<bool>(false));
+
+    // Force-close and drain now, while mngr/svr/authHandler/dataHandler are
+    // still alive, instead of leaving it for ioc's destructor.
+    closeConnections(ioc, {c1.conn, c2.conn});
+    closeConnections(ioc, serverConns);
 }
 
 // A heartbeat from an authorized agent must be accepted (keep-alive), not routed
@@ -172,11 +188,21 @@ TEST(AgentManagerTest, HeartbeatFromAuthorizedAgentKeepsConnection)
         return js.dump();
     }();
 
+    // Tracks connections svr accepts, so they can be force-closed below --
+    // otherwise they outlive mngr/svr (kept alive by their own pending read),
+    // and firing their callbacks against a dangling mngr/svr crashes at
+    // ioc's teardown. See closeConnections() for the full story.
+    std::vector<std::weak_ptr<Connection>> serverConns;
+    svr.onConnection([&](Connection& conn) {
+        serverConns.push_back(conn.weak_from_this());
+    });
+
     ClientState c(ioc);
     bool heartbeatSent = false;
     int responses = 0;
 
     c.client.onConnect([&](Connection& conn) {
+        c.conn = conn.weak_from_this();
         c.comm = std::make_unique<Communicator>(conn);
         c.comm->onMsg([&](const std::string&) {
             ++responses;
@@ -217,4 +243,9 @@ TEST(AgentManagerTest, HeartbeatFromAuthorizedAgentKeepsConnection)
     EXPECT_GE(responses, 2);
     EXPECT_FALSE(c.disconnected);
     EXPECT_TRUE(mngr.hasAuthorizedAgent());
+
+    // Force-close and drain now, while mngr/svr/authHandler/dataHandler are
+    // still alive, instead of leaving it for ioc's destructor.
+    closeConnections(ioc, {c.conn});
+    closeConnections(ioc, serverConns);
 }

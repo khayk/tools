@@ -32,10 +32,12 @@ public:
     using Responder = std::function<std::string(const nlohmann::json&)>;
 
     FakeServer(IoContext& ioc, uint16_t port, Responder responder)
-        : svr_(ioc)
+        : ioc_(ioc)
+        , svr_(ioc)
         , responder_(std::move(responder))
     {
         svr_.onConnection([this](Connection& conn) {
+            conn_ = conn.weak_from_this();
             comm_ = std::make_unique<Communicator>(conn);
             comm_->onMsg([this](const std::string& msg) {
                 onAgentMsg(msg);
@@ -52,6 +54,14 @@ public:
         Server::Options opts;
         opts.port = port;
         svr_.listen(opts);
+    }
+
+    // The accepted connection is kept alive by its own pending async read, not
+    // by svr_ -- so it can outlive this object unless force-closed here, while
+    // "this" (captured by the callbacks above) is still valid.
+    ~FakeServer()
+    {
+        closeConnections(ioc_, {conn_});
     }
 
     [[nodiscard]] bool gotAuth() const noexcept
@@ -89,9 +99,11 @@ private:
         comm_->sendAsync(responder_(authMsg_));
     }
 
+    IoContext& ioc_;
     Server svr_;
     Responder responder_;
     std::unique_ptr<Communicator> comm_;
+    std::weak_ptr<Connection> conn_;
     nlohmann::json authMsg_;
     bool gotAuth_ {false};
     bool agentDisconnected_ {false};

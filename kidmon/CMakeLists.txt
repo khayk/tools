@@ -15,6 +15,11 @@ set(LIB_SRCS
    src/data/Types.cpp
    src/repo/AsyncRepository.cpp
    src/repo/FileSystemRepository.cpp
+   src/repo/MultiRepository.cpp
+   src/repo/RepositoryMigrator.cpp
+   src/repo/SqliteRepository.cpp
+   src/repo/sqlite/SqliteDatabase.cpp
+   src/repo/sqlite/SqliteStatement.cpp
    src/server/AgentConnection.cpp
    src/server/AgentManager.cpp
    src/server/KidmonServer.cpp
@@ -60,15 +65,8 @@ endif()
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(cxxopts CONFIG REQUIRED)
 find_package(glaze CONFIG REQUIRED)
+find_package(unofficial-sqlite3 CONFIG REQUIRED)
 # find_package(msgpack-c CONFIG REQUIRED)
-
-# find_package(SQLite3 REQUIRED)
-# find_package(SqliteOrm REQUIRED)
-# if(SqliteOrm_FOUND)
-#    message("SqliteOrm found    : ${SqliteOrm_INCLUDE_DIRS}")
-# endif()
-
-# message("Sqlite3 library    : ${SQLite3_LIBRARY}")
 
 # Adding a library project
 add_library(${PROJECT_LIB} ${LIB_SRCS})
@@ -83,6 +81,7 @@ target_link_libraries(${PROJECT_LIB} PUBLIC
 
 target_link_libraries(${PROJECT_LIB} PRIVATE
     glaze::glaze
+    unofficial::sqlite3::sqlite3
 )
 
 if(APPLE)
@@ -107,9 +106,6 @@ endif()
 add_executable(${PROJECT_APP} src/Main.cpp)
 BuildInfo(${PROJECT_APP})
 target_link_libraries (${PROJECT_APP} PRIVATE ${PROJECT_LIB} cxxopts::cxxopts)
-
-# target_link_libraries(${PROJECT_APP} sqlite_orm::sqlite_orm)
-# target_link_libraries(${PROJECT_APP} PRIVATE ${SQLite3_LIBRARY})
 
 # For code coverage
 InstrumentForCoverage(${PROJECT_LIB})
