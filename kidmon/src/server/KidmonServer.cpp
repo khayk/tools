@@ -2,6 +2,8 @@
 #include <kidmon/server/handler/AuthorizationHandler.h>
 #include <kidmon/server/handler/DataHandler.h>
 #include <kidmon/repo/FileSystemRepository.h>
+#include <kidmon/repo/SqliteRepository.h>
+#include <kidmon/repo/MultiRepository.h>
 #include <kidmon/repo/AsyncRepository.h>
 #include <kidmon/server/AgentManager.h>
 #include <kidmon/os/Api.h>
@@ -24,17 +26,64 @@ namespace net = boost::asio;
 
 namespace km {
 
+namespace {
+
+// Constructs only the repository backend(s) cfg.repoBackend selects, so e.g.
+// RepositoryBackend::FileSystem never touches dbFile at all -- a test that
+// only cares about the filesystem layout isn't forced to pay for a sqlite db
+// it never asked for.
+std::vector<std::unique_ptr<IRepository>> buildRepos(const KidmonServer::Config& cfg)
+{
+    std::vector<std::unique_ptr<IRepository>> repos;
+
+    if (cfg.repoBackend == RepositoryBackend::FileSystem ||
+        cfg.repoBackend == RepositoryBackend::Both)
+    {
+        repos.push_back(std::make_unique<FileSystemRepository>(cfg.reportsDir));
+    }
+
+    if (cfg.repoBackend == RepositoryBackend::Sqlite ||
+        cfg.repoBackend == RepositoryBackend::Both)
+    {
+        repos.push_back(std::make_unique<SqliteRepository>(cfg.dbFile));
+    }
+
+    return repos;
+}
+
+// repos must outlive the returned MultiRepository. repos[0] (FileSystem, when
+// present) stays the query source: kidmon-reports reads the filesystem
+// directly, so nothing about that path changes here.
+std::vector<std::reference_wrapper<IRepository>> asRefs(
+    const std::vector<std::unique_ptr<IRepository>>& repos)
+{
+    std::vector<std::reference_wrapper<IRepository>> refs;
+    refs.reserve(repos.size());
+
+    for (const auto& repo : repos)
+    {
+        refs.emplace_back(*repo);
+    }
+
+    return refs;
+}
+
+} // namespace
+
 class KidmonServer::Impl
 {
     using work_guard = net::executor_work_guard<net::io_context::executor_type>;
     using time_point = net::steady_timer::time_point;
 
     AuthorizationHandler authHandler_;
-    FileSystemRepository repo_;
-    // Decorates repo_ so blocking disk writes run on a worker thread instead of
-    // the asio event-loop thread. Declared after repo_ and before dataHandler_
-    // so it is constructed after its target and destroyed before it: the worker
-    // flushes pending writes into repo_ while repo_ is still alive.
+    // Only the backend(s) cfg.repoBackend selects are constructed.
+    std::vector<std::unique_ptr<IRepository>> repos_;
+    // Fans writes out to every repository in repos_.
+    MultiRepository multiRepo_;
+    // Decorates multiRepo_ so blocking disk writes run on a worker thread
+    // instead of the asio event-loop thread. Declared after multiRepo_ and
+    // before dataHandler_ so it is constructed after its targets and destroyed
+    // before them: the worker flushes pending writes while they're still alive.
     AsyncRepository asyncRepo_;
     DataHandler dataHandler_;
 
@@ -74,8 +123,9 @@ class KidmonServer::Impl
 
 public:
     explicit Impl(const Config& cfg)
-        : repo_(cfg.reportsDir)
-        , asyncRepo_(repo_)
+        : repos_(buildRepos(cfg))
+        , multiRepo_(asRefs(repos_))
+        , asyncRepo_(multiRepo_)
         , dataHandler_(asyncRepo_)
         , svr_(ioc_)
         , timer_(ioc_)
@@ -170,6 +220,7 @@ public:
 
 KidmonServer::Config::Config(const fs::path& appDataDir)
     : reportsDir {appDataDir / "reports"}
+    , dbFile {appDataDir / "kidmon.db"}
     , activityCheckInterval {defaults::ACTIVITY_CHECK_INTERVAL}
     , peerDropTimeout {activityCheckInterval + defaults::PEER_DROP_GRACE}
     , listenPort {defaults::SERVER_PORT}

@@ -42,6 +42,9 @@ public:
         cfg.spawnAgent = false;
         // Keep the health-check timer quiet; with spawnAgent=false it is a no-op.
         cfg.activityCheckInterval = 1s;
+        // These tests assert against persistedEntryCount(), which reads the
+        // filesystem layout directly -- no need to also stand up a sqlite db.
+        cfg.repoBackend = RepositoryBackend::FileSystem;
 
         server_ = std::make_unique<KidmonServer>(cfg);
         runner_.emplace(*server_);
