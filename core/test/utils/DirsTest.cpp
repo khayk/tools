@@ -56,6 +56,16 @@ TEST(UtilsDirsTests, HomeIsValid)
     EXPECT_EQ(path, home());
 }
 
+TEST(UtilsDirsTests, CurrentIsValid)
+{
+    std::error_code ec;
+    const auto path = current(ec);
+    EXPECT_FALSE(ec) << ec.message();
+    checkValidPath(path);
+    EXPECT_EQ(path, current());
+    EXPECT_EQ(path, fs::current_path());
+}
+
 TEST(UtilsDirsTests, TempIsValid)
 {
     std::error_code ec;

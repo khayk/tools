@@ -18,6 +18,13 @@ fs::path home();
 
 
 /**
+ * @brief The current working directory of the process.
+ */
+fs::path current(std::error_code& ec);
+fs::path current();
+
+
+/**
  * @brief Temp directory of the current account. On Windows systems this is %TEMP%
  */
 fs::path temp(std::error_code& ec);

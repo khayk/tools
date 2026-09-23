@@ -2,6 +2,22 @@
 
 namespace core::dirs {
 
+fs::path current(std::error_code& ec)
+{
+    return fs::current_path(ec);
+}
+
+fs::path current()
+{
+    std::error_code ec;
+    auto path = current(ec);
+    if (ec)
+    {
+        throw std::system_error(ec, "Failed to retrieve current directory");
+    }
+    return path;
+}
+
 fs::path home()
 {
     std::error_code ec;
