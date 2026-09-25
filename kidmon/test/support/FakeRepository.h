@@ -24,6 +24,12 @@ public:
         byUser_[entry.username].push_back(entry);
     }
 
+    void addAll(std::span<const Entry> entries) override
+    {
+        ++addAllCalls_;
+        IRepository::addAll(entries);
+    }
+
     void queryUsers(const UserCb& cb) const override
     {
         for (const auto& kv : byUser_)
@@ -72,6 +78,11 @@ public:
         return addCalls_;
     }
 
+    [[nodiscard]] std::size_t addAllCalls() const noexcept
+    {
+        return addAllCalls_;
+    }
+
     // Makes the next N add() calls throw instead of storing.
     void failNextAdds(std::size_t count) noexcept
     {
@@ -81,6 +92,7 @@ public:
 private:
     std::map<std::string, std::vector<Entry>> byUser_;
     std::size_t addCalls_ {0};
+    std::size_t addAllCalls_ {0};
     std::size_t failNextAdds_ {0};
 };
 
