@@ -24,7 +24,8 @@ MultiRepository::MultiRepository(IRepository& primary, IRepository& secondary)
 {
 }
 
-void MultiRepository::add(const Entry& entry)
+template <typename Write>
+void MultiRepository::fanOut(const Write& write)
 {
     // Every repository gets a write attempt; only the primary's failure propagates.
     std::exception_ptr primaryFailure;
@@ -33,7 +34,7 @@ void MultiRepository::add(const Entry& entry)
     {
         try
         {
-            repos_[i].get().add(entry);
+            write(repos_[i].get());
         }
         catch (const std::exception& ex)
         {
@@ -44,7 +45,7 @@ void MultiRepository::add(const Entry& entry)
             else
             {
                 spdlog::error("MultiRepository: secondary repository #{} failed to "
-                              "persist entry: {}",
+                              "persist: {}",
                               i,
                               ex.what());
             }
@@ -55,6 +56,20 @@ void MultiRepository::add(const Entry& entry)
     {
         std::rethrow_exception(primaryFailure);
     }
+}
+
+void MultiRepository::add(const Entry& entry)
+{
+    fanOut([&](IRepository& repo) {
+        repo.add(entry);
+    });
+}
+
+void MultiRepository::addAll(std::span<const Entry> entries)
+{
+    fanOut([&](IRepository& repo) {
+        repo.addAll(entries);
+    });
 }
 
 void MultiRepository::queryUsers(const UserCb& cb) const

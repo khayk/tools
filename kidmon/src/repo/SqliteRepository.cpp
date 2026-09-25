@@ -1,12 +1,17 @@
 #include <kidmon/repo/SqliteRepository.h>
 #include <core/utils/File.h>
+#include <core/utils/FmtExt.h>
 
 #include "sqlite/SqliteDatabase.h"
 #include "sqlite/SqliteStatement.h"
 #include "sqlite/SqliteTransaction.h"
 
+#include <spdlog/spdlog.h>
+
 #include <mutex>
+#include <span>
 #include <stdexcept>
+#include <unordered_map>
 
 namespace km {
 
@@ -52,8 +57,6 @@ CREATE TABLE IF NOT EXISTS entries (
     captured_at   INTEGER NOT NULL,
     duration_ms   INTEGER NOT NULL
 );
-
-CREATE INDEX IF NOT EXISTS idx_entries_user_time ON entries(user_id, captured_at);
 )sql";
 
 // Keeps the SELECT column order and the read-back order from drifting apart.
@@ -95,6 +98,76 @@ class SqliteRepository::Impl
     // Guards the connection: a query can run concurrently with a write.
     mutable std::mutex mtx_;
 
+    // Users and processes rarely change, so their ids are resolved once.
+    std::unordered_map<std::string, std::int64_t> userIds_;
+    std::unordered_map<std::string, std::int64_t> processIds_;
+
+    std::int64_t userId(const std::string& username)
+    {
+        if (const auto it = userIds_.find(username); it != userIds_.end())
+        {
+            return it->second;
+        }
+
+        upsertUser_.reset();
+        upsertUser_.bindText(1, username);
+        if (!upsertUser_.step())
+        {
+            throw std::runtime_error("Failed to resolve user id");
+        }
+        const auto id = upsertUser_.columnInt64(0);
+        // A RETURNING statement stays "in progress" after one step(); sqlite
+        // refuses to COMMIT until it's reset.
+        upsertUser_.reset();
+
+        userIds_.emplace(username, id);
+        return id;
+    }
+
+    std::int64_t processId(const ProcessInfo& info)
+    {
+        const auto path = core::file::path2s(info.processPath);
+        auto key = path + '\0' + info.sha256;
+        if (const auto it = processIds_.find(key); it != processIds_.end())
+        {
+            return it->second;
+        }
+
+        upsertProcess_.reset();
+        upsertProcess_.bindText(1, path);
+        upsertProcess_.bindText(2, info.sha256);
+        if (!upsertProcess_.step())
+        {
+            throw std::runtime_error("Failed to resolve process id");
+        }
+        const auto id = upsertProcess_.columnInt64(0);
+        upsertProcess_.reset();
+
+        processIds_.emplace(std::move(key), id);
+        return id;
+    }
+
+    // Caller holds mtx_ and an open transaction.
+    void insert(const Entry& entry)
+    {
+        const auto& placement = entry.windowInfo.placement;
+
+        insertEntry_.reset();
+        insertEntry_.bindInt64(1, userId(entry.username))
+            .bindInt64(2, processId(entry.processInfo))
+            .bindText(3, entry.windowInfo.title)
+            .bindInt64(4, placement.leftTop().x())
+            .bindInt64(5, placement.leftTop().y())
+            .bindInt64(6, placement.width())
+            .bindInt64(7, placement.height())
+            .bindText(8, entry.windowInfo.image.name)
+            .bindBlob(9, entry.windowInfo.image.bytes)
+            .bindInt64(10, entry.windowInfo.image.encoded ? 1 : 0)
+            .bindInt64(11, toMillis(entry.timestamp.capture))
+            .bindInt64(12, entry.timestamp.duration.count());
+        insertEntry_.run();
+    }
+
 public:
     explicit Impl(fs::path dbFile)
         : dbFile_(std::move(dbFile))
@@ -106,6 +179,7 @@ public:
                  "PRAGMA synchronous = NORMAL;"
                  "PRAGMA foreign_keys = ON;");
         db_.exec(SCHEMA_SQL);
+        migrateSchema();
 
         // ON CONFLICT ... DO UPDATE ... RETURNING id is a get-or-create in one
         // round trip.
@@ -122,7 +196,8 @@ public:
         insertEntry_ = db_.prepare(
             "INSERT INTO entries(user_id, process_id, window_title, rect_x, rect_y, "
             "rect_w, rect_h, image_name, image_bytes, image_encoded, captured_at, "
-            "duration_ms) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12)");
+            "duration_ms) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12) "
+            "ON CONFLICT(user_id, captured_at) DO NOTHING");
 
         selectUsers_ = db_.prepare("SELECT username FROM users ORDER BY username");
 
@@ -137,57 +212,71 @@ public:
             "ORDER BY e.captured_at ASC, e.id ASC");
     }
 
+    std::int64_t userVersion() const
+    {
+        auto stmt = db_.prepare("PRAGMA user_version");
+        return stmt.step() ? stmt.columnInt64(0) : 0;
+    }
+
+    // Brings an existing database up to SCHEMA_VERSION, one step at a time.
+    // Each step runs in its own transaction together with its version bump.
+    void migrateSchema()
+    {
+        if (userVersion() < 1)
+        {
+            // v1: an entry is identified by user and capture time, so re-adding
+            // it (e.g. re-running a migration) is a no-op. Databases created
+            // before may already hold duplicates; keep the oldest of each.
+            sqlite::Transaction txn(db_);
+            auto dedup = db_.prepare("DELETE FROM entries WHERE id NOT IN ("
+                                     "SELECT MIN(id) FROM entries "
+                                     "GROUP BY user_id, captured_at)");
+            dedup.run();
+            const auto removed = db_.changes();
+            db_.exec("DROP INDEX IF EXISTS ux_entries_identity;"
+                     "DROP INDEX IF EXISTS idx_entries_user_time;"
+                     "CREATE UNIQUE INDEX IF NOT EXISTS ux_entries_user_time ON "
+                     "entries(user_id, captured_at);"
+                     "PRAGMA user_version = 1;");
+            txn.commit();
+
+            if (removed > 0)
+            {
+                spdlog::warn("{}: removed {} duplicate entries while upgrading "
+                             "the schema to v1",
+                             dbFile_,
+                             removed);
+            }
+        }
+    }
+
     const fs::path& dbFile() const noexcept
     {
         return dbFile_;
     }
 
-    void add(const Entry& entry)
+    // One transaction for the whole span: get-or-create + insert must all land
+    // or all roll back, and a single commit is far cheaper than one per entry.
+    void addAll(std::span<const Entry> entries)
     {
         const std::lock_guard lock(mtx_);
 
-        // Get-or-create + insert must all land or all roll back.
-        sqlite::Transaction txn(db_);
-
-        upsertUser_.reset();
-        upsertUser_.bindText(1, entry.username);
-        if (!upsertUser_.step())
+        try
         {
-            throw std::runtime_error("Failed to resolve user id");
+            sqlite::Transaction txn(db_);
+            for (const auto& entry : entries)
+            {
+                insert(entry);
+            }
+            txn.commit();
         }
-        const auto userId = upsertUser_.columnInt64(0);
-        // A RETURNING statement stays "in progress" after one step(); sqlite
-        // refuses to COMMIT until it's reset.
-        upsertUser_.reset();
-
-        upsertProcess_.reset();
-        upsertProcess_.bindText(1, core::file::path2s(entry.processInfo.processPath));
-        upsertProcess_.bindText(2, entry.processInfo.sha256);
-        if (!upsertProcess_.step())
+        catch (...)
         {
-            throw std::runtime_error("Failed to resolve process id");
+            // Ids resolved inside the rolled-back transaction may not exist.
+            userIds_.clear();
+            processIds_.clear();
+            throw;
         }
-        const auto processId = upsertProcess_.columnInt64(0);
-        upsertProcess_.reset();
-
-        const auto& placement = entry.windowInfo.placement;
-
-        insertEntry_.reset();
-        insertEntry_.bindInt64(1, userId)
-            .bindInt64(2, processId)
-            .bindText(3, entry.windowInfo.title)
-            .bindInt64(4, placement.leftTop().x())
-            .bindInt64(5, placement.leftTop().y())
-            .bindInt64(6, placement.width())
-            .bindInt64(7, placement.height())
-            .bindText(8, entry.windowInfo.image.name)
-            .bindBlob(9, entry.windowInfo.image.bytes)
-            .bindInt64(10, entry.windowInfo.image.encoded ? 1 : 0)
-            .bindInt64(11, toMillis(entry.timestamp.capture))
-            .bindInt64(12, entry.timestamp.duration.count());
-        insertEntry_.run();
-
-        txn.commit();
     }
 
     void queryUsers(const UserCb& cb) const
@@ -244,7 +333,12 @@ const fs::path& SqliteRepository::dbFile() const noexcept
 
 void SqliteRepository::add(const Entry& entry)
 {
-    pimpl_->add(entry);
+    pimpl_->addAll({&entry, 1});
+}
+
+void SqliteRepository::addAll(std::span<const Entry> entries)
+{
+    pimpl_->addAll(entries);
 }
 
 void SqliteRepository::queryUsers(const UserCb& cb) const

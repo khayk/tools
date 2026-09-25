@@ -189,3 +189,62 @@ TEST(SqliteRepositoryTest, EntryWithNoSnapshotRoundTrips)
     ASSERT_EQ(found.size(), 1U);
     EXPECT_EQ(found.front(), entry);
 }
+
+TEST(SqliteRepositoryTest, AddingSameEntryTwiceStoresItOnce)
+{
+    TempDir dir("kdmn-tst");
+    SqliteRepository repo(tempDbFile(dir));
+
+    const Entry entry = sampleEntry("john");
+    repo.add(entry);
+    repo.add(entry);
+
+    int count = 0;
+    repo.queryEntries(Filter("john"), [&count](Entry&) {
+        ++count;
+        return true;
+    });
+    EXPECT_EQ(count, 1);
+}
+
+TEST(SqliteRepositoryTest, AddAllStoresEveryEntryAndSkipsDuplicates)
+{
+    TempDir dir("kdmn-tst");
+    SqliteRepository repo(tempDbFile(dir));
+
+    std::vector<Entry> entries;
+    entries.reserve(100);
+    for (int i = 0; i < 100; ++i)
+    {
+        entries.push_back(sampleEntry("john", TimePoint(std::chrono::milliseconds(i))));
+    }
+    repo.addAll(entries);
+    repo.addAll(entries); // same (user, capture time) again
+
+    int count = 0;
+    repo.queryEntries(Filter("john"), [&count](Entry&) {
+        ++count;
+        return true;
+    });
+    EXPECT_EQ(count, 100);
+}
+
+TEST(SqliteRepositoryTest, ReopeningExistingDatabaseKeepsEntries)
+{
+    TempDir dir("kdmn-tst");
+    const Entry entry = sampleEntry("john");
+    {
+        SqliteRepository repo(tempDbFile(dir));
+        repo.add(entry);
+    }
+
+    SqliteRepository repo(tempDbFile(dir));
+    repo.add(entry); // still recognized as a duplicate after reopening
+
+    int count = 0;
+    repo.queryEntries(Filter("john"), [&count](Entry&) {
+        ++count;
+        return true;
+    });
+    EXPECT_EQ(count, 1);
+}

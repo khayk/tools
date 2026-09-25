@@ -74,4 +74,9 @@ std::int64_t Database::lastInsertRowId() const noexcept
     return sqlite3_last_insert_rowid(db_.get());
 }
 
+std::int64_t Database::changes() const noexcept
+{
+    return sqlite3_changes64(db_.get());
+}
+
 } // namespace km::sqlite

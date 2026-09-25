@@ -32,6 +32,9 @@ public:
 
     [[nodiscard]] std::int64_t lastInsertRowId() const noexcept;
 
+    /// Rows changed by the most recent INSERT/UPDATE/DELETE.
+    [[nodiscard]] std::int64_t changes() const noexcept;
+
 private:
     struct Closer
     {

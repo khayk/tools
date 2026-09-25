@@ -20,6 +20,7 @@ public:
     [[nodiscard]] const fs::path& dbFile() const noexcept;
 
     void add(const Entry& entry) override;
+    void addAll(std::span<const Entry> entries) override;
     void queryUsers(const UserCb& cb) const override;
     void queryEntries(const Filter& filter, const EntryCb& cb) const override;
 
