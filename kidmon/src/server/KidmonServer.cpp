@@ -96,6 +96,7 @@ class KidmonServer::Impl
     ApiPtr api_;
     ProcessLauncherPtr launcher_;
     bool spawnAgent_;
+    std::string agentLogLevel_;
 
     // When set, an agent was spawned at this time but has not yet authorized.
     // Used to suppress re-spawning during a slow agent start (see healthCheck).
@@ -134,6 +135,7 @@ public:
         , api_(ApiFactory::create())
         , launcher_(api_->createProcessLauncher())
         , spawnAgent_(cfg.spawnAgent)
+        , agentLogLevel_(cfg.agentLogLevel)
         , spawnGracePeriod_(cfg.activityCheckInterval * 5)
     {
         spdlog::trace("Report dir: {}", cfg.reportsDir);
@@ -199,7 +201,12 @@ public:
                 // (each with a fresh token that would invalidate the previous
                 // agent's) while this one is still authorizing.
                 const auto token = utl::generateToken(16);
-                const Args args = {"--agent"};
+                Args args = {"--agent"};
+                if (!agentLogLevel_.empty())
+                {
+                    args.emplace_back("--log-level");
+                    args.emplace_back(agentLogLevel_);
+                }
 
                 // Pass the token via the environment, not argv, so it is not
                 // visible to other users in the process list.

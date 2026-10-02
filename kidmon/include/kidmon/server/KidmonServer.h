@@ -36,6 +36,9 @@ public:
         fs::path dbFile;
         std::string authToken;
 
+        // Forwarded to spawned agents as --log-level; empty uses their default.
+        std::string agentLogLevel;
+
         std::chrono::milliseconds activityCheckInterval;
         std::chrono::milliseconds peerDropTimeout;
 

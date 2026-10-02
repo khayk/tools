@@ -173,4 +173,16 @@ TEST_F(LogConfigureTests, ConfigureLoggerInstallsTwoSinks)
     EXPECT_EQ(spdlog::default_logger()->sinks().size(), 2U);
 }
 
+TEST_F(LogConfigureTests, ConfigureLoggerDefaultsToTrace)
+{
+    configureLogger(tempDir().path(), "default_level.log");
+    EXPECT_EQ(spdlog::default_logger()->level(), spdlog::level::trace);
+}
+
+TEST_F(LogConfigureTests, ConfigureLoggerAppliesLevel)
+{
+    configureLogger(tempDir().path(), "custom_level.log", spdlog::level::warn);
+    EXPECT_EQ(spdlog::default_logger()->level(), spdlog::level::warn);
+}
+
 } // namespace

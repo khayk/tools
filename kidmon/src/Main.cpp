@@ -102,6 +102,7 @@ int main(int argc, char* argv[])
             ("t,token", "Authorization token for agent", cxxopts::value<std::string>()->default_value(""))
             ("a,agent", "Run as an agent", cxxopts::value<bool>()->default_value("false"))
             ("p,passive", "Run server in a passive mode", cxxopts::value<bool>()->default_value("false"))
+            ("l,log-level", "Log level: trace, debug, info, warn, error, critical, off", cxxopts::value<std::string>()->default_value("trace"))
             ("h,help", "Print usage");
 
         // clang-format on
@@ -109,11 +110,20 @@ int main(int argc, char* argv[])
         auto result = opts.parse(argc, argv);
         const bool agentMode = result["agent"].as<bool>();
         const std::string token = result["token"].as<std::string>();
+        const std::string logLevel = result["log-level"].as<std::string>();
 
         if (result.contains("help"))
         {
             std::cout << opts.help() << '\n';
             return 0;
+        }
+
+        // from_str maps unknown names to off, so reject them explicitly
+        const auto level = spdlog::level::from_str(logLevel);
+        if (level == spdlog::level::off && logLevel != "off")
+        {
+            std::cerr << "Invalid log level: " << logLevel << '\n';
+            return 1;
         }
 
         std::wstring uniqueName;
@@ -129,9 +139,12 @@ int main(int argc, char* argv[])
 
         AppConfig appConf;
         appConf.logFilename = std::move(logFile);
+        appConf.logLevel = level;
 
         // Configure logger as soon as possible
-        core::utl::configureLogger(appConf.logsDir, appConf.logFilename);
+        core::utl::configureLogger(appConf.logsDir,
+                                   appConf.logFilename,
+                                   appConf.logLevel);
 
         trace.emplace("",
                       std::format("{:-^80s}", "> START <"),
@@ -168,6 +181,7 @@ int main(int argc, char* argv[])
             KidmonServer::Config conf(appConf.appDataDir);
             conf.authToken = token;
             conf.spawnAgent = !result["passive"].as<bool>();
+            conf.agentLogLevel = logLevel;
 
             app = std::make_shared<KidmonServer>(conf);
         }

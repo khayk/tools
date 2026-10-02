@@ -11,7 +11,9 @@ namespace core::utl {
 
 fs::path makeLogFilename(std::string_view appName);
 
-void configureLogger(const fs::path& logsDir, const fs::path& logFilename);
+void configureLogger(const fs::path& logsDir,
+                     const fs::path& logFilename,
+                     spdlog::level::level_enum logLevel =spdlog::level::trace);
 
 void logBuildInfo(std::string_view version,
                   std::string_view commitSha,
