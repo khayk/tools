@@ -3,6 +3,7 @@ set -euo pipefail
 
 # ---------------------------------------------------------------------------
 # install-kidmon.sh  <binary-path>  <agent|daemon>  [--token <token>]
+#                    [--log-level <level>]
 #
 #   agent   → ~/Library/LaunchAgents/   (runs as current user, stops on logout)
 #   daemon  → /Library/LaunchDaemons/   (runs as root, survives logout, needs sudo)
@@ -11,16 +12,18 @@ set -euo pipefail
 LABEL="com.kidmon.server"
 PLIST_NAME="${LABEL}.plist"
 TOKEN=""
+LOG_LEVEL="info"
 
 # ---- argument parsing ------------------------------------------------------
 
 usage() {
-    echo "Usage: $0 <binary-path> <agent|daemon> [--token <value>]"
+    echo "Usage: $0 <binary-path> <agent|daemon> [--token <value>] [--log-level <level>]"
     echo ""
     echo "  binary-path   Absolute path to the kidmon-app binary"
     echo "  agent         Install as a per-user LaunchAgent"
     echo "  daemon        Install as a system LaunchDaemon (requires sudo)"
     echo "  --token       Authorization token passed to kidmon (optional)"
+    echo "  --log-level   trace|debug|info|warn|error|critical|off (default: info)"
     exit 1
 }
 
@@ -35,6 +38,11 @@ while [[ $# -gt 0 ]]; do
         --token)
             [[ $# -lt 2 ]] && { echo "error: --token requires a value"; exit 1; }
             TOKEN="$2"
+            shift 2
+            ;;
+        --log-level)
+            [[ $# -lt 2 ]] && { echo "error: --log-level requires a value"; exit 1; }
+            LOG_LEVEL="$2"
             shift 2
             ;;
         *) echo "error: unknown argument: $1"; usage ;;
@@ -68,6 +76,11 @@ case "$INSTALL_TYPE" in
     *) echo "error: install type must be 'agent' or 'daemon' (got: $INSTALL_TYPE)"; usage ;;
 esac
 
+case "$LOG_LEVEL" in
+    trace|debug|info|warn|error|critical|off) ;;
+    *) echo "error: invalid log level: $LOG_LEVEL"; usage ;;
+esac
+
 # ---- resolve paths ---------------------------------------------------------
 
 if [[ "$INSTALL_TYPE" == "daemon" ]]; then
@@ -88,6 +101,8 @@ build_program_arguments() {
     echo "    <key>ProgramArguments</key>"
     echo "    <array>"
     echo "        <string>${BINARY_PATH}</string>"
+    echo "        <string>--log-level</string>"
+    echo "        <string>${LOG_LEVEL}</string>"
     if [[ -n "$TOKEN" ]]; then
         echo "        <string>--token</string>"
         echo "        <string>${TOKEN}</string>"
@@ -131,6 +146,7 @@ EOF
 
 echo "==> Installing kidmon as $INSTALL_TYPE"
 echo "    binary : $BINARY_PATH"
+echo "    level  : $LOG_LEVEL"
 echo "    plist  : $PLIST_PATH"
 echo "    logs   : $LOG_DIR"
 
