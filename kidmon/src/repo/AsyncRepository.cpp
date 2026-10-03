@@ -25,7 +25,7 @@ AsyncRepository::AsyncRepository(IRepository& inner)
 AsyncRepository::~AsyncRepository()
 {
     {
-        const std::lock_guard lock(mtx_);
+        const std::scoped_lock lock(mtx_);
         stop_ = true;
     }
     cv_.notify_one();
@@ -40,7 +40,7 @@ void AsyncRepository::add(const Entry& entry)
 {
     std::size_t backlog = 0;
     {
-        const std::lock_guard lock(mtx_);
+        const std::scoped_lock lock(mtx_);
         queue_.push_back(entry);
         backlog = queue_.size();
     }

@@ -29,7 +29,7 @@ public:
      */
     [[nodiscard]] std::vector<LogEntry> messages() const
     {
-        std::lock_guard lock(mtx_);
+        const std::scoped_lock lock(mtx_);
         return entries_;
     }
 
@@ -38,7 +38,7 @@ public:
      */
     void clear()
     {
-        std::lock_guard lock(mtx_);
+        const std::scoped_lock lock(mtx_);
         entries_.clear();
     }
 
@@ -47,7 +47,7 @@ public:
      */
     [[nodiscard]] std::optional<std::string_view> lastMessage() const
     {
-        std::lock_guard lock(mtx_);
+        const std::scoped_lock lock(mtx_);
         if (entries_.empty())
         {
             return std::nullopt;
@@ -58,7 +58,7 @@ public:
 
     [[nodiscard]] bool contains(std::string_view message) const
     {
-        std::lock_guard lock(mtx_);
+        const std::scoped_lock lock(mtx_);
         return std::ranges::any_of(entries_, [message](const auto& entry) {
             return entry.message.contains(message);
         });
@@ -67,7 +67,7 @@ public:
     [[nodiscard]] bool contains(std::string_view message,
                                 spdlog::level::level_enum level) const
     {
-        std::lock_guard lock(mtx_);
+        const std::scoped_lock lock(mtx_);
         return std::ranges::any_of(entries_, [message, level](const auto& entry) {
             return entry.level == level && entry.message.contains(message);
         });
@@ -78,14 +78,14 @@ public:
      */
     [[nodiscard]] size_t count() const
     {
-        std::lock_guard lock(mtx_);
+        const std::scoped_lock lock(mtx_);
         return entries_.size();
     }
 
 protected:
     void sink_it_(const spdlog::details::log_msg& msg) override
     {
-        std::lock_guard lock(mtx_);
+        const std::scoped_lock lock(mtx_);
         entries_.emplace_back(msg.level,
                               std::string(msg.payload.data(), msg.payload.size()));
     }

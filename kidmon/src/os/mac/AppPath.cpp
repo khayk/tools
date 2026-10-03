@@ -148,7 +148,7 @@ fs::path cachedExecutable(const std::string& bundleId, const fs::path& tail)
     static std::mutex mutex;
     static std::unordered_map<std::string, fs::path> cache;
 
-    const std::lock_guard lock(mutex);
+    const std::scoped_lock lock(mutex);
     const auto it = cache.find(bundleId);
     if (it != cache.end())
     {

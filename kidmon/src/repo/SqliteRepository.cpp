@@ -259,7 +259,7 @@ public:
     // or all roll back, and a single commit is far cheaper than one per entry.
     void addAll(std::span<const Entry> entries)
     {
-        const std::lock_guard lock(mtx_);
+        const std::scoped_lock lock(mtx_);
 
         try
         {
@@ -281,7 +281,7 @@ public:
 
     void queryUsers(const UserCb& cb) const
     {
-        const std::lock_guard lock(mtx_);
+        const std::scoped_lock lock(mtx_);
 
         selectUsers_.reset();
         while (selectUsers_.step())
@@ -300,7 +300,7 @@ public:
             return;
         }
 
-        const std::lock_guard lock(mtx_);
+        const std::scoped_lock lock(mtx_);
 
         selectEntries_.reset();
         selectEntries_.bindText(1, filter.username())

@@ -29,7 +29,7 @@ public:
         }
 
         {
-            const std::lock_guard lock(mtx_);
+            const std::scoped_lock lock(mtx_);
             usernames_.push_back(entry.username);
         }
         cv_.notify_all();
@@ -58,7 +58,7 @@ public:
 
     std::size_t size() const
     {
-        const std::lock_guard lock(mtx_);
+        const std::scoped_lock lock(mtx_);
         return usernames_.size();
     }
 
