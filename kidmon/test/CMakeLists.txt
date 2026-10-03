@@ -7,6 +7,7 @@ set(TEST_SRCS
    data/MessagesTest.cpp
    os/ApiTest.cpp
    repo/AsyncRepositoryTest.cpp
+   repo/CountingRepositoryTest.cpp
    repo/FileSystemRepositoryTest.cpp
    repo/MultiRepositoryTest.cpp
    repo/RawFileRangeTest.cpp

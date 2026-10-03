@@ -23,6 +23,7 @@ public:
         // user as away: the agent then sends heartbeats instead of activity,
         // so idle time is not counted as time-on-task.
         std::chrono::milliseconds idleThreshold;
+        std::chrono::milliseconds statusReportInterval;
         bool takeSnapshots {};
         bool calcSha {};
         uint16_t serverPort {};

@@ -25,4 +25,7 @@ inline constexpr std::chrono::milliseconds SNAPSHOT_INTERVAL {10'000};
 // away, so idle time is not counted as time-on-task.
 inline constexpr std::chrono::milliseconds IDLE_THRESHOLD {60'000};
 
+// How often the agent and server log an info-level activity summary.
+inline constexpr std::chrono::milliseconds STATUS_REPORT_INTERVAL {15 * 60'000};
+
 } // namespace km::defaults

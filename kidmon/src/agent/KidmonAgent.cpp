@@ -7,6 +7,7 @@
 
 #include <core/utils/FmtExt.h>
 #include <core/utils/Str.h>
+#include <core/utils/File.h>
 #include <core/utils/Crypto.h>
 #include <core/network/TcpClient.h>
 #include <core/network/TcpCommunicator.h>
@@ -22,6 +23,10 @@
 #include <sstream>
 #include <chrono>
 #include <array>
+#include <algorithm>
+#include <format>
+#include <optional>
+#include <vector>
 
 namespace net = boost::asio;
 namespace fs = std::filesystem;
@@ -61,9 +66,51 @@ public:
 
 class Statistics
 {
+    using Clock = std::chrono::steady_clock;
+
+    static constexpr std::size_t TOP_APPS = 3;
+
     uint64_t numEvents_ {0};
 
+    // Counters for the periodic status line, reset by maybeReport().
+    std::chrono::milliseconds reportInterval_;
+    Clock::time_point lastReport_ {Clock::now()};
+    uint64_t entries_ {0};
+    uint64_t heartbeats_ {0};
+    uint64_t skipped_ {0};
+    uint64_t snapshots_ {0};
+    std::unordered_map<std::string, std::chrono::milliseconds> appTime_;
+
+    std::string topApps()
+    {
+        using AppTime = std::pair<std::string, std::chrono::milliseconds>;
+        std::vector<AppTime> apps(appTime_.begin(), appTime_.end());
+        const auto top = std::min(apps.size(), TOP_APPS);
+        std::partial_sort(apps.begin(),
+                          apps.begin() + static_cast<std::ptrdiff_t>(top),
+                          apps.end(),
+                          [](const AppTime& a, const AppTime& b) {
+                              return a.second > b.second;
+                          });
+
+        std::string out;
+        for (std::size_t i = 0; i < top; ++i)
+        {
+            out += std::format("{}{} {}",
+                               i == 0 ? "" : ", ",
+                               apps[i].first,
+                               core::str::humanizeDuration(apps[i].second));
+        }
+
+        return out.empty() ? "-" : out;
+    }
+
 public:
+    explicit Statistics(std::chrono::milliseconds reportInterval)
+        : reportInterval_(reportInterval)
+    {
+    }
+
     void report(std::ostream& oss) const
     {
         oss << "Total number of events collected: " << numEvents_;
@@ -77,6 +124,56 @@ public:
     [[nodiscard]] uint64_t numEvents() const noexcept
     {
         return numEvents_;
+    }
+
+    void addEntry(const fs::path& processPath, std::chrono::milliseconds duration)
+    {
+        ++entries_;
+        appTime_[core::file::path2s(processPath.filename())] += duration;
+    }
+
+    void addHeartbeat()
+    {
+        ++heartbeats_;
+    }
+
+    void addSkipped()
+    {
+        ++skipped_;
+    }
+
+    void addSnapshot()
+    {
+        ++snapshots_;
+    }
+
+    // Logs an info-level activity summary and resets the window counters once
+    // the report interval has elapsed.
+    void maybeReport(std::chrono::milliseconds uptime)
+    {
+        using core::str::humanizeDuration;
+        using std::chrono::duration_cast;
+        using std::chrono::milliseconds;
+
+        const auto now = Clock::now();
+        if (now - lastReport_ < reportInterval_)
+        {
+            return;
+        }
+
+        spdlog::info("Last {}: {} entries, {} idle heartbeats, {} skipped, "
+                     "{} snapshots | top: {} | uptime {}",
+                     humanizeDuration(duration_cast<milliseconds>(now - lastReport_)),
+                     entries_,
+                     heartbeats_,
+                     skipped_,
+                     snapshots_,
+                     topApps(),
+                     humanizeDuration(uptime));
+
+        lastReport_ = now;
+        entries_ = heartbeats_ = skipped_ = snapshots_ = 0;
+        appTime_.clear();
     }
 };
 
@@ -198,7 +295,10 @@ class KidmonAgent::Impl
     std::vector<char> wndContent_;
     std::unique_ptr<core::tcp::Communicator> comm_;
     AgentMsgHandler handler_;
-    Statistics stats_;
+    Statistics stats_ {cfg_.statusReportInterval};
+
+    // Set while the user is away; when the away period started.
+    std::optional<time_point> awaySince_;
 
     void initHandlers()
     {
@@ -288,6 +388,7 @@ class KidmonAgent::Impl
         const auto hb = js.dump();
         spdlog::debug("User idle for {} ms; sending heartbeat", idle.count());
         comm_->sendAsync(hb);
+        stats_.addHeartbeat();
     }
 
     void collectData()
@@ -297,8 +398,13 @@ class KidmonAgent::Impl
             collectData();
         });
 
+        const auto now = clock_type::now();
+        stats_.maybeReport(upTime_.elapsed());
+
         try
         {
+            using core::str::humanizeDuration;
+
             // While the user is away, do not record activity (it would count the
             // same window for hours). Send a heartbeat instead so the server
             // keeps the connection and knows we are still alive.
@@ -310,8 +416,24 @@ class KidmonAgent::Impl
             const auto idle = api_->idleTime();
             if (idle >= cfg_.idleThreshold && !api_->displayOn())
             {
+                if (!awaySince_)
+                {
+                    awaySince_ = now - idle;
+                    spdlog::info("User away (no input for {}, display off)",
+                                 humanizeDuration(idle));
+                }
+
                 sendHeartbeat(idle);
                 return;
+            }
+
+            if (awaySince_)
+            {
+                spdlog::info("User active again after {}",
+                             humanizeDuration(
+                                 std::chrono::duration_cast<std::chrono::milliseconds>(
+                                     now - *awaySince_)));
+                awaySince_.reset();
             }
 
             stats_.incrementEvents();
@@ -322,6 +444,7 @@ class KidmonAgent::Impl
             if (!window)
             {
                 spdlog::warn("Unable to detect foreground window");
+                stats_.addSkipped();
                 return;
             }
 
@@ -336,6 +459,7 @@ class KidmonAgent::Impl
             {
                 spdlog::warn("Unable to retrieve the full path of the processId: {}",
                              window->ownerProcessId());
+                stats_.addSkipped();
                 return;
             }
 
@@ -353,7 +477,6 @@ class KidmonAgent::Impl
             spdlog::debug("Foreground wnd: {}", oss.str());
             spdlog::debug("Executable: {}", entry.processInfo.processPath);
 
-            const auto now = clock_type::now();
             if (cfg_.takeSnapshots && nextCaptureTime_ < now)
             {
                 nextCaptureTime_ = now + cfg_.snapshotInterval;
@@ -376,6 +499,7 @@ class KidmonAgent::Impl
                         std::string_view(wndContent_.data(), wndContent_.size()));
                     entry.windowInfo.image.bytes = data;
                     entry.windowInfo.image.encoded = true;
+                    stats_.addSnapshot();
                 }
             }
 
@@ -385,6 +509,7 @@ class KidmonAgent::Impl
             const auto dataMsg = js.dump();
             spdlog::debug("Sending data message: {}", dataMsg);
             comm_->sendAsync(dataMsg);
+            stats_.addEntry(entry.processInfo.processPath, timeout_);
         }
         catch (const std::exception& e)
         {
@@ -440,8 +565,7 @@ KidmonAgent::Config::Config()
     : activityCheckInterval {defaults::ACTIVITY_CHECK_INTERVAL}
     , snapshotInterval {defaults::SNAPSHOT_INTERVAL}
     , idleThreshold {defaults::IDLE_THRESHOLD}
-    , takeSnapshots {false}
-    , calcSha {false}
+    , statusReportInterval {defaults::STATUS_REPORT_INTERVAL}
     , serverPort {defaults::SERVER_PORT}
 {
 }

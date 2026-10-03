@@ -14,6 +14,7 @@ set(LIB_SRCS
    src/data/Messages.cpp
    src/data/Types.cpp
    src/repo/AsyncRepository.cpp
+   src/repo/CountingRepository.cpp
    src/repo/FileSystemRepository.cpp
    src/repo/MultiRepository.cpp
    src/repo/RepositoryMigrator.cpp

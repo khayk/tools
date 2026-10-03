@@ -33,6 +33,7 @@ AgentManager::AgentManager(AuthorizationHandler& authHandler,
             {
                 spdlog::info("Agent successfully authorized: {}", fmt::ptr(conn));
                 authAgentConn_ = weakConn;
+                authorizedAt_ = std::chrono::steady_clock::now();
                 return true;
             }
 
@@ -70,6 +71,17 @@ AgentManager::AgentManager(AuthorizationHandler& authHandler,
 bool AgentManager::hasAuthorizedAgent() const
 {
     return !authAgentConn_.expired();
+}
+
+std::optional<std::chrono::milliseconds> AgentManager::authorizedFor() const
+{
+    if (!hasAuthorizedAgent())
+    {
+        return std::nullopt;
+    }
+
+    return std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now() - authorizedAt_);
 }
 
 } // namespace km

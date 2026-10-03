@@ -5,6 +5,7 @@
 #include <kidmon/repo/SqliteRepository.h>
 #include <kidmon/repo/MultiRepository.h>
 #include <kidmon/repo/AsyncRepository.h>
+#include <kidmon/repo/CountingRepository.h>
 #include <kidmon/server/AgentManager.h>
 #include <kidmon/os/Api.h>
 #include <kidmon/common/Utils.h>
@@ -15,6 +16,7 @@
 #include <core/utils/Str.h>
 #include <core/utils/Sys.h>
 #include <core/utils/FmtExt.h>
+#include <core/utils/StopWatch.h>
 
 #include <spdlog/spdlog.h>
 #include <boost/asio.hpp>
@@ -68,6 +70,61 @@ std::vector<std::reference_wrapper<IRepository>> asRefs(
     return refs;
 }
 
+// Logs an info-level summary of server activity once per interval, so the log
+// shows the server is alive even when nothing notable happens.
+class StatusReporter
+{
+    using Clock = std::chrono::steady_clock;
+
+    std::chrono::milliseconds interval_;
+    CountingRepository& repo_;
+    const StopWatch upTime_;
+    Clock::time_point lastReport_ {Clock::now()};
+    std::size_t spawns_ {0};
+
+public:
+    StatusReporter(std::chrono::milliseconds interval, CountingRepository& repo)
+        : interval_(interval)
+        , repo_(repo)
+    {
+    }
+
+    void agentSpawned() noexcept
+    {
+        ++spawns_;
+    }
+
+    // Logs and resets the window counters once the interval has elapsed.
+    void maybeReport(const AgentManager& agents)
+    {
+        using core::str::humanizeDuration;
+        using std::chrono::duration_cast;
+        using std::chrono::milliseconds;
+
+        const auto now = Clock::now();
+        if (now - lastReport_ < interval_)
+        {
+            return;
+        }
+
+        const auto counts = repo_.take();
+        const auto agentAge = agents.authorizedFor();
+
+        spdlog::info("Last {}: {} entries stored, {} failed | agent: {}, spawned {} "
+                     "| uptime {}",
+                     humanizeDuration(duration_cast<milliseconds>(now - lastReport_)),
+                     counts.stored,
+                     counts.failed,
+                     agentAge ? "connected " + humanizeDuration(*agentAge)
+                              : std::string("none"),
+                     spawns_,
+                     humanizeDuration(upTime_.elapsed()));
+
+        lastReport_ = now;
+        spawns_ = 0;
+    }
+};
+
 } // namespace
 
 class KidmonServer::Impl
@@ -80,8 +137,10 @@ class KidmonServer::Impl
     std::vector<std::unique_ptr<IRepository>> repos_;
     // Fans writes out to every repository in repos_.
     MultiRepository multiRepo_;
-    // Decorates multiRepo_ so blocking disk writes run on a worker thread
-    // instead of the asio event-loop thread. Declared after multiRepo_ and
+    // Counts writes that reach the backends, for the periodic status line.
+    CountingRepository countingRepo_;
+    // Decorates countingRepo_ so blocking disk writes run on a worker thread
+    // instead of the asio event-loop thread. Declared after its targets and
     // before dataHandler_ so it is constructed after its targets and destroyed
     // before them: the worker flushes pending writes while they're still alive.
     AsyncRepository asyncRepo_;
@@ -109,6 +168,8 @@ class KidmonServer::Impl
     // agent is dropped by the server before we ever consider re-spawning.
     std::chrono::milliseconds spawnGracePeriod_;
 
+    StatusReporter status_;
+
     [[nodiscard]] bool agentRunning() const
     {
         return agentMngr_->hasAuthorizedAgent();
@@ -126,7 +187,8 @@ public:
     explicit Impl(const Config& cfg)
         : repos_(buildRepos(cfg))
         , multiRepo_(asRefs(repos_))
-        , asyncRepo_(multiRepo_)
+        , countingRepo_(multiRepo_)
+        , asyncRepo_(countingRepo_)
         , dataHandler_(asyncRepo_)
         , svr_(ioc_)
         , timer_(ioc_)
@@ -137,6 +199,7 @@ public:
         , spawnAgent_(cfg.spawnAgent)
         , agentLogLevel_(cfg.agentLogLevel)
         , spawnGracePeriod_(cfg.activityCheckInterval * 5)
+        , status_(cfg.statusReportInterval, countingRepo_)
     {
         spdlog::trace("Report dir: {}", cfg.reportsDir);
 
@@ -216,7 +279,10 @@ public:
                 spdlog::info("No authorized agent; spawning one");
                 launcher_->launch(core::sys::currentProcessPath(), args, env);
                 spawnedAt_ = time_point::clock::now();
+                status_.agentSpawned();
             }
+
+            status_.maybeReport(*agentMngr_);
         }
         catch (const std::exception& e)
         {
@@ -230,6 +296,7 @@ KidmonServer::Config::Config(const fs::path& appDataDir)
     , dbFile {appDataDir / "kidmon.db"}
     , activityCheckInterval {defaults::ACTIVITY_CHECK_INTERVAL}
     , peerDropTimeout {activityCheckInterval + defaults::PEER_DROP_GRACE}
+    , statusReportInterval {defaults::STATUS_REPORT_INTERVAL}
     , listenPort {defaults::SERVER_PORT}
     , spawnAgent {true}
 {

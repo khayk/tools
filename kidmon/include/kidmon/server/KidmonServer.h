@@ -41,6 +41,7 @@ public:
 
         std::chrono::milliseconds activityCheckInterval;
         std::chrono::milliseconds peerDropTimeout;
+        std::chrono::milliseconds statusReportInterval;
 
         uint16_t listenPort {};
         bool spawnAgent {};
