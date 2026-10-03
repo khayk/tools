@@ -60,7 +60,7 @@ Requires `clang-format` >= 17.0.1. Style rules are in [.clang-format](.clang-for
 
 ## Architecture
 
-This is a **C++23 monorepo** with four tools built on a shared core library. Dependency management via vcpkg; static analysis via clang-tidy (config in [.clang-tidy](.clang-tidy)).
+This is a **C++23 monorepo** with three tools built on a shared core library. Dependency management via vcpkg; static analysis via clang-tidy (config in [.clang-tidy](.clang-tidy)).
 
 ### Projects
 
@@ -87,12 +87,12 @@ Server and agent communicate over TCP on port **51097** using token-based author
 1. **Server**: listens → accepts connection → waits for auth message → routes data messages via `MsgHandler`
 2. **Agent**: connects → sends `{username, token}` auth → collects window/process data periodically → sends heartbeat → reconnects on disconnect
 
-Platform-specific implementations live in `kidmon/src/os/` (Windows/macOS/Linux). Messages are serialized as JSON with `nlohmann/json` (`toJson`/`fromJson` in `data/Types.cpp`), keyed on the `km::constants` strings. Entry data is persisted via a repository pattern (`FileSystemRepository`); the raw-file read path uses `glaze`'s compile-time reflection for speed, reading into DTOs keyed on those same constants.
+Platform-specific implementations live in `kidmon/src/os/` (Windows/macOS/Linux). Messages are serialized as JSON with `nlohmann/json` (`toJson`/`fromJson` in `data/Types.cpp`), keyed on the `km::constants` strings. Entry data is persisted via a repository pattern: the server writes through `AsyncRepository` → `CountingRepository` → `MultiRepository` to `FileSystemRepository` and `SqliteRepository` (backend chosen by `RepositoryBackend`, default `Both`; FileSystem remains the query source). The raw-file read path uses `glaze`'s compile-time reflection for speed, reading into DTOs keyed on those same constants.
 
 ### Namespaces
 
-- `tcp::` — networking
-- `dp::` — design patterns
+- `core::tcp::` — networking
+- `core::dp::` — design patterns
 - `tools::dups::` — duplicates tool
 - Project-specific namespaces per tool
 
@@ -102,6 +102,6 @@ Platform-specific implementations live in `kidmon/src/os/` (Windows/macOS/Linux)
 - **Headers:** `#pragma once`
 - **Ownership:** `std::unique_ptr`/`std::shared_ptr`; no raw ownership transfer
 - **Logging:** `spdlog` with `SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE`
-- **Config files:** TOML (duplicates), JSON (kidmon)
+- **Config:** TOML file (duplicates); command-line flags into `AppConfig` (kidmon)
 - **Column limit:** 87 characters (enforced by clang-format)
 - **Namespace alias:** `namespace fs = std::filesystem` is the project convention
