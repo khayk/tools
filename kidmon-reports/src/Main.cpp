@@ -14,7 +14,7 @@
 #include <core/utils/Str.h>
 #include <core/utils/File.h>
 #include <core/utils/StopWatch.h>
-#include <core/utils/Tracer.h>
+#include <core/utils/ScopedLog.h>
 #include <spdlog/spdlog.h>
 
 #include <cstddef>
@@ -409,7 +409,7 @@ void handleQueryUser(const IRepository& repo,
 
 int main(int argc, char* argv[])
 {
-    std::optional<ScopedTrace> trace;
+    std::optional<ScopedLog> appLog;
 
     try
     {
@@ -439,9 +439,10 @@ int main(int argc, char* argv[])
         AppConfig conf;
         conf.logFilename = "kidmon-reports.log";
         core::utl::configureLogger(conf.logsDir, conf.logFilename);
-        trace.emplace("",
-                      std::format("{:-^80s}", "> START <"),
-                      std::format("{:-^80s}\n", "> END <"));
+        appLog.emplace("",
+                       spdlog::level::info,
+                       std::format("{:-^80s}", "> START <"),
+                       std::format("{:-^80s}\n", "> END <"));
         core::utl::logBuildInfo(BuildInfo::Version,
                                 BuildInfo::CommitSHA,
                                 BuildInfo::Timestamp);

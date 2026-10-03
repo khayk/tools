@@ -18,12 +18,12 @@ set(UTILS_FILES
     utils/MemoryMonitorTest.cpp
     utils/NumberTest.cpp
     utils/ParallelTest.cpp
+    utils/ScopedLogTest.cpp
     utils/SingleInstanceCheckerTest.cpp
     utils/StopWatchTest.cpp
     utils/StrTest.cpp
     utils/SysTest.cpp
     utils/ThrowTest.cpp
-    utils/TracerTest.cpp
 )
 
 set(PATTERNS_FILES

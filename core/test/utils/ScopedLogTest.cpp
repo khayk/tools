@@ -1,46 +1,50 @@
 #include <gtest/gtest.h>
-#include <core/utils/Tracer.h>
+#include <core/utils/ScopedLog.h>
 #include <core/utils/LogCapture.h>
 #include <spdlog/spdlog.h>
 
 namespace {
 
 // ---------------------------------------------------------------------------
-// ScopedTrace — enter / leave logging
+// ScopedLog — enter / leave logging
 // ---------------------------------------------------------------------------
 
-TEST(TracerTests, LogsEnterOnConstruction)
+TEST(ScopedLogTests, LogsEnterOnConstruction)
 {
     core::utl::LogCaptureMt cap;
     {
-        ScopedTrace t("myFunc");
+        ScopedLog t("myFunc");
     }
     EXPECT_TRUE(cap.contains("--> myFunc"));
 }
 
-TEST(TracerTests, LogsLeaveOnDestruction)
+TEST(ScopedLogTests, LogsLeaveOnDestruction)
 {
     core::utl::LogCaptureMt cap;
     {
-        ScopedTrace t("myFunc");
+        ScopedLog t("myFunc");
     }
     EXPECT_TRUE(cap.contains("<-- myFunc"));
 }
 
-TEST(TracerTests, BothEnterAndLeaveAreTraced)
+TEST(ScopedLogTests, BothEnterAndLeaveAreLogged)
 {
     core::utl::LogCaptureMt cap;
     {
-        ScopedTrace t("fn");
+        ScopedLog t("fn");
     }
     EXPECT_EQ(cap.count(), 2U);
 }
 
-TEST(TracerTests, LogsAtTraceLevel)
+// ---------------------------------------------------------------------------
+// Log level
+// ---------------------------------------------------------------------------
+
+TEST(ScopedLogTests, LogsAtTraceLevelByDefault)
 {
     core::utl::LogCaptureMt cap;
     {
-        ScopedTrace t("fn");
+        ScopedLog t("fn");
     }
     const auto msgs = cap.messages();
     EXPECT_TRUE(std::ranges::all_of(msgs, [](const auto& e) {
@@ -48,26 +52,51 @@ TEST(TracerTests, LogsAtTraceLevel)
     }));
 }
 
-// ---------------------------------------------------------------------------
-// extractFunction — namespace stripping via ScopedTrace
-// ---------------------------------------------------------------------------
-
-TEST(TracerTests, StripsLeadingNamespaceComponent)
+TEST(ScopedLogTests, LogsAtGivenLevel)
 {
     core::utl::LogCaptureMt cap;
     {
-        ScopedTrace t("ns::myFunc");
+        ScopedLog t("fn", spdlog::level::info);
+    }
+    const auto msgs = cap.messages();
+    ASSERT_EQ(msgs.size(), 2U);
+    EXPECT_TRUE(std::ranges::all_of(msgs, [](const auto& e) {
+        return e.level == spdlog::level::info;
+    }));
+}
+
+TEST(ScopedLogTests, NothingLoggedBelowLoggerLevel)
+{
+    core::utl::LogCaptureMt cap;
+    const auto prevLevel = spdlog::get_level();
+    spdlog::set_level(spdlog::level::info);
+    {
+        ScopedLog t("fn", spdlog::level::debug);
+    }
+    spdlog::set_level(prevLevel);
+    EXPECT_EQ(cap.count(), 0U);
+}
+
+// ---------------------------------------------------------------------------
+// extractFunction — namespace stripping via ScopedLog
+// ---------------------------------------------------------------------------
+
+TEST(ScopedLogTests, StripsLeadingNamespaceComponent)
+{
+    core::utl::LogCaptureMt cap;
+    {
+        ScopedLog t("ns::myFunc");
     }
     // "ns::" stripped — only "myFunc" should appear
     EXPECT_TRUE(cap.contains("myFunc"));
     EXPECT_FALSE(cap.contains("ns::myFunc"));
 }
 
-TEST(TracerTests, PlainNameWithoutNamespaceIsUnchanged)
+TEST(ScopedLogTests, PlainNameWithoutNamespaceIsUnchanged)
 {
     core::utl::LogCaptureMt cap;
     {
-        ScopedTrace t("plainFunc");
+        ScopedLog t("plainFunc");
     }
     EXPECT_TRUE(cap.contains("plainFunc"));
 }
@@ -76,20 +105,20 @@ TEST(TracerTests, PlainNameWithoutNamespaceIsUnchanged)
 // Custom enter / leave strings
 // ---------------------------------------------------------------------------
 
-TEST(TracerTests, CustomEnterString)
+TEST(ScopedLogTests, CustomEnterString)
 {
     core::utl::LogCaptureMt cap;
     {
-        ScopedTrace t("fn", ">>", "<<");
+        ScopedLog t("fn", spdlog::level::trace, ">>", "<<");
     }
     EXPECT_TRUE(cap.contains(">>fn"));
 }
 
-TEST(TracerTests, CustomLeaveString)
+TEST(ScopedLogTests, CustomLeaveString)
 {
     core::utl::LogCaptureMt cap;
     {
-        ScopedTrace t("fn", ">>", "<<");
+        ScopedLog t("fn", spdlog::level::trace, ">>", "<<");
     }
     EXPECT_TRUE(cap.contains("<<fn"));
 }
@@ -98,20 +127,20 @@ TEST(TracerTests, CustomLeaveString)
 // isPrefix = false — suffix mode
 // ---------------------------------------------------------------------------
 
-TEST(TracerTests, SuffixModeAppendsEnterAfterMessage)
+TEST(ScopedLogTests, SuffixModeAppendsEnterAfterMessage)
 {
     core::utl::LogCaptureMt cap;
     {
-        ScopedTrace t("fn", ">>", "<<", /*isPrefix=*/false);
+        ScopedLog t("fn", spdlog::level::trace, ">>", "<<", /*isPrefix=*/false);
     }
     EXPECT_TRUE(cap.contains("fn>>"));
 }
 
-TEST(TracerTests, SuffixModeAppendsLeaveAfterMessage)
+TEST(ScopedLogTests, SuffixModeAppendsLeaveAfterMessage)
 {
     core::utl::LogCaptureMt cap;
     {
-        ScopedTrace t("fn", ">>", "<<", /*isPrefix=*/false);
+        ScopedLog t("fn", spdlog::level::trace, ">>", "<<", /*isPrefix=*/false);
     }
     EXPECT_TRUE(cap.contains("fn<<"));
 }
@@ -120,14 +149,14 @@ TEST(TracerTests, SuffixModeAppendsLeaveAfterMessage)
 // Empty strings
 // ---------------------------------------------------------------------------
 
-TEST(TracerTests, EmptyEnterAndLeaveProducesOnlyMessage)
+TEST(ScopedLogTests, EmptyEnterAndLeaveProducesOnlyMessage)
 {
     core::utl::LogCaptureMt cap;
     {
-        ScopedTrace t("alone", "", "");
+        ScopedLog t("alone", spdlog::level::trace, "", "");
     }
     EXPECT_TRUE(cap.contains("alone"));
-    EXPECT_EQ(cap.count(), 2U); // shouldTrace() is true because message_ is not empty
+    EXPECT_EQ(cap.count(), 2U); // shouldLog() is true because message_ is not empty
 }
 
 } // namespace

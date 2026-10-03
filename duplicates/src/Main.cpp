@@ -12,7 +12,7 @@
 #include <core/utils/Log.h>
 #include <core/utils/File.h>
 #include <core/utils/FmtExt.h>
-#include <core/utils/Tracer.h>
+#include <core/utils/ScopedLog.h>
 #include <core/utils/Sys.h>
 #include <core/utils/Str.h>
 #include <core/utils/Dirs.h>
@@ -46,7 +46,7 @@ std::unique_ptr<IDeletionStrategy> createDeletionStrategy(const Config& cfg)
 int main(int argc, const char* argv[])
 {
     using namespace tools::dups;
-    std::optional<ScopedTrace> trace;
+    std::optional<ScopedLog> appLog;
 
     try
     {
@@ -63,9 +63,10 @@ int main(int argc, const char* argv[])
 
         Config cfg(core::dirs::config(), core::dirs::cache());
         configureLogger(cfg.logDir(), cfg.logFilename());
-        trace.emplace("",
-            std::format("{:-^80s}", "> START <"),
-            std::format("{:-^80s}\n", "> END <"));
+        appLog.emplace("",
+                       spdlog::level::info,
+                       std::format("{:-^80s}", "> START <"),
+                       std::format("{:-^80s}\n", "> END <"));
         core::utl::logBuildInfo(BuildInfo::Version,
                                 BuildInfo::CommitSHA,
                                 BuildInfo::Timestamp);

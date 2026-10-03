@@ -36,7 +36,7 @@ Asio-based stack for building networked applications:
 | `Sys.h` | Active username, interactive-session detection, memory usage |
 | `Dirs.h` | Platform-correct config / cache / data / log directories |
 | `StopWatch.h` | High-resolution elapsed time |
-| `Tracer.h` | RAII scope tracer that logs entry/exit |
+| `ScopedLog.h` | RAII scope logger that logs entry/exit at a given level |
 | `SingleInstanceChecker.h` | Prevents running more than one copy of a process |
 | `Throw.h` | Checked-throw helpers |
 

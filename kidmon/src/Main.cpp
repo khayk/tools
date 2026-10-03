@@ -12,7 +12,7 @@
 #include <core/utils/Sys.h>
 #include <core/utils/Log.h>
 #include <core/utils/SingleInstanceChecker.h>
-#include <core/utils/Tracer.h>
+#include <core/utils/ScopedLog.h>
 #include <spdlog/spdlog.h>
 
 #include <cxxopts.hpp>
@@ -90,8 +90,8 @@ std::string readAndClearEnv(const char* name)
 
 int main(int argc, char* argv[])
 {
-    std::optional<ScopedTrace> trace;
-    std::optional<ScopedTrace> traceMain;
+    std::optional<ScopedLog> appLog;
+    std::optional<ScopedLog> traceMain;
 
     try
     {
@@ -146,9 +146,10 @@ int main(int argc, char* argv[])
                                    appConf.logFilename,
                                    appConf.logLevel);
 
-        trace.emplace("",
-                      std::format("{:-^80s}", "> START <"),
-                      std::format("{:-^80s}\n", "> END <"));
+        appLog.emplace("",
+                       spdlog::level::info,
+                       std::format("{:-^80s}", "> START <"),
+                       std::format("{:-^80s}\n", "> END <"));
         traceMain.emplace(__FUNCTION__);
         core::utl::logBuildInfo(BuildInfo::Version,
                                 BuildInfo::CommitSHA,

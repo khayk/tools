@@ -1,6 +1,6 @@
 #include <core/app/Service.h>
 #include <core/app/Runnable.h>
-#include <core/utils/Tracer.h>
+#include <core/utils/ScopedLog.h>
 
 #include <Windows.h>
 #include <spdlog/spdlog.h>
@@ -107,7 +107,7 @@ public:
 private:
     static void serviceMain(unsigned long argc, char* argv[])
     {
-        ScopedTrace sc(__FUNCTION__);
+        ScopedLog st(__FUNCTION__);
 
         if (instance_)
         {
@@ -133,7 +133,7 @@ private:
         std::ignore = argc;
         std::ignore = argv;
 
-        ScopedTrace st(__FUNCTION__);
+        ScopedLog st(__FUNCTION__);
 
         status_.dwServiceType = SERVICE_WIN32;
         status_.dwCurrentState = SERVICE_START_PENDING;

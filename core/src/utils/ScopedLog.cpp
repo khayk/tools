@@ -1,4 +1,4 @@
-#include <core/utils/Tracer.h>
+#include <core/utils/ScopedLog.h>
 #include <spdlog/spdlog.h>
 #include <iostream>
 
@@ -14,52 +14,54 @@ std::string extractFunction(const std::string& fullyQualifiedName)
     return fullyQualifiedName;
 }
 
-bool ScopedTrace::shouldTrace() const noexcept
+bool ScopedLog::shouldLog() const noexcept
 {
     return spdlog::default_logger_raw() &&
            (!message_.empty() || !enter_.empty() || !leave_.empty());
 }
 
-ScopedTrace::ScopedTrace(const std::string& message,
-                         std::string enter,
-                         std::string leave,
-                         const bool isPrefix)
+ScopedLog::ScopedLog(const std::string& message,
+                     spdlog::level::level_enum level,
+                     std::string enter,
+                     std::string leave,
+                     const bool isPrefix)
     : message_(extractFunction(message))
     , enter_(std::move(enter))
     , leave_(std::move(leave))
+    , level_(level)
     , isPrefix_(isPrefix)
 {
-    if (shouldTrace())
+    if (shouldLog())
     {
         if (isPrefix_)
         {
-            spdlog::trace("{}{}", enter_, message_);
+            spdlog::log(level_, "{}{}", enter_, message_);
         }
         else
         {
-            spdlog::trace("{}{}", message_, enter_);
+            spdlog::log(level_, "{}{}", message_, enter_);
         }
     }
 }
 
-ScopedTrace::~ScopedTrace()
+ScopedLog::~ScopedLog()
 {
     try
     {
-        if (shouldTrace())
+        if (shouldLog())
         {
             if (isPrefix_)
             {
-                spdlog::trace("{}{}", leave_, message_);
+                spdlog::log(level_, "{}{}", leave_, message_);
             }
             else
             {
-                spdlog::trace("{}{}", message_, leave_);
+                spdlog::log(level_, "{}{}", message_, leave_);
             }
         }
     }
     catch (...)
     {
-        std::cerr << "Failed to log trace message" << '\n';
+        std::cerr << "Failed to log scope message" << '\n';
     }
 }

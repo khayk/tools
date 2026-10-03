@@ -2,7 +2,6 @@ set(PROJECT_TST kidmon-test)
 
 set(TEST_SRCS
    agent/KidmonAgentTest.cpp
-   common/TracerTest.cpp
    common/UtilsTest.cpp
    data/MessagesTest.cpp
    os/ApiTest.cpp

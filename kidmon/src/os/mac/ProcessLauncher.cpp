@@ -2,7 +2,7 @@
 
 // note: whole file is claude generated
 #include <core/utils/Sys.h>
-#include <core/utils/Tracer.h>
+#include <core/utils/ScopedLog.h>
 
 #include <SystemConfiguration/SystemConfiguration.h>
 #include <crt_externs.h> // _NSGetEnviron
@@ -141,7 +141,7 @@ bool interactiveLaunch(const fs::path& exec,
                        const km::Env& env,
                        uid_t uid)
 {
-    ScopedTrace tracer {__FUNCTION__};
+    ScopedLog tracer {__FUNCTION__};
 
     struct passwd* pw = getpwuid(uid);
     if (pw == nullptr)

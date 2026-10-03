@@ -2,7 +2,7 @@
 #include <core/utils/FmtExt.h>
 #include <core/utils/Str.h>
 #include <core/utils/Sys.h>
-#include <core/utils/Tracer.h>
+#include <core/utils/ScopedLog.h>
 
 
 #include <Windows.h>
@@ -221,7 +221,7 @@ bool interactiveLaunch(const fs::path& exec,
                        const km::Env& env,
                        HandleUPtr token)
 {
-    ScopedTrace tracer {__FUNCTION__};
+    ScopedLog tracer {__FUNCTION__};
 
     if (!token)
     {

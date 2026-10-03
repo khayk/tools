@@ -41,10 +41,10 @@ set(UTILS_FILES
     src/utils/MemoryMonitor.cpp
     src/utils/SingleInstanceChecker.cpp
     src/utils/StopWatch.cpp
+    src/utils/ScopedLog.cpp
     src/utils/Str.cpp
     src/utils/Sys.cpp
     src/utils/Throw.cpp
-    src/utils/Tracer.cpp
 )
 
 if(WIN32)
