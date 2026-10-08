@@ -15,7 +15,7 @@ The structure is good. Conditions (`ICondition` with And/Or/Not) let you build f
 5. [x] **`--range` excludes its end date.** `20240601,20240630` ends at midnight at the start of the 30th, so the 30th is dropped. Users expect the end date to be included, so add a day. Invalid dates like `20241345` are also accepted without any error.
 6. [x] **No time option means an empty report.** If none of `-m`, `-h`, `-d`, `-M` or `-r` is given, `from == to` and nothing comes back, with no warning. Default to something sensible like "today" or show an error.
 7. [x] **No user, or an unknown user, gives a raw `filesystem_error`.** `getUserDir("")` and missing folders throw from `directory_iterator`. `validateArguments` is a stub with a TODO; this is where it should be caught.
-8. [ ] **Process matching is a substring search over the full path.** `--process code` matches any path that contains "code", e.g. `/Users/x/code/...`. Match on the file name by default.
+8. [x] **Process matching is a substring search over the full path.** `--process code` matches any path that contains "code", e.g. `/Users/x/code/...`. Match on the file name by default. _Done: matches the executable name, or the full path when the value contains `/` or `\`._
 9. [ ] **`--top` applies at every level, not just once.** The default of 10 can mean 10 × 10 × 10 rows. The README describes it as "top n results".
 10. [ ] **`--fields` is parsed but never used.** Also, the README's output example doesn't match the real output (`proc_name: code, duration: …` plus `total` lines).
 

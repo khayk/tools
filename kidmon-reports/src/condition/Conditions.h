@@ -135,12 +135,18 @@ public:
 };
 
 
+/**
+ * Matches the executable name, or the full path if the needle contains a path
+ * separator
+ */
 class HasProcessCondition : public HasStringCondition
 {
+    bool matchPath_;
+
     void fetchValue(const km::Entry& entry, std::string& value) const override;
 
 public:
-    HasProcessCondition(std::string processName, bool caseSensitive = true);
+    HasProcessCondition(const std::string& process, bool caseSensitive = true);
 };
 
 

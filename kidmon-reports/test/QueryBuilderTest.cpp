@@ -10,6 +10,7 @@
 #include <core/utils/File.h>
 
 #include <ctime>
+#include <sstream>
 #include <stdexcept>
 
 using namespace km;
@@ -176,4 +177,52 @@ TEST(QueryBuilderTest, CaseInsensitiveMatchingHandlesNonAscii)
         matches(conf, makeEntry("/Applications/Éditeur.app/éditeur", "привет")));
     EXPECT_FALSE(
         matches(conf, makeEntry("/Applications/Éditeur.app/éditeur", "пока")));
+}
+
+TEST(QueryBuilderTest, ProcessWithoutSeparatorMatchesExecutableName)
+{
+    const auto include = parseArgs({"-p", "code"});
+
+    EXPECT_TRUE(matches(include, makeEntry("/usr/bin/code", "")));
+    EXPECT_FALSE(matches(include, makeEntry("/Users/x/code/bin/firefox", "")));
+
+    const auto exclude = parseArgs({"--exclude-process", "code"});
+
+    EXPECT_FALSE(matches(exclude, makeEntry("/usr/bin/code", "")));
+    EXPECT_TRUE(matches(exclude, makeEntry("/Users/x/code/bin/firefox", "")));
+}
+
+TEST(QueryBuilderTest, ProcessWithSeparatorMatchesFullPath)
+{
+    const auto include = parseArgs({"-p", "visual studio code.app/"});
+
+    EXPECT_TRUE(matches(
+        include,
+        makeEntry("/Applications/Visual Studio Code.app/Contents/MacOS/Code", "")));
+    EXPECT_FALSE(matches(include, makeEntry("/usr/bin/code", "")));
+
+    const auto exclude = parseArgs({"--exclude-process", "/System/"});
+
+    EXPECT_FALSE(matches(exclude, makeEntry("/System/Library/Finder", "")));
+    EXPECT_TRUE(matches(exclude, makeEntry("/Applications/Firefox.app/firefox", "")));
+}
+
+TEST(QueryBuilderTest, ProcessWithBackslashMatchesFullPath)
+{
+    const auto conf = parseArgs({"-p", "\\Program Files\\"});
+
+    EXPECT_TRUE(matches(conf, makeEntry("C:\\Program Files\\App\\app.exe", "")));
+    EXPECT_FALSE(matches(conf, makeEntry("C:\\Tools\\app.exe", "")));
+}
+
+TEST(QueryBuilderTest, ConditionDescribesProcessMatchKind)
+{
+    const auto describe = [](const std::vector<std::string>& args) {
+        std::ostringstream oss;
+        buildCondition(parseArgs(args))->write(oss);
+        return oss.str();
+    };
+
+    EXPECT_TRUE(describe({"-p", "code"}).contains("process has 'code'"));
+    EXPECT_TRUE(describe({"-p", "/bin/"}).contains("process path has '/bin/'"));
 }

@@ -19,9 +19,9 @@ kidmon-reports [options]
 | `-d, --days <n>` | Include the last `n` days |
 | `-M, --months <n>` | Include the last `n` months |
 | `-r, --range <from,to>` | Date range in `YYYYMMDD` format (e.g. `20240101,20241231`) |
-| `-p, --process <name>` | Include only entries matching this process name (repeatable) |
+| `-p, --process <name>` | Include only entries matching this process (repeatable, see [Process matching](#process-matching)) |
 | `-t, --title <text>` | Include only entries matching this window title (repeatable) |
-| `--exclude-process <name>` | Exclude entries matching this process name (repeatable) |
+| `--exclude-process <name>` | Exclude entries matching this process (repeatable) |
 | `--exclude-title <text>` | Exclude entries matching this window title (repeatable) |
 | `-T, --top <n>` | Show top `n` results (default: 10) |
 | `-c, --case-sensitive` | Enable case-sensitive matching (default: case-insensitive) |
@@ -48,6 +48,16 @@ kidmon-reports --user alice --days 7 --process code --exclude-title "Running Tes
 
 # Query a specific reports directory
 kidmon-reports --user alice --days 7 --reports-dir /mnt/reports
+```
+
+### Process matching
+
+`--process` and `--exclude-process` match the executable name, unless the value contains a path separator (`/` or `\`), in which case they match anywhere in the full path:
+
+```bash
+kidmon-reports --user alice --process code                         # executable named *code*
+kidmon-reports --user alice --process "Visual Studio Code.app/"    # anywhere in the path
+kidmon-reports --user alice --exclude-process /System/             # skip system apps
 ```
 
 ## Output format

@@ -6,6 +6,15 @@
 
 using namespace km;
 
+namespace {
+
+bool isPath(std::string_view str) noexcept
+{
+    return str.find_first_of("/\\") != std::string_view::npos;
+}
+
+} // namespace
+
 void TrueCondition::write(std::ostream& os) const
 {
     os << "true";
@@ -192,11 +201,18 @@ bool HasStringCondition::met(const Entry& entry) const
 
 void HasProcessCondition::fetchValue(const Entry& entry, std::string& value) const
 {
-    value = core::file::path2s(entry.processInfo.processPath);
+    // Without a separator in the needle, match only the executable name, as
+    // directory names would cause false positives
+    const auto& path = entry.processInfo.processPath;
+    value = core::file::path2s(matchPath_ ? path : path.filename());
 }
 
-HasProcessCondition::HasProcessCondition(std::string processName, bool caseSensitive)
-    : HasStringCondition(std::move(processName), "process", caseSensitive)
+HasProcessCondition::HasProcessCondition(const std::string& process,
+                                         bool caseSensitive)
+    : HasStringCondition(process,
+                         isPath(process) ? "process path" : "process",
+                         caseSensitive)
+    , matchPath_(isPath(process))
 {
 }
 
