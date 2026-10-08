@@ -53,6 +53,8 @@ void handleQueryUser(const IRepository& repo,
                      const ReportsConfig& conf,
                      QueryVisualizer& queryVisualizer)
 {
+    validateUser(repo, conf.username);
+
     const auto queryFilter = buildFilter(conf);
     const auto queryCondition = buildCondition(conf);
     const auto transform = buildTransform(conf);
@@ -122,6 +124,13 @@ int main(int argc, char* argv[])
 
             spdlog::warn("No reports directory is provided, defaulting to '{}'",
                          core::file::path2s(reportDir));
+        }
+
+        if (!fs::is_directory(reportDir))
+        {
+            throw std::invalid_argument(
+                std::format("Reports directory '{}' does not exist",
+                            core::file::path2s(reportDir)));
         }
 
         if (result.contains("list"))
