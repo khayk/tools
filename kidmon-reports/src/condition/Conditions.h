@@ -93,16 +93,22 @@ class StringCondition : public ICondition
 private:
     std::string needle_;
     std::string attributeName_;
+    bool caseSensitive_;
 
-    // We need this buffer to slightly improve performance
+    // We need these buffers to slightly improve performance
     mutable std::string buffer_;
+    mutable std::wstring wbuffer_;
     virtual void fetchValue(const km::Entry& entry, std::string& value) const = 0;
 
 protected:
+    // Lowercased when matching is case-insensitive; the entry itself is untouched
     const std::string& value(const km::Entry& entry) const;
 
 public:
-    StringCondition(std::string needle, std::string attributeName);
+    /**
+     * When matching is case-insensitive, the needle is expected to be lowercase
+     */
+    StringCondition(std::string needle, std::string attributeName, bool caseSensitive);
 
     const std::string& needle() const noexcept;
     const std::string& attributeName() const noexcept;
@@ -134,7 +140,7 @@ class HasProcessCondition : public HasStringCondition
     void fetchValue(const km::Entry& entry, std::string& value) const override;
 
 public:
-    HasProcessCondition(std::string processName);
+    HasProcessCondition(std::string processName, bool caseSensitive = true);
 };
 
 
@@ -143,5 +149,5 @@ class HasTitleCondition : public HasStringCondition
     void fetchValue(const km::Entry& entry, std::string& value) const override;
 
 public:
-    HasTitleCondition(std::string title);
+    HasTitleCondition(std::string title, bool caseSensitive = true);
 };

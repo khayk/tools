@@ -27,15 +27,9 @@ Entry makeEntry(const std::string& processPath, const std::string& title)
     return entry;
 }
 
-// Mirrors how the app evaluates an entry: transform first, then the condition
-bool matches(const ReportsConfig& conf, Entry entry)
+bool matches(const ReportsConfig& conf, const Entry& entry)
 {
-    const auto condition = buildCondition(conf);
-    const auto transform = buildTransform(conf);
-
-    transform->apply(entry);
-
-    return condition->met(entry);
+    return buildCondition(conf)->met(entry);
 }
 
 } // namespace
@@ -172,4 +166,14 @@ TEST(QueryBuilderTest, ValidateUser)
     EXPECT_NO_THROW(validateUser(repo, "alice"));
     EXPECT_THROW(validateUser(repo, ""), std::invalid_argument);
     EXPECT_THROW(validateUser(repo, "bob"), std::invalid_argument);
+}
+
+TEST(QueryBuilderTest, CaseInsensitiveMatchingHandlesNonAscii)
+{
+    const auto conf = parseArgs({"-p", "ÉDITEUR", "-t", "ПРИВЕТ"});
+
+    EXPECT_TRUE(
+        matches(conf, makeEntry("/Applications/Éditeur.app/éditeur", "привет")));
+    EXPECT_FALSE(
+        matches(conf, makeEntry("/Applications/Éditeur.app/éditeur", "пока")));
 }

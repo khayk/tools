@@ -16,7 +16,7 @@ bool TrueCondition::met(const Entry&) const
     return true;
 }
 
-void FalseCondition ::write(std::ostream& os) const
+void FalseCondition::write(std::ostream& os) const
 {
     os << "false";
 }
@@ -141,12 +141,21 @@ bool Negate::met(const Entry& entry) const
 const std::string& StringCondition::value(const Entry& entry) const
 {
     fetchValue(entry, buffer_);
+
+    if (!caseSensitive_)
+    {
+        core::str::utf8LowerInplace(buffer_, &wbuffer_);
+    }
+
     return buffer_;
 }
 
-StringCondition::StringCondition(std::string needle, std::string attributeName)
+StringCondition::StringCondition(std::string needle,
+                                 std::string attributeName,
+                                 bool caseSensitive)
     : needle_(std::move(needle))
     , attributeName_(std::move(attributeName))
+    , caseSensitive_(caseSensitive)
 {
 }
 
@@ -186,8 +195,8 @@ void HasProcessCondition::fetchValue(const Entry& entry, std::string& value) con
     value = core::file::path2s(entry.processInfo.processPath);
 }
 
-HasProcessCondition::HasProcessCondition(std::string processName)
-    : HasStringCondition(std::move(processName), "process")
+HasProcessCondition::HasProcessCondition(std::string processName, bool caseSensitive)
+    : HasStringCondition(std::move(processName), "process", caseSensitive)
 {
 }
 
@@ -196,7 +205,7 @@ void HasTitleCondition::fetchValue(const Entry& entry, std::string& value) const
     value = entry.windowInfo.title;
 }
 
-HasTitleCondition::HasTitleCondition(std::string title)
-    : HasStringCondition(std::move(title), "title")
+HasTitleCondition::HasTitleCondition(std::string title, bool caseSensitive)
+    : HasStringCondition(std::move(title), "title", caseSensitive)
 {
 }

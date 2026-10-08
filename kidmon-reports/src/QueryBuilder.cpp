@@ -1,6 +1,5 @@
 #include "QueryBuilder.h"
 #include "condition/Conditions.h"
-#include "transform/Transforms.h"
 
 #include <kidmon/common/Utils.h>
 
@@ -80,14 +79,15 @@ ConditionPtr combineConditions(std::vector<ConditionPtr>&& conditions)
 }
 
 template <typename CondType>
-std::vector<ConditionPtr> createConditions(const std::vector<std::string>& values)
+std::vector<ConditionPtr> createConditions(const std::vector<std::string>& values,
+                                           bool caseSensitive)
 {
     std::vector<ConditionPtr> conds;
     conds.reserve(values.size());
 
     for (const auto& value : values)
     {
-        conds.push_back(std::make_unique<CondType>(value));
+        conds.push_back(std::make_unique<CondType>(value, caseSensitive));
     }
 
     return conds;
@@ -100,7 +100,8 @@ ConditionPtr buildExcludeCondition(const ReportsConfig& conf)
 
     if (!conf.excludeProcesses.empty())
     {
-        for (auto& cond : createConditions<HasProcessCondition>(conf.excludeProcesses))
+        for (auto& cond : createConditions<HasProcessCondition>(conf.excludeProcesses,
+                                                                conf.caseSensitive))
         {
             conditions.push_back(std::move(cond));
         }
@@ -108,7 +109,8 @@ ConditionPtr buildExcludeCondition(const ReportsConfig& conf)
 
     if (!conf.excludeTitles.empty())
     {
-        for (auto& cond : createConditions<HasTitleCondition>(conf.excludeTitles))
+        for (auto& cond : createConditions<HasTitleCondition>(conf.excludeTitles,
+                                                              conf.caseSensitive))
         {
             conditions.push_back(std::move(cond));
         }
@@ -129,13 +131,14 @@ ConditionPtr buildIncludeCondition(const ReportsConfig& conf)
     if (!conf.processes.empty())
     {
         conditions.push_back(combineConditions<LogicalOR>(
-            createConditions<HasProcessCondition>(conf.processes)));
+            createConditions<HasProcessCondition>(conf.processes,
+                                                  conf.caseSensitive)));
     }
 
     if (!conf.titles.empty())
     {
         conditions.push_back(combineConditions<LogicalOR>(
-            createConditions<HasTitleCondition>(conf.titles)));
+            createConditions<HasTitleCondition>(conf.titles, conf.caseSensitive)));
     }
 
     if (conditions.empty())
@@ -225,25 +228,5 @@ ConditionPtr buildCondition(const ReportsConfig& conf)
                                         std::move(includeCondition));
 }
 
-
-TransformPtr buildTransform(const ReportsConfig& conf)
-{
-    std::vector<TransformPtr> transformers;
-
-    if (!conf.caseSensitive)
-    {
-        if (!conf.processes.empty() || !conf.excludeProcesses.empty())
-        {
-            transformers.push_back(std::make_unique<ProcessPathToLowerTransform>());
-        }
-
-        if (!conf.titles.empty() || !conf.excludeTitles.empty())
-        {
-            transformers.push_back(std::make_unique<TitleToLowerTransform>());
-        }
-    }
-
-    return std::make_unique<SpreadTransform>(std::move(transformers));
-}
 
 } // namespace km::reports

@@ -57,15 +57,13 @@ void handleQueryUser(const IRepository& repo,
 
     const auto queryFilter = buildFilter(conf);
     const auto queryCondition = buildCondition(conf);
-    const auto transform = buildTransform(conf);
 
     std::ostringstream oss;
     queryCondition->write(oss);
     spdlog::info("Query condition: {}", oss.str());
 
     repo.queryEntries(queryFilter,
-                      [&queryVisualizer, &queryCondition, &transform](Entry& entry) {
-                          transform->apply(entry);
+                      [&queryVisualizer, &queryCondition](const Entry& entry) {
                           queryVisualizer.update(entry);
 
                           if (queryCondition->met(entry))

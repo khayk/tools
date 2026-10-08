@@ -2,7 +2,6 @@
 
 #include "Options.h"
 #include "condition/ICondition.h"
-#include "transform/ITransform.h"
 
 #include <kidmon/repo/Filter.h>
 #include <kidmon/repo/Repository.h>
@@ -16,6 +15,5 @@ void validateUser(const IRepository& repo, const std::string& username);
 
 Filter buildFilter(const ReportsConfig& conf);
 ConditionPtr buildCondition(const ReportsConfig& conf);
-TransformPtr buildTransform(const ReportsConfig& conf);
 
 } // namespace km::reports

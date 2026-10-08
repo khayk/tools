@@ -12,9 +12,6 @@ set(LIB_SRCS
    src/condition/Conditions.cpp
    src/condition/Conditions.h
    src/condition/ICondition.h
-   src/transform/ITransform.h
-   src/transform/Transforms.cpp
-   src/transform/Transforms.h
    src/Options.cpp
    src/Options.h
    src/QueryBuilder.cpp
