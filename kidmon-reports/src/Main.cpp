@@ -27,7 +27,7 @@ namespace {
 QueryVisualizer buildVisualizer(const ReportsConfig& reportsConf)
 {
     QueryVisualizer::Config conf;
-    conf.topN_ = reportsConf.topN;
+    conf.top_ = reportsConf.top;
     QueryVisualizer queryVis(conf);
 
     return queryVis;

@@ -4,8 +4,10 @@
 
 #include <algorithm>
 #include <functional>
+#include <limits>
 #include <memory>
 #include <chrono>
+#include <vector>
 
 class Data;
 using DataCb = std::function<void(std::string_view field,
@@ -13,12 +15,18 @@ using DataCb = std::function<void(std::string_view field,
                                   uint32_t depth,
                                   const Data& data)>;
 
+/**
+ * Maximum number of children shown per tree level. The last value applies to all
+ * deeper levels, empty means no limit.
+ */
+using TopN = std::vector<uint32_t>;
+
 class IAggregate
 {
 public:
     virtual ~IAggregate() = default;
     virtual void update(const km::Entry& entry) = 0;
-    virtual void enumerate(size_t topN,
+    virtual void enumerate(const TopN& top,
                            uint32_t depth,
                            const DataCb& dataCb) const = 0;
 
@@ -44,9 +52,11 @@ public:
         return os;
     }
 
-    void enumerate(size_t topN, uint32_t depth, const DataCb& dataCb) const override
+    void enumerate(const TopN& top,
+                   uint32_t depth,
+                   const DataCb& dataCb) const override
     {
-        std::ignore = topN;
+        std::ignore = top;
         dataCb("", "", depth, *this);
     }
 
@@ -78,10 +88,11 @@ public:
         second.update(entry);
     }
 
-    void enumerate(size_t topN, uint32_t depth, const DataCb& dataCb) const override
+    void enumerate(const TopN& top, uint32_t depth, const DataCb& dataCb) const
+override
     {
-        first.enumerate(topN, depth, dataCb);
-        second.enumerate(topN, depth, dataCb);
+        first.enumerate(top, depth, dataCb);
+        second.enumerate(top, depth, dataCb);
     }
 
     std::ostream& write(std::ostream& os, uint32_t prefix) const
@@ -148,9 +159,14 @@ public:
         data_[key].update(entry);
     }
 
-    void enumerate(size_t topN, uint32_t depth, const DataCb& dataCb) const override
+    void enumerate(const TopN& top,
+                   uint32_t depth,
+                   const DataCb& dataCb) const override
     {
-        const auto reorder = orderedVec(topN);
+        const size_t count = top.empty()
+                                 ? std::numeric_limits<size_t>::max()
+                                 : top[std::min<size_t>(depth, top.size() - 1)];
+        const auto reorder = orderedVec(count);
         const auto field = fieldBuilder_.field();
         dataCb("total ", "", depth, *this);
         ++depth;
@@ -159,8 +175,9 @@ public:
         {
             const auto& key = it->first;
             const auto& type = it->second;
-            dataCb(field, key, depth, type);
-            type.enumerate(topN, depth, dataCb);
+            // An empty value marks internal rows, so empty keys need a placeholder
+            dataCb(field, key.empty() ? "<empty>" : key, depth, type);
+            type.enumerate(top, depth, dataCb);
         }
     }
 

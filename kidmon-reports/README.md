@@ -23,7 +23,7 @@ kidmon-reports [options]
 | `-t, --title <text>` | Include only entries matching this window title (repeatable) |
 | `--exclude-process <name>` | Exclude entries matching this process (repeatable) |
 | `--exclude-title <text>` | Exclude entries matching this window title (repeatable) |
-| `-T, --top <n>` | Show top `n` results (default: 10) |
+| `-T, --top <n[,m…]>` | Show the top entries per level: processes, paths, titles. The last value applies to deeper levels, e.g. `10,3` shows 10 processes with 3 titles each. `0` hides a level and everything below it, e.g. `10,0` lists processes only (default: 10) |
 | `-c, --case-sensitive` | Enable case-sensitive matching (default: case-insensitive) |
 | `--reports-dir <path>` | Path to the kidmon reports directory (auto-detected if omitted) |
 | `-e, --help` | Print usage |
@@ -37,8 +37,8 @@ kidmon-reports --list
 # What did alice do today?
 kidmon-reports --user alice --days 1
 
-# Top 5 processes used in the last 2 hours
-kidmon-reports --user alice --hours 2 --top 5
+# Top 5 processes used in the last 2 hours, with their 3 main window titles
+kidmon-reports --user alice --hours 2 --top 5,3
 
 # Activity for a specific date range, filtered to browser windows
 kidmon-reports --user alice --range 20240601,20240630 --process firefox

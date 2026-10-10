@@ -55,6 +55,9 @@ TEST(OptionsTest, CaseSensitiveKeepsNeedlesUnchanged)
 
 TEST(OptionsTest, TopDefaultsToTen)
 {
-    EXPECT_EQ(parseArgs({}).topN, 10U);
-    EXPECT_EQ(parseArgs({"-T", "3"}).topN, 3U);
+    using TopN = std::vector<uint32_t>;
+
+    EXPECT_EQ(parseArgs({}).top, TopN {10});
+    EXPECT_EQ(parseArgs({"-T", "3"}).top, TopN {3});
+    EXPECT_EQ(parseArgs({"--top", "10,3"}).top, (TopN {10, 3}));
 }

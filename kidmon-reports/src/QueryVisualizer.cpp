@@ -42,7 +42,7 @@ void QueryVisualizer::display(std::ostream& os) const
     // pathByNameAggr_->write(std::cout, 0);
 
     pathByNameAggr_->enumerate(
-        conf_.topN_,
+        conf_.top_,
         0,
         [&os](std::string_view field,
               std::string_view value,

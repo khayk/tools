@@ -44,7 +44,7 @@ cxxopts::Options makeOptions()
         ("f,fields", "The fields to be displayed", cxxopts::value<std::vector<std::string>>()->default_value(""))
         ("t,title", "The window titles", cxxopts::value<std::vector<std::string>>())
         ("p,process", "The process names", cxxopts::value<std::vector<std::string>>())
-        ("T,top", "The top N results", cxxopts::value<uint32_t>()->default_value("10"))
+        ("T,top", "The top N per level: processes,paths,titles, 0 hides the level (ex: 10,3)", cxxopts::value<std::vector<uint32_t>>()->default_value("10"))
         ("exclude-process", "The process names to exclude", cxxopts::value<std::vector<std::string>>())
         ("exclude-title", "The window titles to exclude", cxxopts::value<std::vector<std::string>>())
         ("reports-dir", "The reports directory", cxxopts::value<std::string>()->default_value(""))
@@ -80,7 +80,7 @@ ReportsConfig makeReportsConfig(const cxxopts::ParseResult& res)
     maybeGet("title", res, conf.titles);
     maybeGet("process", res, conf.processes);
     // Read directly: contains() ignores default values
-    conf.topN = res["top"].as<uint32_t>();
+    conf.top = res["top"].as<std::vector<uint32_t>>();
     maybeGet("case-sensitive", res, conf.caseSensitive);
     maybeGet("exclude-process", res, conf.excludeProcesses);
     maybeGet("exclude-title", res, conf.excludeTitles);

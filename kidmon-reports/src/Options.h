@@ -14,7 +14,7 @@ struct ReportsConfig
     uint32_t hours {0};
     uint32_t days {0};
     uint32_t months {0};
-    uint32_t topN {0};
+    std::vector<uint32_t> top;
     std::vector<uint32_t> range;
     std::vector<std::string> fields;
     std::vector<std::string> titles;

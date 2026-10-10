@@ -16,13 +16,14 @@ The structure is good. Conditions (`ICondition` with And/Or/Not) let you build f
 6. [x] **No time option means an empty report.** If none of `-m`, `-h`, `-d`, `-M` or `-r` is given, `from == to` and nothing comes back, with no warning. Default to something sensible like "today" or show an error.
 7. [x] **No user, or an unknown user, gives a raw `filesystem_error`.** `getUserDir("")` and missing folders throw from `directory_iterator`. `validateArguments` is a stub with a TODO; this is where it should be caught.
 8. [x] **Process matching is a substring search over the full path.** `--process code` matches any path that contains "code", e.g. `/Users/x/code/...`. Match on the file name by default. _Done: matches the executable name, or the full path when the value contains `/` or `\`._
-9. [ ] **`--top` applies at every level, not just once.** The default of 10 can mean 10 × 10 × 10 rows. The README describes it as "top n results".
+9. [x] **`--top` applies at every level, not just once.** The default of 10 can mean 10 × 10 × 10 rows. The README describes it as "top n results". _Done: `--top` takes a limit per level (`--top 10,3`), the last value applies to deeper levels._
 10. [ ] **`--fields` is parsed but never used.** Also, the README's output example doesn't match the real output (`proc_name: code, duration: …` plus `total` lines).
 
 Also fixed along the way:
 
 - [x] **`--top` default was never applied.** cxxopts' `contains()` ignores default values, so `topN` stayed 0 without `-T`.
 - [x] **Stray arguments were silently ignored.** E.g. `-title foo` parses as `-t itle` and drops `foo`; leftover arguments are now an error.
+- [x] **Empty window titles were hidden.** They used up a `--top` slot without being shown; they now appear as `<empty>`.
 
 ## Code I'd change
 

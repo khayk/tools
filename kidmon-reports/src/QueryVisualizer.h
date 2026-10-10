@@ -19,7 +19,7 @@ public:
     struct Config
     {
         std::vector<std::string> fields_;
-        uint32_t topN_ {10};
+        TopN top_ {10};
     };
 
     explicit QueryVisualizer(Config conf);
