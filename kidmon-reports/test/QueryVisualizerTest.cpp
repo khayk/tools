@@ -74,7 +74,7 @@ size_t countRows(const std::string& out, std::string_view field)
 
     for (std::string line; std::getline(iss, line);)
     {
-        count += line.contains(field) ? 1 : 0;
+        count += line.contains(field) ? 1U : 0U;
     }
 
     return count;
