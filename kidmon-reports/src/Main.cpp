@@ -38,13 +38,11 @@ void handleListUsers(const fs::path& reportsDir)
     FileSystemRepository repo(reportsDir);
     spdlog::trace("Listing users...");
 
-    std::ostringstream ss;
-    repo.queryUsers([&ss](const std::string& username) {
-        ss << '\n' << username;
+    repo.queryUsers([](const std::string& username) {
+        std::cout << username << '\n';
         return true;
     });
 
-    spdlog::info("Users: {}", ss.str());
     spdlog::trace("Listing completed.");
 }
 
@@ -87,7 +85,11 @@ int main(int argc, char* argv[])
 
         AppConfig conf;
         conf.logFilename = "kidmon-reports.log";
-        core::utl::configureLogger(conf.logsDir, conf.logFilename);
+        // Console logs go to stderr, keeping stdout for the program's output
+        core::utl::configureLogger(conf.logsDir,
+                                   conf.logFilename,
+                                   spdlog::level::trace,
+                                   core::utl::ConsoleStream::Stderr);
         appLog.emplace("",
                        spdlog::level::info,
                        std::format("{:-^80s}", "> START <"),

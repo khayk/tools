@@ -6,8 +6,6 @@
 
 #include <cstdint>
 #include <iostream>
-#include <string>
-#include <vector>
 
 namespace km::reports {
 
@@ -40,6 +38,8 @@ private:
     uint64_t numEntries_ {};
     uint64_t numFiltered_ {};
     int64_t prevUpdate_ {100}; // don't show progress for short queries
+    bool showProgress_ {false};
+    bool progressShown_ {false};
 };
 
 } // namespace km::reports

@@ -28,12 +28,21 @@ fs::path makeLogFilename(std::string_view appName)
 
 void configureLogger(const fs::path& logsDir,
                      const fs::path& logFilename,
-                     spdlog::level::level_enum logLevel)
+                     spdlog::level::level_enum logLevel,
+                     ConsoleStream consoleStream)
 {
     namespace sinks = spdlog::sinks;
     namespace level = spdlog::level;
 
-    auto consoleSink = std::make_shared<sinks::stdout_color_sink_mt>();
+    spdlog::sink_ptr consoleSink;
+    if (consoleStream == ConsoleStream::Stderr)
+    {
+        consoleSink = std::make_shared<sinks::stderr_color_sink_mt>();
+    }
+    else
+    {
+        consoleSink = std::make_shared<sinks::stdout_color_sink_mt>();
+    }
     consoleSink->set_level(logLevel);
     consoleSink->set_pattern("%^[%L] %v%$");
 

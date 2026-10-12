@@ -2,6 +2,7 @@
 
 #include <spdlog/spdlog.h>
 
+#include <cstdint>
 #include <filesystem>
 #include <string_view>
 
@@ -11,9 +12,16 @@ namespace core::utl {
 
 fs::path makeLogFilename(std::string_view appName);
 
+enum class ConsoleStream : uint8_t
+{
+    Stdout,
+    Stderr, // keeps stdout free for the program's output
+};
+
 void configureLogger(const fs::path& logsDir,
                      const fs::path& logFilename,
-                     spdlog::level::level_enum logLevel =spdlog::level::trace);
+                     spdlog::level::level_enum logLevel = spdlog::level::trace,
+                     ConsoleStream consoleStream = ConsoleStream::Stdout);
 
 void logBuildInfo(std::string_view version,
                   std::string_view commitSha,
