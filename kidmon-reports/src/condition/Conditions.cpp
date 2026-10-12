@@ -179,16 +179,6 @@ const std::string& StringCondition::attributeName() const noexcept
 }
 
 
-void IsStringCondition::write(std::ostream& os) const
-{
-    os << std::format("{} is '{}'", attributeName(), needle());
-}
-
-bool IsStringCondition::met(const Entry& entry) const
-{
-    return value(entry) == needle();
-}
-
 void HasStringCondition::write(std::ostream& os) const
 {
     os << std::format("{} has '{}'", attributeName(), needle());

@@ -8,7 +8,6 @@ namespace km::reports {
 QueryVisualizer::QueryVisualizer(Config conf)
     : conf_(std::move(conf))
 {
-    // using SplitterAggr = Splitter<ProcPathAggr, TitleAggr>;
     using TitleAggr = Aggregate<Data, TitleBuilder>;
     using ProcPathAggr = Aggregate<TitleAggr, ProcPathBuilder>;
     using ProcNameAggr = Aggregate<ProcPathAggr, ProcNameBuilder>;
@@ -37,9 +36,6 @@ void QueryVisualizer::add(const Entry& entry)
 void QueryVisualizer::display(std::ostream& os) const
 {
     os << "Filtered: " << numFiltered_ << " out of " << numEntries_ << '\n';
-
-    // pathByNameAggr_->write(std::cout, conf_.topN_, 0);
-    // pathByNameAggr_->write(std::cout, 0);
 
     pathByNameAggr_->enumerate(
         conf_.top_,

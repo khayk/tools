@@ -74,40 +74,6 @@ public:
 using AggregatePtr = std::unique_ptr<IAggregate>;
 
 
-/*
-template <typename First, typename Second>
-class Splitter : public IAggregate
-{
-    First first;
-    Second second;
-
-public:
-    void update(const km::Entry& entry) override
-    {
-        first.update(entry);
-        second.update(entry);
-    }
-
-    void enumerate(const TopN& top, uint32_t depth, const DataCb& dataCb) const
-override
-    {
-        first.enumerate(top, depth, dataCb);
-        second.enumerate(top, depth, dataCb);
-    }
-
-    std::ostream& write(std::ostream& os, uint32_t prefix) const
-    {
-        os << std::string(prefix, ' ') << "split ------- \n";
-        prefix += 3;
-        first.write(os, prefix);
-        second.write(os, prefix);
-
-        return os;
-    }
-};
-*/
-
-
 class DescendingOrder
 {
 public:

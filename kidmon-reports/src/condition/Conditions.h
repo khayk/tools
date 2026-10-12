@@ -115,16 +115,6 @@ public:
 };
 
 
-class IsStringCondition : public StringCondition
-{
-public:
-    using StringCondition::StringCondition;
-
-    void write(std::ostream& os) const override;
-    bool met(const km::Entry& entry) const override;
-};
-
-
 class HasStringCondition : public StringCondition
 {
 public:

@@ -41,7 +41,7 @@ Also fixed along the way:
 ## What I'd do differently
 
 - [ ] **Use SQLite for reports.** The server already writes to `SqliteRepository`. Grouping, filtering and time ranges become SQL queries (`GROUP BY`, `LIKE`/`GLOB` with `COLLATE NOCASE`), which is much faster for months of data than scanning every raw file. The condition and aggregate classes could become a small query builder.
-- [ ] **Let the user choose the grouping.** Instead of the fixed name → path → title hierarchy, add something like `--group-by app,title` or `--group-by day,app`. The `FieldBuilder` template already points that way; making it chosen at runtime (a vector of key extractors) would turn `--fields` into a real feature.
+- [ ] **Let the user choose the grouping.** Instead of the fixed name → path → title hierarchy, add something like `--group-by app,title` or `--group-by day,app`. The `FieldBuilder` template already points that way; making it chosen at runtime (a vector of key extractors) would turn `--fields` into a real feature. Also allow several groupings in one run (e.g. `--group-by process,title --group-by day`), since reading the data is the expensive part; this is what the removed `Splitter` aggregate was meant for.
 - [ ] **Use regex or glob patterns** for titles and processes instead of plain substrings.
 
 ## Features that would make it more useful
