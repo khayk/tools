@@ -62,16 +62,22 @@ kidmon-reports --user alice --exclude-process /System/             # skip system
 
 ## Output format
 
-Results are grouped hierarchically by process name → process path → window title, each with total duration:
+Results are grouped hierarchically by process name → process path → window title, each with total duration. For example, `kidmon-reports --user alice --days 1 --top 2,2`:
 
 ```
-code                        duration: 4h 12m
-    /usr/bin/code           duration: 4h 12m
-        kidmon/README.md    duration: 1h 05m
-        core/README.md      duration: 45m
-firefox                     duration: 2h 03m
-    ...
+Filtered: 5690 out of 5690
+total duration: 6h 25m
+    proc_name: code, duration: 4h 12m
+        proc_path: /usr/bin/code, duration: 4h 12m
+            title: kidmon/README.md, duration: 1h 5m
+            title: core/README.md, duration: 45m
+    proc_name: firefox, duration: 2h 3m
+        proc_path: /usr/bin/firefox, duration: 2h 3m
+            title: <empty>, duration: 1h 10m
+            title: YouTube - Mozilla Firefox, duration: 40m
 ```
+
+`Filtered` shows how many entries matched the filters out of all entries in the time range. Windows without a title are shown as `<empty>`.
 
 The depth of the output is currently fixed at three levels: process name → full process path → window title.
 

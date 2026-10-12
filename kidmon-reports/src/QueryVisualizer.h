@@ -18,7 +18,6 @@ class QueryVisualizer
 public:
     struct Config
     {
-        std::vector<std::string> fields_;
         TopN top_ {10};
     };
 

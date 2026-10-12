@@ -41,7 +41,6 @@ cxxopts::Options makeOptions()
         ("d,days", "The last 'd' days", cxxopts::value<uint32_t>())
         ("M,months", "The last 'M' months", cxxopts::value<uint32_t>())
         ("r,range", "The dates range (ex: 20240913,20241030)", cxxopts::value<std::vector<uint32_t>>())
-        ("f,fields", "The fields to be displayed", cxxopts::value<std::vector<std::string>>()->default_value(""))
         ("t,title", "The window titles", cxxopts::value<std::vector<std::string>>())
         ("p,process", "The process names", cxxopts::value<std::vector<std::string>>())
         ("T,top", "The top N per level: processes,paths,titles, 0 hides the level (ex: 10,3)", cxxopts::value<std::vector<uint32_t>>()->default_value("10"))
@@ -76,7 +75,6 @@ ReportsConfig makeReportsConfig(const cxxopts::ParseResult& res)
     maybeGet("days", res, conf.days);
     maybeGet("months", res, conf.months);
     maybeGet("range", res, conf.range);
-    maybeGet("fields", res, conf.fields);
     maybeGet("title", res, conf.titles);
     maybeGet("process", res, conf.processes);
     // Read directly: contains() ignores default values

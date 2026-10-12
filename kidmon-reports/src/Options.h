@@ -16,7 +16,6 @@ struct ReportsConfig
     uint32_t months {0};
     std::vector<uint32_t> top;
     std::vector<uint32_t> range;
-    std::vector<std::string> fields;
     std::vector<std::string> titles;
     std::vector<std::string> processes;
     std::vector<std::string> excludeTitles;
