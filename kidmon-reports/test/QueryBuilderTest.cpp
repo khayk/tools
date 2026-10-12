@@ -154,7 +154,7 @@ TEST(QueryBuilderTest, NoTimeOptionReportsToday)
 
 TEST(QueryBuilderTest, RelativeTimeGoesBackFromNow)
 {
-    const auto filter = buildFilter(parseArgs({"-h", "2", "-m", "30"}));
+    const auto filter = buildFilter(parseArgs({"-H", "2", "-m", "30"}));
 
     EXPECT_EQ(filter.to() - filter.from(), std::chrono::minutes(150));
 }

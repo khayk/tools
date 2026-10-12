@@ -37,7 +37,7 @@ cxxopts::Options makeOptions()
         ("l,list", "Lists available users")
         ("u,user", "The name of the user to be queried", cxxopts::value<std::string>())
         ("m,minutes", "The last 'm' minutes", cxxopts::value<uint32_t>())
-        ("h,hours", "The last 'h' hours", cxxopts::value<uint32_t>())
+        ("H,hours", "The last 'H' hours", cxxopts::value<uint32_t>())
         ("d,days", "The last 'd' days", cxxopts::value<uint32_t>())
         ("M,months", "The last 'M' months", cxxopts::value<uint32_t>())
         ("r,range", "The dates range (ex: 20240913,20241030)", cxxopts::value<std::vector<uint32_t>>())
@@ -47,7 +47,7 @@ cxxopts::Options makeOptions()
         ("exclude-process", "The process names to exclude", cxxopts::value<std::vector<std::string>>())
         ("exclude-title", "The window titles to exclude", cxxopts::value<std::vector<std::string>>())
         ("reports-dir", "The reports directory", cxxopts::value<std::string>()->default_value(""))
-        ("e,help", "Print usage")
+        ("h,help", "Print usage")
     ;
     // clang-format on
 

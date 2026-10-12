@@ -15,7 +15,7 @@ kidmon-reports [options]
 | `-l, --list` | List all users that have recorded data |
 | `-u, --user <name>` | User to query |
 | `-m, --minutes <n>` | Include the last `n` minutes |
-| `-h, --hours <n>` | Include the last `n` hours |
+| `-H, --hours <n>` | Include the last `n` hours |
 | `-d, --days <n>` | Include the last `n` days |
 | `-M, --months <n>` | Include the last `n` months |
 | `-r, --range <from,to>` | Date range in `YYYYMMDD` format (e.g. `20240101,20241231`) |
@@ -26,7 +26,7 @@ kidmon-reports [options]
 | `-T, --top <n[,m…]>` | Show the top entries per level: processes, paths, titles. The last value applies to deeper levels, e.g. `10,3` shows 10 processes with 3 titles each. `0` hides a level and everything below it, e.g. `10,0` lists processes only (default: 10) |
 | `-c, --case-sensitive` | Enable case-sensitive matching (default: case-insensitive) |
 | `--reports-dir <path>` | Path to the kidmon reports directory (auto-detected if omitted) |
-| `-e, --help` | Print usage |
+| `-h, --help` | Print usage |
 
 ### Examples
 

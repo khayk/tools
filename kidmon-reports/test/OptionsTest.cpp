@@ -2,6 +2,8 @@
 
 #include "ArgsHelper.h"
 
+#include <array>
+
 using namespace km::reports;
 using km::reports::test::parseArgs;
 
@@ -60,4 +62,14 @@ TEST(OptionsTest, TopDefaultsToTen)
     EXPECT_EQ(parseArgs({}).top, TopN {10});
     EXPECT_EQ(parseArgs({"-T", "3"}).top, TopN {3});
     EXPECT_EQ(parseArgs({"--top", "10,3"}).top, (TopN {10, 3}));
+}
+
+TEST(OptionsTest, ShortFlagsForHelpAndHours)
+{
+    auto opts = makeOptions();
+    const std::array argv = {"kidmon-reports", "-h", "-H", "3"};
+    const auto result = opts.parse(static_cast<int>(argv.size()), argv.data());
+
+    EXPECT_TRUE(result.contains("help"));
+    EXPECT_EQ(result["hours"].as<uint32_t>(), 3U);
 }
