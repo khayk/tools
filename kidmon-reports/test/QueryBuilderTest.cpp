@@ -8,6 +8,7 @@
 #include <kidmon/data/Types.h>
 #include <kidmon/repo/FileSystemRepository.h>
 #include <core/utils/File.h>
+#include <core/utils/Str.h>
 
 #include <ctime>
 #include <sstream>
@@ -171,12 +172,24 @@ TEST(QueryBuilderTest, ValidateUser)
 
 TEST(QueryBuilderTest, CaseInsensitiveMatchingHandlesNonAscii)
 {
-    const auto conf = parseArgs({"-p", "ÉDITEUR", "-t", "ПРИВЕТ"});
+    // u8 literals keep the strings UTF-8 on every platform. On Windows, a narrow
+    // literal and fs::path(std::string) would use the ANSI code page instead.
+    const auto u8 = [](std::u8string_view str) {
+        return std::string(core::str::u8tos(str));
+    };
+    const auto makeU8Entry = [&u8](std::u8string_view title) {
+        Entry entry;
+        entry.processInfo.processPath =
+            fs::path(u8"/Applications/Éditeur.app/éditeur");
+        entry.windowInfo.title = u8(title);
 
-    EXPECT_TRUE(
-        matches(conf, makeEntry("/Applications/Éditeur.app/éditeur", "привет")));
-    EXPECT_FALSE(
-        matches(conf, makeEntry("/Applications/Éditeur.app/éditeur", "пока")));
+        return entry;
+    };
+
+    const auto conf = parseArgs({"-p", u8(u8"ÉDITEUR"), "-t", u8(u8"ПРИВЕТ")});
+
+    EXPECT_TRUE(matches(conf, makeU8Entry(u8"привет")));
+    EXPECT_FALSE(matches(conf, makeU8Entry(u8"пока")));
 }
 
 TEST(QueryBuilderTest, ProcessWithoutSeparatorMatchesExecutableName)

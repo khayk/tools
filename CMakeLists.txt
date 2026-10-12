@@ -50,6 +50,8 @@ if(WIN32)
     add_compile_options(/W4 /WX)
     add_compile_options("/MP${BUILD_JOBS}")
     add_compile_options(/EHsc)
+    # Read sources as UTF-8 (they have no BOM) and keep narrow literals UTF-8
+    add_compile_options(/utf-8)
     add_compile_definitions(_WIN32_WINNT=_WIN32_WINNT_WIN10)
     add_compile_definitions(NOMINMAX)
 elseif(UNIX OR APPLE)
