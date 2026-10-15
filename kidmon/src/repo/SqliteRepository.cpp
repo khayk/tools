@@ -11,7 +11,9 @@
 #include <mutex>
 #include <span>
 #include <stdexcept>
+#include <string>
 #include <unordered_map>
+#include <vector>
 
 namespace km {
 
@@ -281,12 +283,22 @@ public:
 
     void queryUsers(const UserCb& cb) const
     {
-        const std::scoped_lock lock(mtx_);
-
-        selectUsers_.reset();
-        while (selectUsers_.step())
+        // Collect first and call back without the lock, as callers may query this
+        // repository from the callback (e.g. migrate() reads each user's entries)
+        std::vector<std::string> users;
         {
-            if (!cb(selectUsers_.columnText(0)))
+            const std::scoped_lock lock(mtx_);
+
+            selectUsers_.reset();
+            while (selectUsers_.step())
+            {
+                users.push_back(selectUsers_.columnText(0));
+            }
+        }
+
+        for (const auto& user : users)
+        {
+            if (!cb(user))
             {
                 return;
             }

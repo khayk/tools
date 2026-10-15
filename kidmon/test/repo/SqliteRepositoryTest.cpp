@@ -216,7 +216,8 @@ TEST(SqliteRepositoryTest, AddAllStoresEveryEntryAndSkipsDuplicates)
     entries.reserve(100);
     for (int i = 0; i < 100; ++i)
     {
-        entries.push_back(sampleEntry("john", TimePoint(std::chrono::milliseconds(i))));
+        entries.push_back(
+            sampleEntry("john", TimePoint(std::chrono::milliseconds(i))));
     }
     repo.addAll(entries);
     repo.addAll(entries); // same (user, capture time) again
@@ -247,4 +248,24 @@ TEST(SqliteRepositoryTest, ReopeningExistingDatabaseKeepsEntries)
         return true;
     });
     EXPECT_EQ(count, 1);
+}
+
+TEST(SqliteRepositoryTest, QueryUsersCallbackCanQueryEntries)
+{
+    TempDir dir("kdmn-sql-tst");
+    SqliteRepository repo(tempDbFile(dir));
+    repo.add(sampleEntry("alice"));
+    repo.add(sampleEntry("bob"));
+
+    // Used to deadlock: queryUsers held the lock while calling back
+    size_t entries = 0;
+    repo.queryUsers([&repo, &entries](const std::string& username) {
+        repo.queryEntries(Filter(username), [&entries](Entry&) {
+            ++entries;
+            return true;
+        });
+        return true;
+    });
+
+    EXPECT_EQ(entries, 2U);
 }
