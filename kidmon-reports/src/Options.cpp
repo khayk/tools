@@ -46,7 +46,8 @@ cxxopts::Options makeOptions()
         ("T,top", "The top N per level: processes,paths,titles, 0 hides the level (ex: 10,3)", cxxopts::value<std::vector<uint32_t>>()->default_value("10"))
         ("exclude-process", "The process names to exclude", cxxopts::value<std::vector<std::string>>())
         ("exclude-title", "The window titles to exclude", cxxopts::value<std::vector<std::string>>())
-        ("reports-dir", "The reports directory", cxxopts::value<std::string>()->default_value(""))
+        ("source", "The repository to read from, [fs:|sqlite:]location (default: the kidmon reports folder)", cxxopts::value<std::string>())
+        ("migrate-to", "Copy all data from the source into this repository, [fs:|sqlite:]location", cxxopts::value<std::string>())
         ("h,help", "Print usage")
     ;
     // clang-format on

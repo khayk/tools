@@ -12,6 +12,8 @@ set(LIB_SRCS
    src/condition/Conditions.cpp
    src/condition/Conditions.h
    src/condition/ICondition.h
+   src/Migration.cpp
+   src/Migration.h
    src/Options.cpp
    src/Options.h
    src/QueryBuilder.cpp

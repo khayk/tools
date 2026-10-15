@@ -1,10 +1,12 @@
+#include "Migration.h"
 #include "Options.h"
 #include "QueryBuilder.h"
 #include "QueryVisualizer.h"
 
 #include <kidmon/common/Utils.h>
 #include <kidmon/config/Config.h>
-#include <kidmon/repo/FileSystemRepository.h>
+#include <kidmon/repo/RepositoryFactory.h>
+#include <kidmon/repo/RepositoryMigrator.h>
 #include <BuildInfo.h>
 
 #include <core/utils/Dirs.h>
@@ -33,9 +35,8 @@ QueryVisualizer buildVisualizer(const ReportsConfig& reportsConf)
     return queryVis;
 }
 
-void handleListUsers(const fs::path& reportsDir)
+void handleListUsers(const IRepository& repo)
 {
-    FileSystemRepository repo(reportsDir);
     spdlog::trace("Listing users...");
 
     repo.queryUsers([](const std::string& username) {
@@ -46,6 +47,41 @@ void handleListUsers(const fs::path& reportsDir)
     spdlog::trace("Listing completed.");
 }
 
+/**
+ * Copies all entries from the source into the target repository. Returns false if
+ * any entry failed.
+ */
+bool handleMigrate(const IRepository& source,
+                   const RepositorySpec& sourceSpec,
+                   const RepositorySpec& targetSpec)
+{
+    validateMigration(sourceSpec, targetSpec);
+    const auto destination = openRepository(targetSpec, RepositoryAccess::Write);
+
+    spdlog::info("Migrating '{}' into '{}'",
+                 toString(sourceSpec),
+                 toString(targetSpec));
+
+    StopWatch sw(true);
+    const auto stats =
+        migrate(source, *destination, [&sw](const MigrationStats& progress) {
+            if (sw.elapsedMs() > 1000)
+            {
+                spdlog::info("Migrated {} entries, {} failed",
+                             progress.entriesCopied,
+                             progress.entriesFailed);
+                sw.restart();
+            }
+            return true;
+        });
+
+    std::cout << std::format("Users: {}, entries migrated: {}, failed: {}\n",
+                             stats.usersSeen,
+                             stats.entriesCopied,
+                             stats.entriesFailed);
+
+    return stats.entriesFailed == 0;
+}
 
 void handleQueryUser(const IRepository& repo,
                      const ReportsConfig& conf,
@@ -113,42 +149,47 @@ int main(int argc, char* argv[])
             return 2;
         }
 
-        fs::path reportDir(result["reports-dir"].as<std::string>());
         StopWatch sw;
         sw.start();
 
-        if (reportDir.empty())
+        RepositorySpec sourceSpec;
+        if (result.contains("source"))
         {
-            reportDir = core::dirs::data().append("kidmon").lexically_normal();
-            reportDir /= "reports";
-
-            spdlog::warn("No reports directory is provided, defaulting to '{}'",
-                         core::file::path2s(reportDir));
+            sourceSpec = parseRepositorySpec(result["source"].as<std::string>());
+        }
+        else
+        {
+            // The folder kidmon writes its reports to
+            sourceSpec.location = core::dirs::data() / "kidmon" / "reports";
         }
 
-        if (!fs::is_directory(reportDir))
-        {
-            throw std::invalid_argument(
-                std::format("Reports directory '{}' does not exist",
-                            core::file::path2s(reportDir)));
-        }
+        spdlog::info("Source: '{}'", toString(sourceSpec));
+        const auto source = openRepository(sourceSpec, RepositoryAccess::Read);
+
+        int exitCode = 0;
 
         if (result.contains("list"))
         {
-            handleListUsers(reportDir);
+            handleListUsers(*source);
+        }
+        else if (result.contains("migrate-to"))
+        {
+            const auto targetSpec =
+                parseRepositorySpec(result["migrate-to"].as<std::string>());
+            exitCode = handleMigrate(*source, sourceSpec, targetSpec) ? 0 : 1;
         }
         else
         {
             const ReportsConfig reportsConf = makeReportsConfig(result);
-
-            FileSystemRepository repo(reportDir);
             QueryVisualizer queryVisualizer = buildVisualizer(reportsConf);
 
-            handleQueryUser(repo, reportsConf, queryVisualizer);
+            handleQueryUser(*source, reportsConf, queryVisualizer);
             queryVisualizer.display();
         }
 
         spdlog::info("Processing took: {}", core::str::humanizeDuration(sw.elapsed()));
+
+        return exitCode;
     }
     catch (const std::exception& e)
     {
@@ -158,24 +199,3 @@ int main(int argc, char* argv[])
 
     return 0;
 }
-
-
-// #include <kidmon/repo/SqliteRepository.h>
-// #include <kidmon/repo/RepositoryMigrator.h>
-
-// #pragma GCC diagnostic push
-// #pragma GCC diagnostic ignored "-Wunused-function"
-
-// SqliteRepository sqlRepo(core::dirs::current() / "all-activity.db");
-
-// StopWatch sw;
-// km::migrate(repo, sqlRepo, [&sw](const MigrationStats& progress) {
-//     if (sw.elapsedMs() > 1000) {
-//         std::cout << "copied: " << progress.entriesCopied
-//                     << "failed: " << progress.entriesFailed << '\r';
-//         sw.restart();
-//     }
-//     return true;
-// });
-
-// #pragma GCC diagnostic pop

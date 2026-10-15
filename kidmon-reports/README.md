@@ -25,7 +25,8 @@ kidmon-reports [options]
 | `--exclude-title <text>` | Exclude entries matching this window title (repeatable) |
 | `-T, --top <n[,m…]>` | Show the top entries per level: processes, paths, titles. The last value applies to deeper levels, e.g. `10,3` shows 10 processes with 3 titles each. `0` hides a level and everything below it, e.g. `10,0` lists processes only (default: 10) |
 | `-c, --case-sensitive` | Enable case-sensitive matching (default: case-insensitive) |
-| `--reports-dir <path>` | Path to the kidmon reports directory (auto-detected if omitted) |
+| `--source <repo>` | The repository to read from (default: the kidmon reports folder, see [Repositories](#repositories)) |
+| `--migrate-to <repo>` | Copy all data from the source into this repository and exit |
 | `-h, --help` | Print usage |
 
 ### Examples
@@ -46,8 +47,11 @@ kidmon-reports --user alice --range 20240601,20240630 --process firefox
 # Time spent in VS Code over the last week, excluding test runs
 kidmon-reports --user alice --days 7 --process code --exclude-title "Running Tests"
 
-# Query a specific reports directory
-kidmon-reports --user alice --days 7 --reports-dir /mnt/reports
+# Copy all data into a SQLite database
+kidmon-reports --migrate-to activity.db
+
+# Query a SQLite database instead of the reports folder
+kidmon-reports --source activity.db --user alice --days 7
 ```
 
 ### Process matching
@@ -81,9 +85,19 @@ total duration: 6h 25m
 
 The depth of the output is currently fixed at three levels: process name → full process path → window title.
 
-## Data directory
+## Repositories
 
-By default, `kidmon-reports` reads from the same directory that `kidmon` writes to:
+A repository is given as `[type:]location`, where type is `fs` (a reports folder) or `sqlite` (a database file). Without a type, an existing folder is `fs` and a `.db`, `.sqlite` or `.sqlite3` file is `sqlite`:
+
+```bash
+kidmon-reports --source /mnt/reports --list
+kidmon-reports --source sqlite:/backup/activity.data --list
+kidmon-reports --source activity.db --migrate-to fs:/backup/reports
+```
+
+`--migrate-to` copies every user's data; the query options are ignored. A SQLite target skips entries it already has, so re-running it adds only new data. A folder target must be empty or not exist yet, since writing to a folder only appends and a repeated migration would duplicate every entry.
+
+By default, `kidmon-reports` reads from the same folder that `kidmon` writes to:
 
 | Platform | Default path |
 |---|---|
@@ -91,4 +105,4 @@ By default, `kidmon-reports` reads from the same directory that `kidmon` writes 
 | macOS | `~/Library/Application Support/kidmon/reports/` |
 | Windows | `%APPDATA%\kidmon\reports\` |
 
-Pass `--reports-dir` to override this.
+Pass `--source` to read from another repository.

@@ -10,6 +10,7 @@ set(TEST_SRCS
    repo/FileSystemRepositoryTest.cpp
    repo/MultiRepositoryTest.cpp
    repo/RawFileRangeTest.cpp
+   repo/RepositoryFactoryTest.cpp
    repo/RepositoryMigratorTest.cpp
    repo/SqliteRepositoryTest.cpp
    server/AgentManagerTest.cpp

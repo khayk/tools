@@ -17,6 +17,7 @@ set(LIB_SRCS
    src/repo/CountingRepository.cpp
    src/repo/FileSystemRepository.cpp
    src/repo/MultiRepository.cpp
+   src/repo/RepositoryFactory.cpp
    src/repo/RepositoryMigrator.cpp
    src/repo/SqliteRepository.cpp
    src/repo/sqlite/SqliteDatabase.cpp
