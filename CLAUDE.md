@@ -37,6 +37,7 @@ Run a single test binary directly:
 ./build/debug/core/test/core-test
 ./build/debug/duplicates/test/duplicates-test
 ./build/debug/kidmon/test/kidmon-test
+./build/debug/kidmon-reports/test/kidmon-reports-test
 ```
 
 ### Coverage (requires `lcov` and `genhtml`)
@@ -47,6 +48,7 @@ cmake --build --preset vcpkg-coverage                      # build all targets w
 cmake --build --preset vcpkg-coverage -t coverage-core-test       # generate core report
 cmake --build --preset vcpkg-coverage -t coverage-duplicates-test # generate duplicates report
 cmake --build --preset vcpkg-coverage -t coverage-kidmon-test     # generate kidmon report
+cmake --build --preset vcpkg-coverage -t coverage-kidmon-reports-test # generate kidmon-reports report
 # HTML reports appear in build/coverage/coverage-<target-name>/
 ```
 

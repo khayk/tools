@@ -39,6 +39,7 @@ jobs:
           cmake --build --preset vcpkg-coverage -t coverage-core-test
           cmake --build --preset vcpkg-coverage -t coverage-duplicates-test
           cmake --build --preset vcpkg-coverage -t coverage-kidmon-test
+          cmake --build --preset vcpkg-coverage -t coverage-kidmon-reports-test
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@v7
@@ -53,6 +54,7 @@ jobs:
           cp -r build/coverage/coverage-core-test       build/pages/
           cp -r build/coverage/coverage-duplicates-test build/pages/
           cp -r build/coverage/coverage-kidmon-test     build/pages/
+          cp -r build/coverage/coverage-kidmon-reports-test build/pages/
           cat > build/pages/index.html << 'EOF'
           <!DOCTYPE html>
           <html lang="en">
@@ -74,6 +76,7 @@ jobs:
               <li><a href="coverage-core-test/index.html">core</a></li>
               <li><a href="coverage-duplicates-test/index.html">duplicates</a></li>
               <li><a href="coverage-kidmon-test/index.html">kidmon</a></li>
+              <li><a href="coverage-kidmon-reports-test/index.html">kidmon-reports</a></li>
             </ul>
           </body>
           </html>

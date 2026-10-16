@@ -11,7 +11,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")"/..
 
-ALL_TARGETS=(core-test duplicates-test kidmon-test)
+ALL_TARGETS=(core-test duplicates-test kidmon-test kidmon-reports-test)
 BUILD_DIR="build/coverage"
 
 if [ "$#" -eq 0 ]; then
