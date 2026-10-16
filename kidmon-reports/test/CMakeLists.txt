@@ -1,7 +1,6 @@
 set(PROJECT_TST kidmon-reports-test)
 
 set(TEST_SRCS
-   MigrationTest.cpp
    OptionsTest.cpp
    QueryBuilderTest.cpp
    QueryVisualizerTest.cpp

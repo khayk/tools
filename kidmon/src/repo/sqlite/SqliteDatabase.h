@@ -22,7 +22,8 @@ class Statement;
 class Database
 {
 public:
-    explicit Database(const fs::path& file);
+    // A read-only connection never creates the file or writes to it
+    explicit Database(const fs::path& file, bool readOnly = false);
 
     /// Runs statements with no parameters and no result rows (DDL, PRAGMAs).
     void exec(std::string_view sql) const;

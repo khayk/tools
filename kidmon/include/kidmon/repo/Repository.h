@@ -29,6 +29,15 @@ public:
         }
     }
 
+    /**
+     * @brief Whether addAll() stores all entries or none of them, so a failed call
+     * can safely be retried. False for the default addAll().
+     */
+    virtual bool atomicAddAll() const noexcept
+    {
+        return false;
+    }
+
     virtual void queryUsers(const UserCb& cb) const = 0;
 
     virtual void queryEntries(const Filter& filter, const EntryCb& cb) const = 0;

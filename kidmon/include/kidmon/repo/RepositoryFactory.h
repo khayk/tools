@@ -52,4 +52,13 @@ enum class RepositoryAccess : std::uint8_t
 std::unique_ptr<IRepository> openRepository(const RepositorySpec& spec,
                                             RepositoryAccess access);
 
+/**
+ * @brief Throws std::invalid_argument if migrating from source into target is
+ * unsafe: the target is the source or lies inside it, has the wrong kind (a file
+ * where a folder is expected or vice versa), or is a non-empty file system
+ * repository. The latter only appends, so a repeated migration would duplicate
+ * every entry; a SQLite target skips entries it already has.
+ */
+void validateMigration(const RepositorySpec& source, const RepositorySpec& target);
+
 } // namespace km

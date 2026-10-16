@@ -1,4 +1,3 @@
-#include "Migration.h"
 #include "Options.h"
 #include "QueryBuilder.h"
 #include "QueryVisualizer.h"
@@ -138,12 +137,19 @@ int main(int argc, char* argv[])
 
         // cxxopts silently ignores stray positional arguments, e.g. the value in
         // "-title foo" (parsed as "-t itle foo")
+        auto error = findOptionConflict(result);
         if (!result.unmatched().empty())
         {
-            spdlog::error("Unexpected argument '{}'", result.unmatched().front());
+            error =
+                std::format("Unexpected argument '{}'", result.unmatched().front());
         }
 
-        if (result.contains("help") || !result.unmatched().empty())
+        if (error)
+        {
+            spdlog::error("{}", *error);
+        }
+
+        if (result.contains("help") || error)
         {
             std::cout << opts.help() << '\n';
             return 2;

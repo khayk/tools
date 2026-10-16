@@ -36,6 +36,11 @@ void CountingRepository::addAll(std::span<const Entry> entries)
     }
 }
 
+bool CountingRepository::atomicAddAll() const noexcept
+{
+    return inner_.atomicAddAll();
+}
+
 void CountingRepository::queryUsers(const UserCb& cb) const
 {
     inner_.queryUsers(cb);

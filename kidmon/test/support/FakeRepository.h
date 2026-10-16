@@ -16,6 +16,10 @@ public:
     void add(const Entry& entry) override
     {
         ++addCalls_;
+        if (addCalls_ == failAddCall_)
+        {
+            throw std::runtime_error("FakeRepository: simulated add() failure");
+        }
         if (failNextAdds_ > 0)
         {
             --failNextAdds_;
@@ -28,6 +32,17 @@ public:
     {
         ++addAllCalls_;
         IRepository::addAll(entries);
+    }
+
+    // Defaults to true, so tests can exercise chunked writes
+    bool atomicAddAll() const noexcept override
+    {
+        return atomicAddAll_;
+    }
+
+    void setAtomicAddAll(bool atomic) noexcept
+    {
+        atomicAddAll_ = atomic;
     }
 
     void queryUsers(const UserCb& cb) const override
@@ -83,6 +98,12 @@ public:
         return addAllCalls_;
     }
 
+    // Makes the add() call with this 1-based number throw.
+    void failAddCall(std::size_t number) noexcept
+    {
+        failAddCall_ = number;
+    }
+
     // Makes the next N add() calls throw instead of storing.
     void failNextAdds(std::size_t count) noexcept
     {
@@ -94,6 +115,8 @@ private:
     std::size_t addCalls_ {0};
     std::size_t addAllCalls_ {0};
     std::size_t failNextAdds_ {0};
+    std::size_t failAddCall_ {0};
+    bool atomicAddAll_ {true};
 };
 
 } // namespace km::test

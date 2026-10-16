@@ -44,18 +44,27 @@ MigrationStats migrate(const IRepository& source,
             return true;
         }
 
-        try
+        // A failed non-atomic addAll() may have stored part of the chunk, and
+        // retrying it would duplicate those entries, so write one by one
+        if (!destination.atomicAddAll())
         {
-            destination.addAll(chunk);
-            stats.entriesCopied += chunk.size();
-        }
-        catch (const std::exception& ex)
-        {
-            spdlog::warn("migrate: chunk of {} entries failed ({}); retrying "
-                         "one by one",
-                         chunk.size(),
-                         ex.what());
             copyOneByOne(chunk);
+        }
+        else
+        {
+            try
+            {
+                destination.addAll(chunk);
+                stats.entriesCopied += chunk.size();
+            }
+            catch (const std::exception& ex)
+            {
+                spdlog::warn("migrate: chunk of {} entries failed ({}); retrying "
+                             "one by one",
+                             chunk.size(),
+                             ex.what());
+                copyOneByOne(chunk);
+            }
         }
         chunk.clear();
 

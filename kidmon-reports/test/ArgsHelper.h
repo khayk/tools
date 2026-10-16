@@ -2,12 +2,13 @@
 
 #include <Options.h>
 
+#include <optional>
 #include <string>
 #include <vector>
 
 namespace km::reports::test {
 
-inline ReportsConfig parseArgs(std::vector<std::string> args)
+inline cxxopts::ParseResult parse(std::vector<std::string> args)
 {
     args.insert(args.begin(), "kidmon-reports");
 
@@ -19,9 +20,17 @@ inline ReportsConfig parseArgs(std::vector<std::string> args)
     }
 
     auto opts = makeOptions();
-    const auto result = opts.parse(static_cast<int>(argv.size()), argv.data());
+    return opts.parse(static_cast<int>(argv.size()), argv.data());
+}
 
-    return makeReportsConfig(result);
+inline ReportsConfig parseArgs(std::vector<std::string> args)
+{
+    return makeReportsConfig(parse(std::move(args)));
+}
+
+inline std::optional<std::string> optionConflict(std::vector<std::string> args)
+{
+    return findOptionConflict(parse(std::move(args)));
 }
 
 } // namespace km::reports::test

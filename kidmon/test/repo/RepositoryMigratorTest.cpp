@@ -132,6 +132,28 @@ TEST(RepositoryMigratorTest, FailedChunkIsRetriedEntryByEntry)
     EXPECT_EQ(destination.countFor("alice"), 3U);
 }
 
+// A failed non-atomic addAll() may have stored part of the chunk, so retrying
+// the whole chunk would duplicate entries
+TEST(RepositoryMigratorTest, NonAtomicDestinationIsWrittenOneByOne)
+{
+    FakeRepository source;
+    const auto now = SystemClock::now();
+    source.add(makeEntry("alice", now));
+    source.add(makeEntry("alice", now + 1s));
+    source.add(makeEntry("alice", now + 2s));
+
+    FakeRepository destination;
+    destination.setAtomicAddAll(false);
+    destination.failAddCall(2);
+
+    const auto stats = migrate(source, destination, {}, 3);
+
+    EXPECT_EQ(stats.entriesCopied, 2U);
+    EXPECT_EQ(stats.entriesFailed, 1U);
+    EXPECT_EQ(destination.countFor("alice"), 2U);
+    EXPECT_EQ(destination.addAllCalls(), 0U);
+}
+
 // The file repository reuses one Entry per raw file, so the migrator must copy
 // rather than move out of it.
 TEST(RepositoryMigratorTest, KeepsUsernameWhenSourceReusesEntries)

@@ -2,6 +2,8 @@
 
 #include <core/utils/Str.h>
 
+#include <format>
+
 namespace km::reports {
 
 namespace {
@@ -53,6 +55,43 @@ cxxopts::Options makeOptions()
     // clang-format on
 
     return opts;
+}
+
+std::optional<std::string> findOptionConflict(const cxxopts::ParseResult& res)
+{
+    if (res.contains("list") && res.contains("migrate-to"))
+    {
+        return "--list and --migrate-to can't be used together";
+    }
+
+    const auto* command = res.contains("list")         ? "--list"
+                          : res.contains("migrate-to") ? "--migrate-to"
+                                                       : nullptr;
+    if (command == nullptr)
+    {
+        return std::nullopt;
+    }
+
+    for (const auto* option : {"user",
+                               "minutes",
+                               "hours",
+                               "days",
+                               "months",
+                               "range",
+                               "title",
+                               "process",
+                               "exclude-process",
+                               "exclude-title",
+                               "top",
+                               "case-sensitive"})
+    {
+        if (res.contains(option))
+        {
+            return std::format("--{} can't be used with {}", option, command);
+        }
+    }
+
+    return std::nullopt;
 }
 
 void applyCaseTransform(ReportsConfig& conf)

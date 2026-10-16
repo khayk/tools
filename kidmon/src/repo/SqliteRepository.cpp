@@ -171,17 +171,21 @@ class SqliteRepository::Impl
     }
 
 public:
-    explicit Impl(fs::path dbFile)
+    Impl(fs::path dbFile, bool readOnly)
         : dbFile_(std::move(dbFile))
-        , db_(dbFile_)
+        , db_(dbFile_, readOnly)
     {
-        // WAL: readers and the writer don't block each other. NORMAL: cheaper
-        // commits, durability still covered by WAL's checkpoint.
-        db_.exec("PRAGMA journal_mode = WAL;"
-                 "PRAGMA synchronous = NORMAL;"
-                 "PRAGMA foreign_keys = ON;");
-        db_.exec(SCHEMA_SQL);
-        migrateSchema();
+        // Setting up the schema writes to the file, so a reader skips it
+        if (!readOnly)
+        {
+            // WAL: readers and the writer don't block each other. NORMAL:
+            // cheaper commits, durability still covered by WAL's checkpoint.
+            db_.exec("PRAGMA journal_mode = WAL;"
+                     "PRAGMA synchronous = NORMAL;"
+                     "PRAGMA foreign_keys = ON;");
+            db_.exec(SCHEMA_SQL);
+            migrateSchema();
+        }
 
         // ON CONFLICT ... DO UPDATE ... RETURNING id is a get-or-create in one
         // round trip.
@@ -331,8 +335,8 @@ public:
     }
 };
 
-SqliteRepository::SqliteRepository(fs::path dbFile)
-    : pimpl_(std::make_unique<Impl>(std::move(dbFile)))
+SqliteRepository::SqliteRepository(fs::path dbFile, Mode mode)
+    : pimpl_(std::make_unique<Impl>(std::move(dbFile), mode == Mode::ReadOnly))
 {
 }
 
@@ -351,6 +355,11 @@ void SqliteRepository::add(const Entry& entry)
 void SqliteRepository::addAll(std::span<const Entry> entries)
 {
     pimpl_->addAll(entries);
+}
+
+bool SqliteRepository::atomicAddAll() const noexcept
+{
+    return true;
 }
 
 void SqliteRepository::queryUsers(const UserCb& cb) const

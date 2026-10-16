@@ -5,6 +5,7 @@
 #include <array>
 
 using namespace km::reports;
+using km::reports::test::optionConflict;
 using km::reports::test::parseArgs;
 
 using Strings = std::vector<std::string>;
@@ -72,4 +73,22 @@ TEST(OptionsTest, ShortFlagsForHelpAndHours)
 
     EXPECT_TRUE(result.contains("help"));
     EXPECT_EQ(result["hours"].as<uint32_t>(), 3U);
+}
+
+TEST(OptionsTest, NoConflictForValidCombinations)
+{
+    EXPECT_FALSE(optionConflict({}));
+    EXPECT_FALSE(optionConflict({"-u", "alice", "-d", "1", "-T", "5"}));
+    EXPECT_FALSE(optionConflict({"-l", "--source", "a.db"}));
+    EXPECT_FALSE(optionConflict({"--migrate-to", "a.db", "--source", "/r"}));
+}
+
+TEST(OptionsTest, ConflictingCommandsAndOptions)
+{
+    EXPECT_EQ(optionConflict({"-l", "--migrate-to", "a.db"}),
+              "--list and --migrate-to can't be used together");
+    EXPECT_EQ(optionConflict({"--migrate-to", "a.db", "-u", "alice"}),
+              "--user can't be used with --migrate-to");
+    EXPECT_EQ(optionConflict({"-l", "-d", "1"}), "--days can't be used with --list");
+    EXPECT_EQ(optionConflict({"-l", "-T", "5"}), "--top can't be used with --list");
 }

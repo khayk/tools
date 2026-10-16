@@ -269,3 +269,42 @@ TEST(SqliteRepositoryTest, QueryUsersCallbackCanQueryEntries)
 
     EXPECT_EQ(entries, 2U);
 }
+
+TEST(SqliteRepositoryTest, ReadOnlyLeavesFileUntouched)
+{
+    TempDir dir("kdmn-sql-tst");
+    const auto dbFile = tempDbFile(dir);
+    {
+        SqliteRepository repo(dbFile);
+        repo.add(sampleEntry("alice"));
+    }
+    std::error_code ec;
+    std::string before;
+    ASSERT_TRUE(core::file::read(dbFile, before, ec));
+
+    {
+        SqliteRepository repo(dbFile, SqliteRepository::Mode::ReadOnly);
+
+        size_t entries = 0;
+        repo.queryEntries(Filter("alice"), [&entries](Entry&) {
+            ++entries;
+            return true;
+        });
+        EXPECT_EQ(entries, 1U);
+        EXPECT_THROW(repo.add(sampleEntry("bob")), std::exception);
+    }
+
+    std::string after;
+    ASSERT_TRUE(core::file::read(dbFile, after, ec));
+    EXPECT_EQ(before, after);
+}
+
+TEST(SqliteRepositoryTest, ReadOnlyNeverCreatesFile)
+{
+    TempDir dir("kdmn-sql-tst");
+    const auto dbFile = tempDbFile(dir);
+
+    EXPECT_THROW(SqliteRepository(dbFile, SqliteRepository::Mode::ReadOnly),
+                 std::exception);
+    EXPECT_FALSE(fs::exists(dbFile));
+}

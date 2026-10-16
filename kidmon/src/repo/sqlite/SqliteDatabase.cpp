@@ -18,12 +18,13 @@ namespace {
 
 } // namespace
 
-Database::Database(const fs::path& file)
+Database::Database(const fs::path& file, bool readOnly)
 {
     // FULLMUTEX allows handing this connection to another thread later; it
     // does not permit concurrent use from two threads at once.
-    const int flags =
-        SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX;
+    const int flags = (readOnly ? SQLITE_OPEN_READONLY
+                                : SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE) |
+                      SQLITE_OPEN_FULLMUTEX;
 
     sqlite3* raw = nullptr;
     const int rc =
@@ -50,8 +51,8 @@ void Database::exec(std::string_view sql) const
     {
         std::unique_ptr<char, decltype(&sqlite3_free)> msg(errMsg, sqlite3_free);
         throw std::runtime_error(std::format("Failed to execute sql '{}': {}",
-                                            owned,
-                                            errMsg != nullptr ? errMsg : ""));
+                                             owned,
+                                             errMsg != nullptr ? errMsg : ""));
     }
 }
 

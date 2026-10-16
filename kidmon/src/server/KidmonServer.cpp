@@ -54,8 +54,8 @@ std::vector<std::unique_ptr<IRepository>> buildRepos(const KidmonServer::Config&
 }
 
 // repos must outlive the returned MultiRepository. repos[0] (FileSystem, when
-// present) stays the query source: kidmon-reports reads the filesystem
-// directly, so nothing about that path changes here.
+// present) stays the query source. kidmon-reports opens either backend's files
+// itself (--source), so it doesn't depend on this order.
 std::vector<std::reference_wrapper<IRepository>> asRefs(
     const std::vector<std::unique_ptr<IRepository>>& repos)
 {

@@ -3,6 +3,7 @@
 #include <cxxopts.hpp>
 
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -25,6 +26,13 @@ struct ReportsConfig
 };
 
 cxxopts::Options makeOptions();
+
+/**
+ * Finds options that can't be used together: --list with --migrate-to, or either of
+ * them with query options, which they would silently ignore. Returns the error
+ * message, if any.
+ */
+std::optional<std::string> findOptionConflict(const cxxopts::ParseResult& res);
 
 /**
  * Builds the config from parsed options. When matching is case-insensitive, all

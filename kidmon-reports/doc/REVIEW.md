@@ -59,6 +59,21 @@ For a parental-monitoring tool, the useful questions are "how much, when, and on
 9. [ ] **Screenshots.** `WindowInfo` carries an `Image`; a "show captures for this title or time" option would let a parent check context.
 10. [ ] **Comparing users** in one run, e.g. `--user alice,bob` or `--all-users`.
 
+## Code review findings (2026-10-16)
+
+From `/code-review high kidmon-reports`, covering the code written since the review above.
+
+- [x] **Reading a SQLite source modified it.** It was opened read-write, switched to WAL and schema-upgraded, which can delete rows. Read access now opens it read-only.
+- [x] **A folder target could get duplicates on a failed chunk.** The migrator retried the whole chunk although part of it was stored. It now writes one by one unless the target's `addAll()` is atomic (`IRepository::atomicAddAll()`).
+- [x] **A target inside a folder source was accepted.** Refused now.
+- [x] **"Into itself" compared path strings.** Now uses `fs::equivalent`, which also catches other spellings and hard links.
+- [x] **Conflicting options were silently ignored** (`--list` with `--migrate-to`, either with query options). Now an error.
+- [x] **A file was accepted as a folder target** (and a folder as a SQLite target). Refused now.
+- [x] **A SQLite target's parent folder wasn't created.** Created now, as for folder targets.
+- [x] **The migration checks lived in kidmon-reports.** Moved to kidmon (`validateMigration` in `RepositoryFactory.h`).
+- [x] **Stale comment in `KidmonServer.cpp`** about kidmon-reports reading only the folder repository.
+- [ ] **"Entries migrated" counts entries a SQLite target skipped**, so a re-run reports everything again. Needs the repository to report what it actually inserted.
+
 ## Suggested order
 
 Fix bugs 1–3 and 5–7 and add tests for them. Then split `Main.cpp`, add `--format json` and `--group-by`, and after that categories and per-day reports.
