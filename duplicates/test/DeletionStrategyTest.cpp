@@ -12,8 +12,8 @@
 namespace tools::dups {
 
 using namespace core;
-using utl::MuteLogger;
 using utl::LogCaptureSt;
+using utl::MuteLogger;
 
 TEST(DeletionStrategyTest, PermanentDelete)
 {
@@ -71,14 +71,17 @@ TEST(DeletionStrategyTest, BackupAndDelete)
     EXPECT_EQ(journalFile.filename(), "deleted_files.log");
     strategy.reset(); // This will force the journal file to be closed
 
-    file::readLines(
-        journalFile,
-        [it = files.begin()](const std::string& line) mutable {
-            EXPECT_FALSE(line.empty());
-            EXPECT_TRUE(line.contains(file::path2s(it->filename()).c_str()));
-            ++it;
-            return true;
-        });
+    // Each deletion is journaled once (the repeated no-op remove adds nothing),
+    // mapping the original absolute path to the backup that now holds it.
+    const auto hash = crypto::md5(files.front().parent_path().string());
+    std::vector<JournalEntry> expected;
+    expected.reserve(files.size());
+    for (const auto& file : files)
+    {
+        expected.push_back({fs::absolute(file), runDir / hash / file.filename()});
+    }
+
+    EXPECT_EQ(readJournal(journalFile), expected);
 }
 
 TEST(DeletionStrategyTest, BackupsFromSeparateRunsDoNotCollide)

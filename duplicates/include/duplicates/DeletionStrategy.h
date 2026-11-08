@@ -1,7 +1,8 @@
 #pragma once
 
+#include <duplicates/Journal.h>
+
 #include <filesystem>
-#include <fstream>
 
 namespace fs = std::filesystem;
 
@@ -27,10 +28,7 @@ class BackupAndDelete : public IDeletionStrategy
 {
     fs::path backupDir_;
     fs::path runDir_;
-    fs::path journalFilePath_;
-    mutable std::ofstream journalFile_;
-
-    std::ofstream& journal() const;
+    mutable JournalWriter journal_;
 
 public:
     BackupAndDelete(fs::path backupDir);

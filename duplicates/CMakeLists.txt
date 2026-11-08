@@ -10,6 +10,7 @@ set(LIB_SRCS
     src/DuplicateDeletion.cpp
     src/DuplicateDetector.cpp
     src/DuplicateOperation.cpp
+    src/Journal.cpp
     src/Menu.cpp
     src/Node.cpp
     src/PathList.cpp

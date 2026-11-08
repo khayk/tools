@@ -7,6 +7,7 @@ set(TEST_SRCS
     DuplicateDeletionTest.cpp
     DuplicateDetectorTest.cpp
     DuplicateOperationTest.cpp
+    JournalTest.cpp
     MenuTest.cpp
     NodeTest.cpp
     UtilsTest.cpp

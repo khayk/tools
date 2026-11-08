@@ -28,4 +28,4 @@
 13. [x] Ability to view actual keep/delete directories that user altered during the execution
 14. [x] Ability to list and delete entry from each of list
 15. [x] Ensure files to keep and delete are stored in the appropriate metadata files, as ignored 
-16. [ ] This is a dummy entry, checking if the verified commits is properly configured on fedora
+16. [ ] Add command line argument --version to duplicates to print the version of the application

@@ -10,18 +10,11 @@
 #include <system_error>
 
 namespace tools::dups {
+namespace {
 
-void PermanentDelete::remove(const fs::path& file) const
+fs::path createRunDir(const fs::path& backupDir)
 {
-    fs::remove(file);
-    spdlog::info("Deleted: {}", file);
-}
-
-
-BackupAndDelete::BackupAndDelete(fs::path backupDir)
-    : backupDir_(std::move(backupDir))
-{
-    fs::create_directories(backupDir_);
+    fs::create_directories(backupDir);
 
     const auto now = std::chrono::system_clock::now();
     const auto timeT = std::chrono::system_clock::to_time_t(now);
@@ -44,13 +37,13 @@ BackupAndDelete::BackupAndDelete(fs::path backupDir)
     // separate runs would collide on backupDir/<md5(parent)>/<filename> and the
     // later run would silently destroy the earlier backup. The counter suffix
     // disambiguates the rare case of two runs starting within the same second.
-    runDir_ = backupDir_ / std::format("deleted_{}", stamp);
+    auto runDir = backupDir / std::format("deleted_{}", stamp);
     for (int n = 1;; ++n)
     {
         std::error_code ec;
-        if (fs::create_directory(runDir_, ec))
+        if (fs::create_directory(runDir, ec))
         {
-            break; // created a fresh run directory
+            return runDir; // created a fresh run directory
         }
 
         if (ec)
@@ -58,14 +51,28 @@ BackupAndDelete::BackupAndDelete(fs::path backupDir)
             throw std::system_error(
                 ec,
                 std::format("Unable to create backup run directory under: {}",
-                            backupDir_));
+                            backupDir));
         }
 
         // The directory already exists (no error): try the next suffixed name.
-        runDir_ = backupDir_ / std::format("deleted_{}_{}", stamp, n);
+        runDir = backupDir / std::format("deleted_{}_{}", stamp, n);
     }
+}
 
-    journalFilePath_ = runDir_ / "deleted_files.log";
+} // namespace
+
+void PermanentDelete::remove(const fs::path& file) const
+{
+    fs::remove(file);
+    spdlog::info("Deleted: {}", file);
+}
+
+
+BackupAndDelete::BackupAndDelete(fs::path backupDir)
+    : backupDir_(std::move(backupDir))
+    , runDir_(createRunDir(backupDir_))
+    , journal_(runDir_ / JOURNAL_FILE_NAME)
+{
 }
 
 BackupAndDelete::~BackupAndDelete()
@@ -82,26 +89,9 @@ const fs::path& BackupAndDelete::runDir() const noexcept
     return runDir_;
 }
 
-std::ofstream& BackupAndDelete::journal() const
-{
-    if (!journalFile_.is_open())
-    {
-        journalFile_.open(journalFilePath_, std::ios::ate);
-
-        if (!journalFile_)
-        {
-            throw std::system_error(
-                std::make_error_code(std::errc::no_such_file_or_directory),
-                std::format("Unable to open file: {}", journalFilePath_));
-        }
-    }
-
-    return journalFile_;
-}
-
 const fs::path& BackupAndDelete::journalFile() const
 {
-    return journalFilePath_;
+    return journal_.path();
 }
 
 void BackupAndDelete::remove(const fs::path& file) const
@@ -117,7 +107,11 @@ void BackupAndDelete::remove(const fs::path& file) const
     const auto backupFilePath = runDir_ / hash / absFile.filename();
 
     fs::create_directory(runDir_ / hash);
-    journal() << absFile << "|" << backupFilePath << '\n';
+
+    // Record the move before performing it: if the app dies in between, restore
+    // finds an entry whose backup is missing and skips it, whereas the reverse
+    // order could leave a backup that no journal entry points to.
+    journal_.append({absFile, backupFilePath});
 
     std::error_code ec;
     fs::rename(absFile, backupFilePath, ec);
