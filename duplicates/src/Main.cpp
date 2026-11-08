@@ -91,10 +91,18 @@ int main(int argc, const char* argv[])
         // start deletion of the duplicates
         auto strategy = createDeletionStrategy(cfg);
 
+        // A dry run must leave no trace: lists are loaded so the session behaves
+        // like a real one, but changes made during it are not written back.
+        const bool persist = !cfg.dryRun();
+
         DeletionState state;
-        PathsPersister persisIgn(state.ignored.paths(), cfg.ignFilesPath());
-        PathsPersister persisKeep(state.keepFrom.paths(), cfg.keepFilesPath());
-        PathsPersister persisDel(state.deleteFrom.paths(), cfg.delFilesPath());
+        PathsPersister persisIgn(state.ignored.paths(), cfg.ignFilesPath(), persist);
+        PathsPersister persisKeep(state.keepFrom.paths(),
+                                  cfg.keepFilesPath(),
+                                  persist);
+        PathsPersister persisDel(state.deleteFrom.paths(),
+                                 cfg.delFilesPath(),
+                                 persist);
 
         state.keepFrom.add(cfg.dirsToKeepFrom());
         state.deleteFrom.add(cfg.dirsToDeleteFrom());
