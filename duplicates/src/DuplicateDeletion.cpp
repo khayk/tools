@@ -66,7 +66,7 @@ void menuOption(Menu& menu, std::string_view title, char key, Action action)
 
 void menuOption(Menu& menu, size_t count, Action action)
 {
-    std::string menuLabel = std::format("[?] Number from 1 and {}", count);
+    std::string menuLabel = std::format("[?] Number between 1 and {}", count);
 
     menu.add(menuLabel,
              Matchers::Range(1, static_cast<int>(count)),
@@ -379,7 +379,9 @@ Flow deleteInteractively(PathsVec& files, DeletionContext& ctx)
     menuOption(menu, "Ignore", 'i', [&](UserIO&) {
         spdlog::info("Ignoring group...");
         ctx.ignoredPaths().add(files);
-        return Navigation::Continue;
+        // The group is resolved; move on to the next one instead of
+        // re-displaying this menu for the same group.
+        return Navigation::Done;
     });
 
     menuOption(menu, "Open directories", 'o', [&](UserIO&) {

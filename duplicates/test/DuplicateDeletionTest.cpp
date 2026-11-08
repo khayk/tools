@@ -310,9 +310,14 @@ TEST_F(DuplicateDeletionTest, DeleteFilesInteractively_IgnoreGroup)
 
     EXPECT_CALL(strategy, remove(testing::_)).Times(0);
 
-    in.str("i\n"); // Simulate user input to keep the second file
+    // A trailing "q" must remain unread: ignoring resolves the group, so the
+    // menu must not be shown (and prompt) again.
+    in.str("i\nq\n");
 
-    EXPECT_EQ(deleteInteractively(files, ctx), Flow::Quit);
+    EXPECT_EQ(deleteInteractively(files, ctx), Flow::Done);
+    std::string rest;
+    std::getline(in, rest);
+    EXPECT_EQ(rest, "q");
     ASSERT_EQ(files.size(), 3);
     ASSERT_EQ(ctx.ignoredPaths().size(), 3);
     EXPECT_TRUE(ctx.ignoredPaths().contains(files[0]));
@@ -593,6 +598,33 @@ TEST_F(DuplicateDeletionTest, DeleteDuplicates_SkipsIgnoredFiles)
     EXPECT_CALL(strategy, remove(testing::_)).Times(0);
 
     deleteDuplicates(groups, ctx);
+}
+
+TEST_F(DuplicateDeletionTest, DeleteDuplicates_IgnoreMovesToNextGroup)
+{
+    MuteLogger mute;
+    MockDuplicateGroups groups;
+
+    std::vector<PathsVec> groupVec = {
+        {fs::path("a/x.bin"), fs::path("b/y.bin")},
+        {fs::path("a/p.bin"), fs::path("b/q.bin")}};
+
+    EXPECT_CALL(groups, numGroups()).Times(1);
+    EXPECT_CALL(groups, enumGroups(testing::_))
+        .WillOnce([&groupVec](const DupGroupCallback& cb) {
+            emulateDupGroups(groupVec, cb);
+        });
+
+    // "i" ignores the first group; "1" must reach the second group and keep
+    // a/p.bin. Nothing from the ignored group may be removed.
+    EXPECT_CALL(strategy, remove(fs::path("b/q.bin"))).Times(1);
+
+    in.str("i\n1\n");
+    deleteDuplicates(groups, ctx);
+
+    ASSERT_EQ(ctx.ignoredPaths().size(), 2);
+    EXPECT_TRUE(ctx.ignoredPaths().contains(fs::path("a/x.bin")));
+    EXPECT_TRUE(ctx.ignoredPaths().contains(fs::path("b/y.bin")));
 }
 
 } // namespace tools::dups
