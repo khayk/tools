@@ -6,6 +6,7 @@
 #include <spdlog/spdlog.h>
 
 #include <format>
+#include <fstream>
 #include <iomanip>
 #include <sstream>
 #include <system_error>
@@ -57,15 +58,28 @@ std::optional<JournalEntry> parseEntry(std::string_view line)
 
 std::vector<JournalEntry> readJournal(const fs::path& file)
 {
+    // A plain stream rather than core::file::readLines: the journal may still be
+    // open by a JournalWriter, and the memory-mapped reader requests a share mode
+    // on Windows that conflicts with an open writer.
+    std::ifstream in(file, std::ios::binary);
+    if (!in)
+    {
+        throw std::system_error(
+            std::make_error_code(std::errc::no_such_file_or_directory),
+            std::format("Unable to open file: {}", file));
+    }
+
     std::vector<JournalEntry> entries;
+    std::string line;
     size_t lineNo = 0;
 
-    core::file::readLines(file, [&](const std::string& line) {
+    while (std::getline(in, line))
+    {
         ++lineNo;
 
         if (line.find_first_not_of(" \t\r") == std::string::npos)
         {
-            return true;
+            continue;
         }
 
         if (auto entry = parseEntry(line))
@@ -76,9 +90,7 @@ std::vector<JournalEntry> readJournal(const fs::path& file)
         {
             spdlog::warn("Skipping malformed journal line {} in: {}", lineNo, file);
         }
-
-        return true;
-    });
+    }
 
     return entries;
 }
