@@ -4,7 +4,9 @@
 #include <duplicates/Progress.h>
 
 #include <filesystem>
+#include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace fs = std::filesystem;
@@ -45,6 +47,10 @@ struct RestoreReport
     /// The run directory was fully restored and removed.
     bool runDirRemoved {false};
 
+    /// Set when the files were processed but tidying up the run directory
+    /// afterwards failed (e.g. disk full). Repeating the restore is safe.
+    std::optional<std::string> cleanupError;
+
     size_t total() const noexcept;
 
     /// True when nothing is left to restore (no conflicts and no failures).
@@ -69,10 +75,17 @@ struct RestoreOptions
  * entries that are still pending (conflicts and failures), so the restore can be
  * repeated after resolving them.
  *
+ * Errors while tidying up the run directory do not discard the report: they are
+ * returned in RestoreReport::cleanupError.
+ *
+ * Do not restore a run that another session of the application is still
+ * deleting into.
+ *
  * @param runDir Run directory holding the journal and the backups.
  * @param opts Restore options.
  *
  * @throw std::runtime_error if @p runDir is not a run directory with a journal.
+ * @throw std::exception if the journal cannot be read.
  */
 RestoreReport restoreRun(const fs::path& runDir, const RestoreOptions& opts = {});
 
@@ -89,8 +102,9 @@ struct RunInfo
     /// When the run started, as "YYYY-MM-DD HH:MM:SS".
     std::string time;
 
-    /// Number of entries in the journal that are still pending.
-    size_t entries {};
+    /// Number of entries in the journal that are still pending, or std::nullopt
+    /// if the journal could not be read.
+    std::optional<size_t> entries;
 
     /// An earlier restore of this run left conflicts or failures behind.
     bool partial {false};
@@ -99,8 +113,14 @@ struct RunInfo
 /**
  * @brief Find the restorable runs in the backup directory, newest first.
  *        Only directories named like a run and holding a journal are listed.
+ *        A run whose journal cannot be read is still listed, without an entry
+ *        count, so it does not hide the other runs.
  *
  * @param backupDir Directory the runs live in (the BackupAndDelete backup root).
+ *
+ * @return The runs; empty if @p backupDir does not exist.
+ * @throw std::filesystem::filesystem_error if @p backupDir exists but cannot be
+ *        listed (e.g. no permission, or not a directory).
  */
 std::vector<RunInfo> listRuns(const fs::path& backupDir);
 

@@ -11,7 +11,7 @@
 #include <regex>
 #include <stdexcept>
 #include <system_error>
-#include <tuple>
+#include <utility>
 
 namespace tools::dups {
 namespace {
@@ -170,15 +170,19 @@ void cleanUp(const fs::path& runDir, const fs::path& journal, RestoreReport& rep
 {
     const auto marker = runDir / PARTIAL_MARKER;
 
+    // Each step is ordered so that stopping after it leaves a state that a
+    // repeated restore handles: a run marked partial whose journal still lists
+    // already restored entries just skips them, whereas the opposite order could
+    // present a partly restored run as an untouched one.
     if (report.complete())
     {
-        fs::remove(journal);
         fs::remove(marker);
+        fs::remove(journal);
     }
     else
     {
-        rewriteJournal(journal, report);
         core::file::write(marker, "");
+        rewriteJournal(journal, report);
     }
 
     removeEmptyDirs(runDir);
@@ -189,21 +193,19 @@ void cleanUp(const fs::path& runDir, const fs::path& journal, RestoreReport& rep
     report.runDirRemoved = fs::remove(runDir, ec);
 }
 
-/**
- * @brief Sort key and display time of a run, parsed from its directory name
- *        "deleted_YYYYMMDD_HHMMSS[_n]" (see BackupAndDelete).
- */
-struct RunName
-{
-    std::string stamp;  // "YYYYMMDD_HHMMSS", sorts chronologically
-    unsigned suffix {}; // same-second runs: 0, 1, 2, ...
-    std::string time;
-};
+/// "deleted_" + "YYYYMMDD_HHMMSS", see BackupAndDelete
+constexpr size_t STAMP_POS = 8;
+constexpr size_t STAMP_LEN = 15;
 
-std::optional<RunName> parseRunName(const std::string& name)
+/**
+ * @brief Parse a run directory name "deleted_YYYYMMDD_HHMMSS[_n]".
+ * @return The run's start time as "YYYY-MM-DD HH:MM:SS", or std::nullopt if
+ *         @p name is not a run name.
+ */
+std::optional<std::string> runTime(const std::string& name)
 {
     static const std::regex pattern(
-        R"(deleted_((\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2}))(?:_(\d{1,9}))?)");
+        R"(deleted_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})(?:_\d{1,9})?)");
 
     std::smatch m;
     if (!std::regex_match(name, m, pattern))
@@ -211,17 +213,39 @@ std::optional<RunName> parseRunName(const std::string& name)
         return std::nullopt;
     }
 
-    return RunName {
-        .stamp = m[1].str(),
-        .suffix = m[8].matched ? static_cast<unsigned>(std::stoul(m[8].str())) : 0U,
-        .time = std::format("{}-{}-{} {}:{}:{}",
-                            m[2].str(),
-                            m[3].str(),
-                            m[4].str(),
-                            m[5].str(),
-                            m[6].str(),
-                            m[7].str()),
+    return std::format("{}-{}-{} {}:{}:{}",
+                       m[1].str(),
+                       m[2].str(),
+                       m[3].str(),
+                       m[4].str(),
+                       m[5].str(),
+                       m[6].str());
+}
+
+/**
+ * @brief Chronological sort key of a valid run id: the stamp, then the numeric
+ *        suffix that tells apart runs started within the same second.
+ */
+std::pair<std::string_view, unsigned long> runOrder(const std::string& id)
+{
+    const auto suffixPos = STAMP_POS + STAMP_LEN + 1; // after "_"
+    return {
+        std::string_view(id).substr(STAMP_POS, STAMP_LEN),
+        id.size() > suffixPos ? std::stoul(id.substr(suffixPos)) : 0UL,
     };
+}
+
+std::optional<size_t> countEntries(const fs::path& journal)
+{
+    try
+    {
+        return readJournal(journal).size();
+    }
+    catch (const std::exception& ex)
+    {
+        spdlog::warn("Unable to read journal: {}, error: {}", journal, ex.what());
+        return std::nullopt;
+    }
 }
 
 } // namespace
@@ -271,7 +295,19 @@ RestoreReport restoreRun(const fs::path& runDir, const RestoreOptions& opts)
 
     if (!opts.dryRun)
     {
-        cleanUp(runDir, journal, report);
+        // Files have been moved by now: a failure to tidy up must not discard
+        // the report, which is the only account of what happened.
+        try
+        {
+            cleanUp(runDir, journal, report);
+        }
+        catch (const std::exception& ex)
+        {
+            spdlog::error("Failed to clean up run directory: {}, error: {}",
+                          runDir,
+                          ex.what());
+            report.cleanupError = ex.what();
+        }
     }
 
     spdlog::info("Restored: {}, identical: {}, conflicts: {}, missing: {}, "
@@ -287,44 +323,42 @@ RestoreReport restoreRun(const fs::path& runDir, const RestoreOptions& opts)
 
 std::vector<RunInfo> listRuns(const fs::path& backupDir)
 {
-    std::vector<std::pair<RunName, RunInfo>> runs;
+    std::vector<RunInfo> runs;
     std::error_code ec;
 
-    // A missing backup directory simply means nothing was ever deleted.
-    for (const auto& dirEntry : fs::directory_iterator(backupDir, ec))
+    // A missing backup directory simply means nothing was ever deleted. Any
+    // other problem must surface: reporting "no runs" for a directory that is
+    // merely unreadable would suggest the backups are gone.
+    if (!fs::exists(backupDir))
+    {
+        return runs;
+    }
+
+    for (const auto& dirEntry : fs::directory_iterator(backupDir))
     {
         auto name = core::file::path2s(dirEntry.path().filename());
-        auto parsed = parseRunName(name);
+        auto time = runTime(name);
         const auto journal = dirEntry.path() / JOURNAL_FILE_NAME;
 
-        if (!parsed || !dirEntry.is_directory(ec) || !fs::is_regular_file(journal, ec))
+        if (!time || !dirEntry.is_directory(ec) || !fs::is_regular_file(journal, ec))
         {
             continue;
         }
 
-        RunInfo info {
+        runs.push_back({
             .id = std::move(name),
             .dir = dirEntry.path(),
-            .time = parsed->time,
-            .entries = readJournal(journal).size(),
+            .time = std::move(*time),
+            .entries = countEntries(journal),
             .partial = fs::exists(dirEntry.path() / PARTIAL_MARKER, ec),
-        };
-        runs.emplace_back(std::move(*parsed), std::move(info));
+        });
     }
 
-    std::ranges::sort(runs, [](const auto& a, const auto& b) {
-        return std::tie(a.first.stamp, a.first.suffix) >
-               std::tie(b.first.stamp, b.first.suffix);
+    std::ranges::sort(runs, std::ranges::greater {}, [](const RunInfo& run) {
+        return runOrder(run.id);
     });
 
-    std::vector<RunInfo> result;
-    result.reserve(runs.size());
-    for (auto& run : runs)
-    {
-        result.push_back(std::move(run.second));
-    }
-
-    return result;
+    return runs;
 }
 
 RunInfo findRun(const fs::path& backupDir, std::string_view spec)

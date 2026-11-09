@@ -45,7 +45,8 @@ bool runMetricsReview(const cxxopts::ParseResult& opts);
  * @param cfg Populated configuration
  * @param out Stream for the listing, progress and summary
  * @return The process exit code if a command ran (caller should exit):
- *         0 on success, 2 if a restore left conflicts or failures behind.
+ *         0 on success (and always for a dry run), 2 if a restore left
+ *         conflicts or failures behind or could not tidy up the run.
  *         std::nullopt if no restore command was requested.
  */
 std::optional<int> runRestoreCommands(const cxxopts::ParseResult& opts,

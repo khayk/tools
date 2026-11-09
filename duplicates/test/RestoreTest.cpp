@@ -6,6 +6,7 @@
 #include <core/utils/Log.h>
 
 #include <format>
+#include <fstream>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -382,6 +383,73 @@ TEST_F(RestoreTest, FindRunByIdOrLatest)
 TEST_F(RestoreTest, FindRunWithoutRunsThrows)
 {
     EXPECT_THROW(findRun(backupDir_, "latest"), std::runtime_error);
+}
+
+TEST_F(RestoreTest, UnreadableJournalDoesNotHideOtherRuns)
+{
+    makeRun(backupDir_, "deleted_20261107_090000", 1);
+    makeRun(backupDir_, "deleted_20261108_141500", 2);
+
+    const auto journal =
+        backupDir_ / "deleted_20261107_090000" / std::string(JOURNAL_FILE_NAME);
+    fs::permissions(journal, fs::perms::none);
+    if (std::ifstream(journal))
+    {
+        fs::permissions(journal, fs::perms::owner_all);
+        GTEST_SKIP() << "permissions not enforced (running as root or on Windows)";
+    }
+
+    const auto runs = listRuns(backupDir_);
+    fs::permissions(journal, fs::perms::owner_all); // let TempDir clean up
+
+    ASSERT_EQ(runs.size(), 2U);
+    EXPECT_EQ(runs[0].entries, 2U);
+    EXPECT_EQ(runs[1].id, "deleted_20261107_090000");
+    EXPECT_EQ(runs[1].entries, std::nullopt);
+}
+
+TEST_F(RestoreTest, ListRunsThrowsWhenBackupDirCannotBeListed)
+{
+    // Exists, but is not a directory: must not be reported as "no runs".
+    file::write(backupDir_, "not a directory");
+    EXPECT_THROW(listRuns(backupDir_), fs::filesystem_error);
+}
+
+TEST_F(RestoreTest, CleanupFailureKeepsReport)
+{
+    const auto conflict = makeFile("conflict.txt", "old");
+    const auto restored = makeFile("restored.txt", "restored");
+    const auto runDir = deleteRun({conflict, restored});
+    file::write(conflict, "new");
+
+    // A non-empty directory in place of the journal's temp file makes the
+    // journal rewrite fail after the files were already processed.
+    const auto blocker =
+        fs::path(runDir / JOURNAL_FILE_NAME).concat(".tmp") / "occupied";
+    fs::create_directories(blocker.parent_path());
+    file::write(blocker, "");
+
+    const auto report = restoreRun(runDir);
+
+    ASSERT_TRUE(report.cleanupError.has_value());
+    EXPECT_FALSE(report.cleanupError->empty());
+    EXPECT_EQ(report.restored.size(), 1U);
+    EXPECT_EQ(report.conflicts.size(), 1U);
+    EXPECT_EQ(content(restored), "restored");
+
+    // The marker is written before the journal is touched, so the run is still
+    // recognised as partly restored, and its untouched journal is still valid.
+    const auto runs = listRuns(backupDir_);
+    ASSERT_EQ(runs.size(), 1U);
+    EXPECT_TRUE(runs.front().partial);
+
+    // Once the obstacle is gone, repeating the restore settles the run.
+    fs::remove_all(blocker.parent_path());
+    fs::remove(conflict);
+    const auto retry = restoreRun(runDir);
+    EXPECT_FALSE(retry.cleanupError.has_value());
+    EXPECT_TRUE(retry.runDirRemoved);
+    EXPECT_EQ(content(conflict), "old");
 }
 
 } // namespace tools::dups

@@ -44,6 +44,16 @@ void metricsReview(const fs::path& file)
     spdlog::info("sizeof(string): {}", sizeof(std::string));
 }
 
+std::string_view runStatus(const RunInfo& run)
+{
+    if (!run.entries)
+    {
+        return "unreadable journal";
+    }
+
+    return run.partial ? "partly restored" : "pending";
+}
+
 void printRuns(const std::vector<RunInfo>& runs,
                const fs::path& backupDir,
                std::ostream& out)
@@ -61,25 +71,20 @@ void printRuns(const std::vector<RunInfo>& runs,
         out << std::format(row,
                            run.id,
                            run.time,
-                           run.entries,
-                           run.partial ? "partly restored" : "pending");
+                           run.entries ? std::to_string(*run.entries) : "?",
+                           runStatus(run));
     }
 }
 
-void printPending(std::string_view title,
-                  const std::vector<JournalEntry>& entries,
-                  std::ostream& out)
+bool succeeded(const RestoreReport& report)
 {
-    if (entries.empty())
-    {
-        return;
-    }
+    return report.complete() && !report.cleanupError;
+}
 
-    out << title << '\n';
-    for (const auto& e : entries)
-    {
-        out << std::format("  {}\n    backup: {}\n", e.original, e.backup);
-    }
+/// One pending entry of the summary, shared by every list so they read alike.
+void printEntry(const JournalEntry& e, std::ostream& out)
+{
+    out << std::format("  {}\n    backup: {}\n", e.original, e.backup);
 }
 
 void printReport(const RunInfo& run,
@@ -96,20 +101,33 @@ void printReport(const RunInfo& run,
                        report.missing.size(),
                        report.failed.size());
 
-    printPending("Conflicts, a different file exists at the original path:",
-                 report.conflicts,
-                 out);
+    if (!report.conflicts.empty())
+    {
+        out << "Conflicts, a different file exists at the original path:\n";
+        for (const auto& e : report.conflicts)
+        {
+            printEntry(e, out);
+        }
+    }
 
     if (!report.failed.empty())
     {
         out << "Failed:\n";
         for (const auto& f : report.failed)
         {
-            out << std::format("  {}\n    error: {}\n", f.entry.original, f.error);
+            printEntry(f.entry, out);
+            out << std::format("    error: {}\n", f.error);
         }
     }
 
-    if (!report.complete() && !dryRun)
+    if (report.cleanupError)
+    {
+        out << std::format("Files were processed, but tidying up the run failed: "
+                           "{}\n",
+                           *report.cleanupError);
+    }
+
+    if (!succeeded(report) && !dryRun)
     {
         out << std::format("Backups were kept. Resolve the above and run "
                            "'--restore {}' again.\n",
@@ -214,18 +232,18 @@ std::optional<int> runRestoreCommands(const cxxopts::ParseResult& opts,
     }
 
     const auto run = findRun(backupDir, opts["restore"].as<std::string>());
-    out << std::format("{} run {} ({}, entries: {})\n",
+    out << std::format("{} run {} ({})\n",
                        cfg.dryRun() ? "Checking" : "Restoring",
                        run.id,
-                       run.time,
-                       run.entries);
+                       run.time);
 
     Progress progress(&out, cfg.updateFrequency());
     const auto report =
         restoreRun(run.dir, {.dryRun = cfg.dryRun(), .progress = &progress});
     printReport(run, report, cfg.dryRun(), out);
 
-    return report.complete() ? 0 : 2;
+    // A dry run leaves nothing behind, whatever it found.
+    return cfg.dryRun() || succeeded(report) ? 0 : 2;
 }
 
 

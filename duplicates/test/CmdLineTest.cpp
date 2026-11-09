@@ -252,6 +252,27 @@ TEST_F(RestoreCommands, IncompleteRestoreReturnsTwo)
     EXPECT_TRUE(text.contains("again"));
 }
 
+TEST_F(RestoreCommands, DryRunWithConflictReturnsZero)
+{
+    const auto file = deleteFile("a.txt", "alpha");
+    core::file::write(file, "something else");
+    cfg_.setDryRun(true);
+
+    // The conflict is reported, but a dry run leaves nothing behind.
+    EXPECT_EQ(run({"--restore", "latest"}), 0);
+    EXPECT_TRUE(out_.str().contains("conflicts: 1"));
+    EXPECT_FALSE(out_.str().contains("again"));
+}
+
+TEST_F(RestoreCommands, ListFailsWhenCacheDirCannotBeListed)
+{
+    fs::create_directories(cfg_.cacheDir().parent_path());
+    core::file::write(cfg_.cacheDir(), "not a directory");
+
+    EXPECT_THROW(run({"--list-runs"}), fs::filesystem_error);
+    EXPECT_FALSE(out_.str().contains("No restorable runs"));
+}
+
 TEST_F(RestoreCommands, UnknownRunThrows)
 {
     deleteFile("a.txt", "alpha");

@@ -137,8 +137,16 @@ errors remain, the backups are kept, the run is listed as *partly restored*, and
 running `--restore` again retries only those entries. Resolve a conflict by
 moving or removing the file at the original path.
 
-Exit codes: `0` success, `1` error (e.g. unknown run id), `2` the restore left
-conflicts or failures behind.
+Exit codes: `0` success (always for `--dry-run`), `1` error (e.g. unknown run
+id, or the cache directory cannot be read), `2` the restore left conflicts or
+failures behind.
+
+A run whose journal cannot be read is listed as *unreadable journal* rather than
+hiding the other runs.
+
+Don't restore a run while another `duplicates` session is still deleting: with
+`latest`, that session's run is the one picked, and its later deletions would no
+longer be recorded.
 
 Restored files are duplicates again, so the next scan will offer them for
 deletion once more.
