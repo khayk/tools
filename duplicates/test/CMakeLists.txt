@@ -10,6 +10,7 @@ set(TEST_SRCS
     JournalTest.cpp
     MenuTest.cpp
     NodeTest.cpp
+    RestoreTest.cpp
     UtilsTest.cpp
 )
 

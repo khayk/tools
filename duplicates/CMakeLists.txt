@@ -14,6 +14,7 @@ set(LIB_SRCS
     src/Menu.cpp
     src/Node.cpp
     src/PathList.cpp
+    src/Restore.cpp
     src/Utils.cpp
 )
 
