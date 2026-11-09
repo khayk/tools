@@ -12,7 +12,7 @@
     ```
 
 8. [x] After selecting a folder to keep, ask if you want to respect that choice in the future
-9. [ ] Write functionality to restore all deletions from the given run
+9. [x] Write functionality to restore all deletions from the given run
 10. [ ] When moving files into cache, consider possible external drives
     - Can we move somewhere inside that drive
 11. [ ] Improve main progress update
