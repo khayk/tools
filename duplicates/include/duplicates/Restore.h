@@ -76,4 +76,39 @@ struct RestoreOptions
  */
 RestoreReport restoreRun(const fs::path& runDir, const RestoreOptions& opts = {});
 
+/**
+ * @brief A run whose deletions can still be restored.
+ */
+struct RunInfo
+{
+    /// Run directory name, e.g. "deleted_20261108_141500"; identifies the run.
+    std::string id;
+
+    fs::path dir;
+
+    /// When the run started, as "YYYY-MM-DD HH:MM:SS".
+    std::string time;
+
+    /// Number of entries in the journal that are still pending.
+    size_t entries {};
+
+    /// An earlier restore of this run left conflicts or failures behind.
+    bool partial {false};
+};
+
+/**
+ * @brief Find the restorable runs in the backup directory, newest first.
+ *        Only directories named like a run and holding a journal are listed.
+ *
+ * @param backupDir Directory the runs live in (the BackupAndDelete backup root).
+ */
+std::vector<RunInfo> listRuns(const fs::path& backupDir);
+
+/**
+ * @brief Select a run by its id, or the newest run with "latest".
+ *
+ * @throw std::runtime_error if there is no such run.
+ */
+RunInfo findRun(const fs::path& backupDir, std::string_view spec);
+
 } // namespace tools::dups

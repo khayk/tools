@@ -1,15 +1,26 @@
 #include <duplicates/Restore.h>
 #include <core/utils/Crypto.h>
+#include <core/utils/File.h>
 #include <core/utils/FmtExt.h>
 
 #include <spdlog/spdlog.h>
 
+#include <algorithm>
 #include <format>
+#include <optional>
+#include <regex>
 #include <stdexcept>
 #include <system_error>
+#include <tuple>
 
 namespace tools::dups {
 namespace {
+
+/// Left in a run directory whose restore did not complete, so listings can tell
+/// a partly restored run (journal reduced to the pending entries) from a fresh one.
+constexpr std::string_view PARTIAL_MARKER = "restore_incomplete";
+
+constexpr std::string_view LATEST = "latest";
 
 enum class Action : uint8_t
 {
@@ -157,13 +168,17 @@ void removeEmptyDirs(const fs::path& runDir)
 
 void cleanUp(const fs::path& runDir, const fs::path& journal, RestoreReport& report)
 {
+    const auto marker = runDir / PARTIAL_MARKER;
+
     if (report.complete())
     {
         fs::remove(journal);
+        fs::remove(marker);
     }
     else
     {
         rewriteJournal(journal, report);
+        core::file::write(marker, "");
     }
 
     removeEmptyDirs(runDir);
@@ -172,6 +187,41 @@ void cleanUp(const fs::path& runDir, const fs::path& journal, RestoreReport& rep
     // (e.g. a backup no journal entry points to) is kept rather than destroyed.
     std::error_code ec;
     report.runDirRemoved = fs::remove(runDir, ec);
+}
+
+/**
+ * @brief Sort key and display time of a run, parsed from its directory name
+ *        "deleted_YYYYMMDD_HHMMSS[_n]" (see BackupAndDelete).
+ */
+struct RunName
+{
+    std::string stamp;  // "YYYYMMDD_HHMMSS", sorts chronologically
+    unsigned suffix {}; // same-second runs: 0, 1, 2, ...
+    std::string time;
+};
+
+std::optional<RunName> parseRunName(const std::string& name)
+{
+    static const std::regex pattern(
+        R"(deleted_((\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2}))(?:_(\d{1,9}))?)");
+
+    std::smatch m;
+    if (!std::regex_match(name, m, pattern))
+    {
+        return std::nullopt;
+    }
+
+    return RunName {
+        .stamp = m[1].str(),
+        .suffix = m[8].matched ? static_cast<unsigned>(std::stoul(m[8].str())) : 0U,
+        .time = std::format("{}-{}-{} {}:{}:{}",
+                            m[2].str(),
+                            m[3].str(),
+                            m[4].str(),
+                            m[5].str(),
+                            m[6].str(),
+                            m[7].str()),
+    };
 }
 
 } // namespace
@@ -233,6 +283,74 @@ RestoreReport restoreRun(const fs::path& runDir, const RestoreOptions& opts)
                  report.failed.size());
 
     return report;
+}
+
+std::vector<RunInfo> listRuns(const fs::path& backupDir)
+{
+    std::vector<std::pair<RunName, RunInfo>> runs;
+    std::error_code ec;
+
+    // A missing backup directory simply means nothing was ever deleted.
+    for (const auto& dirEntry : fs::directory_iterator(backupDir, ec))
+    {
+        auto name = core::file::path2s(dirEntry.path().filename());
+        auto parsed = parseRunName(name);
+        const auto journal = dirEntry.path() / JOURNAL_FILE_NAME;
+
+        if (!parsed || !dirEntry.is_directory(ec) || !fs::is_regular_file(journal, ec))
+        {
+            continue;
+        }
+
+        RunInfo info {
+            .id = std::move(name),
+            .dir = dirEntry.path(),
+            .time = parsed->time,
+            .entries = readJournal(journal).size(),
+            .partial = fs::exists(dirEntry.path() / PARTIAL_MARKER, ec),
+        };
+        runs.emplace_back(std::move(*parsed), std::move(info));
+    }
+
+    std::ranges::sort(runs, [](const auto& a, const auto& b) {
+        return std::tie(a.first.stamp, a.first.suffix) >
+               std::tie(b.first.stamp, b.first.suffix);
+    });
+
+    std::vector<RunInfo> result;
+    result.reserve(runs.size());
+    for (auto& run : runs)
+    {
+        result.push_back(std::move(run.second));
+    }
+
+    return result;
+}
+
+RunInfo findRun(const fs::path& backupDir, std::string_view spec)
+{
+    auto runs = listRuns(backupDir);
+
+    if (runs.empty())
+    {
+        throw std::runtime_error(
+            std::format("No restorable runs found in: {}", backupDir));
+    }
+
+    if (spec == LATEST)
+    {
+        return std::move(runs.front());
+    }
+
+    const auto it = std::ranges::find(runs, spec, &RunInfo::id);
+    if (it == runs.end())
+    {
+        throw std::runtime_error(std::format(
+            "Run not found: '{}', use --list-runs to see the available runs",
+            spec));
+    }
+
+    return std::move(*it);
 }
 
 } // namespace tools::dups

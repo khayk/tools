@@ -1,11 +1,14 @@
 #include <duplicates/CmdLine.h>
 #include <duplicates/DuplicateDetector.h>
+#include <duplicates/Restore.h>
 #include <core/utils/StopWatch.h>
 #include <core/utils/File.h>
 #include <core/utils/Log.h>
 #include <core/utils/Str.h>
 #include <core/utils/Sys.h>
 #include <core/utils/FmtExt.h>
+
+#include <format>
 
 namespace tools::dups {
 namespace {
@@ -39,6 +42,79 @@ void metricsReview(const fs::path& file)
     spdlog::info("sizeof(path): {}", sizeof(fs::path));
     spdlog::info("sizeof(node): {}", sizeof(Node));
     spdlog::info("sizeof(string): {}", sizeof(std::string));
+}
+
+void printRuns(const std::vector<RunInfo>& runs,
+               const fs::path& backupDir,
+               std::ostream& out)
+{
+    if (runs.empty())
+    {
+        out << std::format("No restorable runs in: {}\n", backupDir);
+        return;
+    }
+
+    constexpr auto row = "{:<28}  {:<19}  {:>8}  {}\n";
+    out << std::format(row, "Run", "Time", "Entries", "Status");
+    for (const auto& run : runs)
+    {
+        out << std::format(row,
+                           run.id,
+                           run.time,
+                           run.entries,
+                           run.partial ? "partly restored" : "pending");
+    }
+}
+
+void printPending(std::string_view title,
+                  const std::vector<JournalEntry>& entries,
+                  std::ostream& out)
+{
+    if (entries.empty())
+    {
+        return;
+    }
+
+    out << title << '\n';
+    for (const auto& e : entries)
+    {
+        out << std::format("  {}\n    backup: {}\n", e.original, e.backup);
+    }
+}
+
+void printReport(const RunInfo& run,
+                 const RestoreReport& report,
+                 bool dryRun,
+                 std::ostream& out)
+{
+    out << std::format("{}: {}, identical: {}, conflicts: {}, missing: {}, "
+                       "failed: {}\n",
+                       dryRun ? "Would restore" : "Restored",
+                       report.restored.size(),
+                       report.identical.size(),
+                       report.conflicts.size(),
+                       report.missing.size(),
+                       report.failed.size());
+
+    printPending("Conflicts, a different file exists at the original path:",
+                 report.conflicts,
+                 out);
+
+    if (!report.failed.empty())
+    {
+        out << "Failed:\n";
+        for (const auto& f : report.failed)
+        {
+            out << std::format("  {}\n    error: {}\n", f.entry.original, f.error);
+        }
+    }
+
+    if (!report.complete() && !dryRun)
+    {
+        out << std::format("Backups were kept. Resolve the above and run "
+                           "'--restore {}' again.\n",
+                           run.id);
+    }
 }
 
 } // namespace
@@ -80,8 +156,13 @@ void defineOptions(cxxopts::Options& opts)
         ("ign-files", "File to store ignored files",
             cxxopts::value<std::string>()->default_value("ignored.txt"))
 
-        ("dry-run", "Emulate deletion instead of performing it",
+        ("dry-run", "Emulate deletion (or restore) instead of performing it",
             cxxopts::value<bool>())
+
+        ("list-runs", "List the runs whose deletions can be restored")
+
+        ("restore", "Restore the files deleted by a run: 'latest' or a run id",
+            cxxopts::value<std::string>())
 
         ("h,help", "Print usage");
 
@@ -104,6 +185,47 @@ bool runMetricsReview(const cxxopts::ParseResult& opts)
     spdlog::info("Measuring resource usage: '{}'", file);
     metricsReview(file);
     return true;
+}
+
+
+std::optional<int> runRestoreCommands(const cxxopts::ParseResult& opts,
+                                      const Config& cfg,
+                                      std::ostream& out)
+{
+    const bool list = opts.contains("list-runs");
+    const bool restore = opts.contains("restore");
+
+    if (!list && !restore)
+    {
+        return std::nullopt;
+    }
+
+    // BackupAndDelete keeps its runs directly under the cache directory.
+    const auto& backupDir = cfg.cacheDir();
+
+    if (list)
+    {
+        printRuns(listRuns(backupDir), backupDir, out);
+    }
+
+    if (!restore)
+    {
+        return 0;
+    }
+
+    const auto run = findRun(backupDir, opts["restore"].as<std::string>());
+    out << std::format("{} run {} ({}, entries: {})\n",
+                       cfg.dryRun() ? "Checking" : "Restoring",
+                       run.id,
+                       run.time,
+                       run.entries);
+
+    Progress progress(&out, cfg.updateFrequency());
+    const auto report =
+        restoreRun(run.dir, {.dryRun = cfg.dryRun(), .progress = &progress});
+    printReport(run, report, cfg.dryRun(), out);
+
+    return report.complete() ? 0 : 2;
 }
 
 

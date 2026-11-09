@@ -79,6 +79,11 @@ int main(int argc, const char* argv[])
         populateConfig(result, cfg);
         logConfig(cfg);
 
+        if (const auto exitCode = runRestoreCommands(result, cfg, std::cout))
+        {
+            return *exitCode;
+        }
+
         DuplicateDetector detector;
         Progress progress(&std::cout, cfg.updateFrequency());
 

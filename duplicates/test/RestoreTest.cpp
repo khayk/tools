@@ -5,6 +5,7 @@
 #include <core/utils/File.h>
 #include <core/utils/Log.h>
 
+#include <format>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -270,6 +271,117 @@ TEST_F(RestoreTest, ThrowsWithoutJournal)
 
     fs::create_directories(backupDir_ / "deleted_empty");
     EXPECT_THROW(restoreRun(backupDir_ / "deleted_empty"), std::runtime_error);
+}
+
+namespace {
+
+/**
+ * @brief Create a run directory with the given name and a journal of @p entries
+ *        made-up entries, without going through BackupAndDelete (which names runs
+ *        after the current time).
+ */
+void makeRun(const fs::path& backupDir, std::string_view id, size_t entries)
+{
+    const auto dir = backupDir / id;
+    fs::create_directories(dir);
+    JournalWriter writer(dir / JOURNAL_FILE_NAME);
+    for (size_t i = 0; i < entries; ++i)
+    {
+        writer.append({dir / std::format("orig{}", i), dir / std::format("bak{}", i)});
+    }
+}
+
+std::vector<std::string> ids(const std::vector<RunInfo>& runs)
+{
+    std::vector<std::string> result;
+    result.reserve(runs.size());
+    for (const auto& run : runs)
+    {
+        result.push_back(run.id);
+    }
+    return result;
+}
+
+} // namespace
+
+TEST_F(RestoreTest, ListRunsNewestFirst)
+{
+    makeRun(backupDir_, "deleted_20261107_090000", 1);
+    makeRun(backupDir_, "deleted_20261108_141500", 2);
+    makeRun(backupDir_, "deleted_20261108_141500_2", 1);
+    makeRun(backupDir_, "deleted_20261108_141500_10", 1); // numeric, not lexical
+    makeRun(backupDir_, "deleted_20251231_235959", 3);
+
+    const auto runs = listRuns(backupDir_);
+
+    const std::vector<std::string> expected {
+        "deleted_20261108_141500_10",
+        "deleted_20261108_141500_2",
+        "deleted_20261108_141500",
+        "deleted_20261107_090000",
+        "deleted_20251231_235959",
+    };
+    EXPECT_EQ(ids(runs), expected);
+
+    const auto& run = runs[2];
+    EXPECT_EQ(run.dir, backupDir_ / "deleted_20261108_141500");
+    EXPECT_EQ(run.time, "2026-11-08 14:15:00");
+    EXPECT_EQ(run.entries, 2U);
+    EXPECT_FALSE(run.partial);
+}
+
+TEST_F(RestoreTest, ListRunsIgnoresUnrelatedEntries)
+{
+    makeRun(backupDir_, "deleted_20261108_141500", 1);
+    makeRun(backupDir_, "deleted_bogus", 1);                        // not a run name
+    makeRun(backupDir_, "something_else", 1);                       // not a run name
+    fs::create_directories(backupDir_ / "deleted_20261108_150000"); // no journal
+    file::write(backupDir_ / "deleted_20261108_160000", "a file, not a dir");
+    file::write(backupDir_ / "all.txt", "cache file");
+
+    const std::vector<std::string> expected {"deleted_20261108_141500"};
+    EXPECT_EQ(ids(listRuns(backupDir_)), expected);
+}
+
+TEST_F(RestoreTest, ListRunsOfMissingBackupDirIsEmpty)
+{
+    EXPECT_TRUE(listRuns(data_.path() / "never-created").empty());
+}
+
+TEST_F(RestoreTest, ListRunsMarksPartlyRestoredRuns)
+{
+    const auto conflict = makeFile("conflict.txt", "old");
+    const auto restored = makeFile("restored.txt", "restored");
+    const auto runDir = deleteRun({conflict, restored});
+    file::write(conflict, "new");
+
+    ASSERT_FALSE(restoreRun(runDir).complete());
+
+    const auto runs = listRuns(backupDir_);
+    ASSERT_EQ(runs.size(), 1U);
+    EXPECT_TRUE(runs.front().partial);
+    EXPECT_EQ(runs.front().entries, 1U); // only the conflict is pending
+
+    // Once resolved, the run (marker included) disappears entirely.
+    fs::remove(conflict);
+    EXPECT_TRUE(restoreRun(runDir).runDirRemoved);
+    EXPECT_TRUE(listRuns(backupDir_).empty());
+}
+
+TEST_F(RestoreTest, FindRunByIdOrLatest)
+{
+    makeRun(backupDir_, "deleted_20261107_090000", 1);
+    makeRun(backupDir_, "deleted_20261108_141500", 1);
+
+    EXPECT_EQ(findRun(backupDir_, "latest").id, "deleted_20261108_141500");
+    EXPECT_EQ(findRun(backupDir_, "deleted_20261107_090000").id,
+              "deleted_20261107_090000");
+    EXPECT_THROW(findRun(backupDir_, "deleted_20000101_000000"), std::runtime_error);
+}
+
+TEST_F(RestoreTest, FindRunWithoutRunsThrows)
+{
+    EXPECT_THROW(findRun(backupDir_, "latest"), std::runtime_error);
 }
 
 } // namespace tools::dups

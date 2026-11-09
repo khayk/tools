@@ -72,8 +72,10 @@ duplicates [options]
 | `--delete-path <path>` | — | Auto-delete duplicates from this path (repeatable) |
 | `--min-size <bytes>` | `1024` | Ignore files smaller than this |
 | `--max-size <bytes>` | `10737418240` | Ignore files larger than this |
-| `--dry-run` | `false` | Preview deletions without performing them |
+| `--dry-run` | `false` | Preview deletions (or a restore) without performing them |
 | `--update-freq <ms>` | `100` | Progress update frequency |
+| `--list-runs` | | List the runs whose deletions can be restored |
+| `--restore <run>` | | Restore a run's deletions: `latest` or a run id |
 | `-h, --help` | | Print usage |
 
 ### Examples
@@ -100,6 +102,46 @@ duplicates \
 - **`dirs_to_delete_from`** / `--delete-path`: if all files in a duplicate group are inside a delete path, deletion is confirmed interactively.
 - If neither rule matches, the tool prompts for each group.
 - `--dry-run` logs what *would* be deleted without touching anything.
+
+## Restoring deleted files
+
+Every run that deletes something keeps its backups in its own directory under the
+cache directory, named after the time the run started (`deleted_YYYYMMDD_HHMMSS`).
+That name is the run id. A journal inside it, `deleted_files.log`, records where
+each file came from.
+
+```bash
+duplicates --list-runs                                # restorable runs, newest first
+duplicates --restore latest --dry-run                 # preview the newest run
+duplicates --restore latest                           # restore the newest run
+duplicates --restore deleted_20261108_141500          # restore a specific run
+```
+
+```
+Run                           Time                  Entries  Status
+deleted_20261109_225047       2026-11-09 22:50:47         3  pending
+deleted_20261108_141500       2026-11-08 14:15:00         1  partly restored
+```
+
+Restoring never overwrites an existing file:
+
+| Situation | Result |
+|---|---|
+| Original path is free | The file is moved back. Missing parent directories are recreated. |
+| A file with identical content is already there | The backup is dropped. |
+| A different file is there | **Conflict:** both are left untouched and listed. |
+| The backup is gone | The entry is skipped and reported. |
+
+When everything is restored, the run's directory is removed. If conflicts or
+errors remain, the backups are kept, the run is listed as *partly restored*, and
+running `--restore` again retries only those entries. Resolve a conflict by
+moving or removing the file at the original path.
+
+Exit codes: `0` success, `1` error (e.g. unknown run id), `2` the restore left
+conflicts or failures behind.
+
+Restored files are duplicates again, so the next scan will offer them for
+deletion once more.
 
 ## Output files
 

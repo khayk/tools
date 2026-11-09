@@ -2,12 +2,16 @@
 
 #include <duplicates/CmdLine.h>
 #include <duplicates/Config.h>
+#include <duplicates/DeletionStrategy.h>
+#include <duplicates/Restore.h>
 
 #include <core/utils/File.h>
 #include <core/utils/Log.h>
 
 #include <cxxopts.hpp>
 #include <chrono>
+#include <optional>
+#include <sstream>
 #include <vector>
 
 namespace tools::dups {
@@ -140,13 +144,118 @@ TEST_F(SilentConfig, FilePathOptions)
     const auto ignPath = (base / "ign.txt").string();
 
     auto result = parse({"duplicates",
-                         "--all-files", allPath.c_str(),
-                         "--dup-files", dupPath.c_str(),
-                         "--ign-files", ignPath.c_str()});
+                         "--all-files",
+                         allPath.c_str(),
+                         "--dup-files",
+                         dupPath.c_str(),
+                         "--ign-files",
+                         ignPath.c_str()});
     populateConfig(result, cfg);
     EXPECT_EQ(cfg.allFilesPath(), base / "all.txt");
     EXPECT_EQ(cfg.dupFilesPath(), base / "dup.txt");
     EXPECT_EQ(cfg.ignFilesPath(), base / "ign.txt");
+}
+
+namespace {
+
+class RestoreCommands : public testing::Test
+{
+protected:
+    core::utl::MuteLogger mute_;
+    core::file::TempDir tmp_ {"dups"};
+    Config cfg_ {tmp_.path() / "data", tmp_.path() / "cache"};
+    std::ostringstream out_;
+
+    /// Create a file and delete it the way a normal run would.
+    fs::path deleteFile(std::string_view name, std::string_view text)
+    {
+        auto file = tmp_.path() / name;
+        core::file::write(file, text);
+        BackupAndDelete(cfg_.cacheDir()).remove(file);
+        return file;
+    }
+
+    std::optional<int> run(std::vector<const char*> args)
+    {
+        args.insert(args.begin(), "duplicates");
+        return runRestoreCommands(parse(std::move(args)), cfg_, out_);
+    }
+};
+
+} // namespace
+
+TEST_F(RestoreCommands, NotRequested)
+{
+    EXPECT_EQ(run({}), std::nullopt);
+    EXPECT_EQ(run({"--dry-run"}), std::nullopt);
+    EXPECT_TRUE(out_.str().empty());
+}
+
+TEST_F(RestoreCommands, ListWithoutRuns)
+{
+    EXPECT_EQ(run({"--list-runs"}), 0);
+    EXPECT_TRUE(out_.str().contains("No restorable runs"));
+}
+
+TEST_F(RestoreCommands, ListShowsRuns)
+{
+    deleteFile("a.txt", "alpha");
+
+    EXPECT_EQ(run({"--list-runs"}), 0);
+
+    const auto runs = listRuns(cfg_.cacheDir());
+    ASSERT_EQ(runs.size(), 1U);
+    EXPECT_TRUE(out_.str().contains(runs.front().id));
+    EXPECT_TRUE(out_.str().contains("pending"));
+}
+
+TEST_F(RestoreCommands, RestoreLatest)
+{
+    const auto file = deleteFile("a.txt", "alpha");
+
+    EXPECT_EQ(run({"--restore", "latest"}), 0);
+    EXPECT_TRUE(fs::exists(file));
+    EXPECT_TRUE(out_.str().contains("Restored: 1,"));
+    EXPECT_TRUE(listRuns(cfg_.cacheDir()).empty());
+}
+
+TEST_F(RestoreCommands, RestoreById)
+{
+    const auto file = deleteFile("a.txt", "alpha");
+    const auto id = listRuns(cfg_.cacheDir()).front().id;
+
+    EXPECT_EQ(run({"--restore", id.c_str()}), 0);
+    EXPECT_TRUE(fs::exists(file));
+}
+
+TEST_F(RestoreCommands, DryRunRestoresNothing)
+{
+    const auto file = deleteFile("a.txt", "alpha");
+    cfg_.setDryRun(true);
+
+    EXPECT_EQ(run({"--restore", "latest"}), 0);
+    EXPECT_FALSE(fs::exists(file));
+    EXPECT_TRUE(out_.str().contains("Would restore: 1,"));
+    EXPECT_EQ(listRuns(cfg_.cacheDir()).size(), 1U);
+}
+
+TEST_F(RestoreCommands, IncompleteRestoreReturnsTwo)
+{
+    const auto file = deleteFile("a.txt", "alpha");
+    core::file::write(file, "something else");
+
+    EXPECT_EQ(run({"--restore", "latest"}), 2);
+
+    const auto& text = out_.str();
+    EXPECT_TRUE(text.contains("conflicts: 1"));
+    EXPECT_TRUE(text.contains(core::file::path2s(file)));
+    EXPECT_TRUE(text.contains("again"));
+}
+
+TEST_F(RestoreCommands, UnknownRunThrows)
+{
+    deleteFile("a.txt", "alpha");
+    EXPECT_THROW(run({"--restore", "deleted_20000101_000000"}), std::runtime_error);
 }
 
 } // namespace tools::dups
