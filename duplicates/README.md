@@ -76,6 +76,7 @@ duplicates [options]
 | `--update-freq <ms>` | `100` | Progress update frequency |
 | `--list-runs` | | List the runs whose deletions can be restored |
 | `--restore <run>` | | Restore a run's deletions: `latest` or a run id |
+| `-v, --version` | | Print version, commit and build time |
 | `-h, --help` | | Print usage |
 
 ### Examples

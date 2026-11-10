@@ -40,6 +40,13 @@ TEST(CmdLineTest, DefineOptionsDoesNotThrow)
     EXPECT_NO_THROW(defineOptions(opts));
 }
 
+TEST(CmdLineTest, VersionOption)
+{
+    EXPECT_TRUE(parse({"duplicates", "--version"}).contains("version"));
+    EXPECT_TRUE(parse({"duplicates", "-v"}).contains("version"));
+    EXPECT_FALSE(parse({"duplicates"}).contains("version"));
+}
+
 TEST_F(SilentConfig, PopulateConfigAppliesDefaultSizes)
 {
     auto result = parse({"duplicates"});

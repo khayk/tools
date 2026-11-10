@@ -61,6 +61,15 @@ int main(int argc, const char* argv[])
             return 0;
         }
 
+        if (result.contains("version"))
+        {
+            std::cout << std::format("duplicates {} (commit {}, built {})\n",
+                                     BuildInfo::Version,
+                                     BuildInfo::CommitSHA,
+                                     BuildInfo::Timestamp);
+            return 0;
+        }
+
         Config cfg(core::dirs::config(), core::dirs::cache());
         configureLogger(cfg.logDir(), cfg.logFilename());
         appLog.emplace("",

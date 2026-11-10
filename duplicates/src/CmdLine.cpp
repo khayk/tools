@@ -182,6 +182,8 @@ void defineOptions(cxxopts::Options& opts)
         ("restore", "Restore the files deleted by a run: 'latest' or a run id",
             cxxopts::value<std::string>())
 
+        ("v,version", "Print version information")
+
         ("h,help", "Print usage");
 
     // Hidden debug-only options, kept out of --help (see Main.cpp).
